@@ -1,4 +1,4 @@
-# ECR-planner
+# SUSSmods
 
 Frontend prototype of a NUSMods-style semester timetable planner.
 
