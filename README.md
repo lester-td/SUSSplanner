@@ -1,4 +1,4 @@
-# ECR-planner
+# SUSSmods
 
 ECR-planner is a lightweight timetable planner inspired by NUSMods-style layouts.
 It runs as a static frontend and can optionally use a Node.js backend for API-driven CSV loading.
