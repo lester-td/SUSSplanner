@@ -4,8 +4,7 @@
     "name": "Computer Architecture",
     "color": "#84cc16",
     "lessons": [
-      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.4.08", "weekPattern": "all" },
-      { "day": "Thu", "start": "1200", "end": "1300", "type": "TUT TG01", "venue": "C.5.09", "weekPattern": "odd" }
+      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.4.08", "weekPattern": "all" }
     ]
   },
   {
@@ -13,8 +12,7 @@
     "name": "Computer Architecture",
     "color": "#38bdf8",
     "lessons": [
-      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.4.10", "weekPattern": "all" },
-      { "day": "Thu", "start": "1530", "end": "1630", "type": "TUT TG02", "venue": "C.6.11", "weekPattern": "odd" }
+      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.4.10", "weekPattern": "all" }
     ]
   },
   {
@@ -22,8 +20,7 @@
     "name": "Structured Programming",
     "color": "#fbbf24",
     "lessons": [
-      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.3.12", "weekPattern": "all" },
-      { "day": "Fri", "start": "0830", "end": "0930", "type": "TUT TG03", "venue": "C.7.13", "weekPattern": "odd" }
+      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.3.12", "weekPattern": "all" }
     ]
   },
   {
@@ -31,8 +28,7 @@
     "name": "Structured Programming",
     "color": "#f97316",
     "lessons": [
-      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.8.14", "weekPattern": "all" },
-      { "day": "Fri", "start": "1200", "end": "1300", "type": "TUT TG01", "venue": "C.5.08", "weekPattern": "even" }
+      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.8.14", "weekPattern": "all" }
     ]
   },
   {
@@ -40,8 +36,7 @@
     "name": "Object Oriented Programming",
     "color": "#a78bfa",
     "lessons": [
-      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.6.09", "weekPattern": "all" },
-      { "day": "Fri", "start": "1200", "end": "1300", "type": "TUT TG02", "venue": "C.7.10", "weekPattern": "even" }
+      { "day": "Mon", "start": "1200", "end": "1400", "type": "LEC", "venue": "C.6.09", "weekPattern": "all" }
     ]
   },
   {
@@ -49,8 +44,7 @@
     "name": "Object Oriented Programming",
     "color": "#f472b6",
     "lessons": [
-      { "day": "Wed", "start": "1530", "end": "1730", "type": "LEC", "venue": "C.4.11", "weekPattern": "all" },
-      { "day": "Fri", "start": "1530", "end": "1630", "type": "SEC TG01", "venue": "C.8.12", "weekPattern": "all" }
+      { "day": "Wed", "start": "1530", "end": "1730", "type": "LEC", "venue": "C.4.11", "weekPattern": "all" }
     ]
   },
   {
@@ -58,8 +52,7 @@
     "name": "Data Programming",
     "color": "#fb7185",
     "lessons": [
-      { "day": "Thu", "start": "0830", "end": "1030", "type": "LEC", "venue": "C.3.13", "weekPattern": "all" },
-      { "day": "Tue", "start": "1530", "end": "1630", "type": "TUT TG01", "venue": "C.6.14", "weekPattern": "all" }
+      { "day": "Thu", "start": "0830", "end": "1030", "type": "LEC", "venue": "C.3.13", "weekPattern": "all" }
     ]
   },
   {
@@ -67,8 +60,7 @@
     "name": "Data Programming",
     "color": "#22c55e",
     "lessons": [
-      { "day": "Thu", "start": "0830", "end": "1030", "type": "LEC", "venue": "C.5.10", "weekPattern": "all" },
-      { "day": "Tue", "start": "1530", "end": "1630", "type": "TUT TG02", "venue": "C.4.14", "weekPattern": "all" }
+      { "day": "Thu", "start": "0830", "end": "1030", "type": "LEC", "venue": "C.5.10", "weekPattern": "all" }
     ]
   },
   {
@@ -84,8 +76,7 @@
     "name": "Web Application Development",
     "color": "#ef4444",
     "lessons": [
-      { "day": "Sun", "start": "1530", "end": "1730", "type": "SEM", "venue": "C.8.08", "weekPattern": "all" },
-      { "day": "Tue", "start": "0830", "end": "0930", "type": "TUT TG01", "venue": "C.3.09", "weekPattern": "odd" }
+      { "day": "Sun", "start": "1530", "end": "1730", "type": "SEM", "venue": "C.8.08", "weekPattern": "all" }
     ]
   },
   {
@@ -93,8 +84,7 @@
     "name": "Operating Systems",
     "color": "#8b5cf6",
     "lessons": [
-      { "day": "Wed", "start": "0830", "end": "1030", "type": "LEC", "venue": "C.6.12", "weekPattern": "all" },
-      { "day": "Fri", "start": "1900", "end": "2100", "type": "LAB TG01", "venue": "C.5.13", "weekPattern": "even" }
+      { "day": "Wed", "start": "0830", "end": "1030", "type": "LEC", "venue": "C.6.12", "weekPattern": "all" }
     ]
   },
   {
@@ -102,8 +92,7 @@
     "name": "Operating Systems",
     "color": "#14b8a6",
     "lessons": [
-      { "day": "Thu", "start": "1530", "end": "1730", "type": "LEC", "venue": "C.4.12", "weekPattern": "all" },
-      { "day": "Sat", "start": "1200", "end": "1300", "type": "TUT TG01", "venue": "C.8.13", "weekPattern": "even" }
+      { "day": "Thu", "start": "1530", "end": "1730", "type": "LEC", "venue": "C.4.12", "weekPattern": "all" }
     ]
   }
 ]

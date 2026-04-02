@@ -7,6 +7,7 @@
   --muted: #475569;
   --line: #dce3e8;
   --time-col: 68px;
+  --day-col-min: 96px;
   --header-h: 52px;
   --hour-h: 76px;
   --day-row-h: 88px;
@@ -26,6 +27,11 @@
     background: linear-gradient(155deg, var(--bg-1) 0%, #ecf6ff 40%, var(--bg-2) 100%);
     position: relative;
     overflow-x: hidden;
+  }
+
+  html,
+  body {
+    height: 100%;
   }
 
   body.theme-dark {
@@ -155,11 +161,14 @@
   }
 
   .app-shell {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 30px 18px 38px;
+    width: 100%;
+    margin: 0;
+    padding: clamp(12px, 1.8vw, 26px) clamp(10px, 1.6vw, 22px) clamp(14px, 2.2vw, 30px);
     position: relative;
     z-index: 1;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
   }
 
   .topbar {
@@ -532,6 +541,16 @@
     position: relative;
   }
 
+  .legend-item.palette-open {
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 220px;
+  }
+
   .legend-swatch {
     appearance: none;
     border: 1px solid #94a3b8;
@@ -600,7 +619,7 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 10px;
-    z-index: 6;
+    z-index: 40;
     width: 184px;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -610,6 +629,14 @@
     border: 1px solid #cbd5e1;
     background: #ffffff;
     box-shadow: 0 12px 22px -16px #0f172a;
+  }
+
+  .legend-item.palette-open .legend-palette {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    box-shadow: none;
   }
 
   .legend-palette-swatch {
@@ -638,6 +665,9 @@
     box-shadow: var(--shadow);
     overflow: auto;
     position: relative;
+    flex: 1 1 auto;
+    min-height: 430px;
+    height: min(76dvh, calc(100dvh - 320px));
   }
 
   .timetable-empty {
@@ -654,7 +684,7 @@
     width: 100%;
     position: relative;
     display: grid;
-    grid-template-columns: var(--time-col) repeat(var(--day-count), minmax(0, 1fr));
+    grid-template-columns: var(--time-col) repeat(var(--day-count), minmax(var(--day-col-min), 1fr));
     grid-template-rows: var(--header-h) repeat(var(--slots), calc(var(--hour-h) / 2));
   }
 
@@ -670,6 +700,10 @@
     grid-column: 1;
     grid-row: 1;
     background: #f8fbff;
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 8;
   }
 
   .day-header {
@@ -729,6 +763,15 @@
     font-size: 0.74rem;
     padding-top: 3px;
     background: #f9fbfc;
+    position: sticky;
+    left: 0;
+    z-index: 6;
+  }
+
+  .day-side-header {
+    position: sticky;
+    left: 0;
+    z-index: 6;
   }
 
   .time-cell.half {
@@ -757,18 +800,22 @@
   .event.tg-active {
     border-color: #0f766e;
     box-shadow: 0 0 0 2px #99f6e4, 0 8px 16px -12px #0f172a;
+    animation: reveal 260ms ease both, tgPulse 1200ms ease-in-out infinite;
+    z-index: 6;
   }
 
   .event.tg-option {
-    opacity: 0.45;
     border-style: dashed;
     border-color: #334155;
     z-index: 4;
   }
 
+  .event.tg-dimmed {
+    filter: saturate(0.78) brightness(0.94);
+  }
+
   .event.tg-option:hover,
   .event.tg-option:focus-visible {
-    opacity: 0.72;
     border-style: solid;
   }
 
@@ -780,7 +827,7 @@
   .event-title {
     margin: 0;
     font-size: clamp(0.56rem, 0.52rem + 0.35vw, 0.76rem);
-    line-height: 1.2;
+    line-height: 1.12;
     font-weight: 700;
     overflow: hidden;
     white-space: normal;
@@ -789,16 +836,27 @@
     max-width: 100%;
   }
 
+  .event-tg {
+    margin: 2px 0 0;
+    font-size: clamp(0.5rem, 0.45rem + 0.24vw, 0.66rem);
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
   .event-meta {
-    margin: 3px 0 0;
+    margin: 2px 0 0;
     font-size: clamp(0.5rem, 0.46rem + 0.28vw, 0.67rem);
-    line-height: 1.2;
+    line-height: 1.1;
     opacity: 0.82;
     font-family: "Inter", "Space Grotesk", sans-serif;
     overflow: hidden;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     max-width: 100%;
   }
 
@@ -811,8 +869,12 @@
     font-size: 0.62rem;
   }
 
+  .compact .event-tg {
+    font-size: 0.54rem;
+  }
+
   .compact .event-meta {
-    display: none;
+    font-size: 0.52rem;
   }
 
   .timetable.vertical .event {
@@ -823,8 +885,12 @@
     font-size: 0.68rem;
   }
 
+  .timetable.vertical .event-tg {
+    font-size: 0.58rem;
+  }
+
   .timetable.vertical .event-meta {
-    display: none;
+    font-size: 0.56rem;
   }
 
   .sr-only {
@@ -850,6 +916,23 @@
     }
   }
 
+  @keyframes tgPulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.03);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .event,
+    .event.tg-active {
+      animation: none;
+    }
+  }
+
   @media (max-width: 900px) {
     .topbar {
       flex-direction: column;
@@ -867,12 +950,42 @@
       text-align: center;
     }
 
+    .week-mode-panel,
+    .controls-panel,
+    .status-panel,
+    .module-search-panel,
+    .date-strip-wrap,
+    .legend-panel {
+      margin-bottom: 10px;
+    }
+
+    .legend-list {
+      gap: 6px;
+    }
+
+    .legend-item {
+      font-size: 0.75rem;
+      padding: 6px 8px;
+      gap: 6px;
+    }
+
+    .controls {
+      gap: 8px;
+      justify-content: flex-start;
+    }
+
+    .control-btn {
+      padding: 8px 12px;
+      font-size: 0.7rem;
+    }
+
     .search-row {
       flex-direction: column;
     }
 
     :root {
       --time-col: 56px;
+      --day-col-min: 92px;
       --hour-h: 62px;
       --day-row-h: 78px;
     }
@@ -895,6 +1008,167 @@
       font-size: 0.7rem;
     }
 
+    .timetable-wrap {
+      min-height: 360px;
+      height: min(70dvh, calc(100dvh - 300px));
+    }
+
+  }
+
+  @media (max-width: 640px) {
+    .app-shell {
+      padding-left: 8px;
+      padding-right: 8px;
+      padding-top: 10px;
+    }
+
+    .topbar {
+      margin-bottom: 8px;
+    }
+
+    .eyebrow {
+      font-size: 0.68rem;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      margin-top: 2px;
+    }
+
+    .week-mode-panel,
+    .controls-panel,
+    .status-panel,
+    .module-search-panel,
+    .date-strip-wrap,
+    .legend-panel,
+    .timetable-wrap {
+      border-radius: 12px;
+    }
+
+    .week-mode-panel,
+    .controls-panel,
+    .status-panel,
+    .module-search-panel,
+    .legend-panel {
+      padding: 10px;
+    }
+
+    .date-strip-wrap {
+      grid-template-columns: 32px minmax(0, 1fr) 32px;
+      gap: 6px;
+      padding: 8px;
+    }
+
+    .date-nav-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 0.78rem;
+    }
+
+    .date-strip {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 2px;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .date-pill {
+      flex: 0 0 68px;
+      min-width: 68px;
+      border-radius: 14px;
+      padding: 7px 6px;
+      scroll-snap-align: start;
+    }
+
+    .date-pill-day {
+      font-size: 0.66rem;
+      line-height: 1.1;
+    }
+
+    .date-pill-date {
+      margin-top: 1px;
+      font-size: 0.76rem;
+      line-height: 1.1;
+    }
+
+    .controls {
+      gap: 6px;
+    }
+
+    .control-btn,
+    .week-btn {
+      border-radius: 14px;
+      padding: 7px 9px;
+      font-size: 0.68rem;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+    }
+
+    .legend-panel {
+      max-height: none;
+      overflow: visible;
+    }
+
+    .legend-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .legend-item {
+      width: 100%;
+      min-width: 0;
+      justify-content: flex-start;
+    }
+
+    .legend-item.palette-open {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .legend-palette {
+      left: 0;
+      width: min(184px, calc(100vw - 40px));
+    }
+
+    .legend-item.palette-open .legend-palette {
+      width: 100%;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .search-input {
+      padding: 8px 10px;
+      font-size: 0.88rem;
+    }
+
+    .search-help,
+    .status-text {
+      font-size: 0.74rem;
+    }
+
+    .timetable-wrap {
+      min-height: 350px;
+      height: min(64dvh, calc(100dvh - 236px));
+    }
+
+    .time-cell,
+    .day-header,
+    .time-header,
+    .day-side-header {
+      font-size: 0.68rem;
+    }
+
+    .event-title {
+      font-size: 0.6rem;
+    }
+
+    .event-tg,
+    .event-meta {
+      font-size: 0.52rem;
+    }
   }
 
   @media print {

@@ -89,6 +89,7 @@ export function buildGrid(timetable, bounds, orientation)
 
 export function renderEvents(timetable, events, bounds, orientation, lessonTimeLabel, onEventClick)
 {
+  const hasActiveTgSelection = events.some((eventData) => eventData.isTgActive);
   const totalSlots = (bounds.endMinutes - bounds.startMinutes) / 30;
   const tableRect = timetable.getBoundingClientRect();
   const firstTimeCell = timetable.querySelector(".time-cell");
@@ -130,7 +131,11 @@ export function renderEvents(timetable, events, bounds, orientation, lessonTimeL
     {
       event.classList.add("tg-active");
     }
-    event.style.backgroundColor = `${eventData.color}cc`;
+    if (hasActiveTgSelection && !eventData.isTgActive)
+    {
+      event.classList.add("tg-dimmed");
+    }
+    event.style.backgroundColor = eventData.isTgOption ? `${eventData.color}80` : eventData.color;
     event.tabIndex = 0;
     event.setAttribute("role", "gridcell");
     event.setAttribute("data-testid", `event-${index}`);
@@ -187,15 +192,25 @@ export function renderEvents(timetable, events, bounds, orientation, lessonTimeL
     event.style.width = `${clampedWidth}px`;
     event.style.height = `${clampedHeight}px`;
 
+    const normalizedCode = String(eventData.code || "").toUpperCase();
+    const tgMatch = normalizedCode.match(/-TG\d+$/i);
+    const tgLabel = tgMatch ? tgMatch[0].replace("-", "") : "TG";
+    const courseCode = tgMatch ? normalizedCode.replace(/-TG\d+$/i, "") : normalizedCode;
+
     const title = document.createElement("p");
     title.className = "event-title";
-    title.textContent = eventData.code;
+    title.textContent = courseCode;
+
+    const tg = document.createElement("p");
+    tg.className = "event-tg";
+    tg.textContent = tgLabel;
 
     const meta = document.createElement("p");
     meta.className = "event-meta";
-    meta.textContent = `${lessonTimeLabel(eventData)} · ${eventData.venue}`;
+    meta.textContent = eventData.venue;
 
     event.appendChild(title);
+    event.appendChild(tg);
     event.appendChild(meta);
 
     if (typeof onEventClick === "function")

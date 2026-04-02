@@ -1,4 +1,7 @@
 /* eslint-disable no-console */
+const fs = require("node:fs");
+const path = require("node:path");
+
 function assert(name, condition) {
   if (!condition) {
     throw new Error(`Assertion failed: ${name}`);
@@ -47,6 +50,14 @@ function run() {
   const encoded = serializeState(state);
   const decoded = deserializeState(encoded);
   assert("state roundtrip", decoded.weekPattern === "odd" && decoded.compact === true);
+
+  const bindEventsPath = path.join(__dirname, "frontend", "js", "bindEvents.js");
+  const bindEventsSource = fs.readFileSync(bindEventsPath, "utf8");
+
+  // Regression check: module blocks must be treated as interactive so wrapper drag logic does not swallow clicks.
+  assert("drag guard includes .event target", /closest\("[^"]*\.event/.test(bindEventsSource));
+  // Regression check: tiny pointer jitter should not count as drag and suppress click.
+  assert("drag threshold remains 6px", /Math\.abs\(dx\) > 6 \|\| Math\.abs\(dy\) > 6/.test(bindEventsSource));
 
   console.log("all tests passed");
 }

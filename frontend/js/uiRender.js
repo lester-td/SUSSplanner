@@ -69,6 +69,7 @@ export function renderDateStrip({
   dateStrip,
   dates,
   days,
+  weekNumber,
   activeDayIndex,
   dayLabel,
   onSelectDay,
@@ -84,7 +85,7 @@ export function renderDateStrip({
 
     const dayText = document.createElement("span");
     dayText.className = "date-pill-day";
-    dayText.textContent = days[idx];
+    dayText.textContent = `W${weekNumber} ${days[idx]}`;
 
     const dateText = document.createElement("span");
     dateText.className = "date-pill-date";

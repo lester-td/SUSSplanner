@@ -3,7 +3,6 @@ import {
   FULL_START_MINUTES,
   FULL_END_MINUTES,
   COOKIE_STATE,
-  WEEK_PATTERN_OPTIONS,
   MODULES_API_PATH,
   MODULES_FALLBACK_PATH,
   MODULE_COLOR_PALETTE,
@@ -11,10 +10,11 @@ import {
 import {
   toMinutes,
   fromMinutes,
-  getWeekStart,
+  getAcademicWeekStart,
+  getAcademicWeekOffset,
+  clampAcademicWeekOffset,
   dayLabel,
   getTimetableDayIndex,
-  getIsoWeekNumber,
 } from "./frontend/js/time.js";
 import {
   encodeState,
@@ -44,7 +44,6 @@ import {
   clearEmptyState,
   lessonTimeLabel,
   scrollToDay,
-  updateWeekModeButtons,
   renderSummary,
   renderDateStrip,
   renderLegend,
@@ -68,8 +67,6 @@ const hideFeedbackBtn = document.getElementById("hideFeedbackBtn");
 const toggleThemeBtn = document.getElementById("toggleTheme");
 const toggleOrientationBtn = document.getElementById("toggleOrientation");
 const toggleSquishBtn = document.getElementById("toggleSquish");
-const weekPatternSelect = document.getElementById("weekPattern");
-const weekModeButtons = Array.from(document.querySelectorAll(".week-btn[data-week-mode]"));
 const shareLinkBtn = document.getElementById("shareLinkBtn");
 const printBtn = document.getElementById("printBtn");
 const exportIcsBtn = document.getElementById("exportIcsBtn");
@@ -91,7 +88,7 @@ const defaultState = {
   hiddenCodes: [],
   customColors: {},
   search: "",
-  weekOffset: 0,
+  weekOffset: getAcademicWeekOffset(new Date()),
   activeDayIndex: getTimetableDayIndex(new Date(), DAYS.length - 1),
 };
 
@@ -267,7 +264,7 @@ function setModuleColor(code, color) {
 }
 
 function weekDates() {
-  const start = getWeekStart(new Date(), state.weekOffset);
+  const start = getAcademicWeekStart(new Date(), state.weekOffset);
   return DAYS.map((_, idx) => {
     const date = new Date(start);
     date.setDate(start.getDate() + idx);
@@ -276,8 +273,7 @@ function weekDates() {
 }
 
 function currentWeekNumber() {
-  const monday = getWeekStart(new Date(), state.weekOffset);
-  return getIsoWeekNumber(monday);
+  return clampAcademicWeekOffset(state.weekOffset);
 }
 
 function lessonsForCurrentWeek() {
@@ -555,6 +551,8 @@ function exportIcs() {
 }
 
 function render() {
+  state.weekOffset = clampAcademicWeekOffset(state.weekOffset);
+
   if (openTgSourceCode && !state.selectedCodes.includes(openTgSourceCode)) {
     openTgSourceCode = "";
   }
@@ -578,6 +576,10 @@ function render() {
     events = toRenderableEvents(lessonsToRender, bounds);
     setFeedback("No classes in squished range. Showing full range instead.");
   }
+
+  const maxLaneCount = events.reduce((max, eventData) => Math.max(max, Number(eventData.laneCount) || 1), 1);
+  const dayColMin = Math.max(92, Math.min(210, 96 + (maxLaneCount - 1) * 34));
+  timetable.style.setProperty("--day-col-min", `${dayColMin}px`);
 
   buildGrid(timetable, bounds, state.orientation);
   renderEvents(
@@ -618,6 +620,7 @@ function render() {
     dateStrip,
     dates: weekDates(),
     days: DAYS,
+    weekNumber: currentWeekNumber(),
     activeDayIndex: state.activeDayIndex,
     dayLabel,
     onSelectDay: (idx) => {
@@ -631,10 +634,6 @@ function render() {
   toggleOrientationBtn.textContent = state.orientation === "horizontal" ? "Vertical Calendar" : "Horizontal Calendar";
   toggleSquishBtn.textContent = state.squishTime ? "Full Time Range" : "Squish Time";
   applyTheme();
-  if (weekPatternSelect) {
-    weekPatternSelect.value = state.weekPattern;
-  }
-  updateWeekModeButtons(weekModeButtons, state.weekPattern);
   timetable.dataset.orientation = state.orientation;
   timetable.dataset.squish = String(state.squishTime);
 
@@ -655,8 +654,6 @@ bindEvents({
     toggleThemeBtn,
     toggleOrientationBtn,
     toggleSquishBtn,
-    weekPatternSelect,
-    weekModeButtons,
     moduleSearch,
     searchResults,
     clearAllBtn,
@@ -669,7 +666,6 @@ bindEvents({
     exportIcsBtn,
     timetableWrap,
   },
-  weekPatternOptions: WEEK_PATTERN_OPTIONS,
   getState: () => state,
   render,
   drawSuggestions,

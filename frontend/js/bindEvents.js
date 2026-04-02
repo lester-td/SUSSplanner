@@ -1,6 +1,5 @@
 export function bindEvents({
   elements,
-  weekPatternOptions,
   getState,
   render,
   drawSuggestions,
@@ -17,8 +16,6 @@ export function bindEvents({
     toggleThemeBtn,
     toggleOrientationBtn,
     toggleSquishBtn,
-    weekPatternSelect,
-    weekModeButtons,
     moduleSearch,
     searchResults,
     clearAllBtn,
@@ -34,6 +31,15 @@ export function bindEvents({
 
   if (timetableWrap)
   {
+    const isInteractiveTarget = (target) => {
+      if (!(target instanceof Element))
+      {
+        return false;
+      }
+
+      return Boolean(target.closest("button, input, select, textarea, a, .event, .legend-palette"));
+    };
+
     let dragState = {
       active: false,
       startX: 0,
@@ -62,6 +68,11 @@ export function bindEvents({
         return;
       }
 
+      if (isInteractiveTarget(event.target))
+      {
+        return;
+      }
+
       dragState = {
         active: true,
         startX: event.clientX,
@@ -86,7 +97,7 @@ export function bindEvents({
       const dx = event.clientX - dragState.startX;
       const dy = event.clientY - dragState.startY;
 
-      if (!dragState.moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3))
+      if (!dragState.moved && (Math.abs(dx) > 6 || Math.abs(dy) > 6))
       {
         dragState.moved = true;
       }
@@ -146,29 +157,6 @@ export function bindEvents({
       render();
     });
   }
-
-  if (weekPatternSelect)
-  {
-    weekPatternSelect.addEventListener("change", (event) => {
-      const state = getState();
-      state.weekPattern = event.target.value;
-      render();
-    });
-  }
-
-  weekModeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const nextPattern = button.dataset.weekMode;
-      if (!weekPatternOptions.includes(nextPattern))
-      {
-        return;
-      }
-
-      const state = getState();
-      state.weekPattern = nextPattern;
-      render();
-    });
-  });
 
   if (moduleSearch)
   {
