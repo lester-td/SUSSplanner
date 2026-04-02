@@ -116,12 +116,36 @@ export function renderLegend({
   modules.forEach((mod) => {
     const hidden = hiddenCodes.includes(mod.code);
     const paletteOpen = openColorMenuCode === mod.code;
+    const currentColor = getModuleColor(mod.code, mod.color);
     const li = document.createElement("li");
     li.className = `legend-item ${hidden ? "hidden" : ""} ${paletteOpen ? "palette-open" : ""}`;
 
-    const swatch = document.createElement("span");
-    swatch.className = "legend-swatch";
-    swatch.style.backgroundColor = getModuleColor(mod.code, mod.color);
+    const swatch = document.createElement("button");
+    swatch.className = `legend-swatch ${hidden ? "hidden" : ""}`;
+    swatch.type = "button";
+    swatch.style.backgroundColor = hidden ? `${currentColor}55` : currentColor;
+    swatch.title = `Choose color for ${mod.code}`;
+    swatch.setAttribute("aria-label", `Choose color for ${mod.code}`);
+    swatch.setAttribute("aria-expanded", String(paletteOpen));
+    swatch.addEventListener("click", () => onTogglePalette(mod.code, paletteOpen));
+
+    const toggleVisibility = document.createElement("button");
+    toggleVisibility.className = `legend-toggle ${hidden ? "is-hidden" : ""}`;
+    toggleVisibility.type = "button";
+    toggleVisibility.title = `${hidden ? "Show" : "Hide"} ${mod.code}`;
+    toggleVisibility.setAttribute("aria-label", `${hidden ? "Show" : "Hide"} ${mod.code}`);
+    toggleVisibility.setAttribute("aria-pressed", String(hidden));
+
+    const eye = document.createElement("span");
+    eye.className = "legend-eye";
+    eye.setAttribute("aria-hidden", "true");
+    toggleVisibility.appendChild(eye);
+
+    const eyeSlash = document.createElement("span");
+    eyeSlash.className = "legend-eye-slash";
+    eyeSlash.setAttribute("aria-hidden", "true");
+    toggleVisibility.appendChild(eyeSlash);
+    toggleVisibility.addEventListener("click", () => onToggleVisibility(mod.code));
 
     const label = document.createElement("span");
     label.className = "legend-code";
@@ -129,21 +153,6 @@ export function renderLegend({
 
     const controls = document.createElement("span");
     controls.className = "legend-controls";
-
-    const colorButton = document.createElement("button");
-    colorButton.className = "legend-color-toggle";
-    colorButton.type = "button";
-    colorButton.textContent = "Color";
-    colorButton.title = `Choose color for ${mod.code}`;
-    colorButton.setAttribute("aria-expanded", String(paletteOpen));
-    colorButton.addEventListener("click", () => onTogglePalette(mod.code, paletteOpen));
-
-    const toggleVisibility = document.createElement("button");
-    toggleVisibility.className = "legend-toggle";
-    toggleVisibility.type = "button";
-    toggleVisibility.textContent = hidden ? "Show" : "Hide";
-    toggleVisibility.title = `${hidden ? "Show" : "Hide"} ${mod.code}`;
-    toggleVisibility.addEventListener("click", () => onToggleVisibility(mod.code));
 
     const remove = document.createElement("button");
     remove.className = "legend-remove";
@@ -153,9 +162,8 @@ export function renderLegend({
     remove.addEventListener("click", () => onRemove(mod.code));
 
     li.appendChild(swatch);
+    li.appendChild(toggleVisibility);
     li.appendChild(label);
-    controls.appendChild(colorButton);
-    controls.appendChild(toggleVisibility);
     controls.appendChild(remove);
     li.appendChild(controls);
 
@@ -166,7 +174,7 @@ export function renderLegend({
 
       moduleColorPalette.forEach((color) => {
         const swatchButton = document.createElement("button");
-        const selected = getModuleColor(mod.code, mod.color).toLowerCase() === color;
+        const selected = currentColor.toLowerCase() === color;
         swatchButton.type = "button";
         swatchButton.className = `legend-palette-swatch ${selected ? "selected" : ""}`;
         swatchButton.style.backgroundColor = color;

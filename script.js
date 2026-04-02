@@ -13,6 +13,7 @@ import {
   fromMinutes,
   getWeekStart,
   dayLabel,
+  getTimetableDayIndex,
   getIsoWeekNumber,
 } from "./frontend/js/time.js";
 import {
@@ -56,6 +57,7 @@ import {
 let moduleCatalog = [];
 
 const timetable = document.getElementById("timetable");
+const timetableWrap = timetable ? timetable.closest(".timetable-wrap") : null;
 const timetableEmpty = document.getElementById("timetableEmpty");
 const moduleLegend = document.getElementById("moduleLegend");
 const moduleSummary = document.getElementById("moduleSummary");
@@ -90,7 +92,7 @@ const defaultState = {
   customColors: {},
   search: "",
   weekOffset: 0,
-  activeDayIndex: new Date().getDay() === 0 ? 6 : new Date().getDay() - 1,
+  activeDayIndex: getTimetableDayIndex(new Date(), DAYS.length - 1),
 };
 
 let state = { ...defaultState };
@@ -665,6 +667,7 @@ bindEvents({
     hideFeedbackBtn,
     printBtn,
     exportIcsBtn,
+    timetableWrap,
   },
   weekPatternOptions: WEEK_PATTERN_OPTIONS,
   getState: () => state,

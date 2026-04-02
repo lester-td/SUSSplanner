@@ -29,7 +29,93 @@ export function bindEvents({
     hideFeedbackBtn,
     printBtn,
     exportIcsBtn,
+    timetableWrap,
   } = elements;
+
+  if (timetableWrap)
+  {
+    let dragState = {
+      active: false,
+      startX: 0,
+      startY: 0,
+      startLeft: 0,
+      startTop: 0,
+      pointerId: null,
+      moved: false,
+    };
+
+    const resetDrag = () => {
+      if (!dragState.active)
+      {
+        return;
+      }
+
+      dragState.active = false;
+      dragState.pointerId = null;
+      timetableWrap.classList.remove("is-dragging");
+      document.body.classList.remove("is-dragging-timetable");
+    };
+
+    timetableWrap.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 || event.pointerType !== "mouse")
+      {
+        return;
+      }
+
+      dragState = {
+        active: true,
+        startX: event.clientX,
+        startY: event.clientY,
+        startLeft: timetableWrap.scrollLeft,
+        startTop: timetableWrap.scrollTop,
+        pointerId: event.pointerId,
+        moved: false,
+      };
+
+      timetableWrap.classList.add("is-dragging");
+      document.body.classList.add("is-dragging-timetable");
+      timetableWrap.setPointerCapture(event.pointerId);
+    });
+
+    timetableWrap.addEventListener("pointermove", (event) => {
+      if (!dragState.active || event.pointerId !== dragState.pointerId)
+      {
+        return;
+      }
+
+      const dx = event.clientX - dragState.startX;
+      const dy = event.clientY - dragState.startY;
+
+      if (!dragState.moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3))
+      {
+        dragState.moved = true;
+      }
+
+      if (!dragState.moved)
+      {
+        return;
+      }
+
+      timetableWrap.scrollLeft = dragState.startLeft - dx;
+      timetableWrap.scrollTop = dragState.startTop - dy;
+      event.preventDefault();
+    });
+
+    timetableWrap.addEventListener("pointerup", resetDrag);
+    timetableWrap.addEventListener("pointercancel", resetDrag);
+    timetableWrap.addEventListener("lostpointercapture", resetDrag);
+
+    timetableWrap.addEventListener("click", (event) => {
+      if (!dragState.moved)
+      {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      dragState.moved = false;
+    }, { capture: true });
+  }
 
   if (toggleThemeBtn)
   {
@@ -179,7 +265,6 @@ export function bindEvents({
     todayBtn.addEventListener("click", () => {
       const state = getState();
       state.weekOffset = 0;
-      state.activeDayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
       render();
       scrollToDay(state.orientation, state.activeDayIndex);
     });

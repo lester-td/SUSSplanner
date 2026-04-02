@@ -1,4 +1,5 @@
 import {
+  DAYS,
   COOKIE_STATE,
   WEEK_PATTERN_OPTIONS,
   MODULE_COLOR_PALETTE,
@@ -75,7 +76,7 @@ export function sanitizeState(candidate, moduleCatalog, defaultState)
     customColors: safeColors,
     search: "",
     weekOffset: Number.isFinite(Number(safeCandidate.weekOffset)) ? Number(safeCandidate.weekOffset) : 0,
-    activeDayIndex: Number.isFinite(Number(safeCandidate.activeDayIndex)) ? Math.max(0, Math.min(6, Number(safeCandidate.activeDayIndex))) : defaultState.activeDayIndex,
+    activeDayIndex: Number.isFinite(Number(safeCandidate.activeDayIndex)) ? Math.max(0, Math.min(DAYS.length - 1, Number(safeCandidate.activeDayIndex))) : defaultState.activeDayIndex,
   };
 }
 

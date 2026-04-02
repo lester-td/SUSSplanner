@@ -26,6 +26,18 @@ export function dayLabel(date)
   return date.toLocaleDateString("en-SG", { day: "2-digit", month: "short" });
 }
 
+export function getTimetableDayIndex(date = new Date(), maxDayIndex = 5)
+{
+  const weekday = date.getDay();
+  if (weekday === 0)
+  {
+    return maxDayIndex;
+  }
+
+  const rawIndex = weekday - 1;
+  return Math.max(0, Math.min(maxDayIndex, rawIndex));
+}
+
 export function getIsoWeekNumber(date)
 {
   const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));

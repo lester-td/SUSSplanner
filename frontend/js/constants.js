@@ -1,4 +1,4 @@
-export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export const FULL_START_HOUR = 8;
 export const FULL_START_MINUTE = 30;

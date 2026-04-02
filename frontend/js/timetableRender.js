@@ -177,8 +177,10 @@ export function renderEvents(timetable, events, bounds, orientation, lessonTimeL
 
     const clampedLeft = Math.max(1, Math.min(left, maxLeft));
     const clampedTop = Math.max(1, Math.min(top, maxTop));
-    const clampedWidth = Math.max(18, Math.min(width, layoutWidth - clampedLeft - 2));
-    const clampedHeight = Math.max(18, Math.min(height, layoutHeight - clampedTop - 2));
+    const availableWidth = Math.max(1, layoutWidth - clampedLeft - 2);
+    const availableHeight = Math.max(1, layoutHeight - clampedTop - 2);
+    const clampedWidth = Math.max(1, Math.min(width, availableWidth));
+    const clampedHeight = Math.max(1, Math.min(height, availableHeight));
 
     event.style.left = `${clampedLeft}px`;
     event.style.top = `${clampedTop}px`;
