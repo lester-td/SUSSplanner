@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NUSMods-Style Timetable</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape bg-shape-one" aria-hidden="true"></div>
+    <div class="bg-shape bg-shape-two" aria-hidden="true"></div>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Placeholder Frontend</p>
+          <h1>Semester Timetable</h1>
+        </div>
+      </header>
+
+      <section class="week-mode-panel" aria-label="SUSS week mode">
+        <p class="search-label">SUSS Study Week Mode</p>
+        <div class="week-buttons" role="group" aria-label="Week mode buttons">
+          <button id="weekAllBtn" class="week-btn" type="button" data-week-mode="all" data-testid="week-mode-all">All Weeks</button>
+          <button id="weekLectureBtn" class="week-btn" type="button" data-week-mode="odd" data-testid="week-mode-lecture">Odd Week</button>
+          <button id="weekTutorialBtn" class="week-btn" type="button" data-week-mode="even" data-testid="week-mode-tutorial">Even Week</button>
+        </div>
+      </section>
+
+      <section class="status-panel" aria-label="Status and messages">
+        <p id="moduleSummary" class="status-text" data-testid="module-summary"></p>
+        <p class="status-text"><span id="weekMetaBadge" class="week-meta-badge"></span></p>
+        <p id="weekPatternNote" class="status-text"></p>
+        <div class="feedback-row">
+          <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+          <button id="hideFeedbackBtn" class="feedback-hide" type="button" hidden aria-label="Hide status message">Hide</button>
+        </div>
+      </section>
+
+      <section class="module-search-panel" aria-label="Add modules">
+        <label class="search-label" for="moduleSearch">Search modules to add/remove</label>
+        <div class="search-row">
+          <input
+            id="moduleSearch"
+            class="search-input"
+            type="search"
+            placeholder="Type module code, e.g. ICT114-TG01"
+            autocomplete="off"
+          />
+          <ul id="searchResults" class="search-results" hidden aria-label="Module suggestions"></ul>
+        </div>
+        <p class="search-help">Click into search to browse all modules, then type to filter. Press Enter to add an exact module code.</p>
+      </section>
+
+      <section class="legend-panel" aria-label="Added modules">
+        <div class="legend-header">
+          <h2>Added Modules</h2>
+          <button id="clearAllBtn" class="control-btn" type="button" data-testid="clear-all-btn">Clear All</button>
+        </div>
+        <ul id="moduleLegend" class="legend-list"></ul>
+      </section>
+
+      <section class="date-strip-wrap" aria-label="Date navigation">
+        <button id="datePrevBtn" class="date-nav-btn" type="button" aria-label="Previous week">&lt;</button>
+        <div id="dateStrip" class="date-strip"></div>
+        <button id="dateNextBtn" class="date-nav-btn" type="button" aria-label="Next week">&gt;</button>
+      </section>
+
+      <section class="controls-panel" aria-label="Calendar tools">
+        <div class="controls" role="group" aria-label="Display controls">
+          <button id="todayBtn" class="control-btn" type="button">Today</button>
+          <button id="toggleTheme" class="control-btn" type="button">Dark Mode</button>
+          <button id="toggleOrientation" class="control-btn" type="button">Vertical Calendar</button>
+          <button id="toggleSquish" class="control-btn" type="button">Squish Time</button>
+          <button id="shareLinkBtn" class="control-btn" type="button" data-testid="share-link-btn">Share Link</button>
+          <button id="printBtn" class="control-btn" type="button">Print / PDF</button>
+          <button id="exportIcsBtn" class="control-btn" type="button">Export ICS</button>
+        </div>
+      </section>
+
+      <section class="timetable-wrap" aria-label="Weekly timetable">
+        <p id="timetableEmpty" class="timetable-empty" hidden data-testid="timetable-empty"></p>
+        <div id="timetable" class="timetable" role="grid"></div>
+      </section>
+
+      <p class="sr-only" id="eventHint">Each timetable event is keyboard focusable and announces module, time, venue, and conflict state.</p>
+    </main>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
