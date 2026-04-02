@@ -1,78 +1,103 @@
 # ECR-planner
 
-Frontend prototype of a NUSMods-style semester timetable planner.
+ECR-planner is a lightweight timetable planner inspired by NUSMods-style layouts.
+It runs as a static frontend and can optionally use a Node.js backend for API-driven CSV loading.
 
-## Run
+## Quick Start
 
-Start the backend server:
+1. Start a local static server:
 
-`node server.js`
+```bash
+python3 -m http.server 5500
+```
 
-Then open:
+2. Open the app:
 
-`http://127.0.0.1:3000`
+```text
+http://127.0.0.1:5500
+```
 
-Run deterministic helper tests:
+3. Run helper tests (optional):
 
-`node tests.js`
+```bash
+node tests.js
+```
 
-## Current Features
+## What It Does
 
-- NUSMods-inspired weekly timetable grid (Mon-Sun)
-- Time axis from 8:30am to 10:00pm
-- Week mode filtering: All / Lecture (Odd) / Tutorial (Even)
-- Week indicator badge showing week number and odd/even parity
-- Date-strip navigation with previous/next week and Today shortcut
-- Orientation toggle (horizontal/vertical calendar)
-- Squish Time mode to focus on active class hours
-- Module search with inline dropdown suggestions
-- Added Modules section
-- Hide/Show per module
-- Remove per module
-- 20-color preset palette per module
-- Conflict visualization with side-by-side lane layout
-- Empty-state and status messaging
-- Share link support for restoring the same NUSMods-style timetable state
-- Print/PDF export and ICS export
-- Cookie-based state persistence
-- Accessibility support (focusable events, ARIA labels, conflict text badge)
+- Weekly timetable grid for Mon-Sat
+- Time range from 08:30 to 22:00
+- Horizontal and vertical timetable orientations
+- Week pattern filter: `all`, `odd`, `even`
+- Week badge and date strip navigation (`<`, `>`, `Current Week`)
+- Squish Time mode for compact active-hour views
+- Module search and add via dropdown suggestions
+- Module legend with:
+	- color swatch click to open color palette
+	- hide/show toggle
+	- remove action
+- Conflict lane rendering for overlapping lessons
+- Share-link state restore
+- Cookie-based local state persistence
+- Print/PDF and ICS export
 
-## Share Link Behavior
+## Data Source
 
-The share link captures and restores the current timetable state, including:
+In static mode (`python3 -m http.server 5500`):
 
-- selected modules
-- hidden modules
-- module colors
-- week mode
-- week offset/day selection
-- orientation and squish settings
+- frontend loads fallback data from `backend/sampleModules.json`
 
-If clipboard copy is blocked, a copy dialog opens instead of printing a long URL in the status area.
-Use the `Hide` button in the status panel to dismiss messages.
+In backend mode (`node server.js`):
 
-## Backend CSV Loading
+- `GET /api/modules`
 
-Module data is now served by the backend.
+The backend serves data from:
 
-- Frontend loads module data from `GET /api/modules`
-- Backend can load CSV by calling `POST /api/modules/load`
+- `backend/sampleModules.json`
 
-Example load request:
+## CSV Loading API
 
-`curl -X POST http://127.0.0.1:3000/api/modules/load -H "Content-Type: application/json" -d '{"csvPath":"/absolute/path/to/daytime.csv"}'`
+This section applies when running the Node backend.
 
-You can also set startup CSV path:
+You can load module data from a CSV file at runtime:
 
-`CSV_FILE=/absolute/path/to/daytime.csv node server.js`
+- `POST /api/modules/load`
 
-## Project Structure
+Request body:
 
-- `index.html`: app layout and controls
-- `styles.css`: visual styling and responsive layout
-- `script.js`: timetable logic, state handling, rendering, and events
-- `tests.js`: deterministic helper tests
+```json
+{
+	"csvPath": "/absolute/path/to/file.csv"
+}
+```
 
-## Customize
+Example:
 
-Edit the `moduleCatalog` array in `script.js` to add your own modules/lessons and tailor the NUSMods-style planner to your timetable.
+```bash
+curl -X POST http://127.0.0.1:3000/api/modules/load \
+	-H "Content-Type: application/json" \
+	-d '{"csvPath":"/absolute/path/to/daytime.csv"}'
+```
+
+You can also set a startup CSV file:
+
+```bash
+CSV_FILE=/absolute/path/to/daytime.csv node server.js
+```
+
+## Project Layout
+
+- `server.js`: static file server and module APIs
+- `index.html`: page structure and controls
+- `styles.css`: styling and responsive behavior
+- `script.js`: app state, orchestration, and rendering lifecycle
+- `tests.js`: deterministic helper checks
+- `backend/csvModuleParser.js`: CSV to module catalog parser
+- `backend/sampleModules.json`: fallback sample module data
+- `frontend/js/`: split frontend modules (events, renderers, helpers, state)
+
+## Notes
+
+- State in share links includes selected modules, hidden modules, colors, week filter, week offset/day, orientation, and squish mode.
+- Static mode is enough for normal timetable planning.
+- Node backend mode is only needed for `/api/modules` and CSV import APIs.
