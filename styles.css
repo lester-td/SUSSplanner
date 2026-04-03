@@ -24,7 +24,7 @@
     min-height: 100vh;
     font-family: "Space Grotesk", sans-serif;
     color: var(--ink);
-    background: linear-gradient(155deg, var(--bg-1) 0%, #ecf6ff 40%, var(--bg-2) 100%);
+    background: linear-gradient(180deg, #edf2f6 0%, #e9eff5 100%);
     position: relative;
     overflow-x: hidden;
   }
@@ -41,7 +41,7 @@
     --muted: #94a3b8;
     --line: #334155;
     --shadow: 0 20px 45px -30px rgb(0 0 0 / 0.85);
-    background: linear-gradient(155deg, #0b1220 0%, #0f1b33 45%, #111827 100%);
+    background: linear-gradient(180deg, #141a24 0%, #101721 100%);
   }
 
   body.theme-dark .week-mode-panel,
@@ -51,8 +51,9 @@
   body.theme-dark .date-strip-wrap,
   body.theme-dark .legend-panel,
   body.theme-dark .timetable-wrap {
-    background: #111827e6;
+    background: transparent;
     border-color: #334155;
+    box-shadow: none;
   }
 
   body.theme-dark .control-btn,
@@ -138,7 +139,7 @@
     position: fixed;
     pointer-events: none;
     filter: blur(8px);
-    opacity: 0.35;
+    opacity: 0;
     z-index: 0;
   }
 
@@ -163,7 +164,7 @@
   .app-shell {
     width: 100%;
     margin: 0;
-    padding: clamp(12px, 1.8vw, 26px) clamp(10px, 1.6vw, 22px) clamp(14px, 2.2vw, 30px);
+    padding: clamp(10px, 1.4vw, 18px) clamp(10px, 1.6vw, 22px) clamp(14px, 1.8vw, 24px);
     position: relative;
     z-index: 1;
     min-height: 100dvh;
@@ -222,11 +223,12 @@
   .module-search-panel,
   .date-strip-wrap,
   .legend-panel {
-    background: #ffffffde;
-    border: 1px solid #d9e1e9;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    margin-bottom: 14px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid #d3dde7;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 0;
   }
 
   .week-mode-panel,
@@ -234,12 +236,12 @@
   .status-panel,
   .module-search-panel,
   .legend-panel {
-    padding: 12px 14px;
+    padding: 12px 0;
   }
 
   .controls-panel {
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
 
   .module-search-panel {
@@ -419,7 +421,7 @@
   }
 
   .date-strip-wrap {
-    padding: 10px;
+    padding: 12px 0;
     display: grid;
     grid-template-columns: 38px minmax(0, 1fr) 38px;
     align-items: center;
@@ -659,10 +661,10 @@
   }
 
   .timetable-wrap {
-    background: #ffffffeb;
+    background: #f7fbff;
     border: 1px solid #d9e1e9;
-    border-radius: 18px;
-    box-shadow: var(--shadow);
+    border-radius: 0;
+    box-shadow: none;
     overflow: auto;
     position: relative;
     flex: 1 1 auto;
@@ -956,7 +958,7 @@
     .module-search-panel,
     .date-strip-wrap,
     .legend-panel {
-      margin-bottom: 10px;
+      margin-bottom: 0;
     }
 
     .legend-list {
@@ -1042,7 +1044,7 @@
     .date-strip-wrap,
     .legend-panel,
     .timetable-wrap {
-      border-radius: 12px;
+      border-radius: 0;
     }
 
     .week-mode-panel,
@@ -1050,7 +1052,7 @@
     .status-panel,
     .module-search-panel,
     .legend-panel {
-      padding: 10px;
+      padding: 10px 0;
     }
 
     .date-strip-wrap {
@@ -1191,5 +1193,6 @@
     .legend-panel {
       box-shadow: none;
       border-color: #cbd5e1;
+      border-radius: 0;
     }
   }
