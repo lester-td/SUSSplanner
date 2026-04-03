@@ -90,8 +90,10 @@ export function renderLegend({
 })
 {
   moduleLegend.innerHTML = "";
+  const moduleRootCode = (code) => String(code || "").toUpperCase().replace(/-TG\d+$/i, "");
 
   modules.forEach((mod) => {
+    const displayCode = String(mod.rootCode || moduleRootCode(mod.code));
     const hidden = hiddenCodes.includes(mod.code);
     const paletteOpen = openColorMenuCode === mod.code;
     const currentColor = getModuleColor(mod.code, mod.color);
@@ -102,16 +104,16 @@ export function renderLegend({
     swatch.className = `legend-swatch ${hidden ? "hidden" : ""}`;
     swatch.type = "button";
     swatch.style.backgroundColor = hidden ? `${currentColor}55` : currentColor;
-    swatch.title = `Choose color for ${mod.code}`;
-    swatch.setAttribute("aria-label", `Choose color for ${mod.code}`);
+    swatch.title = `Choose color for ${displayCode}`;
+    swatch.setAttribute("aria-label", `Choose color for ${displayCode}`);
     swatch.setAttribute("aria-expanded", String(paletteOpen));
     swatch.addEventListener("click", () => onTogglePalette(mod.code, paletteOpen));
 
     const toggleVisibility = document.createElement("button");
     toggleVisibility.className = `legend-toggle ${hidden ? "is-hidden" : ""}`;
     toggleVisibility.type = "button";
-    toggleVisibility.title = `${hidden ? "Show" : "Hide"} ${mod.code}`;
-    toggleVisibility.setAttribute("aria-label", `${hidden ? "Show" : "Hide"} ${mod.code}`);
+    toggleVisibility.title = `${hidden ? "Show" : "Hide"} ${displayCode}`;
+    toggleVisibility.setAttribute("aria-label", `${hidden ? "Show" : "Hide"} ${displayCode}`);
     toggleVisibility.setAttribute("aria-pressed", String(hidden));
 
     const eye = document.createElement("span");
@@ -127,7 +129,7 @@ export function renderLegend({
 
     const label = document.createElement("span");
     label.className = "legend-code";
-    label.textContent = mod.code;
+    label.textContent = displayCode;
 
     const controls = document.createElement("span");
     controls.className = "legend-controls";
@@ -135,7 +137,7 @@ export function renderLegend({
     const remove = document.createElement("button");
     remove.className = "legend-remove";
     remove.type = "button";
-    remove.title = `Remove ${mod.code}`;
+    remove.title = `Remove ${displayCode}`;
     remove.textContent = "x";
     remove.addEventListener("click", () => onRemove(mod.code));
 
@@ -156,8 +158,8 @@ export function renderLegend({
         swatchButton.type = "button";
         swatchButton.className = `legend-palette-swatch ${selected ? "selected" : ""}`;
         swatchButton.style.backgroundColor = color;
-        swatchButton.title = `${mod.code} color ${color}`;
-        swatchButton.setAttribute("aria-label", `Set ${mod.code} color to ${color}`);
+        swatchButton.title = `${displayCode} color ${color}`;
+        swatchButton.setAttribute("aria-label", `Set ${displayCode} color to ${color}`);
         swatchButton.addEventListener("click", () => onSetColor(mod.code, color));
         palette.appendChild(swatchButton);
       });
@@ -195,31 +197,22 @@ export function renderModuleSuggestions({
   const normalizedQuery = String(query || "").trim().toLowerCase();
   const moduleRootCode = (code) => String(code || "").toUpperCase().replace(/-TG\d+$/i, "");
   const selectedRootSet = new Set(selectedCodes.map((code) => moduleRootCode(code)));
-  const formatLessonInfo = (lesson) => {
-    const day = String(lesson.day || "").toUpperCase();
-    const start = String(lesson.start || "");
-    const end = String(lesson.end || "");
-    const type = String(lesson.type || "").trim();
-    const venue = String(lesson.venue || "").trim();
-    const startText = start.length === 4 ? `${start.slice(0, 2)}:${start.slice(2)}` : start;
-    const endText = end.length === 4 ? `${end.slice(0, 2)}:${end.slice(2)}` : end;
 
-    return [day, startText && endText ? `${startText}-${endText}` : "", type, venue]
-      .filter(Boolean)
-      .join(" | ");
-  };
+  const uniqueByRoot = new Map();
+  moduleCatalog.forEach((mod) => {
+    const rootCode = moduleRootCode(mod.code);
+    if (selectedRootSet.has(rootCode) || uniqueByRoot.has(rootCode))
+    {
+      return;
+    }
 
-  const visible = moduleCatalog
-    .filter((mod) => !selectedRootSet.has(moduleRootCode(mod.code)))
-    .map((mod) => {
-      const lessons = Array.isArray(mod.lessons) ? mod.lessons : [];
-      const infoText = lessons.slice(0, 2).map((lesson) => formatLessonInfo(lesson)).filter(Boolean).join(" | ");
-      return {
-        code: String(mod.code || "").toUpperCase(),
-        name: String(mod.name || moduleRootCode(mod.code)),
-        infoText,
-      };
-    })
+    uniqueByRoot.set(rootCode, {
+      code: rootCode,
+      name: String(mod.name || rootCode),
+    });
+  });
+
+  const visible = [...uniqueByRoot.values()]
     .sort((a, b) => a.code.localeCompare(b.code, undefined, { sensitivity: "base" }))
     .filter((mod) => {
       if (normalizedQuery.length === 0)
@@ -227,7 +220,7 @@ export function renderModuleSuggestions({
         return true;
       }
 
-      const haystack = `${mod.code} ${mod.name} ${mod.infoText}`.toLowerCase();
+      const haystack = `${mod.code} ${mod.name}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
 
@@ -250,15 +243,6 @@ export function renderModuleSuggestions({
     const code = document.createElement("span");
     code.className = "search-code";
     code.textContent = `${mod.code} ${mod.name}`;
-
-    if (mod.infoText)
-    {
-      const info = document.createElement("span");
-      info.className = "search-meta";
-      info.textContent = mod.infoText;
-      code.appendChild(document.createElement("br"));
-      code.appendChild(info);
-    }
 
     const action = document.createElement("span");
     action.className = "search-action";

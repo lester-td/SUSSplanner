@@ -28,12 +28,20 @@ export function sanitizeModuleCatalog(rawModules)
         return null;
       }
 
-      const code = String(moduleData.code || "").trim().toUpperCase();
-      if (!code)
+      const rawCode = String(moduleData.code || "").trim().toUpperCase();
+      if (!rawCode)
       {
         return null;
       }
-      const rootCode = code.replace(/-TG\d+$/i, "");
+
+      const tgFromCodeMatch = rawCode.match(/-TG(\d+)$/i);
+      const rootCode = rawCode.replace(/-TG\d+$/i, "").replace(/TG\d+$/i, "");
+      const rawTg = String(moduleData.tg || (tgFromCodeMatch ? `TG${tgFromCodeMatch[1]}` : "TG01"))
+        .trim()
+        .toUpperCase();
+      const tgDigits = (rawTg.match(/(\d+)/) || ["", "01"])[1];
+      const tg = `TG${String(tgDigits).padStart(2, "0")}`;
+      const code = `${rootCode}-${tg}`;
       const name = String(moduleData.name || rootCode).trim() || rootCode;
 
       const color = MODULE_COLOR_PALETTE.includes(String(moduleData.color || "").toLowerCase())
@@ -60,6 +68,8 @@ export function sanitizeModuleCatalog(rawModules)
 
       return {
         code,
+        rootCode,
+        tg,
         name,
         color,
         lessons,

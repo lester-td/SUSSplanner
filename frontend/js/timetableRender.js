@@ -194,7 +194,7 @@ export function renderEvents(timetable, events, bounds, orientation, lessonTimeL
 
     const normalizedCode = String(eventData.code || "").toUpperCase();
     const tgMatch = normalizedCode.match(/-TG\d+$/i);
-    const tgLabel = tgMatch ? tgMatch[0].replace("-", "") : "TG";
+    const tgLabel = "TG";
     const courseCode = tgMatch ? normalizedCode.replace(/-TG\d+$/i, "") : normalizedCode;
 
     const title = document.createElement("p");

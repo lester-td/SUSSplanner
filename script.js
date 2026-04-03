@@ -105,7 +105,13 @@ function applyTheme()
 
 function moduleRootCode(code)
 {
-  return String(code || "").toUpperCase().replace(/-TG\d+$/i, "");
+  return String(code || "").toUpperCase().replace(/-TG\d+$/i, "").replace(/TG\d+$/i, "");
+}
+
+function moduleTgRank(code)
+{
+  const match = String(code || "").toUpperCase().match(/-TG(\d+)$/i);
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
 }
 
 function tgAlternativesFor(code)
@@ -125,7 +131,14 @@ function defaultTgCodeForRoot(rootCode)
 {
   const candidates = moduleCatalog
     .filter((mod) => moduleRootCode(mod.code) === rootCode)
-    .sort((a, b) => a.code.localeCompare(b.code, undefined, { sensitivity: "base" }));
+    .sort((a, b) => {
+      const byTg = moduleTgRank(a.code) - moduleTgRank(b.code);
+      if (byTg !== 0)
+      {
+        return byTg;
+      }
+      return a.code.localeCompare(b.code, undefined, { sensitivity: "base" });
+    });
   return candidates.length > 0 ? candidates[0].code : "";
 }
 
@@ -136,13 +149,6 @@ function resolveModuleSelectionInput(input)
   {
     return "";
   }
-
-  const exactCode = findModuleByCode(normalized);
-  if (exactCode)
-  {
-    return exactCode.code;
-  }
-
   const rootCode = moduleRootCode(normalized);
   return defaultTgCodeForRoot(rootCode);
 }

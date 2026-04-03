@@ -1,6 +1,7 @@
 [
   {
-    "code": "ICT114-TG01",
+    "code": "ICT114",
+    "tg": "TG01",
     "name": "Computer Architecture",
     "color": "#84cc16",
     "lessons": [
@@ -8,7 +9,8 @@
     ]
   },
   {
-    "code": "ICT114-TG02",
+    "code": "ICT114",
+    "tg": "TG02",
     "name": "Computer Architecture",
     "color": "#38bdf8",
     "lessons": [
@@ -16,7 +18,8 @@
     ]
   },
   {
-    "code": "ICT133-TG01",
+    "code": "ICT133",
+    "tg": "TG01",
     "name": "Structured Programming",
     "color": "#fbbf24",
     "lessons": [
@@ -24,7 +27,8 @@
     ]
   },
   {
-    "code": "ICT133-TG02",
+    "code": "ICT133",
+    "tg": "TG02",
     "name": "Structured Programming",
     "color": "#f97316",
     "lessons": [
@@ -32,7 +36,8 @@
     ]
   },
   {
-    "code": "ICT162-TG01",
+    "code": "ICT162",
+    "tg": "TG01",
     "name": "Object Oriented Programming",
     "color": "#a78bfa",
     "lessons": [
@@ -40,7 +45,8 @@
     ]
   },
   {
-    "code": "ICT162-TG02",
+    "code": "ICT162",
+    "tg": "TG02",
     "name": "Object Oriented Programming",
     "color": "#f472b6",
     "lessons": [
@@ -48,7 +54,8 @@
     ]
   },
   {
-    "code": "ICT233-TG01",
+    "code": "ICT233",
+    "tg": "TG01",
     "name": "Data Programming",
     "color": "#fb7185",
     "lessons": [
@@ -56,7 +63,8 @@
     ]
   },
   {
-    "code": "ICT233-TG02",
+    "code": "ICT233",
+    "tg": "TG02",
     "name": "Data Programming",
     "color": "#22c55e",
     "lessons": [
@@ -64,7 +72,8 @@
     ]
   },
   {
-    "code": "ICT239-TG01",
+    "code": "ICT239",
+    "tg": "TG01",
     "name": "Web Application Development",
     "color": "#06b6d4",
     "lessons": [
@@ -72,7 +81,8 @@
     ]
   },
   {
-    "code": "ICT239-TG02",
+    "code": "ICT239",
+    "tg": "TG02",
     "name": "Web Application Development",
     "color": "#ef4444",
     "lessons": [
@@ -80,7 +90,8 @@
     ]
   },
   {
-    "code": "ICT246-TG01",
+    "code": "ICT246",
+    "tg": "TG01",
     "name": "Operating Systems",
     "color": "#8b5cf6",
     "lessons": [
@@ -88,7 +99,8 @@
     ]
   },
   {
-    "code": "ICT246-TG02",
+    "code": "ICT246",
+    "tg": "TG02",
     "name": "Operating Systems",
     "color": "#14b8a6",
     "lessons": [
