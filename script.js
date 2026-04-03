@@ -266,6 +266,15 @@ function setModuleColor(code, color) {
   render();
 }
 
+function randomColorFromPalette(exclude = [])
+{
+  const blocked = new Set(exclude);
+  const candidates = MODULE_COLOR_PALETTE.filter((color) => !blocked.has(color));
+  const pool = candidates.length > 0 ? candidates : MODULE_COLOR_PALETTE;
+  const idx = Math.floor(Math.random() * pool.length);
+  return pool[idx];
+}
+
 function weekDates() {
   const start = getAcademicWeekStart(new Date(), state.weekOffset);
   return DAYS.map((_, idx) => {
@@ -412,6 +421,20 @@ function addModule(code) {
   }
 
   state.selectedCodes.push(moduleMatch.code);
+
+  const usedColors = state.selectedCodes
+    .map((selectedCode) => {
+      const selected = findModuleByCode(selectedCode);
+      if (!selected)
+      {
+        return "";
+      }
+
+      return getModuleColor(selected.code, selected.color);
+    })
+    .filter(Boolean);
+  state.customColors[root] = randomColorFromPalette(usedColors);
+
   setFeedback(`Added ${root}.`);
   render();
 }
