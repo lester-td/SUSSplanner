@@ -21,6 +21,11 @@ export function sanitizeModuleCatalog(rawModules)
     return [];
   }
 
+  const normalizeLessonType = (type) => {
+    const normalized = String(type || "").trim().toUpperCase();
+    return normalized.includes("TUT") || normalized.includes("TUTORIAL") ? "TUT" : "LEC";
+  };
+
   return rawModules
     .map((moduleData) => {
       if (!moduleData || typeof moduleData !== "object")
@@ -55,7 +60,7 @@ export function sanitizeModuleCatalog(rawModules)
               day: lesson.day,
               start: String(lesson.start),
               end: String(lesson.end),
-              type: "Class",
+              type: normalizeLessonType(lesson.type),
               venue: String(lesson.venue || "TBA").trim() || "TBA",
               weekPattern: String(lesson.weekPattern || "all").toLowerCase(),
             }))

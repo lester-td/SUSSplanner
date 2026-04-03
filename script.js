@@ -693,7 +693,7 @@ bindEvents({
   addModuleFromSearchInput,
   clearAllModules,
   setFeedback,
-  buildShareLink,
+  buildShareLink: (currentState) => buildShareLink(currentState, moduleCatalog),
   exportIcs,
   clearFeedback,
 });

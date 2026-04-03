@@ -28,6 +28,55 @@ export function bindEvents({
     timetableWrap,
   } = elements;
 
+  let latestShareLink = "";
+  const feedbackRow = hideFeedbackBtn && hideFeedbackBtn.parentElement instanceof HTMLElement
+    ? hideFeedbackBtn.parentElement
+    : null;
+
+  let feedbackCopyBtn = null;
+  if (feedbackRow)
+  {
+    feedbackCopyBtn = document.createElement("button");
+    feedbackCopyBtn.type = "button";
+    feedbackCopyBtn.className = "feedback-hide";
+    feedbackCopyBtn.textContent = "Copy";
+    feedbackCopyBtn.hidden = true;
+    feedbackCopyBtn.setAttribute("aria-label", "Copy share link");
+    feedbackRow.insertBefore(feedbackCopyBtn, hideFeedbackBtn || null);
+
+    feedbackCopyBtn.addEventListener("click", async () => {
+      if (!latestShareLink)
+      {
+        return;
+      }
+
+      try
+      {
+        await navigator.clipboard.writeText(latestShareLink);
+        setFeedback(`Share link copied to clipboard: ${latestShareLink}`, true);
+      }
+      catch {
+        setFeedback(`Share link: ${latestShareLink}`, true);
+      }
+    });
+  }
+
+  const showFeedbackCopyButton = (link) => {
+    latestShareLink = String(link || "");
+    if (feedbackCopyBtn)
+    {
+      feedbackCopyBtn.hidden = !latestShareLink;
+    }
+  };
+
+  const hideFeedbackCopyButton = () => {
+    latestShareLink = "";
+    if (feedbackCopyBtn)
+    {
+      feedbackCopyBtn.hidden = true;
+    }
+  };
+
   if (timetableWrap)
   {
     const isInteractiveTarget = (target) => {
@@ -256,22 +305,29 @@ export function bindEvents({
   if (shareLinkBtn)
   {
     shareLinkBtn.addEventListener("click", async () => {
-      const shareLink = buildShareLink(getState());
+      const sharePath = buildShareLink(getState());
+      const normalizedPath = sharePath.startsWith("/") ? sharePath : `/${sharePath}`;
+      const shareLink = `https://sussmods.dev${normalizedPath}`;
 
       try
       {
         await navigator.clipboard.writeText(shareLink);
-        setFeedback("Share link copied to clipboard.", true);
+        setFeedback(`Share link copied to clipboard: ${shareLink}`, true);
+        showFeedbackCopyButton(shareLink);
       }
       catch {
-        setFeedback("Unable to copy share link. Copy it from your browser address bar.", true);
+        setFeedback(`Share link: ${shareLink}`, true);
+        showFeedbackCopyButton(shareLink);
       }
     });
   }
 
   if (hideFeedbackBtn)
   {
-    hideFeedbackBtn.addEventListener("click", clearFeedback);
+    hideFeedbackBtn.addEventListener("click", () => {
+      hideFeedbackCopyButton();
+      clearFeedback();
+    });
   }
 
   if (printBtn)

@@ -15,6 +15,25 @@ function moduleRootCode(code)
   return String(code || "").toUpperCase().replace(/-TG\d+$/i, "");
 }
 
+function moduleGroupFromCode(code)
+{
+  const match = String(code || "").toUpperCase().match(/-TG(\d+)$/i);
+  if (match)
+  {
+    return String(Number(match[1]));
+  }
+
+  return "1";
+}
+
+function buildNusmodsModuleSegment(moduleEntry)
+{
+  const code = moduleRootCode(moduleEntry.code);
+  const group = moduleGroupFromCode(moduleEntry.code);
+  const classes = [`TG:(${group})`];
+  return { code, classes };
+}
+
 export function getStatePayload(state)
 {
   return {
@@ -77,10 +96,29 @@ export function sanitizeState(candidate, moduleCatalog, defaultState)
   };
 }
 
-export function buildShareLink(state)
+export function buildShareLink(state, moduleCatalog = [])
 {
-  const encoded = encodeState(getStatePayload(state));
-  return `${window.location.origin}${window.location.pathname}?s=${encoded}`;
+  const basePath = window.location.pathname || "/";
+  const selectedModules = Array.isArray(moduleCatalog)
+    ? state.selectedCodes
+        .map((selectedCode) => moduleCatalog.find((mod) => mod.code === selectedCode))
+        .filter(Boolean)
+    : [];
+
+  if (selectedModules.length === 0)
+  {
+    return basePath;
+  }
+
+  const segments = selectedModules.map((moduleEntry) => {
+    const segment = buildNusmodsModuleSegment(moduleEntry);
+    return `${encodeURIComponent(segment.code)}=${segment.classes.join(";")}`;
+  });
+
+  const query = segments.join("&");
+  return query
+    ? `${basePath}?${query}`
+    : basePath;
 }
 
 export function saveState(state)
