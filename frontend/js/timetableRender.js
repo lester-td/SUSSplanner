@@ -89,6 +89,22 @@ export function buildGrid(timetable, bounds, orientation)
 
 export function renderEvents(timetable, events, bounds, orientation, lessonTimeLabel, onEventClick)
 {
+  const normalizeTgLabel = (eventData) => {
+    const explicitTg = String(eventData.tg || "").trim().toUpperCase();
+    if (/^TG\d+$/.test(explicitTg))
+    {
+      return explicitTg;
+    }
+
+    const codeMatch = String(eventData.code || "").toUpperCase().match(/-TG(\d+)$/i);
+    if (codeMatch)
+    {
+      return `TG${String(codeMatch[1]).padStart(2, "0")}`;
+    }
+
+    return "TG";
+  };
+
   const hasActiveTgSelection = events.some((eventData) => eventData.isTgActive);
   const totalSlots = (bounds.endMinutes - bounds.startMinutes) / 30;
   const tableRect = timetable.getBoundingClientRect();
@@ -194,7 +210,7 @@ export function renderEvents(timetable, events, bounds, orientation, lessonTimeL
 
     const normalizedCode = String(eventData.code || "").toUpperCase();
     const tgMatch = normalizedCode.match(/-TG\d+$/i);
-    const tgLabel = "TG";
+    const tgLabel = normalizeTgLabel(eventData);
     const courseCode = tgMatch ? normalizedCode.replace(/-TG\d+$/i, "") : normalizedCode;
 
     const title = document.createElement("p");

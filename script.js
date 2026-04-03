@@ -296,6 +296,7 @@ function lessonsForCurrentWeek() {
       .map((lesson) => ({
         ...lesson,
         code: mod.code,
+        tg: mod.tg,
         color: getModuleColor(mod.code, mod.color),
         isTgOption: false,
         isTgActive: openTgSourceCode === mod.code,
@@ -318,6 +319,7 @@ function tgOptionLessonsForCurrentWeek() {
         .map((lesson) => ({
           ...lesson,
           code: mod.code,
+          tg: mod.tg,
           color: getModuleColor(mod.code, mod.color),
           isTgOption: true,
           isTgActive: false,
