@@ -15,25 +15,6 @@ export function lessonTimeLabel(fromMinutes, eventData)
   return `${fromMinutes(eventData.originalStart || eventData.start)}-${fromMinutes(eventData.originalEnd || eventData.end)}`;
 }
 
-export function scrollToDay(orientation, dayIndex)
-{
-  const headerId = orientation === "horizontal" ? `day-col-${dayIndex}` : `day-row-${dayIndex}`;
-  const header = document.getElementById(headerId);
-  if (!header)
-  {
-    return;
-  }
-
-  header.scrollIntoView({
-    behavior: "smooth",
-    block: "nearest",
-    inline: "center",
-  });
-
-  header.classList.add("active-day");
-  window.setTimeout(() => header.classList.remove("active-day"), 280);
-}
-
 export function updateWeekModeButtons(weekModeButtons, weekPattern)
 {
   weekModeButtons.forEach((button) => {
@@ -70,17 +51,14 @@ export function renderDateStrip({
   dates,
   days,
   weekNumber,
-  activeDayIndex,
   dayLabel,
-  onSelectDay,
 })
 {
   dateStrip.innerHTML = "";
 
   dates.forEach((date, idx) => {
-    const pill = document.createElement("button");
-    pill.type = "button";
-    pill.className = `date-pill ${activeDayIndex === idx ? "active" : ""}`;
+    const pill = document.createElement("div");
+    pill.className = "date-pill";
     pill.setAttribute("aria-label", `${days[idx]} ${dayLabel(date)}`);
 
     const dayText = document.createElement("span");
@@ -93,7 +71,6 @@ export function renderDateStrip({
 
     pill.appendChild(dayText);
     pill.appendChild(dateText);
-    pill.addEventListener("click", () => onSelectDay(idx));
 
     dateStrip.appendChild(pill);
   });

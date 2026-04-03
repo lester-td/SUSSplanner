@@ -66,8 +66,7 @@
     border-color: #334155;
   }
 
-  body.theme-dark .week-btn.active,
-  body.theme-dark .date-pill.active {
+  body.theme-dark .week-btn.active {
     border-color: #14b8a6;
     background: #0f3d3b;
     color: #e6fffb;
@@ -440,7 +439,7 @@
 
   .date-strip {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -449,7 +448,6 @@
     background: #fff;
     border-radius: 999px;
     padding: 8px 10px;
-    cursor: pointer;
     text-align: center;
   }
 
@@ -464,11 +462,6 @@
     font-size: 0.84rem;
     font-family: "Inter", "Space Grotesk", sans-serif;
     margin-top: 2px;
-  }
-
-  .date-pill.active {
-    border-color: #0f766e;
-    background: #d9f4ef;
   }
 
   .legend-header {
@@ -720,10 +713,6 @@
     letter-spacing: 0.02em;
   }
 
-  .day-header.active-day {
-    background: #d9f4ef;
-  }
-
   .time-header,
   .day-side-header {
     border-right: 1px solid var(--line);
@@ -738,10 +727,6 @@
 
   .time-header.half {
     color: transparent;
-  }
-
-  .day-side-header.active-day {
-    background: #d9f4ef;
   }
 
   .timetable.vertical {
@@ -1068,21 +1053,14 @@
     }
 
     .date-strip {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 6px;
-      overflow-x: auto;
-      overflow-y: hidden;
-      padding-bottom: 2px;
-      scroll-snap-type: x proximity;
-      -webkit-overflow-scrolling: touch;
     }
 
     .date-pill {
-      flex: 0 0 68px;
-      min-width: 68px;
       border-radius: 14px;
       padding: 7px 6px;
-      scroll-snap-align: start;
     }
 
     .date-pill-day {

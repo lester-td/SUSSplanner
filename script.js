@@ -14,7 +14,6 @@ import {
   getAcademicWeekOffset,
   clampAcademicWeekOffset,
   dayLabel,
-  getTimetableDayIndex,
 } from "./frontend/js/time.js";
 import {
   encodeState,
@@ -43,7 +42,6 @@ import {
   setEmptyState,
   clearEmptyState,
   lessonTimeLabel,
-  scrollToDay,
   renderSummary,
   renderDateStrip,
   renderLegend,
@@ -89,7 +87,6 @@ const defaultState = {
   customColors: {},
   search: "",
   weekOffset: getAcademicWeekOffset(new Date()),
-  activeDayIndex: getTimetableDayIndex(new Date(), DAYS.length - 1),
 };
 
 let state = { ...defaultState };
@@ -621,14 +618,7 @@ function render() {
     dates: weekDates(),
     days: DAYS,
     weekNumber: currentWeekNumber(),
-    activeDayIndex: state.activeDayIndex,
     dayLabel,
-    onSelectDay: (idx) => {
-      state.activeDayIndex = idx;
-      render();
-      scrollToDay(state.orientation, idx);
-      saveState(state);
-    },
   });
 
   toggleOrientationBtn.textContent = state.orientation === "horizontal" ? "Vertical Calendar" : "Horizontal Calendar";
@@ -671,7 +661,6 @@ bindEvents({
   drawSuggestions,
   addModuleFromSearchInput,
   clearAllModules,
-  scrollToDay,
   setFeedback,
   buildShareLink,
   exportIcs,
@@ -683,7 +672,6 @@ async function initializeApp()
   await loadCatalogFromBackend();
   state = restoreInitialState(state, moduleCatalog, defaultState, setFeedback);
   render();
-  scrollToDay(state.orientation, state.activeDayIndex);
 }
 
 initializeApp();

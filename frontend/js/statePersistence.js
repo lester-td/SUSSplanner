@@ -1,5 +1,4 @@
 import {
-  DAYS,
   COOKIE_STATE,
   WEEK_PATTERN_OPTIONS,
   MODULE_COLOR_PALETTE,
@@ -27,7 +26,6 @@ export function getStatePayload(state)
     hiddenCodes: state.hiddenCodes,
     customColors: state.customColors,
     weekOffset: state.weekOffset,
-    activeDayIndex: state.activeDayIndex,
   };
 }
 
@@ -76,7 +74,6 @@ export function sanitizeState(candidate, moduleCatalog, defaultState)
     customColors: safeColors,
     search: "",
     weekOffset: Number.isFinite(Number(safeCandidate.weekOffset)) ? Number(safeCandidate.weekOffset) : 0,
-    activeDayIndex: Number.isFinite(Number(safeCandidate.activeDayIndex)) ? Math.max(0, Math.min(DAYS.length - 1, Number(safeCandidate.activeDayIndex))) : defaultState.activeDayIndex,
   };
 }
 

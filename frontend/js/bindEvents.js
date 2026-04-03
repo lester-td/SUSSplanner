@@ -5,7 +5,6 @@ export function bindEvents({
   drawSuggestions,
   addModuleFromSearchInput,
   clearAllModules,
-  scrollToDay,
   setFeedback,
   buildShareLink,
   exportIcs,
@@ -143,7 +142,6 @@ export function bindEvents({
       const state = getState();
       state.orientation = state.orientation === "horizontal" ? "vertical" : "horizontal";
       render();
-      scrollToDay(state.orientation, state.activeDayIndex);
     });
   }
 
@@ -234,7 +232,6 @@ export function bindEvents({
       const state = getState();
       state.weekOffset -= 1;
       render();
-      scrollToDay(state.orientation, state.activeDayIndex);
     });
   }
 
@@ -244,7 +241,6 @@ export function bindEvents({
       const state = getState();
       state.weekOffset += 1;
       render();
-      scrollToDay(state.orientation, state.activeDayIndex);
     });
   }
 
@@ -254,7 +250,6 @@ export function bindEvents({
       const state = getState();
       state.weekOffset = 0;
       render();
-      scrollToDay(state.orientation, state.activeDayIndex);
     });
   }
 
