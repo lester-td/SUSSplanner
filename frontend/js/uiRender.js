@@ -38,12 +38,12 @@ export function renderSummary({
   const visibleModuleCount = selectedCount - hiddenCount;
   const weekParity = weekNumber % 2 === 1 ? "Odd" : "Even";
 
-  moduleSummary.textContent = `Selected modules: ${selectedCount} | Visible modules: ${visibleModuleCount} | Visible lessons: ${lessonsCount}`;
+  moduleSummary.textContent = `${selectedCount} modules selected, ${visibleModuleCount} visible, ${lessonsCount} lessons shown`;
   if (weekMetaBadge)
   {
     weekMetaBadge.textContent = `Week ${weekNumber} (${weekParity})`;
   }
-  weekPatternNote.textContent = `Filter: ${weekPattern.toUpperCase()}`;
+  weekPatternNote.textContent = `Lesson filter: ${weekPattern.toUpperCase()}`;
 }
 
 export function renderDateStrip({
@@ -128,8 +128,18 @@ export function renderLegend({
     toggleVisibility.addEventListener("click", () => onToggleVisibility(mod.code));
 
     const label = document.createElement("span");
-    label.className = "legend-code";
-    label.textContent = displayCode;
+    label.className = "legend-label";
+
+    const code = document.createElement("span");
+    code.className = "legend-code";
+    code.textContent = displayCode;
+
+    const name = document.createElement("span");
+    name.className = "legend-name";
+    name.textContent = String(mod.name || displayCode);
+
+    label.appendChild(code);
+    label.appendChild(name);
 
     const controls = document.createElement("span");
     controls.className = "legend-controls";
@@ -242,13 +252,18 @@ export function renderModuleSuggestions({
 
     const code = document.createElement("span");
     code.className = "search-code";
-    code.textContent = `${mod.code} ${mod.name}`;
+    code.textContent = mod.code;
+
+    const meta = document.createElement("span");
+    meta.className = "search-meta";
+    meta.textContent = mod.name;
 
     const action = document.createElement("span");
     action.className = "search-action";
     action.textContent = "Add";
 
     button.appendChild(code);
+    button.appendChild(meta);
     button.appendChild(action);
     button.addEventListener("click", () => {
       moduleSearch.value = mod.code;

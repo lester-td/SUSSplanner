@@ -219,15 +219,20 @@ export function renderEvents(timetable, events, bounds, orientation, lessonTimeL
 
     const tg = document.createElement("p");
     tg.className = "event-tg";
-    tg.textContent = tgLabel;
+    tg.textContent = `${String(eventData.type || "Class").toUpperCase()} ${tgLabel}`;
 
     const meta = document.createElement("p");
     meta.className = "event-meta";
-    meta.textContent = eventData.venue;
+    meta.textContent = lessonTimeLabel(eventData);
+
+    const venue = document.createElement("p");
+    venue.className = "event-venue";
+    venue.textContent = eventData.venue;
 
     event.appendChild(title);
     event.appendChild(tg);
     event.appendChild(meta);
+    event.appendChild(venue);
 
     if (typeof onEventClick === "function")
     {

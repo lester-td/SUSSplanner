@@ -79,7 +79,7 @@ const todayBtn = document.getElementById("todayBtn");
 const defaultState = {
   theme: "light",
   orientation: "horizontal",
-  squishTime: false,
+  squishTime: true,
   forceFullRange: false,
   weekPattern: "all",
   selectedCodes: ["CS2030S", "MA2001", "IS1108", "GEA1000", "CFG1002"],

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NUSMods-Style Timetable</title>
+    <title>SUSS Planner Timetable</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,72 +13,88 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="bg-shape bg-shape-one" aria-hidden="true"></div>
-    <div class="bg-shape bg-shape-two" aria-hidden="true"></div>
-
     <main class="app-shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Placeholder Frontend</p>
+        <div class="brand-block">
+          <p class="eyebrow">SUSSPLANNER</p>
           <h1>Semester Timetable</h1>
+          <p class="topbar-subtext">SUSS module planner with updated ECR/ECC modules</p>
         </div>
       </header>
 
-      <section class="status-panel" aria-label="Status and messages">
-        <p id="moduleSummary" class="status-text" data-testid="module-summary"></p>
-        <p class="status-text"><span id="weekMetaBadge" class="week-meta-badge"></span></p>
-        <p id="weekPatternNote" class="status-text"></p>
-        <div class="feedback-row">
-          <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
-          <button id="hideFeedbackBtn" class="feedback-hide" type="button" hidden aria-label="Hide status message">Hide</button>
-        </div>
-      </section>
+      <div class="workspace-grid">
+        <aside class="sidebar" aria-label="Module management">
+          <section class="module-search-panel panel-card panel-section" aria-label="Add modules">
+            <div class="section-heading">
+              <h2>Modules</h2>
+            </div>
+            <label class="search-label sr-only" for="moduleSearch">Search modules</label>
+            <div class="search-row">
+              <input
+                id="moduleSearch"
+                class="search-input"
+                type="search"
+                placeholder="Search modules by code or title"
+                autocomplete="off"
+              />
+              <ul id="searchResults" class="search-results" hidden aria-label="Module suggestions"></ul>
+            </div>
+            <p class="search-help">Press Enter to add the exact module code, or pick one from the suggestions.</p>
+          </section>
 
-      <section class="module-search-panel" aria-label="Add modules">
-        <label class="search-label" for="moduleSearch">Search modules to add/remove</label>
-        <div class="search-row">
-          <input
-            id="moduleSearch"
-            class="search-input"
-            type="search"
-            placeholder="Type module code or name, e.g. ICT114 or Computer Architecture"
-            autocomplete="off"
-          />
-          <ul id="searchResults" class="search-results" hidden aria-label="Module suggestions"></ul>
-        </div>
-        <p class="search-help">Click into search to browse all modules, then type to filter. Press Enter to add an exact module code.</p>
-      </section>
+          <section class="legend-panel panel-card panel-section" aria-label="Added modules">
+            <div class="legend-header">
+              <div class="section-heading">
+                <h2>Selected Modules</h2>
+              </div>
+              <button id="clearAllBtn" class="control-btn subtle-btn" type="button" data-testid="clear-all-btn">Clear Modules</button>
+            </div>
+            <ul id="moduleLegend" class="legend-list"></ul>
+          </section>
 
-      <section class="legend-panel" aria-label="Added modules">
-        <div class="legend-header">
-          <h2>Added Modules</h2>
-          <button id="clearAllBtn" class="control-btn" type="button" data-testid="clear-all-btn">Clear All</button>
-        </div>
-        <ul id="moduleLegend" class="legend-list"></ul>
-      </section>
+          <section class="status-panel panel-card panel-section" aria-label="Status and messages">
+            <div class="section-heading">
+              <h2>Overview</h2>
+            </div>
+            <div class="summary-meta">
+              <p id="moduleSummary" class="status-text" data-testid="module-summary"></p>
+              <div class="summary-badges">
+                <span id="weekMetaBadge" class="week-meta-badge"></span>
+                <span id="weekPatternNote" class="status-text"></span>
+              </div>
+            </div>
+            <div class="feedback-row">
+              <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+              <button id="hideFeedbackBtn" class="feedback-hide" type="button" hidden aria-label="Hide status message">Hide</button>
+            </div>
+          </section>
+        </aside>
 
-      <section class="date-strip-wrap" aria-label="Date navigation">
-        <button id="datePrevBtn" class="date-nav-btn" type="button" aria-label="Previous week">&lt;</button>
-        <div id="dateStrip" class="date-strip"></div>
-        <button id="dateNextBtn" class="date-nav-btn" type="button" aria-label="Next week">&gt;</button>
-      </section>
+        <section class="board" aria-label="Timetable board">
+          <section class="date-strip-wrap panel-card panel-section" aria-label="Date navigation">
+            <button id="datePrevBtn" class="date-nav-btn" type="button" aria-label="Previous week">&lt;</button>
+            <div id="dateStrip" class="date-strip"></div>
+            <button id="dateNextBtn" class="date-nav-btn" type="button" aria-label="Next week">&gt;</button>
+          </section>
 
-      <section class="controls-panel" aria-label="Calendar tools">
-        <div class="controls" role="group" aria-label="Display controls">
-          <button id="todayBtn" class="control-btn" type="button">Current Week</button>
-          <button id="toggleTheme" class="control-btn" type="button">Dark Mode</button>
-          <button id="toggleOrientation" class="control-btn" type="button">Vertical Calendar</button>
-          <button id="toggleSquish" class="control-btn" type="button">Squish Time</button>
-          <button id="shareLinkBtn" class="control-btn" type="button" data-testid="share-link-btn">Share Link</button>
-          <button id="printBtn" class="control-btn" type="button">Print / PDF</button>
-          <button id="exportIcsBtn" class="control-btn" type="button">Export ICS</button>
-        </div>
-      </section>
+          <section class="controls-panel panel-card panel-section" aria-label="Calendar tools">
+            <div class="controls" role="group" aria-label="Display controls">
+              <button id="todayBtn" class="control-btn" type="button">Current Week</button>
+              <button id="toggleTheme" class="control-btn" type="button">Dark Mode</button>
+              <button id="toggleOrientation" class="control-btn" type="button">Vertical Calendar</button>
+              <button id="toggleSquish" class="control-btn" type="button">Squish Time</button>
+              <button id="shareLinkBtn" class="control-btn" type="button" data-testid="share-link-btn">Share Link</button>
+              <button id="printBtn" class="control-btn" type="button">Print / PDF</button>
+              <button id="exportIcsBtn" class="control-btn" type="button">Export ICS</button>
+            </div>
+          </section>
 
-      <section class="timetable-wrap" aria-label="Weekly timetable">
-        <p id="timetableEmpty" class="timetable-empty" hidden data-testid="timetable-empty"></p>
-        <div id="timetable" class="timetable" role="grid"></div>
-      </section>
+          <section class="timetable-wrap panel-section" aria-label="Weekly timetable">
+            <p id="timetableEmpty" class="timetable-empty" hidden data-testid="timetable-empty"></p>
+            <div id="timetable" class="timetable" role="grid"></div>
+          </section>
+        </section>
+      </div>
 
       <p class="sr-only" id="eventHint">Each timetable event is keyboard focusable and announces module, time, venue, and conflict state.</p>
     </main>

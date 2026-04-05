@@ -86,7 +86,9 @@ export function sanitizeState(candidate, moduleCatalog, defaultState)
   return {
     theme: safeCandidate.theme === "dark" ? "dark" : "light",
     orientation: safeCandidate.orientation === "vertical" ? "vertical" : "horizontal",
-    squishTime: Boolean(safeCandidate.squishTime),
+    squishTime: Object.prototype.hasOwnProperty.call(safeCandidate, "squishTime")
+      ? Boolean(safeCandidate.squishTime)
+      : Boolean(defaultState.squishTime),
     weekPattern: WEEK_PATTERN_OPTIONS.includes(safeCandidate.weekPattern) ? safeCandidate.weekPattern : "all",
     selectedCodes: selected,
     hiddenCodes: hidden,
