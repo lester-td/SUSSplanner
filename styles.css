@@ -934,6 +934,14 @@ body.is-dragging-timetable .timetable-wrap {
     padding: 12px;
   }
 
+  .board {
+    order: 1;
+  }
+
+  .sidebar {
+    order: 2;
+  }
+
   .controls {
     gap: 6px;
   }
@@ -955,21 +963,58 @@ body.is-dragging-timetable .timetable-wrap {
 
 @media (max-width: 640px) {
   .app-shell {
-    padding: 8px;
-    gap: 10px;
+    padding: 4px;
+    gap: 6px;
   }
 
   h1 {
-    font-size: 1.22rem;
+    font-size: 1.12rem;
   }
 
   .topbar-subtext {
-    font-size: 0.8rem;
+    margin-top: 4px;
+    font-size: 0.72rem;
   }
 
   .workspace-grid {
-    padding: 10px;
-    gap: 12px;
+    padding: 6px 8px 8px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+
+  :root {
+    --time-col: 44px;
+    --day-col-min: 84px;
+    --header-h: 42px;
+    --hour-h: 52px;
+    --day-row-h: 62px;
+  }
+
+  .panel-section {
+    padding-top: 6px;
+    padding-bottom: 8px;
+  }
+
+  .section-heading h2 {
+    font-size: 0.8rem;
+  }
+
+  .board .date-strip-wrap {
+    order: 1;
+  }
+
+  .board .timetable-wrap {
+    order: 2;
+    min-height: 268px;
+    height: min(42dvh, calc(100dvh - 176px));
+  }
+
+  .board .controls-panel {
+    order: 3;
+  }
+
+  .legend-header {
+    margin-bottom: 8px;
   }
 
   .status-panel,
@@ -979,34 +1024,133 @@ body.is-dragging-timetable .timetable-wrap {
     align-items: stretch;
   }
 
+  #clearAllBtn {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    width: auto;
+    padding: 5px 9px;
+    font-size: 0.64rem;
+  }
+
+  .search-input {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 0.78rem;
+  }
+
+  .search-help,
+  .status-text {
+    margin-top: 6px;
+    font-size: 0.68rem;
+    line-height: 1.3;
+  }
+
   .date-strip-wrap {
-    grid-template-columns: 32px minmax(0, 1fr) 32px;
-    gap: 6px;
-    padding: 10px;
+    grid-template-columns: 26px minmax(0, 1fr) 26px;
+    gap: 3px;
+    padding: 0 0 5px;
   }
 
   .date-nav-btn {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
+    font-size: 0.74rem;
   }
 
   .date-strip {
-    gap: 6px;
+    gap: 3px;
   }
 
   .date-pill-day {
-    font-size: 0.62rem;
+    font-size: 0.46rem;
   }
 
   .date-pill-date {
-    font-size: 0.72rem;
+    margin-top: 1px;
+    font-size: 0.56rem;
+  }
+
+  .date-pill {
+    border-radius: 8px;
+    padding: 4px 3px;
+  }
+
+  .controls {
+    gap: 4px;
+  }
+
+  .control-btn {
+    flex: 1 1 calc(50% - 5px);
+    min-height: 34px;
+    padding: 5px 8px;
+    font-size: 0.6rem;
   }
 
   .legend-item {
     width: 100%;
     min-width: 0;
-    gap: 8px;
-    border-radius: 16px;
+    gap: 5px;
+    padding: 5px 8px;
+    border-radius: 10px;
+  }
+
+  .legend-code {
+    font-size: 0.66rem;
+  }
+
+  .legend-name {
+    font-size: 0.58rem;
+  }
+
+  .legend-toggle,
+  .legend-remove {
+    width: 18px;
+    height: 18px;
+    font-size: 0.62rem;
+  }
+
+  .legend-swatch {
+    width: 12px;
+    height: 12px;
+  }
+
+  .week-meta-badge {
+    padding: 3px 7px;
+    font-size: 0.64rem;
+  }
+
+  .timetable-empty {
+    padding: 7px 8px;
+    font-size: 0.68rem;
+  }
+
+  .day-header,
+  .time-header,
+  .day-side-header {
+    font-size: 0.56rem;
+  }
+
+  .time-cell {
+    font-size: 0.5rem;
+    padding-top: 2px;
+  }
+
+  .event {
+    border-radius: 3px;
+    padding: 3px 4px;
+  }
+
+  .event-title {
+    font-size: 0.56rem;
+    line-height: 1.08;
+  }
+
+  .event-tg,
+  .event-meta,
+  .event-venue {
+    margin-top: 1px;
+    font-size: 0.46rem;
+    line-height: 1.05;
   }
 }
 
