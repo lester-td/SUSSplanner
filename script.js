@@ -590,7 +590,7 @@ function render() {
   const lessonsToRender = [...weekLessons, ...tgOptionLessons];
 
   let bounds = getVisibleTimeBounds(lessonsToRender, state.squishTime);
-  if (state.orientation === "vertical" && !state.squishTime && !state.forceFullRange)
+  if (state.orientation === "horizontal" && !state.squishTime && !state.forceFullRange)
   {
     const timetableWrap = timetable.parentElement;
     const containerWidth = timetableWrap ? timetableWrap.clientWidth : timetable.clientWidth;
@@ -607,7 +607,9 @@ function render() {
 
   const maxLaneCount = events.reduce((max, eventData) => Math.max(max, Number(eventData.laneCount) || 1), 1);
   const dayColMin = Math.max(92, Math.min(210, 96 + (maxLaneCount - 1) * 34));
+  const dayRowHeight = Math.max(58, Math.min(168, 58 + (maxLaneCount - 1) * 42));
   timetable.style.setProperty("--day-col-min", `${dayColMin}px`);
+  timetable.style.setProperty("--day-row-h", `${dayRowHeight}px`);
 
   buildGrid(timetable, bounds, state.orientation);
   renderEvents(

@@ -10,8 +10,8 @@ export function buildGrid(timetable, bounds, orientation)
   timetable.classList.toggle("vertical", orientation === "vertical");
   timetable.innerHTML = "";
 
-  timetable.setAttribute("aria-colcount", orientation === "horizontal" ? String(DAYS.length + 1) : String(slots + 1));
-  timetable.setAttribute("aria-rowcount", orientation === "horizontal" ? String(slots + 1) : String(DAYS.length + 1));
+  timetable.setAttribute("aria-colcount", orientation === "horizontal" ? String(slots + 1) : String(DAYS.length + 1));
+  timetable.setAttribute("aria-rowcount", orientation === "horizontal" ? String(DAYS.length + 1) : String(slots + 1));
 
   const corner = document.createElement("div");
   corner.className = "corner-cell";
@@ -19,72 +19,79 @@ export function buildGrid(timetable, bounds, orientation)
 
   if (orientation === "horizontal")
   {
-    DAYS.forEach((day, dayIndex) => {
-      const header = document.createElement("div");
-      header.className = "day-header";
-      header.id = `day-col-${dayIndex}`;
-      header.style.gridColumn = String(dayIndex + 2);
-      header.style.gridRow = "1";
-      header.textContent = day;
-      timetable.appendChild(header);
-    });
-
     for (let slot = 0; slot < slots; slot += 1)
     {
-      const isHalf = slot % 2 === 1;
-      const time = document.createElement("div");
-      time.className = `time-cell ${isHalf ? "half" : ""}`;
-      time.style.gridRow = String(slot + 2);
-      time.textContent = fromMinutes(bounds.startMinutes + slot * 30);
-      timetable.appendChild(time);
+      const timeHeader = document.createElement("div");
+      timeHeader.className = "time-header";
+      timeHeader.style.gridColumn = String(slot + 2);
+      timeHeader.style.gridRow = "1";
+      const labelMinutes = bounds.startMinutes + slot * 30;
+      const showHourLabel = labelMinutes % 60 === 0;
+      timeHeader.textContent = showHourLabel ? fromMinutes(labelMinutes) : "";
+      if (!showHourLabel)
+      {
+        timeHeader.classList.add("half");
+      }
+      timetable.appendChild(timeHeader);
+    }
 
-      DAYS.forEach((_, dayIndex) => {
+    DAYS.forEach((day, dayIndex) => {
+      const sideHeader = document.createElement("div");
+      sideHeader.className = "day-side-header";
+      sideHeader.id = `day-row-${dayIndex}`;
+      sideHeader.style.gridColumn = "1";
+      sideHeader.style.gridRow = String(dayIndex + 2);
+      sideHeader.textContent = day;
+      timetable.appendChild(sideHeader);
+
+      for (let slot = 0; slot < slots; slot += 1)
+      {
+        const isHalf = slot % 2 === 1;
         const cell = document.createElement("div");
         cell.className = `grid-cell ${isHalf ? "half" : ""}`;
-        cell.style.gridColumn = String(dayIndex + 2);
-        cell.style.gridRow = String(slot + 2);
+        cell.style.gridColumn = String(slot + 2);
+        cell.style.gridRow = String(dayIndex + 2);
         timetable.appendChild(cell);
-      });
-    }
+      }
+    });
 
     return;
   }
 
+  DAYS.forEach((day, dayIndex) => {
+    const header = document.createElement("div");
+    header.className = "day-header";
+    header.id = `day-col-${dayIndex}`;
+    header.style.gridColumn = String(dayIndex + 2);
+    header.style.gridRow = "1";
+    header.textContent = day;
+    timetable.appendChild(header);
+  });
+
   for (let slot = 0; slot < slots; slot += 1)
   {
-    const timeHeader = document.createElement("div");
-    timeHeader.className = "time-header";
-    timeHeader.style.gridColumn = String(slot + 2);
-    timeHeader.style.gridRow = "1";
+    const isHalf = slot % 2 === 1;
+    const time = document.createElement("div");
+    time.className = `time-cell ${isHalf ? "half" : ""}`;
+    time.style.gridRow = String(slot + 2);
     const labelMinutes = bounds.startMinutes + slot * 30;
-    const showHourLabel = labelMinutes % 60 === 0;
-    timeHeader.textContent = showHourLabel ? fromMinutes(labelMinutes) : "";
-    if (!showHourLabel)
+    if (labelMinutes % 60 === 0)
     {
-      timeHeader.classList.add("half");
+      const timeLabel = document.createElement("span");
+      timeLabel.className = "time-label";
+      timeLabel.textContent = fromMinutes(labelMinutes);
+      time.appendChild(timeLabel);
     }
-    timetable.appendChild(timeHeader);
-  }
+    timetable.appendChild(time);
 
-  DAYS.forEach((day, dayIndex) => {
-    const sideHeader = document.createElement("div");
-    sideHeader.className = "day-side-header";
-    sideHeader.id = `day-row-${dayIndex}`;
-    sideHeader.style.gridColumn = "1";
-    sideHeader.style.gridRow = String(dayIndex + 2);
-    sideHeader.textContent = day;
-    timetable.appendChild(sideHeader);
-
-    for (let slot = 0; slot < slots; slot += 1)
-    {
-      const isHalf = slot % 2 === 1;
+    DAYS.forEach((_, dayIndex) => {
       const cell = document.createElement("div");
       cell.className = `grid-cell ${isHalf ? "half" : ""}`;
-      cell.style.gridColumn = String(slot + 2);
-      cell.style.gridRow = String(dayIndex + 2);
+      cell.style.gridColumn = String(dayIndex + 2);
+      cell.style.gridRow = String(slot + 2);
       timetable.appendChild(cell);
-    }
-  });
+    });
+  }
 }
 
 export function renderEvents(timetable, events, bounds, orientation, lessonTimeLabel, onEventClick)
@@ -170,6 +177,19 @@ export function renderEvents(timetable, events, bounds, orientation, lessonTimeL
 
     if (orientation === "horizontal")
     {
+      const laneHeight = dayRowHeight / eventData.laneCount;
+      const dayRect = dayRowRects[eventData.dayIdx];
+      if (!dayRect)
+      {
+        return;
+      }
+      left = timeColumnBase + startOffset * slotWidth + 2;
+      top = dayRect.top - tableRect.top + eventData.lane * laneHeight + 2;
+      width = durationSlots * slotWidth - 4;
+      height = laneHeight - 4;
+    }
+    else
+    {
       const dayRect = dayColumnRects[eventData.dayIdx];
       if (!dayRect)
       {
@@ -181,19 +201,6 @@ export function renderEvents(timetable, events, bounds, orientation, lessonTimeL
       top = timeRowBase + startOffset * rowHeight + 2;
       width = laneWidth - 4;
       height = durationSlots * rowHeight - 4;
-    }
-    else
-    {
-      const laneHeight = dayRowHeight / eventData.laneCount;
-      const dayRect = dayRowRects[eventData.dayIdx];
-      if (!dayRect)
-      {
-        return;
-      }
-      left = timeColumnBase + startOffset * slotWidth + 2;
-      top = dayRect.top - tableRect.top + eventData.lane * laneHeight + 2;
-      width = durationSlots * slotWidth - 4;
-      height = laneHeight - 4;
     }
 
     const clampedLeft = Math.max(1, Math.min(left, maxLeft));
