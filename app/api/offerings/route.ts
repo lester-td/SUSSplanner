@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { json, routeErrorResponse } from "@/lib/api/http";
+import { json, optionsResponse, routeErrorResponse } from "@/lib/api/http";
 import { getPublicOfferings } from "@/lib/db/queries/offerings";
 import { moduleCodeSchema, uuidSchema } from "@/lib/validation/common";
 
@@ -27,10 +27,15 @@ export async function GET(request: NextRequest)
     });
 
     const offerings = await getPublicOfferings(parsed);
-    return json({ offerings });
+    return json({ offerings }, 200, request);
   }
   catch (error)
   {
-    return routeErrorResponse(error);
+    return routeErrorResponse(error, request);
   }
+}
+
+export function OPTIONS(request: NextRequest)
+{
+  return optionsResponse(request);
 }

@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { json, routeErrorResponse } from "@/lib/api/http";
+import { json, optionsResponse, routeErrorResponse } from "@/lib/api/http";
 import { getPublicClasses } from "@/lib/db/queries/classes";
 import { moduleCodeSchema, uuidSchema } from "@/lib/validation/common";
 
@@ -29,10 +29,15 @@ export async function GET(request: NextRequest)
     });
 
     const classes = await getPublicClasses(parsed);
-    return json({ classes });
+    return json({ classes }, 200, request);
   }
   catch (error)
   {
-    return routeErrorResponse(error);
+    return routeErrorResponse(error, request);
   }
+}
+
+export function OPTIONS(request: NextRequest)
+{
+  return optionsResponse(request);
 }

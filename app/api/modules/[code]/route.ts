@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { errorResponse, json, routeErrorResponse } from "@/lib/api/http";
+import { errorResponse, json, optionsResponse, routeErrorResponse } from "@/lib/api/http";
 import { getPublicModuleByCode } from "@/lib/db/queries/modules";
 import { uuidSchema } from "@/lib/validation/common";
 
@@ -31,13 +31,18 @@ export async function GET(
     const moduleRecord = await getPublicModuleByCode(code, parsed);
     if (!moduleRecord)
     {
-      return errorResponse(404, "Module not found.");
+      return errorResponse(404, "Module not found.", undefined, request);
     }
 
-    return json({ module: moduleRecord });
+    return json({ module: moduleRecord }, 200, request);
   }
   catch (error)
   {
-    return routeErrorResponse(error);
+    return routeErrorResponse(error, request);
   }
+}
+
+export function OPTIONS(request: NextRequest)
+{
+  return optionsResponse(request);
 }

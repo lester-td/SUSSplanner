@@ -8,7 +8,13 @@ export const FULL_END_MINUTES = END_HOUR * 60;
 
 export const COOKIE_STATE = "timetableState";
 export const WEEK_PATTERN_OPTIONS = ["all", "odd", "even"];
-export const MODULES_API_PATH = "/api/modules";
+const API_DEFAULT_ORIGIN = "http://127.0.0.1:3000";
+const RUNTIME_API_ORIGIN = typeof window !== "undefined" && window.location.port === "3000"
+  ? ""
+  : API_DEFAULT_ORIGIN;
+
+export const API_BASE_URL = globalThis.SUSSPLANNER_API_BASE_URL || RUNTIME_API_ORIGIN;
+export const MODULES_API_PATH = `${API_BASE_URL}/api/modules`;
 export const MODULES_FALLBACK_PATH = "/backend/sampleModules.json";
 
 export const MODULE_COLOR_PALETTE = [

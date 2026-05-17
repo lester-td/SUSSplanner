@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:seed:sample": "node scripts/seed-sample-data.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@types/react": "19.2.14",
     "drizzle-kit": "^0.31.4",
     "typescript": "^5.9.3"
   }
