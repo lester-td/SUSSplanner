@@ -27,6 +27,11 @@ build/
 coverage/
 .cache/
 .vite/
+.next/
+.turbo/
+.vercel/
+out/
+*.tsbuildinfo
 
 # Test artifacts
 .nyc_output/
