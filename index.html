@@ -101,3 +101,374 @@
     <script type="module" src="script.js"></script>
   </body>
 </html>
+
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SUSS Planner - Timetable</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#87b6fb",
+                      "on-tertiary-fixed": "#321200",
+                      "surface-bright": "#f9f9ff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container": "#ededf3",
+                      "on-secondary-container": "#fffbff",
+                      "tertiary-fixed-dim": "#ffb68c",
+                      "on-surface": "#191c20",
+                      "on-tertiary-container": "#fb9d64",
+                      "primary": "#00305d",
+                      "primary-container": "#004684",
+                      "on-secondary-fixed": "#410007",
+                      "secondary-fixed-dim": "#ffb3b1",
+                      "secondary-container": "#e0283c",
+                      "surface": "#f9f9ff",
+                      "surface-dim": "#d9dadf",
+                      "outline": "#727781",
+                      "tertiary": "#512200",
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#2b5f9f",
+                      "outline-variant": "#c2c6d2",
+                      "primary-fixed": "#d4e3ff",
+                      "on-surface-variant": "#424750",
+                      "surface-container-highest": "#e2e2e8",
+                      "inverse-surface": "#2e3035",
+                      "tertiary-container": "#743300",
+                      "background": "#f9f9ff",
+                      "primary-fixed-dim": "#a6c8ff",
+                      "secondary-fixed": "#ffdad8",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed": "#001c3a",
+                      "on-error-container": "#93000a",
+                      "on-background": "#191c20",
+                      "tertiary-fixed": "#ffdbc9",
+                      "surface-variant": "#e2e2e8",
+                      "surface-container-high": "#e7e8ee",
+                      "on-primary": "#ffffff",
+                      "inverse-primary": "#a6c8ff",
+                      "on-secondary-fixed-variant": "#92001c",
+                      "on-tertiary-fixed-variant": "#753401",
+                      "on-error": "#ffffff",
+                      "surface-container-low": "#f3f3f9",
+                      "on-primary-fixed-variant": "#034785",
+                      "inverse-on-surface": "#f0f0f6",
+                      "error": "#ba1a1a",
+                      "error-container": "#ffdad6",
+                      "secondary": "#bb0027"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "timetable-row-height": "48px",
+                      "unit": "4px",
+                      "sidebar-width": "260px",
+                      "gutter": "16px",
+                      "margin-desktop": "32px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-md": ["Inter"]
+              },
+              "fontSize": {
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg": ["30px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<div class="flex flex-1">
+<!-- SideNavBar -->
+<nav class="border-r border-outline-variant flat fixed left-0 w-sidebar-width flex flex-col py-margin-desktop z-40 hidden md:flex top-0 h-screen bg-surface-container-low shadow-lg"><div class="px-8 py-6 border-b border-outline-variant mb-4"><h1 class="font-headline-md text-headline-md text-primary font-black">SUSS Planner</h1><p class="text-on-surface-variant font-label-md text-label-md mt-1">AY2025/2026, Semester 2, Week 2</p></div>
+<div class="flex-1 overflow-y-auto px-4 gap-2 flex flex-col">
+<a class="bg-primary text-on-primary border-l-4 border-primary-container font-bold px-4 py-3 flex items-center gap-3 rounded-r-lg hover:bg-primary-container transition-all duration-200 ease-in-out font-label-md text-label-md shadow-sm" href="#"><span class="material-symbols-outlined" data-icon="calendar_view_week" data-weight="fill" style="font-variation-settings: &quot;FILL&quot; 1;">calendar_view_week</span>Timetable</a>
+<a class="text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-container-high transition-colors duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-highest hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+                    Courses
+                </a>
+<a class="text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-container-high transition-colors duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-highest hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="edit_calendar">edit_calendar</span>
+                    Planner
+                </a>
+</div>
+<div class="px-4 gap-2 flex flex-col border-t border-outline-variant pt-4 mt-4">
+<a class="text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-container-high transition-colors duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-highest hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                    Settings
+                </a>
+<a class="text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-container-high transition-colors duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-highest hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="code">code</span>
+                    Git Repo
+                </a>
+</div>
+</nav>
+<!-- Main Workspace -->
+<main class="flex-1 ml-sidebar-width flex flex-col bg-background min-h-screen">
+<!-- Filters Header -->
+<div class="flex flex-1 flex-col md:flex-row h-[calc(100vh-73px)]">
+<!-- Timetable Section (70%) -->
+<section class="flex-1 w-full md:w-[70%] border-outline-variant flex flex-col h-full"><div class="flex flex-col bg-surface-container-lowest border-b border-outline-variant">
+<!-- Row 1: Semester Selection -->
+<div class="flex items-center px-gutter py-3 border-b border-outline-variant/50 relative group">
+<button class="absolute left-2 z-10 p-2 hover:bg-surface-container-low rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="flex-1 overflow-x-hidden">
+<div class="flex items-center gap-8 justify-center">
+<div class="text-center opacity-40">
+<div class="font-label-md">Semester 1</div>
+<div class="text-[10px] uppercase tracking-tighter">AY2025/2026</div>
+</div>
+<div class="text-center relative px-4">
+<div class="font-headline-sm text-primary font-bold">Semester 2</div>
+<div class="text-label-sm text-on-surface-variant font-medium">AY2025/2026</div>
+<div class="absolute -bottom-[12px] left-0 right-0 h-0.5 bg-primary"></div>
+</div>
+<div class="text-center opacity-40">
+<div class="font-label-md">Special Semester</div>
+<div class="text-[10px] uppercase tracking-tighter">AY2025/2026</div>
+</div>
+<div class="text-center opacity-40">
+<div class="font-label-md">Semester 1</div>
+<div class="text-[10px] uppercase tracking-tighter">AY2026/2027</div>
+</div>
+</div>
+</div>
+<button class="absolute right-2 z-10 p-2 hover:bg-surface-container-low rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Row 2: Week Selection -->
+<div class="flex items-center px-gutter py-3 relative group bg-surface-container-low/20">
+<button class="absolute left-2 z-10 p-2 hover:bg-surface-container-low rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<div class="flex-1 overflow-x-hidden">
+<div class="flex items-center gap-10 justify-center">
+<div class="text-center relative">
+<div class="font-label-md text-primary font-bold">Week 1</div>
+<div class="text-[10px] text-on-surface-variant">12 Jan</div>
+</div>
+<div class="text-center opacity-50">
+<div class="font-label-md">Week 2</div>
+<div class="text-[10px]">19 Jan</div>
+</div>
+<div class="text-center opacity-50">
+<div class="font-label-md">Week 3</div>
+<div class="text-[10px]">26 Jan</div>
+</div>
+<div class="text-center opacity-50">
+<div class="font-label-md">Week 4</div>
+<div class="text-[10px]">02 Feb</div>
+</div>
+<div class="text-center opacity-50">
+<div class="font-label-md">Week 5</div>
+<div class="text-[10px]">09 Feb</div>
+</div>
+</div>
+</div>
+<button class="absolute right-2 z-10 p-2 hover:bg-surface-container-low rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Timetable Grid Area -->
+<div class="flex-1 overflow-auto relative bg-surface-container-lowest p-gutter pt-4">
+<div class="min-w-[900px] grid grid-cols-[60px_repeat(6,1fr)] grid-rows-[40px_repeat(11,minmax(60px,1fr))] relative">
+<!-- Header Row (Days) -->
+<div class="col-start-1 row-start-1 border-b border-outline-variant"></div>
+<div class="col-start-2 row-start-1 border-b border-outline-variant border-l text-center font-label-md text-label-md text-on-surface-variant flex items-end pb-2 justify-center">Mon</div>
+<div class="col-start-3 row-start-1 border-b border-outline-variant border-l text-center font-label-md text-label-md text-on-surface-variant flex items-end pb-2 justify-center">Tue</div>
+<div class="col-start-4 row-start-1 border-b border-outline-variant border-l text-center font-label-md text-label-md text-on-surface-variant flex items-end pb-2 justify-center bg-surface-container-low/30">Wed</div>
+<div class="col-start-5 row-start-1 border-b border-outline-variant border-l text-center font-label-md text-label-md text-on-surface-variant flex items-end pb-2 justify-center">Thu</div>
+<div class="col-start-6 row-start-1 border-b border-outline-variant border-l border-r text-center font-label-md text-label-md text-on-surface-variant flex items-end pb-2 justify-center">Fri</div><div class="col-start-7 row-start-1 border-b border-outline-variant border-l border-r text-center font-label-md text-label-md text-on-surface-variant flex items-end pb-2 justify-center">Sat</div>
+<!-- Time Column & Grid Lines -->
+<!-- 0800 -->
+<div class="col-start-1 row-start-2 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant/70 pt-2">0800</div>
+<div class="col-start-2 col-span-6 row-start-2 border-b border-outline-variant border-l"></div>
+<!-- 0900 -->
+<div class="col-start-1 row-start-3 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">0900</div>
+<div class="col-start-2 col-span-6 row-start-3 border-b border-outline-variant border-l"></div>
+<!-- 1000 -->
+<div class="col-start-1 row-start-4 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">1000</div>
+<div class="col-start-2 col-span-6 row-start-4 border-b border-outline-variant border-l"></div>
+<!-- 1100 -->
+<div class="col-start-1 row-start-5 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">1100</div>
+<div class="col-start-2 col-span-6 row-start-5 border-b border-outline-variant border-l"></div>
+<!-- 1200 -->
+<div class="col-start-1 row-start-6 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant font-bold text-primary pt-2">1200</div>
+<div class="col-start-2 col-span-6 row-start-6 border-b border-outline-variant border-l bg-surface-container-lowest"></div>
+<!-- 1300 -->
+<div class="col-start-1 row-start-7 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">1300</div>
+<div class="col-start-2 col-span-6 row-start-7 border-b border-outline-variant border-l"></div>
+<!-- 1400 -->
+<div class="col-start-1 row-start-8 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">1400</div>
+<div class="col-start-2 col-span-6 row-start-8 border-b border-outline-variant border-l"></div>
+<!-- 1500 -->
+<div class="col-start-1 row-start-9 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">1500</div>
+<div class="col-start-2 col-span-6 row-start-9 border-b border-outline-variant border-l"></div>
+<!-- 1600 -->
+<div class="col-start-1 row-start-10 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">1600</div>
+<div class="col-start-2 col-span-6 row-start-10 border-b border-outline-variant border-l"></div>
+<!-- 1700 -->
+<div class="col-start-1 row-start-11 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">1700</div>
+<div class="col-start-2 col-span-6 row-start-11 border-b border-outline-variant border-l"></div>
+<!-- 1800 -->
+<div class="col-start-1 row-start-12 border-b border-outline-variant text-right pr-2 font-label-sm text-label-sm text-on-surface-variant pt-2">1800</div>
+<div class="col-start-2 col-span-6 row-start-12 border-b border-outline-variant border-l"></div>
+<!-- Vertical Day Borders -->
+<div class="col-start-2 row-start-2 row-end-13 border-l border-outline-variant"></div>
+<div class="col-start-3 row-start-2 row-end-13 border-l border-outline-variant"></div>
+<div class="col-start-4 row-start-2 row-end-13 border-l border-outline-variant bg-surface-container-low/30"></div>
+<div class="col-start-5 row-start-2 row-end-13 border-l border-outline-variant"></div>
+<div class="col-start-6 row-start-2 row-end-13 border-l border-outline-variant"></div>
+<div class="col-start-7 row-start-2 row-end-13 border-l border-outline-variant"></div><div class="col-start-8 row-start-2 row-end-13 border-l border-outline-variant"></div>
+<!-- Current Time Indicator -->
+<div class="col-start-2 col-span-6 row-start-6 absolute w-full border-t border-error top-1/2 z-20 pointer-events-none">
+<div class="w-2 h-2 rounded-full bg-error absolute -left-1 -top-[5px]"></div>
+</div>
+<!-- Course Block 1: ICT114 TG01 (Mon 1200-1500) -->
+<div class="col-start-2 row-start-6 row-span-3 bg-primary-fixed text-on-primary-fixed rounded-md m-1 border-l-4 border-primary p-2 hover:shadow-md transition-shadow cursor-pointer relative group z-10">
+<div class="font-label-md text-label-md font-bold mb-1">ICT114</div>
+<div class="font-label-sm text-label-sm mb-1 opacity-90">TG01</div>
+<div class="font-label-sm text-label-sm opacity-70">12:00 - 15:00</div>
+<div class="font-label-sm text-label-sm opacity-70 flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                TBC
+                            </div>
+<!-- Tooltip -->
+<div class="hidden group-hover:block absolute top-full left-0 mt-2 w-64 bg-surface-container-lowest border border-outline-variant rounded-lg p-3 shadow-lg z-50 pointer-events-none">
+<h4 class="font-label-md text-label-md font-bold text-on-surface mb-1">ICT114 Computer Architecture</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Class Group: TG01</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Instructor: TBC</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Units: 5 CU</p>
+</div>
+</div>
+<!-- Course Block 2: ICT114 TG02 (Wed 1200-1500) -->
+<div class="col-start-4 row-start-6 row-span-3 bg-tertiary-fixed text-on-tertiary-fixed rounded-md m-1 border-l-4 border-tertiary p-2 hover:shadow-md transition-shadow cursor-pointer relative group z-10">
+<div class="font-label-md text-label-md font-bold mb-1">ICT114</div>
+<div class="font-label-sm text-label-sm mb-1 opacity-90">TG02</div>
+<div class="font-label-sm text-label-sm opacity-70">12:00 - 15:00</div>
+<div class="font-label-sm text-label-sm opacity-70 flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                TBC
+                            </div>
+<!-- Tooltip -->
+<div class="hidden group-hover:block absolute top-full left-0 mt-2 w-64 bg-surface-container-lowest border border-outline-variant rounded-lg p-3 shadow-lg z-50 pointer-events-none">
+<h4 class="font-label-md text-label-md font-bold text-on-surface mb-1">ICT114 Computer Architecture</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Class Group: TG02</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Instructor: TBC</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Units: 5 CU</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Course Listing Section (30%) -->
+<aside class="w-full md:w-[30%] flex flex-col h-full bg-surface-container-lowest border-l border-outline-variant"><div class="p-gutter border-outline-variant bg-surface-container-lowest flex justify-between items-center h-16 shrink-0">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">My Courses</h3>
+<span class="px-2 py-1 bg-primary/10 text-primary rounded-full font-label-sm text-label-sm">1 Selected</span>
+</div><div class="px-gutter py-2 bg-surface-container-lowest border-outline-variant shrink-0">
+<div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md placeholder-on-surface-variant" placeholder="Search courses" type="text">
+</div>
+</div><div class="px-gutter pb-gutter pt-2 border-outline-variant bg-surface-container-lowest flex flex-col gap-3 shrink-0">
+<div class="grid grid-cols-2 gap-2">
+<button class="flex items-center justify-center gap-2 bg-surface-container border border-outline-variant text-on-surface py-2 px-3 rounded-lg font-label-sm text-label-sm hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+<span class="">Reset</span>
+</button>
+<button class="flex items-center justify-center gap-2 bg-surface-container border border-outline-variant text-on-surface py-2 px-3 rounded-lg font-label-sm text-label-sm hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">view_week</span>
+<span class="">Change Layout</span>
+</button>
+<button class="flex items-center justify-center gap-2 bg-surface-container border border-outline-variant text-on-surface py-2 px-3 rounded-lg font-label-sm text-label-sm hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">download</span>
+<span class="">Download</span>
+</button>
+<button class="flex items-center justify-center gap-2 bg-surface-container border border-outline-variant text-on-surface py-2 px-3 rounded-lg font-label-sm text-label-sm hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">event</span>
+<span class="">Exam Cal</span>
+</button>
+</div>
+<button class="w-full flex items-center justify-center gap-2 bg-primary text-on-primary py-2.5 px-4 rounded-lg font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+<span class="">Share / Sync</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-gutter space-y-4 bg-surface-container-lowest">
+<!-- Course Tile -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+<!-- Color Swatch Indicator -->
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-fixed"></div>
+<div class="flex justify-between items-start mb-2 pl-2">
+<div><div class="flex items-center gap-2"><div aria-hidden="true" class="w-3 h-3 bg-primary-fixed border border-outline-variant/30 rounded-sm"></div><h4 class="font-label-md text-label-md font-bold text-on-surface">ICT114</h4></div><p class="font-body-md text-body-md text-on-surface-variant">Computer Architecture</p></div>
+<div class="flex gap-1 group-hover:opacity-100 transition-opacity items-center"><button class="p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Hide course">
+<span class="material-symbols-outlined text-[18px]">visibility_off</span>
+</button>
+<button class="p-1.5 rounded-full text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors" title="Remove course">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button></div>
+</div>
+<div class="pl-2 space-y-2 mt-4 border-t border-outline-variant pt-3">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span class="">Exam: 20 April 2026</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">school</span>
+<span class="">5 CU</span>
+</div>
+</div>
+</div>
+<!-- Placeholder for empty state if needed, or add more courses to fill space beautifully -->
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-center text-on-surface-variant opacity-60 h-32">
+<span class="material-symbols-outlined mb-2 text-2xl">add_circle</span>
+<p class="font-label-sm text-label-sm">Search to add more courses</p>
+</div>
+<div class="flex justify-between items-center text-on-surface font-label-md text-label-md pt-4 border-t border-outline-variant mt-2">
+<span class="text-on-surface-variant">Total Credit Units</span>
+<span class="font-bold text-primary">5 CU</span>
+</div></div>
+<!-- Listing Footer & Actions -->
+</aside>
+</div>
+</main>
+</div>
+<!-- Footer -->
+
+
+</body></html>

@@ -43,3 +43,35 @@ out/
 # Temporary files
 *.tmp
 *.temp
+# Dependencies
+node_modules/
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+*.local
+scraper/data/input/course-pdfs/
+scraper/data/output/
+venv/
