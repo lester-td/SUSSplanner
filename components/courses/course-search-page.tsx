@@ -236,11 +236,11 @@ export function CourseSearchPage({
   }
 
   return (
-    <div className="px-4 py-4 md:px-[16px]">
-      <div className="mx-auto grid max-w-7xl gap-3 lg:grid-cols-[minmax(0,1fr)_21rem]">
-        <section className="space-y-3">
-          <div className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="px-3 pb-3 pt-8 md:px-[16px]">
+      <div className="mx-auto grid max-w-7xl gap-2.5 lg:grid-cols-[minmax(0,1fr)_21rem]">
+        <section className="space-y-2.5 lg:pr-4">
+          <div className="pb-3">
+            <div className="flex flex-col gap-2.5 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
               </div>
@@ -256,28 +256,23 @@ export function CourseSearchPage({
                 value={filters.q}
                 onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
                 placeholder="Search by course code, course title, or school"
-                className="w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-3 pl-12 pr-4 text-[15px] leading-6 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                className="elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-3 pl-12 pr-4 text-[15px] leading-6 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
               />
             </label>
           </div>
 
-          {!deferredQuery.trim() ? (
-            <div className="flex min-h-[16rem] flex-col items-center justify-center rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-center text-[var(--on-surface-variant)]">
-              <BookIcon className="mb-3 h-8 w-8" />
-              <p className="text-[16px] font-semibold leading-6 text-[var(--on-surface)]">Start typing to search courses</p>
-            </div>
-          ) : results.length === 0 && !loading ? (
-            <div className="rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-[14px] leading-5 text-[var(--on-surface-variant)]">
+          {deferredQuery.trim() && results.length === 0 && !loading ? (
+            <div className="elev-1 rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               No courses matched the current query and checkbox filters.
             </div>
           ) : (
-            <div className="divide-y divide-[color:rgb(6_55_100_/_0.12)] rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+            <div className="divide-y divide-[color:rgb(6_55_100_/_0.12)] border-y border-[color:rgb(6_55_100_/_0.12)]">
               {results.map((course) => {
                 const semesterIndicators = buildSemesterIndicators(course);
 
                 return (
                 <article key={course.courseCode} className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-2.5">
                     <h2 className="min-w-0 flex-1 text-[18px] font-bold leading-7 tracking-[-0.02em]">
                       <Link
                         href={`/courses/${course.courseCode}`}
@@ -327,8 +322,8 @@ export function CourseSearchPage({
           )}
         </section>
 
-        <aside className="space-y-2.5 lg:sticky lg:top-3 lg:self-start lg:border-l lg:border-[color:rgb(6_55_100_/_0.12)] lg:pl-3">
-            <div className="flex items-center justify-between gap-3">
+        <aside className="mt-2 border-l border-[color:rgb(6_55_100_/_0.12)] pl-3 lg:sticky lg:top-[5.65rem] lg:self-start">
+            <div className="flex items-center justify-between gap-2.5 border-b border-[color:rgb(6_55_100_/_0.12)] pb-2.5">
               <div className="flex items-center gap-2">
                 <SettingsIcon className="h-5 w-5 text-[var(--primary)]" />
                 <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Search Settings</h2>
@@ -343,7 +338,7 @@ export function CourseSearchPage({
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="divide-y divide-[color:rgb(6_55_100_/_0.12)]">
               <FilterGroup title="Offered In">
                 {semesters.map((semester) => (
                   <CheckboxRow
@@ -455,8 +450,8 @@ function FilterGroup({
 })
 {
   return (
-    <section>
-      <div className="mb-1 flex items-center justify-between gap-3">
+    <section className="py-2.5">
+      <div className="mb-1 flex items-center justify-between gap-2.5">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">{title}</h3>
         {action}
       </div>

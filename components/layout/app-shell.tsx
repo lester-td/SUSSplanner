@@ -40,16 +40,16 @@ export function AppShell({
 })
 {
   return (
-    <main className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--on-surface)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--outline-variant)] bg-[color:rgb(249_249_255_/_0.92)] backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:gap-3">
-              <Link href="/planner" className="text-[24px] font-extrabold leading-8 tracking-[-0.02em] text-[var(--primary-container)]">
+    <main className="flex min-h-screen flex-col bg-[var(--surface-container)] text-[var(--on-surface)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--outline-variant)] bg-[var(--surface-container-low)] shadow-[0_4px_18px_rgba(15,23,42,0.08)] backdrop-blur">
+        <div className="px-3 py-2.5 md:px-[16px] md:py-3">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2.5 xl:gap-3">
+              <Link href="/planner" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--primary-container)] sm:inline sm:text-[24px] sm:leading-8">
                 SUSS Planner
               </Link>
 
-              <nav className="flex flex-wrap items-center gap-2">
+              <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                 {navItems.map((item) => {
                   const Icon = item.icon;
 
@@ -57,7 +57,7 @@ export function AppShell({
                     <Link
                       key={item.id}
                       href={item.href}
-                      className={`inline-flex items-center gap-2 rounded-[999px] px-3 py-2 text-[12px] font-semibold leading-4 transition-colors ${
+                      className={`inline-flex items-center gap-1.5 rounded-[999px] px-2.5 py-1.5 text-[12px] font-semibold leading-4 transition-colors sm:gap-2 sm:px-3 sm:py-2 ${
                         activeSection === item.id
                           ? "bg-[var(--primary)] !text-[var(--on-primary)] hover:bg-[var(--primary-container)] hover:!text-[var(--on-primary)]"
                           : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
@@ -78,8 +78,8 @@ export function AppShell({
               </nav>
             </div>
 
-            <div className="flex justify-start xl:justify-end">
-              <div className="px-1 py-1 text-[14px] font-semibold leading-5 text-[var(--on-surface-variant)]">
+            <div className="shrink-0">
+              <div className="whitespace-nowrap px-1 py-1 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[14px] sm:leading-5">
                 {currentWeekLabel}
               </div>
             </div>
@@ -87,7 +87,7 @@ export function AppShell({
         </div>
       </header>
 
-      <section className="flex min-h-0 flex-1 flex-col">
+      <section className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)]">
         <div className="flex min-h-0 flex-1 flex-col">
           {children}
         </div>

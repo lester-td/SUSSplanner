@@ -18,6 +18,8 @@ const OVERLAP_GAP_PX = 1;
 const OVERLAP_COMPRESS_RATIO = 0.99;
 const MIN_LANE_WIDTH_PX = 38;
 const MIN_LANE_HEIGHT_PX = 18;
+const VERTICAL_TIME_AXIS_COLUMN = "clamp(2.6rem, 8vw, 4.25rem)";
+const VERTICAL_DAY_COLUMN_MIN = "clamp(2.9rem, 12vw, 8.5rem)";
 
 type TimetableLaneLayout = {
   laneIndex: number;
@@ -214,8 +216,7 @@ export function TimetableCanvas({
     horizontalRunningTop += height;
   }
   const horizontalContentHeight = horizontalRunningTop;
-  const verticalGridTemplateColumns = `68px ${dayLaneCounts.map((laneCount) => `minmax(8.5rem, ${laneCount}fr)`).join(" ")}`;
-  const verticalMinWidthPx = 68 + dayLaneCounts.reduce((sum, laneCount) => sum + laneCount * 136, 0);
+  const verticalGridTemplateColumns = `${VERTICAL_TIME_AXIS_COLUMN} ${dayLaneCounts.map((laneCount) => `minmax(${VERTICAL_DAY_COLUMN_MIN}, ${laneCount}fr)`).join(" ")}`;
   const now = new Date();
   const todayIndex = now.getDay() === 0 ? 7 : now.getDay();
   const showNowLine = showCurrentTime && todayIndex >= 1 && todayIndex <= DAY_LABELS.length;
@@ -311,8 +312,8 @@ export function TimetableCanvas({
   }
 
   return (
-    <div className="overflow-x-auto overflow-y-hidden bg-[var(--surface-container-lowest)] p-px">
-      <div style={{ minWidth: `${verticalMinWidthPx}px` }}>
+    <div className="overflow-hidden bg-[var(--surface-container-lowest)] p-px">
+      <div className="w-full">
         <div className="grid grid-rows-[40px] gap-0" style={{ gridTemplateColumns: verticalGridTemplateColumns }}>
           <div className="border-b border-[var(--outline-variant)]" />
           {DAY_LABELS.map((day, index) => (
@@ -413,7 +414,6 @@ export function TimetableCanvas({
                       top: `${laneTop}px`,
                       left: laneLeft,
                       width: laneWidth,
-                      minWidth: `${MIN_LANE_WIDTH_PX}px`,
                       height: `${laneHeight}px`,
                       zIndex: layout.laneIndex + 1,
                     }}
@@ -448,10 +448,15 @@ function TimetableBlockButton({
   showWeekLabel: boolean;
 })
 {
+  const blockHeightPx = typeof style.height === "number"
+    ? style.height
+    : Number.parseFloat(String(style.height ?? 0));
+  const isTight = Number.isFinite(blockHeightPx) && blockHeightPx <= 60;
+
   return (
     <button
       type="button"
-      className={`absolute z-10 origin-center overflow-visible rounded-[0.375rem] border border-[color:var(--block-outline)] bg-[color:var(--block-bg)] p-1.5 text-left text-[color:var(--block-text)] transition-[box-shadow,opacity] ${
+      className={`absolute z-10 origin-center overflow-hidden rounded-[0.375rem] border border-[color:var(--block-outline)] bg-[color:var(--block-bg)] text-left text-[color:var(--block-text)] transition-[box-shadow,opacity] ${
         active ? "ring-2 ring-[var(--primary)] shadow-md" : "shadow-sm"
       }`}
       style={{
@@ -460,24 +465,25 @@ function TimetableBlockButton({
         ["--block-outline" as string]: "rgba(0, 0, 0, 0.12)",
         ["--block-text" as string]: "#ffffff",
         opacity: dimmed ? 0.5 : 1,
+        padding: isTight ? "0.25rem" : "0.375rem",
       }}
       onClick={onClick}
     >
-      <div className="flex h-full flex-col items-start justify-start gap-0.5 text-left">
-        <p className="max-w-full truncate text-[14px] font-bold leading-5">{block.courseCode}</p>
-        <p className="max-w-full truncate text-[12px] leading-[15px] opacity-90">{formatClassGroupLabel(block.groupCode)}</p>
-        <p className="max-w-full truncate text-[13px] leading-4 opacity-75">
+      <div className="flex h-full min-h-0 flex-col items-start justify-start gap-0.5 overflow-auto text-left">
+        <p className="w-full break-words text-[clamp(9px,1.8vw,12px)] font-bold leading-tight">{block.courseCode}</p>
+        <p className="w-full break-words text-[clamp(8px,1.6vw,11px)] leading-tight opacity-90">{formatClassGroupLabel(block.groupCode)}</p>
+        <p className="w-full break-words text-[clamp(8px,1.6vw,11px)] leading-tight opacity-80">
           {formatTimeRange(minutesToTimeString(block.startMinutes), minutesToTimeString(block.endMinutes))}
         </p>
         {showWeekLabel ? (
-          <p className="max-w-full truncate text-[12px] leading-[15px] opacity-75">
+          <p className="w-full break-words text-[clamp(8px,1.6vw,11px)] leading-tight opacity-80">
             {block.weekLabel}
           </p>
         ) : null}
         {block.venue ? (
-          <p className="mt-0.5 flex max-w-full items-center gap-1 truncate text-[12px] leading-[15px] opacity-75">
+          <p className="mt-0.5 flex w-full items-start gap-1 break-words text-[clamp(8px,1.6vw,11px)] leading-tight opacity-80">
             <PinIcon className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{block.venue}</span>
+            <span className="break-words">{block.venue}</span>
           </p>
         ) : null}
       </div>
