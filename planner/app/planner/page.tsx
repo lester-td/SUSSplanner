@@ -1,11 +1,11 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { PlannerClient } from "@/components/timetable/planner-client";
-import { getSemestersWithWeeks } from "@/lib/db/queries";
+import { getSemestersWithClassesAndWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
 
 export default async function PlannerPage()
 {
-  const semesters = await getSemestersWithWeeks();
+  const semesters = await getSemestersWithClassesAndWeeks();
   const { semester, week } = getCurrentSemesterContext(
     semesters.map(({ weeks, ...semesterData }) => semesterData),
     semesters.flatMap((item) => item.weeks),

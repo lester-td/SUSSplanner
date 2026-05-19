@@ -19,6 +19,7 @@ import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { exportElementToPng } from "@/lib/export/png";
 import {
   buildTimeSlots,
+  formatClassGroupLabel,
   formatEventDate,
   formatTimeRange,
 } from "@/lib/timetable/date-utils";
@@ -123,7 +124,7 @@ export function ShareClient({
         </div>
       </div>
 
-      <div className={`flex min-h-[calc(100dvh-73px)] flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
+      <div className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
           <div className="flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
@@ -164,7 +165,7 @@ export function ShareClient({
                   {timetable.clashes.slice(0, 4).map((clash) => (
                     <div key={clash.clashKey}>
                       <div className="font-semibold">{formatEventDate(clash.eventDate)} · {formatTimeRange(clash.startTime, clash.endTime)}</div>
-                      <div className="text-[var(--on-surface-variant)]">{clash.events.map((event) => `${event.courseCode} ${event.groupCodeType} ${event.groupCode}`).join(" · ")}</div>
+                      <div className="text-[var(--on-surface-variant)]">{clash.events.map((event) => `${event.courseCode} ${formatClassGroupLabel(event.groupCode)}`).join(" · ")}</div>
                     </div>
                   ))}
                 </div>
@@ -182,8 +183,7 @@ export function ShareClient({
                   timeSlots={timeSlots}
                   visibleEndMinutes={visibleEndMinutes}
                   showAllWeeks={selectedWeekId === "all"}
-                  focusMode={false}
-                  activeBlockId=""
+                  activeShareKey={null}
                   onBlockClick={() => undefined}
                   showCurrentTime={false}
                 />
@@ -193,7 +193,7 @@ export function ShareClient({
                     <article key={card.id} className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: colorByShareKey.get(card.shareKey) ?? "#3556b8" }} />
-                        <span className="text-[12px] font-bold leading-4 text-[var(--on-surface)]">{card.courseCode} {card.groupCode}</span>
+                        <span className="text-[12px] font-bold leading-4 text-[var(--on-surface)]">{card.courseCode} · {formatClassGroupLabel(card.groupCode)}</span>
                       </div>
                       <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{card.courseName ?? "Untitled course"}</p>
                       <p className="mt-3 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatEventDate(card.eventDate)}</p>
@@ -234,7 +234,7 @@ export function ShareClient({
                   <div className="pl-2">
                     <h4 className="truncate text-[12px] font-bold leading-4 text-[var(--on-surface)]">{record.courseCode}</h4>
                     <p className="mt-1 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{record.courseName ?? "Untitled course"}</p>
-                    <p className="mt-1 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{record.groupCodeType} {record.groupCode} · {record.creditUnits?.toFixed(1) ?? "0.0"} CU</p>
+                    <p className="mt-1 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatClassGroupLabel(record.groupCode)} · {record.creditUnits?.toFixed(1) ?? "0.0"} CU</p>
                   </div>
                 </article>
               ))}

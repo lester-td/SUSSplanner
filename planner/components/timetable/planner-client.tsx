@@ -11,6 +11,7 @@ import {
   EyeOffIcon,
   GridIcon,
   ListIcon,
+  PlusIcon,
   RefreshIcon,
   RowsIcon,
   SchoolIcon,
@@ -26,23 +27,24 @@ import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { exportElementToPng } from "@/lib/export/png";
 import {
   buildTimeSlots,
+  formatClassGroupLabel,
   formatEventDate,
   formatTimeRange,
   getCurrentWeekChip,
-  stripSeconds,
 } from "@/lib/timetable/date-utils";
 import {
-  importSharedTimetableToLocalStorage,
   loadSavedTimetable,
   saveTimetableToLocalStorage,
 } from "@/lib/timetable/local-storage";
-import { encodeShareUrlState } from "@/lib/timetable/share-url";
+import {
+  buildSharedClassIdentifier,
+  encodeShareUrlState,
+} from "@/lib/timetable/share-url";
 import {
   buildExamCards,
   buildSelectedCourseCards,
   buildTimetableBlocks,
   buildWeekOptions,
-  getCourseColorMap,
   getLatestEndMinutes,
 } from "@/lib/timetable/timetable-utils";
 import type {
@@ -53,6 +55,7 @@ import type {
   SemesterWeekRecord,
   SharedClassIdentifier,
   TimetableData,
+  TimetableEventRecord,
   TimetableOrientation,
 } from "@/lib/timetable/types";
 
@@ -66,12 +69,43 @@ type SearchResponse = {
 
 type ClassesResponse = {
   classes: CourseClassRecord[];
-  timetable?: TimetableData;
 };
+
+type ClassPickerCourse = Pick<CourseSearchResult, "courseCode" | "courseName">;
+
+const GROUP_PREVIEW_COLORS = [
+  "#3556b8",
+  "#cf5b22",
+  "#008b7b",
+  "#8f4bc4",
+  "#7a8f2d",
+  "#c14953",
+  "#2e6f95",
+  "#a76318",
+];
 
 function buildShareQuery(semesterId: number, selectedClasses: SharedClassIdentifier[])
 {
   return encodeShareUrlState({ semesterId, selectedClasses }).split("?")[1] ?? "";
+}
+
+function buildPreviewEvents(classes: CourseClassRecord[]): TimetableEventRecord[]
+{
+  return classes.flatMap((group) => {
+    const shareKey = buildSharedClassIdentifier({
+      courseCode: group.courseCode,
+      scheduleType: group.scheduleType,
+      groupCodeType: group.groupCodeType,
+      groupCode: group.groupCode,
+    });
+
+    return group.events.map((event) => ({
+      ...event,
+      courseName: group.courseName,
+      schoolName: group.schoolName,
+      shareKey,
+    } satisfies TimetableEventRecord));
+  });
 }
 
 function defaultStorageState(
@@ -86,7 +120,7 @@ function defaultStorageState(
     selectedClasses: [],
     hiddenClasses: [],
     selectedWeekId: currentWeekId && currentSemesterId === semesterId ? currentWeekId : "all",
-    orientation: "horizontal",
+    orientation: "vertical",
     viewMode: "class",
   };
 }
@@ -137,7 +171,7 @@ export function PlannerClient({
 {
   const [ready, setReady] = useState(false);
   const [semesterId, setSemesterId] = useState<number>(currentSemesterId);
-  const [orientation, setOrientation] = useState<TimetableOrientation>("horizontal");
+  const [orientation, setOrientation] = useState<TimetableOrientation>("vertical");
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [sortMode, setSortMode] = useState<"code" | "exam">("code");
   const [searchInput, setSearchInput] = useState("");
@@ -148,6 +182,7 @@ export function PlannerClient({
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<CourseSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [plannerNotice, setPlannerNotice] = useState("");
   const [timetableData, setTimetableData] = useState<TimetableData>({
     semester: null,
     semesterWeeks: [],
@@ -156,15 +191,14 @@ export function PlannerClient({
     clashes: [],
     unresolvedSelections: [],
   });
-  const [timetableLoading, setTimetableLoading] = useState(false);
-  const [activeCourseCode, setActiveCourseCode] = useState<string | null>(null);
-  const [classPickerOpen, setClassPickerOpen] = useState(false);
-  const [classPickerCourse, setClassPickerCourse] = useState<CourseSearchResult | null>(null);
+  const [classPickerCourse, setClassPickerCourse] = useState<ClassPickerCourse | null>(null);
   const [classPickerLoading, setClassPickerLoading] = useState(false);
   const [classPickerClasses, setClassPickerClasses] = useState<CourseClassRecord[]>([]);
   const [classPickerError, setClassPickerError] = useState("");
+  const [scheduleCourse, setScheduleCourse] = useState<ReturnType<typeof buildSelectedCourseCards>[number] | null>(null);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const timetableCaptureRef = useRef<HTMLDivElement | null>(null);
+  const noticeTimeoutRef = useRef<number | null>(null);
   const deferredSearch = useDeferredValue(searchInput);
 
   const selectedSemester = semesters.find((semester) => semester.semesterId === semesterId) ?? semesters[0] ?? null;
@@ -206,8 +240,6 @@ export function PlannerClient({
     }
 
     const controller = new AbortController();
-    setTimetableLoading(true);
-
     fetch(`/api/classes?${buildShareQuery(semesterId, selectedClasses)}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -241,13 +273,6 @@ export function PlannerClient({
           unresolvedSelections: [],
         });
       })
-      .finally(() => {
-        if (!controller.signal.aborted)
-        {
-          setTimetableLoading(false);
-        }
-      });
-
     return () => controller.abort();
   }, [ready, selectedClasses, semesterId]);
 
@@ -263,9 +288,9 @@ export function PlannerClient({
 
     const params = new URLSearchParams({
       q: deferredSearch,
-      semesterId: String(semesterId),
       limit: "8",
     });
+    params.append("semesterIds", String(semesterId));
 
     fetch(`/api/courses/search?${params.toString()}`, {
       cache: "no-store",
@@ -300,19 +325,37 @@ export function PlannerClient({
     () => sortSelectedCards(buildSelectedCourseCards(timetableData), sortMode),
     [sortMode, timetableData],
   );
-  const courseColorMap = useMemo(() => getCourseColorMap(timetableData.selections), [timetableData.selections]);
   const colorByShareKey = useMemo(
     () => new Map(selectedCards.map((card) => [card.shareKey, card.color])),
     [selectedCards],
+  );
+  const selectedShareKeyByCourseCode = useMemo(
+    () => new Map(selectedClasses.map((selection) => [selection.courseCode, buildSharedClassIdentifier(selection)])),
+    [selectedClasses],
   );
   const visibleEvents = useMemo(
     () => timetableData.events.filter((event) => !hiddenClasses.includes(event.shareKey)),
     [hiddenClasses, timetableData.events],
   );
   const allBlocks = useMemo(() => buildTimetableBlocks(visibleEvents, selectedWeekId), [selectedWeekId, visibleEvents]);
-  const displayedBlocks = activeCourseCode
-    ? allBlocks.filter((block) => block.courseCode === activeCourseCode)
-    : allBlocks;
+  const pickerPreviewEvents = useMemo(() => buildPreviewEvents(classPickerClasses), [classPickerClasses]);
+  const pickerBlocks = useMemo(
+    () => buildTimetableBlocks(pickerPreviewEvents, selectedWeekId),
+    [pickerPreviewEvents, selectedWeekId],
+  );
+  const pickerColorByShareKey = useMemo(() => (
+    new Map(classPickerClasses.map((group, index) => {
+      const identifier: SharedClassIdentifier = {
+        courseCode: group.courseCode,
+        scheduleType: group.scheduleType,
+        groupCodeType: group.groupCodeType,
+        groupCode: group.groupCode,
+      };
+      return [buildSharedClassIdentifier(identifier), GROUP_PREVIEW_COLORS[index % GROUP_PREVIEW_COLORS.length]] as const;
+    }))
+  ), [classPickerClasses]);
+  const displayedBlocks = classPickerCourse ? pickerBlocks : allBlocks;
+  const displayedBlockColors = classPickerCourse ? pickerColorByShareKey : colorByShareKey;
   const examCards = useMemo(
     () => buildExamCards(visibleEvents).filter((card) => !hiddenClasses.includes(card.shareKey)),
     [hiddenClasses, visibleEvents],
@@ -327,6 +370,16 @@ export function PlannerClient({
     subtitle: `AY${semester.academicYear}`,
   }));
   const showCurrentTime = semesterId === currentSemesterId && (selectedWeekId === "all" || selectedWeekId === currentWeekId);
+  const activePickerShareKey = classPickerCourse
+    ? selectedShareKeyByCourseCode.get(classPickerCourse.courseCode) ?? null
+    : null;
+
+  useEffect(() => () => {
+    if (noticeTimeoutRef.current !== null)
+    {
+      window.clearTimeout(noticeTimeoutRef.current);
+    }
+  }, []);
 
   function toggleHidden(shareKey: string)
   {
@@ -339,16 +392,35 @@ export function PlannerClient({
   {
     setSelectedClasses((current) => current.filter((value) => `${value.courseCode}:${value.scheduleType}:${value.groupCodeType}:${value.groupCode}` !== shareKey));
     setHiddenClasses((current) => current.filter((value) => value !== shareKey));
-    setActiveCourseCode((current) => (current && shareKey.startsWith(current) ? null : current));
+    setClassPickerCourse((current) => (current && shareKey.startsWith(`${current.courseCode}:`) ? null : current));
+  }
+
+  function showPlannerBanner(message: string)
+  {
+    setPlannerNotice(message);
+    if (noticeTimeoutRef.current !== null)
+    {
+      window.clearTimeout(noticeTimeoutRef.current);
+    }
+    noticeTimeoutRef.current = window.setTimeout(() => setPlannerNotice(""), 3200);
+  }
+
+  function closeClassPicker()
+  {
+    setClassPickerCourse(null);
+    setClassPickerClasses([]);
+    setClassPickerError("");
+    setClassPickerLoading(false);
   }
 
   function addClassSelection(selection: SharedClassIdentifier)
   {
     setSelectedClasses((current) => replaceSelectionForCourse(current, selection));
     setHiddenClasses((current) => current.filter((value) => !value.startsWith(`${selection.courseCode}:`)));
-    setClassPickerOpen(false);
+    closeClassPicker();
     setSearchInput("");
     setSearchResults([]);
+    setPlannerNotice("");
   }
 
   function handleSemesterChange(nextSemesterId: number)
@@ -359,12 +431,12 @@ export function PlannerClient({
     setSelectedWeekId(nextSemesterId === currentSemesterId && currentWeekId ? currentWeekId : "all");
     setSearchInput("");
     setSearchResults([]);
-    setActiveCourseCode(null);
+    setPlannerNotice("");
+    closeClassPicker();
   }
 
-  function openClassPicker(course: CourseSearchResult)
+  function openClassPicker(course: ClassPickerCourse)
   {
-    setClassPickerOpen(true);
     setClassPickerCourse(course);
     setClassPickerLoading(true);
     setClassPickerError("");
@@ -386,6 +458,24 @@ export function PlannerClient({
       .then((payload) => setClassPickerClasses(payload.classes))
       .catch((error: unknown) => setClassPickerError(error instanceof Error ? error.message : "Unable to load class groups."))
       .finally(() => setClassPickerLoading(false));
+  }
+
+  function handleSearchResultClick(course: CourseSearchResult)
+  {
+    const offeredInSelectedSemester = course.offeredSemesters.some((semester) => semester.semesterId === semesterId);
+
+    if (!offeredInSelectedSemester)
+    {
+      showPlannerBanner(`${course.courseCode} is not offered in ${selectedSemester?.semesterName ?? "the selected semester"}.`);
+      return;
+    }
+
+    setSearchInput("");
+    setSearchResults([]);
+    openClassPicker({
+      courseCode: course.courseCode,
+      courseName: course.courseName,
+    });
   }
 
   async function handleShare()
@@ -427,31 +517,33 @@ export function PlannerClient({
 
   function resetPlanner()
   {
-    const next = defaultStorageState(semesters, currentSemesterId, currentWeekId);
-    setSemesterId(next.semesterId);
     setSelectedClasses([]);
     setHiddenClasses([]);
-    setSelectedWeekId(next.selectedWeekId);
-    setOrientation(next.orientation);
-    setViewMode(next.viewMode);
-    setSortMode("code");
     setSearchInput("");
-    setActiveCourseCode(null);
+    setPlannerNotice("");
     setDownloadOpen(false);
     setConfirmResetOpen(false);
-    importSharedTimetableToLocalStorage({ semesterId: next.semesterId, selectedClasses: [] }, next);
+    closeClassPicker();
+    saveTimetableToLocalStorage({
+      semesterId,
+      selectedClasses: [],
+      hiddenClasses: [],
+      selectedWeekId,
+      orientation,
+      viewMode,
+    });
   }
 
   const nextViewToggle = viewMode === "class"
-    ? { label: "Exam Cal", icon: <CalendarIcon className="h-4 w-4" />, onClick: () => setViewMode("exam") }
-    : { label: "Timetable", icon: <GridIcon className="h-4 w-4" />, onClick: () => setViewMode("class") };
+    ? { label: "Exam Cal", icon: <CalendarIcon className="h-[18px] w-[18px]" />, onClick: () => setViewMode("exam") }
+    : { label: "Timetable", icon: <GridIcon className="h-[18px] w-[18px]" />, onClick: () => setViewMode("class") };
   const nextOrientationToggle = orientation === "horizontal"
-    ? { label: "Vertical", icon: <RowsIcon className="h-4 w-4" />, onClick: () => setOrientation("vertical") }
-    : { label: "Horizontal", icon: <ColumnsIcon className="h-4 w-4" />, onClick: () => setOrientation("horizontal") };
+    ? { label: "Vertical", icon: <RowsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("vertical") }
+    : { label: "Horizontal", icon: <ColumnsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("horizontal") };
 
   return (
     <>
-      <div className={`flex min-h-[calc(100dvh-73px)] flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
+      <div className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
           <div className="flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
@@ -500,6 +592,11 @@ export function PlannerClient({
           </div>
 
           <div className="bg-[var(--surface-container-lowest)] px-[16px] pt-3">
+            {plannerNotice ? (
+              <div className="mb-3 rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--primary)]">
+                {plannerNotice}
+              </div>
+            ) : null}
             {timetableData.unresolvedSelections.length > 0 ? (
               <div className="mb-3 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--error)]">
                 Some shared or saved class identifiers no longer match the database for this semester.
@@ -513,10 +610,43 @@ export function PlannerClient({
                     <div key={clash.clashKey}>
                       <div className="font-semibold">{formatEventDate(clash.eventDate)} · {formatTimeRange(clash.startTime, clash.endTime)}</div>
                       <div className="text-[var(--on-surface-variant)]">
-                        {clash.events.map((event) => `${event.courseCode} ${event.groupCodeType} ${event.groupCode}`).join(" · ")}
+                        {clash.events.map((event) => `${event.courseCode} ${formatClassGroupLabel(event.groupCode)}`).join(" · ")}
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            ) : null}
+            {classPickerCourse ? (
+              <div className={`mb-3 rounded-[0.5rem] border px-4 py-3 ${
+                classPickerError
+                  ? "border-[var(--error)]/30 bg-[var(--error-container)] text-[var(--error)]"
+                  : "border-[var(--primary)]/20 bg-[var(--primary-fixed)] text-[var(--primary)]"
+              }`}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[12px] font-semibold leading-4">
+                      {classPickerCourse.courseCode} group selection
+                    </p>
+                    <p className={`mt-1 text-[12px] leading-4 ${
+                      classPickerError ? "text-[var(--error)]" : "text-[var(--primary)]"
+                    }`}>
+                      {classPickerLoading
+                        ? "Loading class group blocks for this course."
+                        : classPickerError
+                          ? classPickerError
+                          : classPickerClasses.length === 0
+                            ? "No class groups are available for this course in the selected semester."
+                            : "Other course blocks are hidden. Click a timetable block to switch to that class group."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeClassPicker}
+                    className="rounded-[0.4rem] border border-current/20 px-3 py-1.5 text-[11px] font-semibold leading-4 transition-opacity hover:opacity-75"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             ) : null}
@@ -527,14 +657,44 @@ export function PlannerClient({
               {viewMode === "class" ? (
                 <TimetableCanvas
                   blocks={displayedBlocks}
-                  blockColorByKey={colorByShareKey}
+                  blockColorByKey={displayedBlockColors}
                   isHorizontal={orientation === "horizontal"}
                   timeSlots={timeSlots}
                   visibleEndMinutes={visibleEndMinutes}
                   showAllWeeks={selectedWeekId === "all"}
-                  focusMode={Boolean(activeCourseCode)}
-                  activeBlockId=""
-                  onBlockClick={(block) => setActiveCourseCode((current) => current === block.courseCode ? null : block.courseCode)}
+                  activeShareKey={activePickerShareKey}
+                  onBlockClick={(block) => {
+                    if (classPickerCourse)
+                    {
+                      const matchingGroup = classPickerClasses.find((group) => {
+                        const identifier: SharedClassIdentifier = {
+                          courseCode: group.courseCode,
+                          scheduleType: group.scheduleType,
+                          groupCodeType: group.groupCodeType,
+                          groupCode: group.groupCode,
+                        };
+
+                        return buildSharedClassIdentifier(identifier) === block.shareKey;
+                      });
+
+                      if (matchingGroup)
+                      {
+                        addClassSelection({
+                          courseCode: matchingGroup.courseCode,
+                          scheduleType: matchingGroup.scheduleType,
+                          groupCodeType: matchingGroup.groupCodeType,
+                          groupCode: matchingGroup.groupCode,
+                        });
+                      }
+
+                      return;
+                    }
+
+                    openClassPicker({
+                      courseCode: block.courseCode,
+                      courseName: block.courseName,
+                    });
+                  }}
                   showCurrentTime={showCurrentTime}
                 />
               ) : (
@@ -545,17 +705,17 @@ export function PlannerClient({
         </section>
 
         <aside className={`flex min-h-0 w-full flex-col border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] ${orientation === "horizontal" ? "md:w-full md:border-l-0 md:border-t" : "md:w-[30%] md:border-l md:border-t-0"}`}>
-          <div className="flex h-16 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-[16px]">
+          <div className="flex h-14 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-3">
             <div>
               <h3 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">My Courses</h3>
               <p className="text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{selectedSemester ? getCurrentWeekChip(selectedSemester, semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null) : ""}</p>
             </div>
-            <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-1 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
+            <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
               {selectedCards.length} Selected
             </span>
           </div>
 
-          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-[16px] py-2">
+          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 py-1.5">
             <label className="relative block">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
               <input
@@ -566,13 +726,13 @@ export function PlannerClient({
               />
 
               {searchInput ? (
-                <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2 shadow-lg">
+                <div className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5 shadow-lg">
                   {searchResults.map((record) => (
                     <button
                       key={record.courseCode}
                       type="button"
-                      className="flex w-full items-center justify-between gap-3 rounded-[0.5rem] px-3 py-2 text-left transition-colors hover:bg-[var(--surface-container-high)]"
-                      onClick={() => openClassPicker(record)}
+                      className="flex w-full items-center justify-between gap-2 rounded-[0.5rem] px-2.5 py-1.5 text-left transition-colors hover:bg-[var(--surface-container-high)]"
+                      onClick={() => handleSearchResultClick(record)}
                     >
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
@@ -581,9 +741,20 @@ export function PlannerClient({
                         <span className="block truncate text-[11px] leading-[14px] text-[var(--on-surface-variant)]">
                           {record.courseName ?? "Untitled course"}
                         </span>
+                        <span className="mt-1 flex flex-wrap gap-1">
+                          {record.offeredSemesters.map((semester) => (
+                            <span key={`${record.courseCode}-${semester.semesterId}`} className="rounded-[999px] border border-[var(--outline-variant)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-tight text-[var(--on-surface-variant)]">
+                              {semester.semesterName}
+                            </span>
+                          ))}
+                        </span>
                       </span>
-                      <span className="text-[10px] leading-3 text-[var(--on-surface-variant)]">
-                        {record.availableClassCount} groups
+                      <span className={`inline-flex h-8 w-8 items-center justify-center rounded-[0.5rem] border ${
+                        record.hasAvailableClasses
+                          ? "border-[var(--primary)]/20 bg-[var(--primary-fixed)] text-[var(--primary)]"
+                          : "border-[var(--outline-variant)] text-[var(--on-surface-variant)]"
+                      }`}>
+                        {record.hasAvailableClasses ? <PlusIcon className="h-4 w-4" /> : <XIcon className="h-4 w-4" />}
                       </span>
                     </button>
                   ))}
@@ -602,75 +773,87 @@ export function PlannerClient({
             </label>
           </div>
 
-          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-[16px] pb-[16px] pt-2">
-            <div className={`grid gap-2 ${orientation === "horizontal" ? "grid-cols-5" : "grid-cols-2"}`}>
-              <ActionButton variant="ghost" icon={<RefreshIcon className="h-4 w-4" />} label="Reset" onClick={() => setConfirmResetOpen(true)} />
+          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1.5">
+            <div className={`grid gap-1.5 ${orientation === "horizontal" ? "grid-cols-5" : "grid-cols-2"}`}>
+              <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} />
               <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} />
-              <ActionButton variant="ghost" icon={<DownloadIcon className="h-4 w-4" />} label="Download" onClick={() => setDownloadOpen((current) => !current)} />
+              <ActionButton variant="ghost" icon={<DownloadIcon className="h-[18px] w-[18px]" />} label="Download" onClick={() => setDownloadOpen((current) => !current)} />
               <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} />
-              <ActionButton variant="primary" icon={<ShareIcon className="h-4 w-4" />} label="Share / Sync" onClick={handleShare} stretch />
+              <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share / Sync" onClick={handleShare} stretch />
             </div>
 
             {downloadOpen ? (
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <ActionButton variant="ghost" icon={<DownloadIcon className="h-4 w-4" />} label="PDF" onClick={() => triggerDownload("/api/export/pdf", `suss-planner-${semesterId}-${viewMode}.pdf`)} />
-                <ActionButton variant="ghost" icon={<CalendarIcon className="h-4 w-4" />} label="ICS" onClick={() => triggerDownload("/api/export/ics", `suss-planner-${semesterId}-${viewMode}.ics`)} />
-                <ActionButton variant="ghost" icon={<GridIcon className="h-4 w-4" />} label="PNG" onClick={() => void handlePngExport()} />
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                <ActionButton variant="ghost" icon={<DownloadIcon className="h-[18px] w-[18px]" />} label="PDF" onClick={() => triggerDownload("/api/export/pdf", `suss-planner-${semesterId}-${viewMode}.pdf`)} />
+                <ActionButton variant="ghost" icon={<CalendarIcon className="h-[18px] w-[18px]" />} label="ICS" onClick={() => triggerDownload("/api/export/ics", `suss-planner-${semesterId}-${viewMode}.ics`)} />
+                <ActionButton variant="ghost" icon={<GridIcon className="h-[18px] w-[18px]" />} label="PNG" onClick={() => void handlePngExport()} />
               </div>
             ) : null}
 
             {shareMessage ? (
-              <div className="mt-3 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-3 py-2 text-[11px] font-semibold leading-4 text-[var(--primary)]">
+              <div className="mt-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--primary)]">
                 {shareMessage}
               </div>
             ) : null}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-[16px] pb-[16px]">
-            <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-3"}>
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-3 pb-3">
+            <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
               {selectedCards.map((record) => {
                 const isHidden = hiddenClasses.includes(record.shareKey);
                 return (
                   <article
                     key={record.shareKey}
-                    className="group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 shadow-sm transition-shadow hover:shadow-md"
+                    className="group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 shadow-sm transition-shadow hover:shadow-md"
                   >
                     <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: record.color }} />
 
-                    <div className="pl-2">
-                      <div className="flex items-start justify-between gap-3">
+                    <div className="pl-1.5">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span aria-hidden="true" className="h-3 w-3 rounded-[3px] border border-black/10" style={{ backgroundColor: record.color }} />
-                            <h4 className="truncate text-[12px] font-bold leading-4 text-[var(--on-surface)]">
-                              {record.courseCode}
-                              <span className="ml-2 font-medium text-[var(--on-surface-variant)]">{record.courseName ?? "Untitled course"}</span>
-                            </h4>
+                            <span aria-hidden="true" className="h-4 w-4 rounded-[4px] border border-black/10" style={{ backgroundColor: record.color }} />
+                            <div className="flex min-w-0 items-baseline gap-2">
+                              <h4 className="shrink-0 text-[15px] font-extrabold leading-5 text-[var(--on-surface)]">{record.courseCode}</h4>
+                              <p className="min-w-0 truncate text-[14px] font-normal leading-5 text-[var(--on-surface)]">
+                                {record.courseName ?? "Untitled course"}
+                              </p>
+                            </div>
                           </div>
-                          <div className="mt-1 flex items-center gap-2 text-[11px] font-medium leading-[14px] text-[var(--on-surface-variant)]">
-                            <span className="flex min-w-0 items-center gap-1">
-                              <ListIcon className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate">{record.groupCodeType} {record.groupCode}</span>
-                            </span>
-                            <span aria-hidden="true">•</span>
-                            <span className="flex min-w-0 items-center gap-1">
-                              <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate">{record.examLabel}</span>
-                            </span>
-                            <span aria-hidden="true">•</span>
-                            <span className="flex shrink-0 items-center gap-1">
-                              <SchoolIcon className="h-3.5 w-3.5 shrink-0" />
-                              <span>{record.creditUnits?.toFixed(1) ?? "0.0"} CU</span>
-                            </span>
+                          <div className="mt-1 space-y-1 text-[13px] font-medium leading-5 text-[var(--on-surface-variant)]">
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <ListIcon className="h-4 w-4 shrink-0" />
+                              <span className="shrink-0 font-semibold text-[var(--on-surface)]">Group:</span>
+                              <span className="truncate">{formatClassGroupLabel(record.groupCode)}</span>
+                            </div>
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <CalendarIcon className="h-4 w-4 shrink-0" />
+                              {record.examDateLabel === "No Exam" || record.examDateLabel === "ECA" ? (
+                                <span className="truncate font-bold text-[var(--on-surface)]">{record.examDateLabel}</span>
+                              ) : (
+                                <>
+                                  <span className="shrink-0 font-semibold text-[var(--on-surface)]">Exam:</span>
+                                  <span className="truncate">{record.examDateLabel}{record.examTimeLabel ? `, ${record.examTimeLabel}` : ""}</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <SchoolIcon className="h-4 w-4 shrink-0" />
+                              <span className="shrink-0 font-semibold text-[var(--on-surface)]">Credit Units:</span>
+                              <span>{record.creditUnits?.toFixed(1) ?? "0.0"}</span>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1">
-                          <IconButton label={isHidden ? "Show course" : "Hide course"} onClick={() => toggleHidden(record.shareKey)}>
-                            {isHidden ? <EyeOffIcon className="h-[18px] w-[18px]" /> : <EyeIcon className="h-[18px] w-[18px]" />}
+                        <div className="flex flex-col items-center gap-0.5">
+                          <IconButton label="View class schedule" onClick={() => setScheduleCourse(record)} className="h-9 w-9">
+                            <CalendarIcon className="h-5 w-5" />
                           </IconButton>
-                          <IconButton label="Remove course" onClick={() => removeClass(record.shareKey)} danger>
-                            <TrashIcon className="h-[18px] w-[18px]" />
+                          <IconButton label={isHidden ? "Show course" : "Hide course"} onClick={() => toggleHidden(record.shareKey)} className="h-9 w-9">
+                            {isHidden ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                          </IconButton>
+                          <IconButton label="Remove course" onClick={() => removeClass(record.shareKey)} danger className="h-9 w-9">
+                            <TrashIcon className="h-5 w-5" />
                           </IconButton>
                         </div>
                       </div>
@@ -679,13 +862,13 @@ export function PlannerClient({
                 );
               })}
 
-              <div className={`flex flex-col items-center justify-center rounded-[0.5rem] border-2 border-dashed border-[var(--outline-variant)] px-6 text-center text-[var(--on-surface-variant)] opacity-60 ${orientation === "horizontal" ? "py-1" : "h-32"}`}>
+              <div className={`flex flex-col items-center justify-center rounded-[0.5rem] border-2 border-dashed border-[var(--outline-variant)] px-4 text-center text-[var(--on-surface-variant)] opacity-60 ${orientation === "horizontal" ? "py-1" : "h-28"}`}>
                 <BookIcon className="mb-2 h-6 w-6" />
                 <p className="text-[11px] font-medium leading-[14px]">Search to add more courses</p>
               </div>
             </div>
 
-            <div className={`flex items-start justify-between gap-4 border-t border-[var(--outline-variant)] pt-4 ${orientation === "horizontal" ? "mt-3" : "mt-2"}`}>
+            <div className={`flex items-start justify-between gap-3 border-t border-[var(--outline-variant)] pt-3 ${orientation === "horizontal" ? "mt-2.5" : "mt-2"}`}>
               <div className="text-left text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
                 <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
                 <div className="mt-1 text-[18px] font-bold leading-6 text-[var(--primary)]">{totalCredits.toFixed(1)} CU</div>
@@ -697,67 +880,45 @@ export function PlannerClient({
       </div>
 
       <Modal
-        open={classPickerOpen}
-        title={classPickerCourse ? `${classPickerCourse.courseCode} groups` : "Class groups"}
-        description={classPickerCourse?.courseName ?? "Select one class group to add to the timetable."}
-        onClose={() => setClassPickerOpen(false)}
-        footer={
-          <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Close" onClick={() => setClassPickerOpen(false)} />
-        }
+        open={Boolean(scheduleCourse)}
+        title={scheduleCourse ? `${scheduleCourse.courseCode} Class schedule` : "Class schedule"}
+        description={scheduleCourse?.courseName ?? undefined}
+        onClose={() => setScheduleCourse(null)}
+        maxWidthClassName="max-w-3xl"
       >
-        {classPickerLoading ? (
-          <div className="text-[14px] leading-5 text-[var(--on-surface-variant)]">Loading class groups…</div>
-        ) : classPickerError ? (
-          <div className="rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-4 py-3 text-[13px] leading-5 text-[var(--error)]">
-            {classPickerError}
-          </div>
-        ) : classPickerClasses.length === 0 ? (
-          <div className="rounded-[0.5rem] border border-dashed border-[var(--outline-variant)] px-4 py-3 text-[13px] leading-5 text-[var(--on-surface-variant)]">
-            No class groups are available for this course in the selected semester.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {classPickerClasses.map((group) => {
-              const identifier: SharedClassIdentifier = {
-                courseCode: group.courseCode,
-                scheduleType: group.scheduleType,
-                groupCodeType: group.groupCodeType,
-                groupCode: group.groupCode,
-              };
+        {scheduleCourse
+          ? (() => {
+            const classEvents = scheduleCourse.events
+              .filter((event) => event.eventKind === "CLASS")
+              .sort((left, right) => `${left.eventDate}${left.startTime}`.localeCompare(`${right.eventDate}${right.startTime}`));
 
+            if (classEvents.length === 0)
+            {
               return (
-                <article key={`${group.classId}`} className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-[14px] font-semibold leading-5 text-[var(--on-surface)]">
-                        {group.groupCodeType} {group.groupCode}
-                      </h3>
-                      <p className="mt-1 text-[12px] leading-4 text-[var(--on-surface-variant)]">
-                        {group.scheduleType} · {group.creditUnits?.toFixed(1) ?? "0.0"} CU · {group.presentationPattern ?? "Pattern unavailable"}
-                      </p>
-                    </div>
-                    <ActionButton variant="primary" icon={<ShareIcon className="h-4 w-4" />} label="Add group" onClick={() => addClassSelection(identifier)} />
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {group.events.map((event) => (
-                      <div key={event.eventId} className="rounded-[0.5rem] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] leading-4 text-[var(--on-surface-variant)]">
-                        <div className="font-semibold text-[var(--on-surface)]">{event.eventKind} · {formatEventDate(event.eventDate)}</div>
-                        <div>{formatTimeRange(event.startTime, event.endTime)} · {event.venue ?? event.eventMode ?? "TBA"}</div>
-                        {event.weekLabel ? <div>{event.weekLabel}</div> : null}
-                      </div>
-                    ))}
-                  </div>
-                </article>
+                <p className="rounded-[0.5rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-4 text-[var(--on-surface-variant)]">
+                  No class schedule events for this course.
+                </p>
               );
-            })}
-          </div>
-        )}
+            }
+
+            return classEvents.map((event) => (
+              <article key={event.eventId} className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] leading-4">
+                <div className="font-semibold text-[var(--on-surface)]">{formatEventDate(event.eventDate)}</div>
+                <div className="mt-1 text-[var(--on-surface-variant)]">{formatTimeRange(event.startTime, event.endTime)}</div>
+                <div className="mt-0.5 text-[var(--on-surface-variant)]">
+                  {event.venue ?? event.eventMode ?? "Venue TBD"}
+                </div>
+                {event.weekLabel ? <div className="mt-0.5 text-[var(--on-surface-variant)]">{event.weekLabel}</div> : null}
+              </article>
+            ));
+          })()
+          : null}
       </Modal>
 
       <Modal
         open={confirmResetOpen}
         title="Reset planner"
-        description="This clears the saved local timetable for the current planner and resets the display options."
+        description="This clears the selected courses for the current timetable and keeps your current display layout."
         onClose={() => setConfirmResetOpen(false)}
         footer={(
           <>
@@ -814,23 +975,18 @@ function SortDropdown({
 {
   return (
     <div className="min-w-[10rem] shrink-0">
-      <div className="mb-1 text-left text-[11px] font-medium uppercase tracking-tight text-[var(--on-surface-variant)]">Sort by</div>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          className={`rounded-[0.5rem] border px-3 py-1.5 text-[12px] font-semibold leading-4 ${sortMode === "code" ? "border-[var(--primary)] bg-[var(--primary-fixed)] text-[var(--primary)]" : "border-[var(--outline-variant)] bg-[var(--surface-container-low)] text-[var(--on-surface)]"}`}
-          onClick={() => onSelect("code")}
-        >
-          Code
-        </button>
-        <button
-          type="button"
-          className={`rounded-[0.5rem] border px-3 py-1.5 text-[12px] font-semibold leading-4 ${sortMode === "exam" ? "border-[var(--primary)] bg-[var(--primary-fixed)] text-[var(--primary)]" : "border-[var(--outline-variant)] bg-[var(--surface-container-low)] text-[var(--on-surface)]"}`}
-          onClick={() => onSelect("exam")}
-        >
-          Exam
-        </button>
-      </div>
+      <label className="mb-1 block text-left text-[11px] font-medium uppercase tracking-tight text-[var(--on-surface-variant)]" htmlFor="my-courses-sort-mode">
+        Sort by
+      </label>
+      <select
+        id="my-courses-sort-mode"
+        value={sortMode}
+        onChange={(event) => onSelect(event.target.value as "code" | "exam")}
+        className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-1.5 text-[12px] font-semibold leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+      >
+        <option value="code">Code</option>
+        <option value="exam">Exam</option>
+      </select>
     </div>
   );
 }

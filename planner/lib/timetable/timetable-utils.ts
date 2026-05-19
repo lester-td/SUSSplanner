@@ -4,6 +4,7 @@ import {
 import {
   buildWeekLabel,
   DEFAULT_END_MINUTES,
+  formatDateRange,
   formatEventDate,
   getVisibleEndMinutes,
   stripSeconds,
@@ -37,23 +38,20 @@ function unique<T>(values: T[])
 
 function formatWeekSummary(events: ClassEventWithWeekRecord[])
 {
-  const labels = unique(
+  const teachingWeekNumbers = unique(
     events
-      .map((event) => {
-        if (event.weekLabel)
-        {
-          return event.weekLabel;
-        }
-
-        if (event.weekType && event.weekNo)
-        {
-          return event.weekType === "TEACHING" ? `Week ${event.weekNo}` : `${event.weekType} ${event.weekNo}`;
-        }
-
-        return formatEventDate(event.eventDate);
-      })
-      .filter(Boolean),
+      .filter((event) => event.weekType === "TEACHING" && event.weekNo !== null)
+      .map((event) => String(event.weekNo)),
   );
+
+  if (teachingWeekNumbers.length > 0)
+  {
+    return teachingWeekNumbers.length <= 6
+      ? teachingWeekNumbers.join(", ")
+      : `${teachingWeekNumbers.slice(0, 6).join(", ")} +${teachingWeekNumbers.length - 6}`;
+  }
+
+  const labels = unique(events.map((event) => event.weekLabel ?? formatEventDate(event.eventDate)).filter(Boolean));
 
   if (labels.length === 0)
   {
@@ -186,12 +184,12 @@ export function buildSelectedCourseCards(data: TimetableData)
     const exam = selection.events
       .filter((event) => event.eventKind === "EXAM")
       .sort((left, right) => `${left.eventDate}${left.startTime}`.localeCompare(`${right.eventDate}${right.startTime}`))[0] ?? null;
-
     return {
       ...selection,
       shareKey: buildSharedClassIdentifier(selection.identifier),
       color: colorMap.get(selection.courseCode) ?? COURSE_COLORS[0],
-      examLabel: exam ? `${formatEventDate(exam.eventDate)} ${stripSeconds(exam.startTime)}` : "No Exam",
+      examDateLabel: exam ? formatEventDate(exam.eventDate) : selection.hasEca ? "ECA" : "No Exam",
+      examTimeLabel: exam ? stripSeconds(exam.startTime) : null,
     };
   });
 }
@@ -203,7 +201,7 @@ export function buildWeekOptions(semesterWeeks: SemesterWeekRecord[])
     ...semesterWeeks.map((week) => ({
       id: String(week.weekId),
       title: buildWeekLabel(week),
-      subtitle: week.startDate.slice(5),
+      subtitle: formatDateRange(week.startDate, week.endDate),
     })),
   ];
 }

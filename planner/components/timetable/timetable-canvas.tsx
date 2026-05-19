@@ -6,6 +6,7 @@ import { PinIcon } from "@/components/planner/icons";
 import {
   DAY_LABELS,
   START_MINUTES,
+  formatClassGroupLabel,
   formatTimeRange,
   minutesToLabel,
   minutesToTimeString,
@@ -130,31 +131,6 @@ function buildLaneLayouts(blocks: TimetableBlock[])
   return laneLayouts;
 }
 
-function getTimetableBlockFillColor(color: string)
-{
-  switch (color)
-  {
-    case "#cf5b22":
-      return "#ffdbc9";
-    case "#2e6f95":
-      return "#d7eaf5";
-    case "#7a8f2d":
-      return "#e2ecc7";
-    case "#8f4bc4":
-      return "#ecdfff";
-    case "#008b7b":
-      return "#d2f2ee";
-    case "#c14953":
-      return "#ffd9dd";
-    case "#a76318":
-      return "#f5dfc9";
-    case "#3556b8":
-      return "#dde6ff";
-    default:
-      return "#e7e8ee";
-  }
-}
-
 function getVerticalTimeLabelStyle(slot: number, firstSlot: number, lastSlot: number, rangeMinutes: number): CSSProperties
 {
   const leftPercent = ((slot - START_MINUTES) / rangeMinutes) * 100;
@@ -196,8 +172,7 @@ export function TimetableCanvas({
   timeSlots,
   visibleEndMinutes,
   showAllWeeks,
-  focusMode,
-  activeBlockId,
+  activeShareKey,
   onBlockClick,
   showCurrentTime,
 }: {
@@ -207,8 +182,7 @@ export function TimetableCanvas({
   timeSlots: number[];
   visibleEndMinutes: number;
   showAllWeeks: boolean;
-  focusMode: boolean;
-  activeBlockId: string;
+  activeShareKey: string | null;
   onBlockClick: (block: TimetableBlock) => void;
   showCurrentTime: boolean;
 })
@@ -314,8 +288,8 @@ export function TimetableCanvas({
                     key={block.id}
                     block={block}
                     color={blockColorByKey.get(block.shareKey) ?? "#3556b8"}
-                    active={activeBlockId === block.id}
-                    dimmed={focusMode && activeBlockId !== block.id}
+                    active={activeShareKey === block.shareKey}
+                    dimmed={false}
                     style={{
                       top: `${laneTop}px`,
                       left: `${blockLeftPercent}%`,
@@ -433,8 +407,8 @@ export function TimetableCanvas({
                     key={block.id}
                     block={block}
                     color={blockColorByKey.get(block.shareKey) ?? "#3556b8"}
-                    active={activeBlockId === block.id}
-                    dimmed={focusMode && activeBlockId !== block.id}
+                    active={activeShareKey === block.shareKey}
+                    dimmed={false}
                     style={{
                       top: `${laneTop}px`,
                       left: laneLeft,
@@ -477,31 +451,31 @@ function TimetableBlockButton({
   return (
     <button
       type="button"
-      className={`absolute z-10 origin-center overflow-visible rounded-[0.375rem] border border-[color:var(--block-outline)] bg-[color:var(--block-bg)] p-2 text-left text-[color:var(--block-text)] transition-[box-shadow,opacity] ${
+      className={`absolute z-10 origin-center overflow-visible rounded-[0.375rem] border border-[color:var(--block-outline)] bg-[color:var(--block-bg)] p-1.5 text-left text-[color:var(--block-text)] transition-[box-shadow,opacity] ${
         active ? "ring-2 ring-[var(--primary)] shadow-md" : "shadow-sm"
       }`}
       style={{
         ...style,
-        ["--block-bg" as string]: getTimetableBlockFillColor(color),
-        ["--block-outline" as string]: "rgba(25, 28, 32, 0.08)",
-        ["--block-text" as string]: "#191c20",
+        ["--block-bg" as string]: color,
+        ["--block-outline" as string]: "rgba(0, 0, 0, 0.12)",
+        ["--block-text" as string]: "#ffffff",
         opacity: dimmed ? 0.5 : 1,
       }}
       onClick={onClick}
     >
       <div className="flex h-full flex-col items-start justify-start gap-0.5 text-left">
-        <p className="max-w-full truncate text-[12px] font-bold leading-4">{block.courseCode}</p>
-        <p className="max-w-full truncate text-[11px] leading-[14px] opacity-90">{block.groupCodeType} {block.groupCode}</p>
-        <p className="max-w-full truncate text-[11px] leading-[14px] opacity-75">
+        <p className="max-w-full truncate text-[14px] font-bold leading-5">{block.courseCode}</p>
+        <p className="max-w-full truncate text-[12px] leading-[15px] opacity-90">{formatClassGroupLabel(block.groupCode)}</p>
+        <p className="max-w-full truncate text-[13px] leading-4 opacity-75">
           {formatTimeRange(minutesToTimeString(block.startMinutes), minutesToTimeString(block.endMinutes))}
         </p>
         {showWeekLabel ? (
-          <p className="max-w-full truncate text-[10px] leading-3 opacity-75">
+          <p className="max-w-full truncate text-[12px] leading-[15px] opacity-75">
             {block.weekLabel}
           </p>
         ) : null}
         {block.venue ? (
-          <p className="mt-0.5 flex max-w-full items-center gap-1 truncate text-[10px] leading-3 opacity-75">
+          <p className="mt-0.5 flex max-w-full items-center gap-1 truncate text-[12px] leading-[15px] opacity-75">
             <PinIcon className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{block.venue}</span>
           </p>

@@ -50,8 +50,10 @@ export type CourseSearchResult = {
   courseLevel: string | null;
   creditUnits: number | null;
   presentationPattern: string | null;
+  courseSynopsis: string | null;
   hasAvailableClasses: boolean;
   availableClassCount: number;
+  offeredSemesters: SemesterRecord[];
 };
 
 export type CourseRecord = {
@@ -127,6 +129,7 @@ export type CourseClassRecord = ClassRecord & {
 export type TimetableSelectionRecord = CourseClassRecord & {
   identifier: SharedClassIdentifier;
   shareKey: string;
+  hasEca: boolean;
 };
 
 export type TimetableEventRecord = ClassEventWithWeekRecord & {

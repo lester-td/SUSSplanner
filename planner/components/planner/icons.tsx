@@ -12,6 +12,15 @@ export function SearchIcon({ className }: IconProps)
   );
 }
 
+export function PlusIcon({ className }: IconProps)
+{
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
 export function EyeIcon({ className }: IconProps)
 {
   return (
@@ -243,6 +252,16 @@ export function CodeIcon({ className }: IconProps)
       <path d="m8 8-5 4 5 4" />
       <path d="m16 8 5 4-5 4" />
       <path d="m13 5-2 14" />
+    </svg>
+  );
+}
+
+export function ArrowUpRightIcon({ className }: IconProps)
+{
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <path d="M7 17 17 7" />
+      <path d="M9 7h8v8" />
     </svg>
   );
 }

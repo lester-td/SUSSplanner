@@ -17,7 +17,7 @@
   --primary-container: #004684;
   --primary-fixed: #d4e3ff;
   --on-primary: #ffffff;
-  --on-primary-container: #87b6fb;
+  --on-primary-container: #ffffff;
   --on-surface: #191c20;
   --on-surface-variant: #424750;
   --error: #ba1a1a;
@@ -63,7 +63,7 @@ input,
 select {
   font: inherit;
   font-family: inherit;
-  border-radius: 0.125rem;
+  border-radius: 0.375rem;
 }
 
 ::selection {

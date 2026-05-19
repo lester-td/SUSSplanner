@@ -11,6 +11,7 @@ import {
   sql,
 } from "drizzle-orm";
 
+import type { CourseSearchFilters } from "@/lib/timetable/course-search";
 import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
 import { buildSharedClassIdentifier } from "@/lib/timetable/share-url";
 import type {
@@ -149,7 +150,7 @@ export async function getSemesters()
   const rows = await db
     .select()
     .from(semesters)
-    .orderBy(desc(semesters.academicYear), desc(semesters.semesterNo), desc(semesters.semesterId));
+    .orderBy(asc(semesters.academicYear), asc(semesters.semesterNo), asc(semesters.semesterId));
 
   return rows.map(mapSemesterRow);
 }
@@ -183,6 +184,33 @@ export async function getSemestersWithWeeks()
   }));
 }
 
+export async function getSemestersWithClassesAndWeeks()
+{
+  const [semesterRows, weekRows] = await Promise.all([
+    db
+      .selectDistinct({
+        semesterId: semesters.semesterId,
+        academicYear: semesters.academicYear,
+        semesterNo: semesters.semesterNo,
+        semesterName: semesters.semesterName,
+      })
+      .from(semesters)
+      .innerJoin(classes, eq(classes.semesterId, semesters.semesterId))
+      .orderBy(asc(semesters.academicYear), asc(semesters.semesterNo), asc(semesters.semesterId)),
+    getSemesterWeeks(),
+  ]);
+
+  return semesterRows
+    .map((semester) => ({
+      semesterId: semester.semesterId,
+      academicYear: semester.academicYear,
+      semesterNo: semester.semesterNo as 1 | 2 | 3,
+      semesterName: semester.semesterName,
+      weeks: weekRows.filter((week) => week.semesterId === semester.semesterId),
+    }))
+    .filter((semester) => semester.weeks.length > 0);
+}
+
 export async function getSemesterById(semesterId: number)
 {
   const [row] = await db
@@ -194,18 +222,74 @@ export async function getSemesterById(semesterId: number)
   return row ? mapSemesterRow(row) : null;
 }
 
-export async function searchCourses(
-  query: string,
-  semesterId?: number,
-  scheduleType?: "daytime" | "evening",
-  postgraduate: "all" | "undergraduate" | "postgraduate" = "all",
-  school?: string,
-  courseLevel?: string,
-  limit = 25,
-)
+async function getOfferedSemestersForCourseCodes(courseCodes: string[])
 {
-  const searchTerm = query.trim();
+  const normalizedCourseCodes = unique(courseCodes.map(normalizeCourseCode));
+
+  if (normalizedCourseCodes.length === 0)
+  {
+    return new Map<string, SemesterRecord[]>();
+  }
+
+  const rows = await db
+    .selectDistinct({
+      courseCode: classes.courseCode,
+      semesterId: semesters.semesterId,
+      academicYear: semesters.academicYear,
+      semesterNo: semesters.semesterNo,
+      semesterName: semesters.semesterName,
+    })
+    .from(classes)
+    .innerJoin(semesters, eq(classes.semesterId, semesters.semesterId))
+    .where(inArray(classes.courseCode, normalizedCourseCodes))
+    .orderBy(asc(classes.courseCode), desc(semesters.academicYear), desc(semesters.semesterNo), desc(semesters.semesterId));
+
+  const semestersByCourseCode = new Map<string, SemesterRecord[]>();
+
+  for (const row of rows)
+  {
+    const mappedSemester = mapSemesterRow({
+      semesterId: row.semesterId,
+      academicYear: row.academicYear,
+      semesterNo: row.semesterNo,
+      semesterName: row.semesterName,
+      lastUpdated: new Date(0),
+    });
+    const existing = semestersByCourseCode.get(row.courseCode);
+
+    if (existing)
+    {
+      existing.push(mappedSemester);
+    }
+    else
+    {
+      semestersByCourseCode.set(row.courseCode, [mappedSemester]);
+    }
+  }
+
+  return semestersByCourseCode;
+}
+
+function unique<T>(values: T[])
+{
+  return [...new Set(values)];
+}
+
+export async function searchCourses({
+  q,
+  semesterIds,
+  scheduleTypes,
+  postgraduateOnly,
+  availableAsGspOnly,
+  schoolNames,
+  courseLevels,
+  limit,
+}: CourseSearchFilters)
+{
+  const searchTerm = q.trim();
   const predicates = [];
+  const classFilterPredicates = [eq(classes.courseCode, courses.courseCode)];
+  const hasClassFilters = semesterIds.length > 0 || scheduleTypes.length > 0 || availableAsGspOnly;
 
   if (searchTerm)
   {
@@ -218,60 +302,98 @@ export async function searchCourses(
     );
   }
 
-  if (postgraduate === "undergraduate")
-  {
-    predicates.push(eq(courses.isPostgraduate, false));
-  }
-  else if (postgraduate === "postgraduate")
+  if (postgraduateOnly)
   {
     predicates.push(eq(courses.isPostgraduate, true));
   }
 
-  if (school)
+  if (schoolNames.length > 0)
   {
-    predicates.push(eq(courses.schoolName, school));
+    predicates.push(inArray(courses.schoolName, schoolNames));
   }
 
-  if (courseLevel)
+  if (courseLevels.length > 0)
   {
-    predicates.push(eq(courses.courseLevel, courseLevel));
+    predicates.push(inArray(courses.courseLevel, courseLevels));
   }
 
-  const joinPredicates = [eq(classes.courseCode, courses.courseCode)];
-  if (semesterId)
+  if (semesterIds.length > 0)
   {
-    joinPredicates.push(eq(classes.semesterId, semesterId));
+    classFilterPredicates.push(inArray(classes.semesterId, semesterIds));
   }
-  if (scheduleType)
+  if (scheduleTypes.length > 0)
   {
-    joinPredicates.push(eq(classes.scheduleType, scheduleType));
+    classFilterPredicates.push(inArray(classes.scheduleType, scheduleTypes));
+  }
+  if (availableAsGspOnly)
+  {
+    classFilterPredicates.push(eq(classes.availableAsGsp, true));
   }
 
-  const rows = await db
-    .select({
-      courseCode: courses.courseCode,
-      courseName: courses.courseName,
-      schoolName: courses.schoolName,
-      isPostgraduate: courses.isPostgraduate,
-      courseLevel: courses.courseLevel,
-      creditUnits: courses.creditUnits,
-      presentationPattern: courses.presentationPattern,
-      availableClassCount: sql<number>`count(distinct ${classes.classId})::int`,
-    })
-    .from(courses)
-    .leftJoin(classes, and(...joinPredicates))
-    .where(predicates.length > 0 ? and(...predicates) : undefined)
-    .groupBy(
-      courses.courseCode,
-      courses.courseName,
-      courses.schoolName,
-      courses.isPostgraduate,
-      courses.courseLevel,
-      courses.creditUnits,
-      courses.presentationPattern,
-    )
-    .orderBy(asc(courses.courseCode))
-    .limit(limit);
+  const selectShape = {
+    courseCode: courses.courseCode,
+    courseName: courses.courseName,
+    schoolName: courses.schoolName,
+    isPostgraduate: courses.isPostgraduate,
+    courseLevel: courses.courseLevel,
+    creditUnits: courses.creditUnits,
+    presentationPattern: courses.presentationPattern,
+    courseSynopsis: courses.courseSynopsis,
+    availableClassCount: sql<number>`count(distinct ${classes.classId})::int`,
+  };
+
+  const searchRanking = searchTerm
+    ? sql<number>`case
+      when upper(${courses.courseCode}) = upper(${searchTerm}) then 0
+      when upper(${courses.courseCode}) like upper(${`${searchTerm}%`}) then 1
+      when upper(${courses.courseCode}) like upper(${`%${searchTerm}%`}) then 2
+      when ${courses.courseName} ilike ${`${searchTerm}%`} then 3
+      when ${courses.courseName} ilike ${`%${searchTerm}%`} then 4
+      when ${courses.schoolName} ilike ${`${searchTerm}%`} then 5
+      when ${courses.schoolName} ilike ${`%${searchTerm}%`} then 6
+      else 7
+    end`
+    : sql<number>`7`;
+
+  const rows = hasClassFilters
+    ? await db
+        .select(selectShape)
+        .from(courses)
+        .innerJoin(classes, and(...classFilterPredicates))
+        .where(predicates.length > 0 ? and(...predicates) : undefined)
+        .groupBy(
+          courses.courseCode,
+          courses.courseName,
+          courses.schoolName,
+          courses.isPostgraduate,
+          courses.courseLevel,
+          courses.creditUnits,
+          courses.presentationPattern,
+          courses.courseSynopsis,
+        )
+        .orderBy(asc(searchRanking), asc(courses.courseCode))
+        .limit(limit)
+    : await db
+        .select(selectShape)
+        .from(courses)
+        .leftJoin(classes, eq(classes.courseCode, courses.courseCode))
+        .where(predicates.length > 0 ? and(...predicates) : undefined)
+        .groupBy(
+          courses.courseCode,
+          courses.courseName,
+          courses.schoolName,
+          courses.isPostgraduate,
+          courses.courseLevel,
+          courses.creditUnits,
+          courses.presentationPattern,
+          courses.courseSynopsis,
+        )
+        .orderBy(asc(searchRanking), asc(courses.courseCode))
+        .limit(limit);
+
+  const offeredSemestersByCourseCode = await getOfferedSemestersForCourseCodes(
+    rows.map((row) => row.courseCode),
+  );
 
   return rows.map((row) => ({
     courseCode: row.courseCode,
@@ -281,9 +403,16 @@ export async function searchCourses(
     courseLevel: row.courseLevel,
     creditUnits: row.creditUnits,
     presentationPattern: row.presentationPattern,
+    courseSynopsis: row.courseSynopsis,
     hasAvailableClasses: row.availableClassCount > 0,
     availableClassCount: row.availableClassCount,
+    offeredSemesters: offeredSemestersByCourseCode.get(row.courseCode) ?? [],
   } satisfies CourseSearchResult));
+}
+
+export async function getCourseOfferedSemesters(courseCode: string)
+{
+  return (await getOfferedSemestersForCourseCodes([courseCode])).get(normalizeCourseCode(courseCode)) ?? [];
 }
 
 export async function getCourseByCode(courseCode: string)
@@ -435,7 +564,16 @@ export async function getCoursesWithAvailableClasses(
   scheduleType?: "daytime" | "evening",
 )
 {
-  return searchCourses("", semesterId, scheduleType, "all", undefined, undefined, 200);
+  return searchCourses({
+    q: "",
+    semesterIds: [semesterId],
+    scheduleTypes: scheduleType ? [scheduleType] : [],
+    postgraduateOnly: false,
+    availableAsGspOnly: false,
+    schoolNames: [],
+    courseLevels: [],
+    limit: 200,
+  });
 }
 
 export async function getCourseSearchFacets()
@@ -506,6 +644,27 @@ export async function getTimetableDataFromClassIds(classIds: number[])
   }
 
   const semesterId = classRows[0].semesterId;
+  const assessmentRows = await db
+    .select({
+      courseCode: assessmentComponents.courseCode,
+      scheduleType: assessmentComponents.scheduleType,
+      componentName: assessmentComponents.componentName,
+      assessmentMode: assessmentComponents.assessmentMode,
+    })
+    .from(assessmentComponents)
+    .where(inArray(assessmentComponents.courseCode, unique(classRows.map((row) => row.courseCode))));
+  const hasEcaByCourseAndScheduleType = new Map<string, boolean>();
+  for (const row of assessmentRows)
+  {
+    const hasEca = [row.componentName, row.assessmentMode]
+      .some((value) => value?.toLowerCase().includes("eca"));
+    if (!hasEca)
+    {
+      continue;
+    }
+    hasEcaByCourseAndScheduleType.set(`${row.courseCode}:${row.scheduleType}`, true);
+  }
+
   const [semester, weeks, eventRows] = await Promise.all([
     getSemesterById(semesterId),
     getSemesterWeeks(semesterId),
@@ -594,6 +753,7 @@ export async function getTimetableDataFromClassIds(classIds: number[])
       presentationPattern: row.presentationPattern,
       identifier,
       shareKey: buildSharedClassIdentifier(identifier),
+      hasEca: hasEcaByCourseAndScheduleType.get(`${row.courseCode}:${row.scheduleType}`) ?? false,
       events: eventsByClassId.get(row.classId) ?? [],
     } satisfies TimetableSelectionRecord;
   });

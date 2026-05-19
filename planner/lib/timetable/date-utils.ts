@@ -1,6 +1,6 @@
-import type { SemesterRecord, SemesterWeekRecord } from "./types";
+import type { EventKind, SemesterRecord, SemesterWeekRecord } from "./types";
 
-export const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const START_MINUTES = 8 * 60 + 30;
 export const DEFAULT_END_MINUTES = 18 * 60 + 30;
 export const MAX_END_MINUTES = 22 * 60;
@@ -76,6 +76,22 @@ export function formatTimeRange(startTime: string, endTime: string)
   return `${stripSeconds(startTime)}-${stripSeconds(endTime)}`;
 }
 
+export function formatClassGroupLabel(groupCode: string)
+{
+  return groupCode;
+}
+
+export function formatEventHeading(eventKind: EventKind, eventDate: string)
+{
+  if (eventKind === "CLASS")
+  {
+    return formatEventDate(eventDate);
+  }
+
+  const label = eventKind.charAt(0) + eventKind.slice(1).toLowerCase();
+  return `${label} · ${formatEventDate(eventDate)}`;
+}
+
 export function getVisibleEndMinutes(latestEndMinutes: number)
 {
   return Math.min(MAX_END_MINUTES, Math.max(DEFAULT_END_MINUTES, latestEndMinutes));
@@ -136,10 +152,10 @@ export function getCurrentWeekChip(
 
   if (!week)
   {
-    return `${semester.academicYear}, ${semester.semesterName}`;
+    return `AY${semester.academicYear}, ${semester.semesterName}`;
   }
 
   return week.weekType === "TEACHING"
-    ? `${semester.academicYear}, ${semester.semesterName}, Week ${week.weekNo}`
-    : `${semester.academicYear}, ${semester.semesterName}, ${week.label}`;
+    ? `AY${semester.academicYear}, ${semester.semesterName}, Week ${week.weekNo}`
+    : `AY${semester.academicYear}, ${semester.semesterName}, ${week.label}`;
 }

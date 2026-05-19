@@ -19,11 +19,11 @@ export function ActionButton({
   return (
     <button
       type="button"
-      className={`flex items-center justify-center gap-2 rounded-[0.25rem] px-3 py-2 text-[12px] font-semibold leading-4 transition-colors ${
+      className={`flex items-center justify-center gap-2 rounded-[0.5rem] px-3 py-2 text-[11px] font-bold leading-4 transition-colors ${
         stretch ? "w-full" : ""
       } ${
         variant === "primary"
-          ? "bg-[var(--primary)] text-[var(--on-primary)] hover:bg-[var(--primary-container)] hover:text-[var(--on-primary-container)]"
+          ? "bg-[var(--primary)] text-[var(--on-primary)] hover:bg-[var(--primary-container)] hover:text-[var(--on-primary)]"
           : "border border-[var(--outline-variant)] bg-[var(--surface-container)] text-[var(--on-surface)] hover:bg-[var(--surface-container-high)]"
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       onClick={onClick}
@@ -56,7 +56,7 @@ export function IconButton({
       type="button"
       aria-label={label}
       title={label}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-[0.375rem] border transition-colors ${
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-[0.5rem] border transition-colors ${
         danger
           ? "border-transparent text-[var(--error)] hover:bg-[var(--error-container)]"
           : "border-transparent text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"

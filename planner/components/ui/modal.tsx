@@ -7,6 +7,8 @@ export function Modal({
   children,
   footer,
   onClose,
+  maxWidthClassName = "max-w-2xl",
+  bodyClassName = "",
 }: {
   open: boolean;
   title: string;
@@ -14,6 +16,8 @@ export function Modal({
   children?: ReactNode;
   footer?: ReactNode;
   onClose: () => void;
+  maxWidthClassName?: string;
+  bodyClassName?: string;
 })
 {
   if (!open)
@@ -22,15 +26,17 @@ export function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-4 py-6">
       <button type="button" className="absolute inset-0" aria-label="Close modal" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-2xl rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-6 shadow-2xl">
-        <h2 className="text-[20px] font-semibold leading-7 text-[var(--on-surface)]">{title}</h2>
-        {description ? (
-          <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{description}</p>
-        ) : null}
-        {children ? <div className="mt-4">{children}</div> : null}
-        {footer ? <div className="mt-6 flex flex-wrap justify-end gap-2">{footer}</div> : null}
+      <div className={`relative z-10 mx-auto flex max-h-[calc(100dvh-3rem)] w-full flex-col overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-2xl ${maxWidthClassName}`}>
+        <div className="shrink-0 px-6 pb-0 pt-6">
+          <h2 className="text-[20px] font-semibold leading-7 text-[var(--on-surface)]">{title}</h2>
+          {description ? (
+            <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{description}</p>
+          ) : null}
+        </div>
+        {children ? <div className={`min-h-0 flex-1 overflow-y-auto px-6 py-4 ${bodyClassName}`}>{children}</div> : null}
+        {footer ? <div className="shrink-0 px-6 pb-6 pt-0"><div className="flex flex-wrap justify-end gap-2">{footer}</div></div> : null}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import {
   getAssessmentComponents,
   getCourseByCode,
   getCourseClasses,
-  getSemesters,
+  getCourseOfferedSemesters,
   getSemestersWithWeeks,
 } from "@/lib/db/queries";
 import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
@@ -20,10 +20,9 @@ export default async function CourseDetailRoute({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 })
 {
-  const [{ courseCode }, rawSearchParams, semesters, semesterTree] = await Promise.all([
+  const [{ courseCode }, rawSearchParams, semesterTree] = await Promise.all([
     params,
     searchParams,
-    getSemesters(),
     getSemestersWithWeeks(),
   ]);
 
@@ -42,16 +41,17 @@ export default async function CourseDetailRoute({
     notFound();
   }
 
-  const [classes, assessments] = await Promise.all([
+  const [classes, assessments, offeredSemesters] = await Promise.all([
     getCourseClasses(courseCode, selectedSemesterId),
     getAssessmentComponents(courseCode),
+    getCourseOfferedSemesters(courseCode),
   ]);
 
   return (
     <AppShell activeSection="courses" currentWeekLabel={getCurrentWeekChip(semester, week)}>
       <CourseDetailPage
         course={course}
-        semesters={semesters}
+        offeredSemesters={offeredSemesters}
         selectedSemesterId={selectedSemesterId}
         classes={classes}
         assessments={assessments}

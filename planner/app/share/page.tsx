@@ -37,7 +37,7 @@ export default async function SharePage({
             <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               Open a shared timetable URL here to preview it in read-only mode, compare clashes, and import it into your saved planner only if you choose to.
             </p>
-            <Link href="/planner" className="mt-6 inline-flex rounded-[0.25rem] bg-[var(--primary)] px-4 py-2 text-[12px] font-semibold leading-4 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)] hover:text-[var(--on-primary-container)]">
+            <Link href="/planner" className="mt-6 inline-flex rounded-[0.25rem] bg-[var(--primary)] px-4 py-2 text-[12px] font-semibold leading-4 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)] hover:text-[var(--on-primary)]">
               Open planner
             </Link>
           </div>
@@ -60,7 +60,7 @@ export default async function SharePage({
             <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               This share URL is missing required timetable information or has malformed class identifiers.
             </p>
-            <Link href="/planner" className="mt-6 inline-flex rounded-[0.25rem] bg-[var(--primary)] px-4 py-2 text-[12px] font-semibold leading-4 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)] hover:text-[var(--on-primary-container)]">
+            <Link href="/planner" className="mt-6 inline-flex rounded-[0.25rem] bg-[var(--primary)] px-4 py-2 text-[12px] font-semibold leading-4 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)] hover:text-[var(--on-primary)]">
               Open planner
             </Link>
           </div>
