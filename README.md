@@ -1,145 +1,117 @@
-# SUSSmods
+# SUSS Planner
 
-SUSSmods is a timetable planner with:
-- a static frontend in this repo
-- a Next.js backend using PostgreSQL, Drizzle ORM, Zod, and Supabase Auth for admin-only routes
+SUSS Planner is a full-stack Next.js timetable planner rebuilt around the existing Supabase Postgres schema.
 
-Normal users do not log in. Their timetable selections stay in the URL and browser storage. The backend only stores module, semester, offering, and class data.
+## Key constraints
 
-## Project Modes
+- The database schema is the source of truth.
+- Existing Supabase tables and data are preserved.
+- No destructive migrations are included for the core academic tables.
+- Share links are stateless and human-readable.
+- Planner state is stored in localStorage for anonymous users.
 
-### Frontend
-- Served as a static site from this repo
-- Loads timetable data from the backend public API
-- Falls back to `backend/sampleModules.json` only if the backend is unavailable
+## Stack
 
-### Backend
-- Next.js Route Handlers under `app/api`
-- Public read APIs for modules, classes, offerings, and the active semester
-- Admin-only write APIs protected by Supabase Auth plus `admin_profiles`
+- Next.js App Router
+- TypeScript
+- Drizzle ORM
+- Supabase Postgres via `DATABASE_URL`
+- Tailwind CSS v4
+- Zod
+- Route Handlers for search, class lookup, and exports
 
-## Start The Backend
+## Routes
 
-1. Install dependencies:
+### Pages
 
-```bash
-npm install
-```
+- `/planner`
+- `/courses`
+- `/courses/[courseCode]`
+- `/share?sem=...&classes=...`
+- `/` reuses `/planner`
 
-2. Create your local environment file:
+### APIs
 
-```bash
-cp .env.example .env.local
-```
+- `GET /api/courses/search`
+- `GET /api/courses/[courseCode]`
+- `GET /api/classes`
+- `GET /api/export/ics`
+- `GET /api/export/pdf`
 
-3. Fill in `.env.local`:
+PNG export is implemented client-side so the captured image stays visually close to the rendered timetable.
+
+## Environment variables
+
+Create `.env.local` from `.env.example`.
 
 ```env
 DATABASE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-FRONTEND_PUBLIC_ORIGIN=http://127.0.0.1:5500
 ```
 
-4. Generate and apply the database schema:
+Notes:
+
+- `DATABASE_URL` is server-only.
+- The current rewrite does not require Supabase Auth for normal planner usage.
+- `NEXT_PUBLIC_SUPABASE_*` are retained for future Supabase browser integrations, but the current planner logic does not depend on them.
+
+## Install
 
 ```bash
-npm run db:generate
-npm run db:migrate
+npm install
 ```
 
-5. Carry the current dummy data into PostgreSQL:
-
-```bash
-npm run db:seed:sample
-```
-
-Optional seed variables:
-
-```bash
-SEED_ACADEMIC_YEAR=2026/2027 SEED_TERM=1 npm run db:seed:sample
-```
-
-6. Start the backend:
+## Run
 
 ```bash
 npm run dev
 ```
 
-Backend URL:
-
-```text
-http://127.0.0.1:3000
-```
-
-## Start The Frontend
-
-Start a static server from the repo root:
+## Verify
 
 ```bash
-python3 -m http.server 5500
+npm run typecheck
+npm run build
 ```
 
-Open:
+## Drizzle
 
-```text
-http://127.0.0.1:5500
-```
+The Drizzle schema in `lib/db/schema.ts` mirrors the existing Supabase schema manually. No migrations are included for the live academic tables.
 
-By default, the frontend calls the backend at:
-
-```text
-http://127.0.0.1:3000/api/modules
-```
-
-So in normal local development:
-
-1. Start the backend on port `3000`
-2. Start the frontend on port `5500`
-3. Open the frontend URL
-
-## Admin Setup
-
-Admin routes require both:
-- a valid Supabase Auth session
-- a matching row in `admin_profiles.user_id`
-
-You must create at least one Supabase user and insert that user UUID into `admin_profiles` before the admin APIs will work.
-
-## Public API Routes
-
-- `GET /api/modules`
-- `GET /api/modules/[code]`
-- `GET /api/classes`
-- `GET /api/semesters/active`
-- `GET /api/offerings`
-
-## Admin API Routes
-
-- `POST /api/admin/modules`
-- `PATCH /api/admin/modules/[id]`
-- `DELETE /api/admin/modules/[id]`
-- `POST /api/admin/semesters`
-- `PATCH /api/admin/semesters/[id]`
-- `POST /api/admin/classes`
-- `PATCH /api/admin/classes/[id]`
-- `DELETE /api/admin/classes/[id]`
-- `POST /api/admin/import`
-
-## Legacy Files
-
-These older files are still present for reference and frontend fallback behavior:
-- `backend/sampleModules.json`
-- `backend/csvModuleParser.js`
-- `server.js`
-
-The new backend path is the Next.js app under `app/api`, not `server.js`.
-
-## Helper Tests
-
-You can still run the existing helper tests with:
+Generate a migration only if you intentionally change the schema later:
 
 ```bash
-node tests.js
+npm run db:generate
 ```
+
+If you want to introspect the current database manually instead of editing the schema by hand:
+
+```bash
+npx drizzle-kit introspect --config drizzle.config.ts
+```
+
+Do not run `drizzle-kit push` against the existing Supabase database unless you explicitly intend to change it.
+
+## Share link format
+
+Shared timetables use semantic class identifiers instead of raw `class_id` values.
+
+Example:
+
+```text
+/share?sem=1&classes=ICT133:evening:TG:T01,ANL252:daytime:CRN:12345
+```
+
+## Local planner state
+
+The planner persists the following in localStorage:
+
+- selected semester
+- selected class identifiers
+- hidden classes
+- current week filter
+- timetable orientation
+- timetable/exam view mode
+
+Shared links never overwrite local planner state unless the user clicks `Import timetable` and confirms.

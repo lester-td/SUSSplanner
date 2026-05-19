@@ -1,10 +1,12 @@
+import "server-only";
+
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import * as schema from "./schema";
 
-declare global {
-  // eslint-disable-next-line no-var
+declare global
+{
   var __sussplanner_sql_client__: ReturnType<typeof postgres> | undefined;
 }
 
@@ -18,11 +20,10 @@ function getDatabaseUrl()
   return databaseUrl;
 }
 
-const sql =
-  globalThis.__sussplanner_sql_client__ ??
-  postgres(getDatabaseUrl(), {
-    prepare: false,
-  });
+const sql = globalThis.__sussplanner_sql_client__ ?? postgres(getDatabaseUrl(), {
+  prepare: false,
+  max: 10,
+});
 
 if (process.env.NODE_ENV !== "production")
 {
