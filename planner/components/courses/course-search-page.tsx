@@ -236,10 +236,10 @@ export function CourseSearchPage({
   }
 
   return (
-    <div className="px-4 py-6 md:px-[16px]">
-      <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
-        <section className="space-y-4">
-          <div className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 shadow-sm">
+    <div className="px-4 py-4 md:px-[16px]">
+      <div className="mx-auto grid max-w-7xl gap-3 lg:grid-cols-[minmax(0,1fr)_21rem]">
+        <section className="space-y-3">
+          <div className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
@@ -249,7 +249,7 @@ export function CourseSearchPage({
               </div>
             </div>
 
-            <label className="relative mt-5 block">
+            <label className="relative mt-4 block">
               <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--on-surface-variant)]" />
               <input
                 type="search"
@@ -262,12 +262,12 @@ export function CourseSearchPage({
           </div>
 
           {!deferredQuery.trim() ? (
-            <div className="flex min-h-[18rem] flex-col items-center justify-center rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center text-[var(--on-surface-variant)]">
+            <div className="flex min-h-[16rem] flex-col items-center justify-center rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-center text-[var(--on-surface-variant)]">
               <BookIcon className="mb-3 h-8 w-8" />
               <p className="text-[16px] font-semibold leading-6 text-[var(--on-surface)]">Start typing to search courses</p>
             </div>
           ) : results.length === 0 && !loading ? (
-            <div className="rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-8 text-[14px] leading-5 text-[var(--on-surface-variant)]">
+            <div className="rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               No courses matched the current query and checkbox filters.
             </div>
           ) : (
@@ -276,7 +276,7 @@ export function CourseSearchPage({
                 const semesterIndicators = buildSemesterIndicators(course);
 
                 return (
-                <article key={course.courseCode} className="px-5 py-4">
+                <article key={course.courseCode} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="min-w-0 flex-1 text-[18px] font-bold leading-7 tracking-[-0.02em]">
                       <Link
@@ -327,7 +327,7 @@ export function CourseSearchPage({
           )}
         </section>
 
-        <aside className="space-y-3 lg:sticky lg:top-4 lg:self-start lg:border-l lg:border-[color:rgb(6_55_100_/_0.12)] lg:pl-4">
+        <aside className="space-y-2.5 lg:sticky lg:top-3 lg:self-start lg:border-l lg:border-[color:rgb(6_55_100_/_0.12)] lg:pl-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <SettingsIcon className="h-5 w-5 text-[var(--primary)]" />

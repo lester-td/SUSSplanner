@@ -54,7 +54,7 @@ export function SelectorRail({
 
   return (
     <div
-      className={`relative flex items-center px-[16px] py-3 ${
+      className={`relative flex items-center px-3 py-2.5 ${
         variant === "semester" ? "border-b border-[var(--outline-variant)]/50" : ""
       } ${subtle ? "bg-[color:rgb(243_243_249_/_0.2)]" : ""}`}
     >
@@ -63,7 +63,7 @@ export function SelectorRail({
       </IconButton>
 
       <div ref={scrollerRef} className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <div className={`flex min-w-max items-center justify-center px-4 ${variant === "semester" ? "gap-8" : "gap-10"}`}>
+        <div className={`flex min-w-max items-center justify-center px-3 ${variant === "semester" ? "gap-6" : "gap-8"}`}>
           {items.map((item) => {
             const active = item.id === selectedId;
             return (
@@ -71,7 +71,7 @@ export function SelectorRail({
                 key={item.id}
                 type="button"
                 data-rail-item={item.id}
-                className={`relative min-w-[7rem] px-1 text-center transition-opacity ${
+                className={`relative min-w-[6.5rem] px-1 text-center transition-opacity ${
                   active ? "text-[var(--primary)]" : "text-[var(--on-surface-variant)] opacity-40 hover:opacity-70"
                 }`}
                 onClick={() => onSelect(item.id)}
@@ -105,7 +105,7 @@ export function SelectorRail({
                   </div>
                 ) : null}
                 {active && variant === "semester" ? (
-                  <div className="absolute -bottom-[12px] left-0 right-0 h-0.5 bg-[var(--primary)]" />
+                  <div className="absolute -bottom-[10px] left-0 right-0 h-0.5 bg-[var(--primary)]" />
                 ) : null}
               </button>
             );

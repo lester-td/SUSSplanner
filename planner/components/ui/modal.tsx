@@ -26,17 +26,17 @@ export function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-4 py-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-4 py-4">
       <button type="button" className="absolute inset-0" aria-label="Close modal" onClick={onClose} />
-      <div className={`relative z-10 mx-auto flex max-h-[calc(100dvh-3rem)] w-full flex-col overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-2xl ${maxWidthClassName}`}>
-        <div className="shrink-0 px-6 pb-0 pt-6">
+      <div className={`relative z-10 mx-auto flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-2xl ${maxWidthClassName}`}>
+        <div className="shrink-0 px-5 pb-0 pt-5">
           <h2 className="text-[20px] font-semibold leading-7 text-[var(--on-surface)]">{title}</h2>
           {description ? (
             <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{description}</p>
           ) : null}
         </div>
-        {children ? <div className={`min-h-0 flex-1 overflow-y-auto px-6 py-4 ${bodyClassName}`}>{children}</div> : null}
-        {footer ? <div className="shrink-0 px-6 pb-6 pt-0"><div className="flex flex-wrap justify-end gap-2">{footer}</div></div> : null}
+        {children ? <div className={`min-h-0 flex-1 overflow-y-auto px-5 py-3 ${bodyClassName}`}>{children}</div> : null}
+        {footer ? <div className="shrink-0 px-5 pb-5 pt-0"><div className="flex flex-wrap justify-end gap-2">{footer}</div></div> : null}
       </div>
     </div>
   );

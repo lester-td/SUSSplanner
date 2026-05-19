@@ -155,10 +155,10 @@ export function CourseDetailPage({
 
   return (
     <>
-      <div className="px-4 py-6 md:px-[16px]">
-        <div className="mx-auto max-w-6xl space-y-4">
-          <div className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 shadow-sm">
-            <div className="flex flex-col gap-5">
+      <div className="px-4 py-4 md:px-[16px]">
+        <div className="mx-auto max-w-6xl space-y-3">
+          <div className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
+            <div className="flex flex-col gap-4">
               <div>
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
                   <span className="text-[32px] font-black leading-none tracking-[-0.05em] text-[var(--primary)]">{course.courseCode}</span>
@@ -215,9 +215,9 @@ export function CourseDetailPage({
             </div>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
-            <section className="space-y-4">
-              <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 shadow-sm">
+          <div className="grid gap-3 xl:grid-cols-[1.3fr_1fr]">
+            <section className="space-y-3">
+              <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
                 <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Topics</h2>
                 {topics.length > 0 ? (
                   <ul className="mt-3 space-y-2 text-[14px] leading-6 text-[var(--on-surface-variant)]">
@@ -228,7 +228,7 @@ export function CourseDetailPage({
                 )}
               </article>
 
-              <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 shadow-sm">
+              <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
                 <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Learning Outcomes</h2>
                 {outcomes.length > 0 ? (
                   <ul className="mt-3 space-y-2 text-[14px] leading-6 text-[var(--on-surface-variant)]">
@@ -240,8 +240,8 @@ export function CourseDetailPage({
               </article>
             </section>
 
-            <section className="space-y-4">
-              <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 shadow-sm">
+            <section className="space-y-3">
+              <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
                 <div>
                   <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Available Classes</h2>
                   <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)]">
@@ -264,7 +264,7 @@ export function CourseDetailPage({
                   </label>
                 </div>
 
-                <div className="mt-4 space-y-3">
+                <div className="mt-3 space-y-2.5">
                   {loadingClasses ? (
                     <div className="rounded-[0.7rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3 text-[14px] leading-5 text-[var(--on-surface-variant)]">
                       Loading class groups...
@@ -272,7 +272,7 @@ export function CourseDetailPage({
                   ) : null}
 
                   {!loadingClasses && classes.map((group) => (
-                    <article key={group.classId} className="rounded-[0.7rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-4">
+                    <article key={group.classId} className="rounded-[0.7rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-3">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h3 className="text-[16px] font-semibold leading-6 text-[var(--on-surface)]">{formatClassGroupLabel(group.groupCode)}</h3>
@@ -304,7 +304,7 @@ export function CourseDetailPage({
                 </div>
               </article>
 
-              <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 shadow-sm">
+              <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
                 <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Assessment Components</h2>
                 <div className="mt-4 space-y-2">
                   {assessments.length === 0 ? (

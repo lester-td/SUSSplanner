@@ -42,9 +42,9 @@ export function AppShell({
   return (
     <main className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--on-surface)]">
       <header className="sticky top-0 z-40 border-b border-[var(--outline-variant)] bg-[color:rgb(249_249_255_/_0.92)] backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-4">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:gap-3">
               <Link href="/planner" className="text-[24px] font-extrabold leading-8 tracking-[-0.02em] text-[var(--primary-container)]">
                 SUSS Planner
               </Link>
@@ -93,7 +93,7 @@ export function AppShell({
         </div>
 
         <footer className="border-t border-[var(--outline-variant)] bg-[var(--surface-container-low)]">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 md:flex-row md:items-end md:justify-between">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">SUSS Planner</p>
               <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">

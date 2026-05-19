@@ -19,7 +19,7 @@ export function ActionButton({
   return (
     <button
       type="button"
-      className={`flex items-center justify-center gap-2 rounded-[0.5rem] px-3 py-2 text-[11px] font-bold leading-4 transition-colors ${
+      className={`flex items-center justify-center gap-1.5 rounded-[0.5rem] px-2.5 py-1.5 text-[11px] font-bold leading-4 transition-colors ${
         stretch ? "w-full" : ""
       } ${
         variant === "primary"

@@ -110,7 +110,7 @@ export function ShareClient({
 
   return (
     <>
-      <div className="border-b border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-4 py-3 md:px-[16px]">
+      <div className="border-b border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-3 py-2.5">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <p className="text-[12px] font-semibold leading-4 text-[var(--primary)]">
             Shared timetable view. Your saved local planner is unchanged until you choose to import this selection.
@@ -152,14 +152,14 @@ export function ShareClient({
             />
           </div>
 
-          <div className="bg-[var(--surface-container-lowest)] px-[16px] pt-3">
+          <div className="bg-[var(--surface-container-lowest)] px-3 pt-2.5">
             {timetable.unresolvedSelections.length > 0 ? (
-              <div className="mb-3 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--error)]">
+              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-1.5 text-[12px] font-medium leading-4 text-[var(--error)]">
                 Some class identifiers in this shared link no longer match the current database.
               </div>
             ) : null}
             {timetable.clashes.length > 0 ? (
-              <div className="mb-3 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-4 py-3">
+              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2.5">
                 <p className="text-[12px] font-semibold leading-4 text-[var(--error)]">Detected timetable clashes</p>
                 <div className="mt-2 space-y-2 text-[11px] leading-[14px] text-[var(--on-surface)]">
                   {timetable.clashes.slice(0, 4).map((clash) => (
@@ -173,7 +173,7 @@ export function ShareClient({
             ) : null}
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-[16px] pb-[16px] pt-1">
+          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1">
             <div ref={captureRef} className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
               {viewMode === "class" ? (
                 <TimetableCanvas
@@ -188,15 +188,15 @@ export function ShareClient({
                   showCurrentTime={false}
                 />
               ) : (
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                   {examCards.map((card) => (
-                    <article key={card.id} className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
+                    <article key={card.id} className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3 shadow-sm">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: colorByShareKey.get(card.shareKey) ?? "#3556b8" }} />
                         <span className="text-[12px] font-bold leading-4 text-[var(--on-surface)]">{card.courseCode} · {formatClassGroupLabel(card.groupCode)}</span>
                       </div>
                       <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{card.courseName ?? "Untitled course"}</p>
-                      <p className="mt-3 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatEventDate(card.eventDate)}</p>
+                      <p className="mt-2 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatEventDate(card.eventDate)}</p>
                       <p className="text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatTimeRange(card.startTime, card.endTime)}</p>
                     </article>
                   ))}
@@ -207,29 +207,29 @@ export function ShareClient({
         </section>
 
         <aside className={`flex min-h-0 w-full flex-col border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] ${orientation === "horizontal" ? "md:w-full md:border-l-0 md:border-t" : "md:w-[30%] md:border-l md:border-t-0"}`}>
-          <div className="flex h-16 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-[16px]">
+          <div className="flex h-14 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-3">
             <h3 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Shared Courses</h3>
-            <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-1 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
+            <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
               {selectedCards.length} Selected
             </span>
           </div>
 
-          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-[16px] pb-[16px] pt-2">
-            <div className={`grid gap-2 ${orientation === "horizontal" ? "grid-cols-4" : "grid-cols-2"}`}>
+          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1.5">
+            <div className={`grid gap-1.5 ${orientation === "horizontal" ? "grid-cols-4" : "grid-cols-2"}`}>
               <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} />
               <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} />
               <ActionButton variant="ghost" icon={<DownloadIcon className="h-4 w-4" />} label="PDF" onClick={() => triggerDownload("/api/export/pdf", `suss-shared-${sharedState.semesterId}.pdf`)} />
               <ActionButton variant="ghost" icon={<CalendarIcon className="h-4 w-4" />} label="ICS" onClick={() => triggerDownload("/api/export/ics", `suss-shared-${sharedState.semesterId}.ics`)} />
             </div>
-            <div className="mt-2 grid grid-cols-1 gap-2">
+            <div className="mt-1.5 grid grid-cols-1 gap-1.5">
               <ActionButton variant="ghost" icon={<GridIcon className="h-4 w-4" />} label="PNG" onClick={() => void handlePngExport()} />
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-[16px] pb-[16px]">
-            <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-3"}>
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-3 pb-3">
+            <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
               {selectedCards.map((record) => (
-                <article key={record.shareKey} className="group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 shadow-sm">
+                <article key={record.shareKey} className="group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 shadow-sm">
                   <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: record.color }} />
                   <div className="pl-2">
                     <h4 className="truncate text-[12px] font-bold leading-4 text-[var(--on-surface)]">{record.courseCode}</h4>

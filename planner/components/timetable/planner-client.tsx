@@ -591,19 +591,19 @@ export function PlannerClient({
             />
           </div>
 
-          <div className="bg-[var(--surface-container-lowest)] px-[16px] pt-3">
+          <div className="bg-[var(--surface-container-lowest)] px-3 pt-2.5">
             {plannerNotice ? (
-              <div className="mb-3 rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--primary)]">
+              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[12px] font-medium leading-4 text-[var(--primary)]">
                 {plannerNotice}
               </div>
             ) : null}
             {timetableData.unresolvedSelections.length > 0 ? (
-              <div className="mb-3 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2 text-[12px] font-medium leading-4 text-[var(--error)]">
+              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-1.5 text-[12px] font-medium leading-4 text-[var(--error)]">
                 Some shared or saved class identifiers no longer match the database for this semester.
               </div>
             ) : null}
             {timetableData.clashes.length > 0 ? (
-              <div className="mb-3 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-4 py-3">
+              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2.5">
                 <p className="text-[12px] font-semibold leading-4 text-[var(--error)]">Detected timetable clashes</p>
                 <div className="mt-2 space-y-2 text-[11px] leading-[14px] text-[var(--on-surface)]">
                   {timetableData.clashes.slice(0, 4).map((clash) => (
@@ -618,12 +618,12 @@ export function PlannerClient({
               </div>
             ) : null}
             {classPickerCourse ? (
-              <div className={`mb-3 rounded-[0.5rem] border px-4 py-3 ${
+              <div className={`mb-2.5 rounded-[0.5rem] border px-3 py-2.5 ${
                 classPickerError
                   ? "border-[var(--error)]/30 bg-[var(--error-container)] text-[var(--error)]"
                   : "border-[var(--primary)]/20 bg-[var(--primary-fixed)] text-[var(--primary)]"
               }`}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-2.5">
                   <div>
                     <p className="text-[12px] font-semibold leading-4">
                       {classPickerCourse.courseCode} group selection
@@ -652,7 +652,7 @@ export function PlannerClient({
             ) : null}
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-[16px] pb-[16px] pt-1">
+          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1">
             <div ref={timetableCaptureRef} className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
               {viewMode === "class" ? (
                 <TimetableCanvas
@@ -942,7 +942,7 @@ function ExamCalendar({
   if (cards.length === 0)
   {
     return (
-      <div className="rounded-[0.5rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center text-[14px] leading-5 text-[var(--on-surface-variant)]">
+      <div className="rounded-[0.5rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-6 text-center text-[14px] leading-5 text-[var(--on-surface-variant)]">
         No exam events for selected courses.
       </div>
     );
