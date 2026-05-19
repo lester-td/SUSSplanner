@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f9f9ff;
+  --surface: #f9f9ff;
+  --surface-bright: #f9f9ff;
+  --surface-dim: #d9dadf;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f3f3f9;
+  --surface-container: #ededf3;
+  --surface-container-high: #e7e8ee;
+  --surface-container-highest: #e2e2e8;
+  --surface-variant: #e2e2e8;
+  --outline: #727781;
+  --outline-variant: #c2c6d2;
+  --primary: #00305d;
+  --primary-container: #004684;
+  --primary-fixed: #d4e3ff;
+  --on-primary: #ffffff;
+  --on-primary-container: #87b6fb;
+  --on-surface: #191c20;
+  --on-surface-variant: #424750;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --bg: var(--background);
+  --panel: var(--surface-container-lowest);
+  --panel-strong: var(--surface-container-low);
+  --ink: var(--on-surface);
+  --muted: var(--on-surface-variant);
+  --line: var(--outline-variant);
+  --brand: var(--primary);
+  --brand-soft: var(--primary-fixed);
+  --surface-high: var(--surface-container-high);
+  --surface-low: var(--surface-container-low);
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-sans), sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--on-surface);
+  font-family: var(--font-sans), sans-serif;
+  line-height: 1.4;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  font-family: inherit;
+  border-radius: 0.125rem;
+}
+
+::selection {
+  background: rgba(0, 70, 132, 0.18);
+}
+
+@keyframes timetable-pop {
+  0% {
+    transform: scale(0.72);
+  }
+
+  65% {
+    transform: scale(1.06);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
