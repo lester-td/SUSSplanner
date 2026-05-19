@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
 import { PinIcon } from "@/components/planner/icons";
@@ -189,12 +190,27 @@ export function TimetableCanvas({
   showCurrentTime: boolean;
 })
 {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateMobileState = () => setIsMobile(mediaQuery.matches);
+    updateMobileState();
+    mediaQuery.addEventListener("change", updateMobileState);
+    return () => mediaQuery.removeEventListener("change", updateMobileState);
+  }, []);
+
+  const hasSaturdayClasses = blocks.some((block) => block.dayOfWeek === 6);
+  const visibleDays = DAY_LABELS
+    .map((label, index) => ({ label, dayOfWeek: index + 1 }))
+    .filter((day) => day.dayOfWeek <= 5 || hasSaturdayClasses);
   const rangeMinutes = Math.max(30, visibleEndMinutes - START_MINUTES);
-  const slotSize = 30;
+  const slotSize = isMobile ? 22 : 30;
   const daySize = 104;
   const contentHeight = (rangeMinutes / 30) * slotSize;
+  const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 58 : 74);
   const laneLayouts = buildLaneLayouts(blocks);
-  const dayBlocksByIndex = DAY_LABELS.map((_, dayIndex) => blocks.filter((block) => block.dayOfWeek === dayIndex + 1));
+  const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
   const dayLaneCounts = dayBlocksByIndex.map((dayBlocks) => dayBlocks.reduce((maxLaneCount, block) => {
     const layout = laneLayouts.get(block.id);
     return Math.max(maxLaneCount, layout?.laneCount ?? 1);
@@ -219,7 +235,8 @@ export function TimetableCanvas({
   const verticalGridTemplateColumns = `${VERTICAL_TIME_AXIS_COLUMN} ${dayLaneCounts.map((laneCount) => `minmax(${VERTICAL_DAY_COLUMN_MIN}, ${laneCount}fr)`).join(" ")}`;
   const now = new Date();
   const todayIndex = now.getDay() === 0 ? 7 : now.getDay();
-  const showNowLine = showCurrentTime && todayIndex >= 1 && todayIndex <= DAY_LABELS.length;
+  const todayVisibleIndex = visibleDays.findIndex((day) => day.dayOfWeek === todayIndex);
+  const showNowLine = showCurrentTime && todayVisibleIndex >= 0;
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
   if (isHorizontal)
@@ -228,82 +245,89 @@ export function TimetableCanvas({
       <div className="overflow-hidden bg-[var(--surface-container-lowest)] p-px">
         <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3">
           <div className="pt-10">
-            {DAY_LABELS.map((day, dayIndex) => (
+            {visibleDays.map((day, dayIndex) => (
               <div
-                key={day}
+                key={day.dayOfWeek}
                 className="flex items-start justify-end pt-2 pr-3 text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]"
                 style={{ height: `${horizontalDayHeights[dayIndex]}px` }}
               >
-                {day}
+                {day.label}
               </div>
             ))}
           </div>
 
-          <div className="min-w-0">
-            <div className="relative h-10 overflow-x-hidden">
-              {timeSlots.map((slot) => (
-                <div
-                  key={slot}
-                  className="absolute top-0 text-[11px] font-medium leading-[14px] text-[var(--on-surface-variant)]"
-                  style={getVerticalTimeLabelStyle(slot, timeSlots[0], timeSlots[timeSlots.length - 1], rangeMinutes)}
-                >
-                  {slot % 60 === 0 ? minutesToLabel(slot) : ""}
-                </div>
-              ))}
-            </div>
+          <div className="min-w-0 overflow-x-auto">
+            <div style={{ minWidth: `${horizontalMinWidthPx}px` }}>
+              <div className="relative h-10">
+                {timeSlots.map((slot) => (
+                  <div
+                    key={slot}
+                    className="absolute top-0 text-[11px] font-medium leading-[14px] text-[var(--on-surface-variant)]"
+                    style={getVerticalTimeLabelStyle(slot, timeSlots[0], timeSlots[timeSlots.length - 1], rangeMinutes)}
+                  >
+                    {slot % 60 === 0 ? minutesToLabel(slot) : ""}
+                  </div>
+                ))}
+              </div>
 
-            <div
-              className="relative w-full overflow-hidden border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
-              style={{ height: `${horizontalContentHeight}px` }}
-            >
-              {DAY_LABELS.map((_, index) => (
-                <div
-                  key={index}
-                  className="absolute inset-x-0 border-t border-[var(--outline-variant)]"
-                  style={{ top: `${horizontalDayTops[index]}px` }}
-                />
-              ))}
-              {timeSlots.map((slot) => (
-                <div
-                  key={slot}
-                  className={`absolute inset-y-0 border-l ${slot % 60 === 0 ? "border-[var(--outline-variant)]" : "border-[var(--outline-variant)]/35"}`}
-                  style={{ left: `${((slot - START_MINUTES) / rangeMinutes) * 100}%` }}
-                />
-              ))}
-
-              {blocks.map((block) => {
-                const layout = laneLayouts.get(block.id) ?? { laneIndex: 0, laneCount: 1 };
-                const dayLaneCount = dayLaneCounts[block.dayOfWeek - 1];
-                const blockLeftPercent = ((block.startMinutes - START_MINUTES) / rangeMinutes) * 100;
-                const blockWidthPercent = ((block.endMinutes - block.startMinutes) / rangeMinutes) * 100;
-                const dayLaneHeight = horizontalLaneHeights[block.dayOfWeek - 1];
-                const laneHeight = layout.laneCount === 1 && dayLaneCount > 1
-                  ? dayLaneCount * dayLaneHeight + (dayLaneCount - 1) * OVERLAP_GAP_PX
-                  : dayLaneHeight;
-                const laneTop = horizontalDayTops[block.dayOfWeek - 1]
-                  + OVERLAP_INSET_PX
-                  + layout.laneIndex * (dayLaneHeight + OVERLAP_GAP_PX);
-
-                return (
-                  <TimetableBlockButton
-                    key={block.id}
-                    block={block}
-                    color={blockColorByKey.get(block.shareKey) ?? "#3556b8"}
-                    active={activeShareKey === block.shareKey}
-                    dimmed={false}
-                    style={{
-                      top: `${laneTop}px`,
-                      left: `${blockLeftPercent}%`,
-                      width: `${Math.max(0, blockWidthPercent)}%`,
-                      minWidth: `${MIN_LANE_WIDTH_PX}px`,
-                      height: `${laneHeight}px`,
-                      zIndex: layout.laneIndex + 1,
-                    }}
-                    onClick={() => onBlockClick(block)}
-                    showWeekLabel={showAllWeeks}
+              <div
+                className="relative w-full overflow-hidden border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
+                style={{ height: `${horizontalContentHeight}px` }}
+              >
+                {visibleDays.map((day, index) => (
+                  <div
+                    key={day.dayOfWeek}
+                    className="absolute inset-x-0 border-t border-[var(--outline-variant)]"
+                    style={{ top: `${horizontalDayTops[index]}px` }}
                   />
-                );
-              })}
+                ))}
+                {timeSlots.map((slot) => (
+                  <div
+                    key={slot}
+                    className={`absolute inset-y-0 border-l ${slot % 60 === 0 ? "border-[var(--outline-variant)]" : "border-[var(--outline-variant)]/35"}`}
+                    style={{ left: `${((slot - START_MINUTES) / rangeMinutes) * 100}%` }}
+                  />
+                ))}
+
+                {blocks.map((block) => {
+                  const layout = laneLayouts.get(block.id) ?? { laneIndex: 0, laneCount: 1 };
+                  const dayIndex = visibleDays.findIndex((day) => day.dayOfWeek === block.dayOfWeek);
+                  if (dayIndex < 0)
+                  {
+                    return null;
+                  }
+                  const dayLaneCount = dayLaneCounts[dayIndex];
+                  const blockLeftPercent = ((block.startMinutes - START_MINUTES) / rangeMinutes) * 100;
+                  const blockWidthPercent = ((block.endMinutes - block.startMinutes) / rangeMinutes) * 100;
+                  const dayLaneHeight = horizontalLaneHeights[dayIndex];
+                  const laneHeight = layout.laneCount === 1 && dayLaneCount > 1
+                    ? dayLaneCount * dayLaneHeight + (dayLaneCount - 1) * OVERLAP_GAP_PX
+                    : dayLaneHeight;
+                  const laneTop = horizontalDayTops[dayIndex]
+                    + OVERLAP_INSET_PX
+                    + layout.laneIndex * (dayLaneHeight + OVERLAP_GAP_PX);
+
+                  return (
+                    <TimetableBlockButton
+                      key={block.id}
+                      block={block}
+                      color={blockColorByKey.get(block.shareKey) ?? "#3556b8"}
+                      active={activeShareKey === block.shareKey}
+                      dimmed={false}
+                      style={{
+                        top: `${laneTop}px`,
+                        left: `${blockLeftPercent}%`,
+                        width: `${Math.max(0, blockWidthPercent)}%`,
+                        minWidth: `${MIN_LANE_WIDTH_PX}px`,
+                        height: `${laneHeight}px`,
+                        zIndex: layout.laneIndex + 1,
+                      }}
+                      onClick={() => onBlockClick(block)}
+                      showWeekLabel={showAllWeeks}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -316,16 +340,16 @@ export function TimetableCanvas({
       <div className="w-full">
         <div className="grid grid-rows-[40px] gap-0" style={{ gridTemplateColumns: verticalGridTemplateColumns }}>
           <div className="border-b border-[var(--outline-variant)]" />
-          {DAY_LABELS.map((day, index) => (
+          {visibleDays.map((day, index) => (
             <div
-              key={day}
+              key={day.dayOfWeek}
               className={`flex items-end justify-center border-b border-l border-[var(--outline-variant)] px-2 pb-2 text-center text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)] ${
-                index === DAY_LABELS.length - 1 ? "border-r" : ""
+                index === visibleDays.length - 1 ? "border-r" : ""
               } ${
-                showNowLine && todayIndex === index + 1 ? "bg-[color:rgb(243_243_249_/_0.3)]" : "bg-[var(--surface-container-lowest)]"
+                showNowLine && todayVisibleIndex === index ? "bg-[color:rgb(243_243_249_/_0.3)]" : "bg-[var(--surface-container-lowest)]"
               }`}
             >
-              {day}
+              {day.label}
             </div>
           ))}
         </div>
@@ -345,13 +369,13 @@ export function TimetableCanvas({
             ))}
           </div>
 
-          {DAY_LABELS.map((_, dayIndex) => (
+          {visibleDays.map((day, dayIndex) => (
             <div
-              key={dayIndex}
+              key={day.dayOfWeek}
               className={`relative border-l border-[var(--outline-variant)] ${
-                dayIndex === DAY_LABELS.length - 1 ? "border-r" : ""
+                dayIndex === visibleDays.length - 1 ? "border-r" : ""
               } ${
-                showNowLine && todayIndex === dayIndex + 1 ? "bg-[color:rgb(243_243_249_/_0.3)]" : "bg-[var(--surface-container-lowest)]"
+                showNowLine && todayVisibleIndex === dayIndex ? "bg-[color:rgb(243_243_249_/_0.3)]" : "bg-[var(--surface-container-lowest)]"
               }`}
               style={{ height: `${contentHeight}px` }}
             >
@@ -363,7 +387,7 @@ export function TimetableCanvas({
                 />
               ))}
 
-              {showNowLine && todayIndex === dayIndex + 1 && nowMinutes >= START_MINUTES && nowMinutes <= visibleEndMinutes ? (
+              {showNowLine && todayVisibleIndex === dayIndex && nowMinutes >= START_MINUTES && nowMinutes <= visibleEndMinutes ? (
                 <div
                   className="absolute inset-x-0 z-20 border-t border-[#ba1a1a]"
                   style={{ top: `${((nowMinutes - START_MINUTES) / rangeMinutes) * contentHeight}px` }}
