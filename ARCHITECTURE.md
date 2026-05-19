@@ -1,19 +1,45 @@
 # Architecture
 
-## Overview
+## Scope
 
-The app is a single Next.js project under `planner/`.
+This repository has two workspaces:
 
-It has two responsibilities:
+- root app: Next.js timetable planner (`app/`, `components/`, `lib/`)
+- scraper pipeline: local data ingestion workflow (`scraper/`)
 
-1. Read academic data from the existing Supabase Postgres schema through Drizzle.
-2. Let anonymous users plan and share timetables entirely from client-side state and URL parameters.
+This document covers the root web app architecture.
 
-There is no server-side timetable persistence in this rewrite.
+## System Overview
 
-## Database model
+The app has two runtime objectives:
 
-The active data model is the existing Supabase schema:
+1. Read timetable/course data from an existing Supabase Postgres schema.
+2. Let anonymous users build, share, and export timetables from URL + local browser state.
+
+There is no server-side user timetable persistence in this design.
+
+## Runtime Topology
+
+### Server runtime (Node.js)
+
+- Next.js App Router pages and route handlers execute on the server.
+- `DATABASE_URL` is read only on the server.
+- DB reads are performed via Drizzle + `postgres` driver.
+
+### Browser runtime
+
+- `PlannerClient` and `ShareClient` manage interactive state.
+- Planner state persists in `localStorage`.
+- PNG export is client-side DOM capture.
+
+### Database
+
+- Existing Supabase Postgres schema is the source of truth.
+- This rewrite is read-focused for planner runtime operations.
+
+## Data Model Contract
+
+The app expects these relations:
 
 - `courses`
 - `semesters`
@@ -21,123 +47,152 @@ The active data model is the existing Supabase schema:
 - `classes`
 - `class_events`
 - `assessment_components`
-- `v_class_events_with_week`
+- `v_class_events_with_week` (read-only view used for timetable expansion by week)
 
-The app does not use the older `modules`, `module_offerings`, or admin import model anymore.
+Key business identifiers:
 
-## Data access
+- course-level identity: `course_code`
+- class-level share identity: `course_code + schedule_type + group_code_type + group_code`
+- timetable URL identity: semantic class identifiers, not raw `class_id`
 
-### Files
+## Data Access Layer
+
+Primary files:
 
 - `lib/db/index.ts`
 - `lib/db/schema.ts`
 - `lib/db/queries.ts`
 
-### Rules
+Rules and behaviors:
 
-- `DATABASE_URL` is only used server-side.
-- Client components do not import the Drizzle client.
-- Queries are centralized in `lib/db/queries.ts`.
-- The view `v_class_events_with_week` is treated as read-only.
+- `lib/db/index.ts` throws immediately if `DATABASE_URL` is missing.
+- A shared `postgres` client is reused in development (`globalThis.__sussplanner_sql_client__`) to avoid connection churn during hot reload.
+- Query functions are centralized in `lib/db/queries.ts`; UI code does not query DB directly.
+- All timetable assembly paths resolve through `getTimetableDataFromClassIdentifiers(...)` or `getTimetableDataFromClassIds(...)`.
+- `v_class_events_with_week` rows are validated for required fields before mapping.
 
-## Timetable domain
+## Routing And Page Data Flow
 
-### Files
+### `/` and `/planner`
 
-- `lib/timetable/share-url.ts`
-- `lib/timetable/local-storage.ts`
-- `lib/timetable/clash-detection.ts`
-- `lib/timetable/timetable-utils.ts`
-- `lib/timetable/date-utils.ts`
-- `lib/timetable/types.ts`
+- `app/page.tsx` re-exports `/planner`.
+- `app/planner/page.tsx` loads:
+  - `getSemestersWithClassesAndWeeks()`
+  - current semester/week context from date utilities
+- `PlannerClient` then performs client fetches to `/api/classes` using encoded share query state.
 
-### Responsibilities
+### `/courses`
 
-- decode and encode share URLs
-- persist anonymous planner state in localStorage
-- resolve semantic class identifiers into database rows
-- detect clashes by actual `event_date`, `start_time`, and `end_time`
-- transform dated class events into timetable blocks and exam cards for the UI
+- Server fetches:
+  - semester list
+  - semester-week tree
+  - search facets (`schools`, `courseLevels`)
+- Initial filter state is parsed from URL query params.
+- `CourseSearchPage` performs live search via `/api/courses/search`.
 
-## Routing
+### `/courses/[courseCode]`
 
-### Pages
+- Server fetches:
+  - course metadata
+  - classes (optional `semesterId`)
+  - assessment components
+  - offered semesters
+- Missing course returns Next.js `notFound()`.
+- Client-side semester dropdown re-fetches class groups via `/api/classes?courseCode=...`.
 
-- `/planner`: interactive planner with localStorage persistence
-- `/courses`: searchable catalog view
-- `/courses/[courseCode]`: server-rendered course detail page
-- `/share`: read-only shared timetable viewer and importer
+### `/share`
 
-### Route handlers
+- If no share params: renders an empty-state explainer.
+- If malformed params: renders invalid-link UI.
+- If valid params:
+  - decode `sem` and `classes`
+  - resolve identifiers to classes/events
+  - render read-only shared timetable in `ShareClient`
+- Importing from this page explicitly overwrites local planner selection state.
+
+## API Surface
+
+All route handlers use `runtime = "nodejs"` and are currently `GET` only.
 
 - `/api/courses/search`
+  - parses multi-value search/filter query params
+  - returns `{ courses }`
+
 - `/api/courses/[courseCode]`
+  - validates optional `semesterId`, `scheduleType`
+  - returns `{ course, classes, assessmentComponents }` or `404`
+
 - `/api/classes`
+  - Mode A: class group lookup by `courseCode`
+  - Mode B: timetable assembly from share payload (`sem`, `classes`)
+  - returns `{ classes }` or `{ timetable }`
+
 - `/api/export/ics`
+  - resolves timetable from share payload
+  - returns downloadable ICS file
+
 - `/api/export/pdf`
+  - resolves timetable from share payload
+  - returns downloadable PDF file
 
-## Share flow
+No `/api/export/png` route exists; PNG is generated client-side from rendered UI.
 
-Shared links are stateless.
+## Share URL Architecture
 
-The URL carries:
-
-- `sem`: `semester_id`
-- `classes`: comma-separated semantic identifiers in the format `courseCode:scheduleType:groupCodeType:groupCode`
-
-Example:
+Share state is stateless and URL-based:
 
 ```text
-/share?sem=1&classes=ICT133:evening:TG:T01,ANL252:daytime:CRN:12345
+/share?sem=<semesterId>&classes=<courseCode:scheduleType:groupCodeType:groupCode>,...
 ```
 
-On load:
+Validation is enforced by Zod schemas:
 
-1. the URL is validated with Zod
-2. each semantic identifier is matched back to `classes`
-3. matching timetable events are loaded from the database
-4. unresolved identifiers are surfaced as a warning instead of mutating data
+- `semesterId` must be a positive integer
+- `scheduleType` must be `daytime` or `evening`
+- `groupCodeType` must be `TG` or `CRN`
+- max `50` selected classes per shared payload
 
-## UI structure
+Resolution flow:
 
-### Shared shell
+1. Parse and validate URL payload.
+2. Match semantic identifiers to `classes` within selected semester.
+3. Build timetable from matching class IDs.
+4. Return non-matching identifiers in `unresolvedSelections` (do not mutate DB or silently drop in UI).
 
-- `components/layout/app-shell.tsx`
+## Local State Architecture
 
-### Planner UI
+Storage key:
 
-- `components/timetable/planner-client.tsx`
-- `components/timetable/share-client.tsx`
-- `components/timetable/timetable-canvas.tsx`
-- `components/timetable/selector-rail.tsx`
+- `sussplanner.timetable.v1`
 
-### Course UI
+Persisted fields:
 
-- `components/courses/course-search-page.tsx`
-- `components/courses/course-detail-page.tsx`
+- `semesterId`
+- `selectedClasses`
+- `hiddenClasses`
+- `selectedWeekId`
+- `orientation`
+- `viewMode`
 
-The visual direction intentionally keeps the existing color system, spacing, card shapes, button treatment, and timetable layout patterns from the prior frontend scaffold.
+Import behavior from `/share`:
 
-## Exports
+- selected shared classes replace current selected classes
+- `hiddenClasses` resets to empty
+- orientation/view mode are preserved from existing saved state when present
 
-### ICS
+## Export Architecture
 
-Server-side generation from `class_events`.
+### ICS (`lib/export/ics.ts`)
 
-### PDF
+- Built server-side from resolved timetable events.
+- Emits `VEVENT`s with `Asia/Singapore` timezone in `DTSTART/DTEND`.
 
-Server-side generation from resolved timetable data.
+### PDF (`lib/export/pdf.ts`)
 
-### PNG
+- Built server-side with `pdf-lib`.
+- Includes semester header, generation timestamp, clash summary, and event list.
 
-Client-side capture of the rendered timetable to preserve the visible UI more faithfully.
+### PNG (`lib/export/png.ts`)
 
-## Removed from the active architecture
-
-These older code paths are no longer part of the runtime:
-
-- static `index.html` frontend
-- legacy browser-side JS modules under `frontend/`
-- old module/offering/admin route handlers
-- old Drizzle schema based on UUID module records
-- sample-data seed/import pipeline for the previous schema
+- Built client-side with `html-to-image` from current rendered timetable container.
+- Preserves current visual state (orientation, filtered week, selected view).

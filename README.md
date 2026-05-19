@@ -1,48 +1,67 @@
 # SUSS Planner
 
-SUSS Planner is a full-stack Next.js timetable planner rebuilt around the existing Supabase Postgres schema.
+SUSS Planner is a full-stack timetable planner for SUSS students. It is built on Next.js App Router and reads directly from an existing Supabase Postgres schema via Drizzle.
 
-## Key constraints
+This repo contains:
 
-- The database schema is the source of truth.
-- Existing Supabase tables and data are preserved.
-- No destructive migrations are included for the core academic tables.
-- Share links are stateless and human-readable.
-- Planner state is stored in localStorage for anonymous users.
+- the web app (`/`)
+- a local scraping/import pipeline (`/scraper`) for updating academic data
 
-## Stack
+## What This App Does
 
-- Next.js App Router
+- Lets users build a timetable from class groups by semester
+- Detects timetable clashes from real dated events
+- Supports read-only shared links with optional one-click import into local state
+- Exports selected timetable data as PDF, ICS, or PNG
+- Stores planner state in browser `localStorage` (no user auth required)
+
+## Tech Stack
+
+### Web app (`/`)
+
+- Next.js 16 (App Router + Route Handlers)
+- React 19
 - TypeScript
-- Drizzle ORM
-- Supabase Postgres via `DATABASE_URL`
+- Drizzle ORM + `postgres` driver
+- Supabase Postgres (via `DATABASE_URL`)
 - Tailwind CSS v4
 - Zod
-- Route Handlers for search, class lookup, and exports
+- `pdf-lib` (PDF export)
+- `html-to-image` (client-side PNG export)
 
-## Routes
+### Scraper (`/scraper`)
 
-### Pages
+- Node.js + TypeScript CLI scripts
+- Python (`pdfplumber`) for PDF extraction helpers
+- SQL generation for `psql`/Supabase import
 
-- `/planner`
-- `/courses`
-- `/courses/[courseCode]`
-- `/share?sem=...&classes=...`
-- `/` reuses `/planner`
+## Repository Layout
 
-### APIs
+```text
+app/                    Next.js routes (pages + API route handlers)
+components/             UI components
+lib/db/                 Drizzle client, schema, queries
+lib/timetable/          Timetable domain logic (share URL, clash detection, storage)
+lib/export/             ICS/PDF/PNG export logic
+lib/validation/         Zod schemas
+drizzle/                Intentionally empty for this rewrite (no destructive migrations)
+scraper/                Local data scraping + SQL generation workflow
+```
 
-- `GET /api/courses/search`
-- `GET /api/courses/[courseCode]`
-- `GET /api/classes`
-- `GET /api/export/ics`
-- `GET /api/export/pdf`
+## Prerequisites
 
-PNG export is implemented client-side so the captured image stays visually close to the rendered timetable.
+- Node.js (current LTS recommended)
+- npm
+- A Postgres connection string (Supabase or compatible) with the expected schema/data
 
-## Environment variables
+Optional for scraper workflow:
 
-Create `.env.local` from `.env.example`.
+- Python 3.10+
+- `psql`
+
+## Environment Variables
+
+Create `.env.local` in repo root:
 
 ```env
 DATABASE_URL=
@@ -52,50 +71,103 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 Notes:
 
-- `DATABASE_URL` is server-only.
-- The current rewrite does not require Supabase Auth for normal planner usage.
-- `NEXT_PUBLIC_SUPABASE_*` are retained for future Supabase browser integrations, but the current planner logic does not depend on them.
+- `DATABASE_URL` is required and used server-side by the app and Drizzle config.
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently not required by runtime code, but are kept for compatibility/future browser integrations.
+- Never commit real credentials.
 
-## Install
+## Install And Run
 
 ```bash
 npm install
-```
-
-## Run
-
-```bash
 npm run dev
 ```
 
-## Verify
+Open `http://localhost:3000`.
+
+## Useful Commands
 
 ```bash
-npm run typecheck
-npm run build
+npm run typecheck   # TypeScript checks
+npm run build       # Production build
+npm run start       # Run production build locally
+npm run db:generate # Generate Drizzle migration files (only when you intentionally change schema)
 ```
 
-## Drizzle
+Important:
 
-The Drizzle schema in `lib/db/schema.ts` mirrors the existing Supabase schema manually. No migrations are included for the live academic tables.
+- The current architecture assumes the existing Supabase academic tables already exist.
+- Do not run `drizzle-kit push` against production/shared Supabase unless you explicitly intend schema changes.
 
-Generate a migration only if you intentionally change the schema later:
+## App Routes
 
-```bash
-npm run db:generate
+### Pages
+
+- `/` -> renders the same page as `/planner` (`app/page.tsx` re-export)
+- `/planner` -> interactive timetable planner
+- `/courses` -> course search page with filters
+- `/courses/[courseCode]` -> course detail page; optional query `semesterId`
+- `/share` -> shared timetable preview/import page
+  - expected query params: `sem`, `classes`
+
+### API Routes
+
+All current API routes are `GET` and run on Node.js runtime.
+
+1. `/api/courses/search`
+- Query params:
+  - `q`
+  - `semesterIds` (repeatable) or `semesterId`
+  - `scheduleTypes` (repeatable) or `scheduleType` (`daytime` | `evening`)
+  - `postgraduateOnly` or legacy `postgraduate=postgraduate`
+  - `availableAsGspOnly`
+  - `schools` (repeatable) or `school`
+  - `courseLevels` (repeatable) or `courseLevel`
+  - `limit` (default `25`, max `100`)
+- Response:
+  - `{ courses: CourseSearchResult[] }`
+
+2. `/api/courses/[courseCode]`
+- Query params:
+  - `semesterId` (optional)
+  - `scheduleType` (optional: `daytime` | `evening`)
+- Response:
+  - `{ course, classes, assessmentComponents }`
+- Error:
+  - `404` when course code is not found
+
+3. `/api/classes`
+- Mode A (course group lookup):
+  - Query: `courseCode` + optional `semesterId`/`sem`, `scheduleType`
+  - Response: `{ classes: CourseClassRecord[] }`
+- Mode B (timetable resolution from share params):
+  - Query: `sem` + `classes`
+  - Response: `{ timetable: TimetableData }`
+
+4. `/api/export/ics`
+- Query: share params (`sem`, `classes`)
+- Response: calendar attachment (`text/calendar`)
+
+5. `/api/export/pdf`
+- Query: share params (`sem`, `classes`)
+- Response: PDF attachment (`application/pdf`)
+
+PNG export is intentionally client-side (no `/api/export/png`) to preserve the rendered UI view.
+
+## Share URL Format
+
+Share URLs are stateless and encode selected classes semantically.
+
+Format:
+
+```text
+/share?sem=<semesterId>&classes=<identifier>,<identifier>,...
 ```
 
-If you want to introspect the current database manually instead of editing the schema by hand:
+Class identifier format:
 
-```bash
-npx drizzle-kit introspect --config drizzle.config.ts
+```text
+COURSECODE:scheduleType:groupCodeType:groupCode
 ```
-
-Do not run `drizzle-kit push` against the existing Supabase database unless you explicitly intend to change it.
-
-## Share link format
-
-Shared timetables use semantic class identifiers instead of raw `class_id` values.
 
 Example:
 
@@ -103,15 +175,63 @@ Example:
 /share?sem=1&classes=ICT133:evening:TG:T01,ANL252:daytime:CRN:12345
 ```
 
-## Local planner state
+Validation constraints:
 
-The planner persists the following in localStorage:
+- `scheduleType`: `daytime` | `evening`
+- `groupCodeType`: `TG` | `CRN`
+- up to 50 selected class identifiers in one shared payload
 
-- selected semester
-- selected class identifiers
-- hidden classes
-- current week filter
-- timetable orientation
-- timetable/exam view mode
+If a shared identifier no longer maps to current DB rows, it is returned in `unresolvedSelections` and surfaced in the UI.
 
-Shared links never overwrite local planner state unless the user clicks `Import timetable` and confirms.
+## Local State Persistence
+
+Planner state is stored in browser `localStorage` under:
+
+```text
+sussplanner.timetable.v1
+```
+
+Persisted fields:
+
+- `semesterId`
+- `selectedClasses`
+- `hiddenClasses`
+- `selectedWeekId`
+- `orientation`
+- `viewMode`
+
+Shared links do not auto-overwrite local state. Overwrite only happens after explicit import confirmation in `/share`.
+
+## Database And Schema Expectations
+
+The app expects these tables/views (read path):
+
+- `courses`
+- `semesters`
+- `semester_weeks`
+- `classes`
+- `class_events`
+- `assessment_components`
+- `v_class_events_with_week` (treated as read-only)
+
+`lib/db/schema.ts` mirrors this schema manually. This rewrite intentionally avoids destructive migration workflows for core academic tables.
+
+## Scraper Workflow
+
+The scraper is a separate local workflow under [`scraper/`](./scraper):
+
+```bash
+cd scraper
+npm install
+```
+
+See [`scraper/README.md`](./scraper/README.md) for:
+
+- schedule PDF parsing
+- course synopsis PDF download/parsing
+- semester week SQL generation
+- import order and validation checks
+
+## License
+
+MIT (see [`LICENSE`](./LICENSE)).
