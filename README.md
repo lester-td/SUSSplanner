@@ -1,145 +1,237 @@
-# SUSSmods
+# SUSS Planner
 
-SUSSmods is a timetable planner with:
-- a static frontend in this repo
-- a Next.js backend using PostgreSQL, Drizzle ORM, Zod, and Supabase Auth for admin-only routes
+SUSS Planner is a full-stack timetable planner for SUSS students. It is built on Next.js App Router and reads directly from an existing Supabase Postgres schema via Drizzle.
 
-Normal users do not log in. Their timetable selections stay in the URL and browser storage. The backend only stores module, semester, offering, and class data.
+This repo contains:
 
-## Project Modes
+- the web app (`/`)
+- a local scraping/import pipeline (`/scraper`) for updating academic data
 
-### Frontend
-- Served as a static site from this repo
-- Loads timetable data from the backend public API
-- Falls back to `backend/sampleModules.json` only if the backend is unavailable
+## What This App Does
 
-### Backend
-- Next.js Route Handlers under `app/api`
-- Public read APIs for modules, classes, offerings, and the active semester
-- Admin-only write APIs protected by Supabase Auth plus `admin_profiles`
+- Lets users build a timetable from class groups by semester
+- Detects timetable clashes from real dated events
+- Supports read-only shared links with optional one-click import into local state
+- Exports selected timetable data as PDF, ICS, or PNG
+- Stores planner state in browser `localStorage` (no user auth required)
 
-## Start The Backend
+## Tech Stack
 
-1. Install dependencies:
+### Web app (`/`)
 
-```bash
-npm install
+- Next.js 16 (App Router + Route Handlers)
+- React 19
+- TypeScript
+- Drizzle ORM + `postgres` driver
+- Supabase Postgres (via `DATABASE_URL`)
+- Tailwind CSS v4
+- Zod
+- `pdf-lib` (PDF export)
+- `html-to-image` (client-side PNG export)
+
+### Scraper (`/scraper`)
+
+- Node.js + TypeScript CLI scripts
+- Python (`pdfplumber`) for PDF extraction helpers
+- SQL generation for `psql`/Supabase import
+
+## Repository Layout
+
+```text
+app/                    Next.js routes (pages + API route handlers)
+components/             UI components
+lib/db/                 Drizzle client, schema, queries
+lib/timetable/          Timetable domain logic (share URL, clash detection, storage)
+lib/export/             ICS/PDF/PNG export logic
+lib/validation/         Zod schemas
+drizzle/                Intentionally empty for this rewrite (no destructive migrations)
+scraper/                Local data scraping + SQL generation workflow
 ```
 
-2. Create your local environment file:
+## Prerequisites
 
-```bash
-cp .env.example .env.local
-```
+- Node.js (current LTS recommended)
+- npm
+- A Postgres connection string (Supabase or compatible) with the expected schema/data
 
-3. Fill in `.env.local`:
+Optional for scraper workflow:
+
+- Python 3.10+
+- `psql`
+
+## Environment Variables
+
+Create `.env.local` in repo root:
 
 ```env
 DATABASE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-FRONTEND_PUBLIC_ORIGIN=http://127.0.0.1:5500
 ```
 
-4. Generate and apply the database schema:
+Notes:
+
+- `DATABASE_URL` is required and used server-side by the app and Drizzle config.
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently not required by runtime code, but are kept for compatibility/future browser integrations.
+- Never commit real credentials.
+
+## Install And Run
 
 ```bash
-npm run db:generate
-npm run db:migrate
-```
-
-5. Carry the current dummy data into PostgreSQL:
-
-```bash
-npm run db:seed:sample
-```
-
-Optional seed variables:
-
-```bash
-SEED_ACADEMIC_YEAR=2026/2027 SEED_TERM=1 npm run db:seed:sample
-```
-
-6. Start the backend:
-
-```bash
+npm install
 npm run dev
 ```
 
-Backend URL:
+Open `http://localhost:3000`.
 
-```text
-http://127.0.0.1:3000
-```
-
-## Start The Frontend
-
-Start a static server from the repo root:
+## Useful Commands
 
 ```bash
-python3 -m http.server 5500
+npm run typecheck   # TypeScript checks
+npm run build       # Production build
+npm run start       # Run production build locally
+npm run db:generate # Generate Drizzle migration files (only when you intentionally change schema)
 ```
 
-Open:
+Important:
+
+- The current architecture assumes the existing Supabase academic tables already exist.
+- Do not run `drizzle-kit push` against production/shared Supabase unless you explicitly intend schema changes.
+
+## App Routes
+
+### Pages
+
+- `/` -> renders the same page as `/planner` (`app/page.tsx` re-export)
+- `/planner` -> interactive timetable planner
+- `/courses` -> course search page with filters
+- `/courses/[courseCode]` -> course detail page; optional query `semesterId`
+- `/share` -> shared timetable preview/import page
+  - expected query params: `sem`, `classes`
+
+### API Routes
+
+All current API routes are `GET` and run on Node.js runtime.
+
+1. `/api/courses/search`
+- Query params:
+  - `q`
+  - `semesterIds` (repeatable) or `semesterId`
+  - `scheduleTypes` (repeatable) or `scheduleType` (`daytime` | `evening`)
+  - `postgraduateOnly` or legacy `postgraduate=postgraduate`
+  - `availableAsGspOnly`
+  - `schools` (repeatable) or `school`
+  - `courseLevels` (repeatable) or `courseLevel`
+  - `limit` (default `25`, max `100`)
+- Response:
+  - `{ courses: CourseSearchResult[] }`
+
+2. `/api/courses/[courseCode]`
+- Query params:
+  - `semesterId` (optional)
+  - `scheduleType` (optional: `daytime` | `evening`)
+- Response:
+  - `{ course, classes, assessmentComponents }`
+- Error:
+  - `404` when course code is not found
+
+3. `/api/classes`
+- Mode A (course group lookup):
+  - Query: `courseCode` + optional `semesterId`/`sem`, `scheduleType`
+  - Response: `{ classes: CourseClassRecord[] }`
+- Mode B (timetable resolution from share params):
+  - Query: `sem` + `classes`
+  - Response: `{ timetable: TimetableData }`
+
+4. `/api/export/ics`
+- Query: share params (`sem`, `classes`)
+- Response: calendar attachment (`text/calendar`)
+
+5. `/api/export/pdf`
+- Query: share params (`sem`, `classes`)
+- Response: PDF attachment (`application/pdf`)
+
+PNG export is intentionally client-side (no `/api/export/png`) to preserve the rendered UI view.
+
+## Share URL Format
+
+Share URLs are stateless and encode selected classes semantically.
+
+Format:
 
 ```text
-http://127.0.0.1:5500
+/share?sem=<semesterId>&classes=<identifier>,<identifier>,...
 ```
 
-By default, the frontend calls the backend at:
+Class identifier format:
 
 ```text
-http://127.0.0.1:3000/api/modules
+COURSECODE:scheduleType:groupCodeType:groupCode
 ```
 
-So in normal local development:
+Example:
 
-1. Start the backend on port `3000`
-2. Start the frontend on port `5500`
-3. Open the frontend URL
+```text
+/share?sem=1&classes=ICT133:evening:TG:T01,ANL252:daytime:CRN:12345
+```
 
-## Admin Setup
+Validation constraints:
 
-Admin routes require both:
-- a valid Supabase Auth session
-- a matching row in `admin_profiles.user_id`
+- `scheduleType`: `daytime` | `evening`
+- `groupCodeType`: `TG` | `CRN`
+- up to 50 selected class identifiers in one shared payload
 
-You must create at least one Supabase user and insert that user UUID into `admin_profiles` before the admin APIs will work.
+If a shared identifier no longer maps to current DB rows, it is returned in `unresolvedSelections` and surfaced in the UI.
 
-## Public API Routes
+## Local State Persistence
 
-- `GET /api/modules`
-- `GET /api/modules/[code]`
-- `GET /api/classes`
-- `GET /api/semesters/active`
-- `GET /api/offerings`
+Planner state is stored in browser `localStorage` under:
 
-## Admin API Routes
+```text
+sussplanner.timetable.v1
+```
 
-- `POST /api/admin/modules`
-- `PATCH /api/admin/modules/[id]`
-- `DELETE /api/admin/modules/[id]`
-- `POST /api/admin/semesters`
-- `PATCH /api/admin/semesters/[id]`
-- `POST /api/admin/classes`
-- `PATCH /api/admin/classes/[id]`
-- `DELETE /api/admin/classes/[id]`
-- `POST /api/admin/import`
+Persisted fields:
 
-## Legacy Files
+- `semesterId`
+- `selectedClasses`
+- `hiddenClasses`
+- `selectedWeekId`
+- `orientation`
+- `viewMode`
 
-These older files are still present for reference and frontend fallback behavior:
-- `backend/sampleModules.json`
-- `backend/csvModuleParser.js`
-- `server.js`
+Shared links do not auto-overwrite local state. Overwrite only happens after explicit import confirmation in `/share`.
 
-The new backend path is the Next.js app under `app/api`, not `server.js`.
+## Database And Schema Expectations
 
-## Helper Tests
+The app expects these tables/views (read path):
 
-You can still run the existing helper tests with:
+- `courses`
+- `semesters`
+- `semester_weeks`
+- `classes`
+- `class_events`
+- `assessment_components`
+- `v_class_events_with_week` (treated as read-only)
+
+`lib/db/schema.ts` mirrors this schema manually. This rewrite intentionally avoids destructive migration workflows for core academic tables.
+
+## Scraper Workflow
+
+The scraper is a separate local workflow under [`scraper/`](./scraper):
 
 ```bash
-node tests.js
+cd scraper
+npm install
 ```
+
+See [`scraper/README.md`](./scraper/README.md) for:
+
+- schedule PDF parsing
+- course synopsis PDF download/parsing
+- semester week SQL generation
+- import order and validation checks
+
+## License
+
+MIT (see [`LICENSE`](./LICENSE)).

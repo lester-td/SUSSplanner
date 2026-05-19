@@ -1,135 +1,110 @@
-import { relations } from "drizzle-orm";
 import {
+  bigint,
   boolean,
-  index,
+  date,
   integer,
+  jsonb,
+  numeric,
   pgTable,
+  smallint,
   text,
+  time,
   timestamp,
-  uniqueIndex,
-  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
 
-export const modules = pgTable(
-  "modules",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    code: text("code").notNull(),
-    name: text("name").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    codeUnique: uniqueIndex("modules_code_unique").on(table.code),
-  })
-);
+export const courses = pgTable("courses", {
+  courseCode: varchar("course_code", { length: 20 }).primaryKey(),
+  courseName: varchar("course_name", { length: 255 }),
+  schoolName: varchar("school_name", { length: 255 }),
+  isPostgraduate: boolean("is_postgraduate"),
+  courseLevel: varchar("course_level", { length: 50 }),
+  creditUnits: numeric("credit_units", { precision: 4, scale: 1, mode: "number" }),
+  presentationPattern: text("presentation_pattern"),
+  courseSynopsis: text("course_synopsis"),
+  courseTopics: jsonb("course_topics").$type<unknown>(),
+  learningOutcomes: jsonb("learning_outcomes").$type<unknown>(),
+  synopsisUrl: text("synopsis_url"),
+  lastScrapedAt: timestamp("last_scraped_at", { withTimezone: true }),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
+});
 
-export const semesters = pgTable(
-  "semesters",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    academicYear: text("academic_year").notNull(),
-    term: integer("term").notNull(),
-    label: text("label").notNull(),
-    isActive: boolean("is_active").default(false).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    academicYearTermUnique: uniqueIndex("semesters_academic_year_term_unique").on(
-      table.academicYear,
-      table.term
-    ),
-    activeIndex: index("semesters_active_idx").on(table.isActive),
-  })
-);
+export const semesters = pgTable("semesters", {
+  semesterId: bigint("semester_id", { mode: "number" }).primaryKey(),
+  academicYear: varchar("academic_year", { length: 9 }).notNull(),
+  semesterNo: smallint("semester_no").notNull(),
+  semesterName: varchar("semester_name", { length: 100 }).notNull(),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
+});
 
-export const moduleOfferings = pgTable(
-  "module_offerings",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    moduleId: uuid("module_id")
-      .notNull()
-      .references(() => modules.id, { onDelete: "cascade" }),
-    semesterId: uuid("semester_id")
-      .notNull()
-      .references(() => semesters.id, { onDelete: "cascade" }),
-    tg: text("tg").notNull(),
-    color: text("color"),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    offeringUnique: uniqueIndex("module_offerings_unique").on(
-      table.moduleId,
-      table.semesterId,
-      table.tg
-    ),
-    semesterIndex: index("module_offerings_semester_idx").on(table.semesterId),
-    moduleIndex: index("module_offerings_module_idx").on(table.moduleId),
-  })
-);
+export const semesterWeeks = pgTable("semester_weeks", {
+  weekId: bigint("week_id", { mode: "number" }).primaryKey(),
+  semesterId: bigint("semester_id", { mode: "number" }).notNull(),
+  weekNo: smallint("week_no").notNull(),
+  weekType: varchar("week_type", { length: 20 }).notNull(),
+  label: varchar("label", { length: 50 }).notNull(),
+  startDate: date("start_date", { mode: "string" }).notNull(),
+  endDate: date("end_date", { mode: "string" }).notNull(),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
+});
 
-export const classes = pgTable(
-  "classes",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    offeringId: uuid("offering_id")
-      .notNull()
-      .references(() => moduleOfferings.id, { onDelete: "cascade" }),
-    day: text("day").notNull(),
-    startTime: text("start_time").notNull(),
-    durationHours: integer("duration_hours").notNull(),
-    classType: text("class_type").notNull(),
-    venue: text("venue").notNull(),
-    weekPattern: text("week_pattern").default("all").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    offeringIndex: index("classes_offering_idx").on(table.offeringId),
-  })
-);
+export const classes = pgTable("classes", {
+  classId: bigint("class_id", { mode: "number" }).primaryKey(),
+  courseCode: varchar("course_code", { length: 20 }).notNull(),
+  semesterId: bigint("semester_id", { mode: "number" }).notNull(),
+  scheduleType: varchar("schedule_type", { length: 20 }).notNull(),
+  groupCodeType: varchar("group_code_type", { length: 10 }).notNull(),
+  groupCode: varchar("group_code", { length: 20 }).notNull(),
+  availableAsGsp: boolean("available_as_gsp"),
+  isRestricted: boolean("is_restricted"),
+  remarks: text("remarks"),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
+});
 
-export const adminProfiles = pgTable(
-  "admin_profiles",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    userId: uuid("user_id").notNull(),
-    email: text("email").notNull(),
-    displayName: text("display_name"),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (table) => ({
-    userUnique: uniqueIndex("admin_profiles_user_unique").on(table.userId),
-    emailUnique: uniqueIndex("admin_profiles_email_unique").on(table.email),
-  })
-);
+export const classEvents = pgTable("class_events", {
+  eventId: bigint("event_id", { mode: "number" }).primaryKey(),
+  classId: bigint("class_id", { mode: "number" }).notNull(),
+  eventKind: varchar("event_kind", { length: 20 }).notNull(),
+  eventDate: date("event_date", { mode: "string" }).notNull(),
+  dayOfWeek: smallint("day_of_week").notNull(),
+  startTime: time("start_time").notNull(),
+  endTime: time("end_time").notNull(),
+  eventMode: varchar("event_mode", { length: 100 }),
+  venue: varchar("venue", { length: 255 }),
+  remarks: text("remarks"),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
+});
 
-export const modulesRelations = relations(modules, ({ many }) => ({
-  offerings: many(moduleOfferings),
-}));
+export const assessmentComponents = pgTable("assessment_components", {
+  componentId: bigint("component_id", { mode: "number" }).primaryKey(),
+  courseCode: varchar("course_code", { length: 20 }).notNull(),
+  scheduleType: varchar("schedule_type", { length: 20 }).notNull(),
+  componentName: varchar("component_name", { length: 100 }).notNull(),
+  componentGroup: varchar("component_group", { length: 10 }).notNull(),
+  assessmentMode: varchar("assessment_mode", { length: 100 }),
+  weightPercentage: numeric("weight_percentage", { precision: 5, scale: 2, mode: "number" }).notNull(),
+  sortOrder: integer("sort_order").notNull(),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
+});
 
-export const semestersRelations = relations(semesters, ({ many }) => ({
-  offerings: many(moduleOfferings),
-}));
-
-export const moduleOfferingsRelations = relations(moduleOfferings, ({ one, many }) => ({
-  module: one(modules, {
-    fields: [moduleOfferings.moduleId],
-    references: [modules.id],
-  }),
-  semester: one(semesters, {
-    fields: [moduleOfferings.semesterId],
-    references: [semesters.id],
-  }),
-  classes: many(classes),
-}));
-
-export const classesRelations = relations(classes, ({ one }) => ({
-  offering: one(moduleOfferings, {
-    fields: [classes.offeringId],
-    references: [moduleOfferings.id],
-  }),
-}));
+export const vClassEventsWithWeek = pgTable("v_class_events_with_week", {
+  eventId: bigint("event_id", { mode: "number" }),
+  classId: bigint("class_id", { mode: "number" }),
+  courseCode: varchar("course_code", { length: 20 }),
+  semesterId: bigint("semester_id", { mode: "number" }),
+  scheduleType: varchar("schedule_type", { length: 20 }),
+  groupCodeType: varchar("group_code_type", { length: 10 }),
+  groupCode: varchar("group_code", { length: 20 }),
+  eventKind: varchar("event_kind", { length: 20 }),
+  eventDate: date("event_date", { mode: "string" }),
+  dayOfWeek: smallint("day_of_week"),
+  startTime: time("start_time"),
+  endTime: time("end_time"),
+  eventMode: varchar("event_mode", { length: 100 }),
+  venue: varchar("venue", { length: 255 }),
+  remarks: text("remarks"),
+  weekId: bigint("week_id", { mode: "number" }),
+  weekNo: smallint("week_no"),
+  weekType: varchar("week_type", { length: 20 }),
+  weekLabel: varchar("week_label", { length: 50 }),
+});

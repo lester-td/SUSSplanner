@@ -1,0 +1,29 @@
+{
+  "name": "suss-timetable-scraper",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "description": "Local Node/TypeScript scraper that extracts SUSS timetable PDFs and latest course synopsis PDFs into Supabase/Postgres SQL inserts.",
+  "scripts": {
+    "scrape:schedule": "tsx src/cli/scrapeSchedule.ts",
+    "scrape:all": "tsx src/cli/scrapeAll.ts",
+    "generate:weeks": "tsx src/cli/generateSemesterWeeksSql.ts",
+    "download:courses": "tsx src/cli/downloadCoursePdfs.ts",
+    "parse:courses": "tsx src/cli/parseCoursePdfs.ts",
+    "scrape:courses": "node -e \"console.log('Use: npm run download:courses, then npm run parse:courses')\"",
+    "typecheck": "tsc --noEmit",
+    "extract:pdf-table": "python3 tools/pdf_table_to_csv.py",
+    "extract:course-pdf": "python3 tools/course_pdf_to_text.py",
+    "courses-json-to-sql": "tsx src/cli/courseJsonToSql.ts",
+    "schedule-json-to-sql": "tsx src/cli/scheduleJsonToSql.ts"
+  },
+  "dependencies": {
+    "csv-parse": "^5.6.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

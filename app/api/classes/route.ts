@@ -1,43 +1,36 @@
-import { type NextRequest } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
 
-import { json, optionsResponse, routeErrorResponse } from "@/lib/api/http";
-import { getPublicClasses } from "@/lib/db/queries/classes";
-import { moduleCodeSchema, uuidSchema } from "@/lib/validation/common";
+import {
+  getCourseClasses,
+  getTimetableDataFromClassIdentifiers,
+} from "@/lib/db/queries";
+import { decodeShareUrlState } from "@/lib/timetable/share-url";
+import {
+  courseCodeSchema,
+  optionalSemesterIdSchema,
+  scheduleTypeSchema,
+} from "@/lib/validation/timetable";
 
 export const runtime = "nodejs";
 
-const querySchema = z.object({
-  moduleCode: moduleCodeSchema.optional(),
-  semesterId: uuidSchema.optional(),
-  offeringId: uuidSchema.optional(),
-  activeOnly: z.boolean().optional().default(true),
-});
-
 export async function GET(request: NextRequest)
 {
-  try
-  {
-    const parsed = querySchema.parse({
-      moduleCode: request.nextUrl.searchParams.get("moduleCode") ?? undefined,
-      semesterId: request.nextUrl.searchParams.get("semesterId") ?? undefined,
-      offeringId: request.nextUrl.searchParams.get("offeringId") ?? undefined,
-      activeOnly:
-        request.nextUrl.searchParams.get("activeOnly") === null
-          ? true
-          : request.nextUrl.searchParams.get("activeOnly") !== "false",
-    });
+  const courseCode = request.nextUrl.searchParams.get("courseCode");
+  const semesterId = optionalSemesterIdSchema.parse(
+    request.nextUrl.searchParams.get("semesterId")
+      ?? request.nextUrl.searchParams.get("sem")
+      ?? undefined,
+  );
+  const rawScheduleType = request.nextUrl.searchParams.get("scheduleType");
+  const scheduleType = rawScheduleType ? scheduleTypeSchema.parse(rawScheduleType) : undefined;
 
-    const classes = await getPublicClasses(parsed);
-    return json({ classes }, 200, request);
-  }
-  catch (error)
+  if (courseCode)
   {
-    return routeErrorResponse(error, request);
+    const classes = await getCourseClasses(courseCodeSchema.parse(courseCode), semesterId, scheduleType);
+    return NextResponse.json({ classes });
   }
-}
 
-export function OPTIONS(request: NextRequest)
-{
-  return optionsResponse(request);
+  const decoded = decodeShareUrlState(request.nextUrl.searchParams);
+  const timetable = await getTimetableDataFromClassIdentifiers(decoded.selectedClasses, decoded.semesterId);
+  return NextResponse.json({ timetable });
 }

@@ -1,274 +1,198 @@
-# SUSSmods Architecture
+# Architecture
 
-## Overview
+## Scope
 
-SUSSmods is split into two runtime layers:
+This repository has two workspaces:
 
-1. A static frontend that runs entirely in the browser
-2. A Next.js backend that exposes API routes backed by PostgreSQL
+- root app: Next.js timetable planner (`app/`, `components/`, `lib/`)
+- scraper pipeline: local data ingestion workflow (`scraper/`)
 
-The product goal is intentionally narrow:
-- normal users browse module data and build timetables locally
-- timetable selections are not persisted on the server
-- sharing remains URL-based
-- server-side state is only for academic data and admin management
+This document covers the root web app architecture.
 
-## Stack
+## System Overview
 
-### Frontend
-- Static HTML, CSS, and browser-side JavaScript
-- Main entry files:
-  - [index.html](/Users/raventang/Documents/LocalGit/SUSSplanner/index.html)
-  - [styles.css](/Users/raventang/Documents/LocalGit/SUSSplanner/styles.css)
-  - [script.js](/Users/raventang/Documents/LocalGit/SUSSplanner/script.js)
-  - [frontend/js](/Users/raventang/Documents/LocalGit/SUSSplanner/frontend/js)
+The app has two runtime objectives:
 
-### Backend
-- Next.js Route Handlers
-- TypeScript
-- PostgreSQL
-- Drizzle ORM
-- Zod validation
-- Supabase Auth for admin-only routes
+1. Read timetable/course data from an existing Supabase Postgres schema.
+2. Let anonymous users build, share, and export timetables from URL + local browser state.
 
-Core backend files:
-- [app/api](/Users/raventang/Documents/LocalGit/SUSSplanner/app/api)
-- [lib/db/schema.ts](/Users/raventang/Documents/LocalGit/SUSSplanner/lib/db/schema.ts)
-- [lib/db/queries](/Users/raventang/Documents/LocalGit/SUSSplanner/lib/db/queries)
-- [lib/auth/admin.ts](/Users/raventang/Documents/LocalGit/SUSSplanner/lib/auth/admin.ts)
-- [lib/validation](/Users/raventang/Documents/LocalGit/SUSSplanner/lib/validation)
-
-## High-Level Design
-
-### Frontend Responsibilities
-- Fetch module catalog data from the public backend API
-- Let users build a timetable locally in memory
-- Store local UI state in cookies and share links
-- Render timetable layout, conflict lanes, filters, and exports
-
-The frontend does not:
-- authenticate normal users
-- write timetable selections to the database
-- depend on backend planner/session storage
-
-### Backend Responsibilities
-- Serve canonical academic data to the frontend
-- Validate admin write payloads
-- Enforce admin-only access for mutations
-- Store and update module, semester, offering, and class data
-- Seed the database from the legacy dummy JSON catalog
-
-The backend does not:
-- store normal-user planner records
-- require login for public reads
-- participate in URL timetable sharing logic
-
-## Data Flow
-
-### Public Read Flow
-
-1. The browser loads the static frontend
-2. The frontend requests `GET /api/modules` from the Next backend
-3. The backend reads normalized Postgres data
-4. Query helpers reshape that data into the frontend-compatible module catalog shape
-5. The frontend renders the timetable UI from that response
-
-If the backend is unavailable, the frontend falls back to:
-- [backend/sampleModules.json](/Users/raventang/Documents/LocalGit/SUSSplanner/backend/sampleModules.json)
-
-### Admin Write Flow
-
-1. An admin sends a request to an `/api/admin/*` route
-2. The backend verifies the Supabase session
-3. The backend checks that the authenticated Supabase user exists in `admin_profiles`
-4. Zod validates the payload
-5. Drizzle writes the normalized records into PostgreSQL
-
-## API Design
-
-### Public Routes
-- `GET /api/modules`
-- `GET /api/modules/[code]`
-- `GET /api/classes`
-- `GET /api/semesters/active`
-- `GET /api/offerings`
-
-These routes:
-- do not require login
-- allow the static frontend to call them cross-origin during local development
-- return data shaped for frontend consumption where appropriate
-
-### Admin Routes
-- `POST /api/admin/modules`
-- `PATCH /api/admin/modules/[id]`
-- `DELETE /api/admin/modules/[id]`
-- `POST /api/admin/semesters`
-- `PATCH /api/admin/semesters/[id]`
-- `POST /api/admin/classes`
-- `PATCH /api/admin/classes/[id]`
-- `DELETE /api/admin/classes/[id]`
-- `POST /api/admin/import`
-
-These routes:
-- require a Supabase-authenticated admin
-- never expose planner storage because planner storage does not exist server-side
-
-## Database Model
-
-The database is normalized around academic data.
-
-### `modules`
-Root module records.
-
-Important fields:
-- `id`
-- `code`
-- `name`
-
-Example:
-- `ICT114`
-
-### `semesters`
-Academic periods for module offerings.
-
-Important fields:
-- `id`
-- `academic_year`
-- `term`
-- `label`
-- `is_active`
-
-### `module_offerings`
-Join records linking a module to a semester and a TG/group.
-
-Important fields:
-- `id`
-- `module_id`
-- `semester_id`
-- `tg`
-- `color`
-
-This is the layer that lets the backend preserve the existing frontend expectation that one module root can have multiple TG variants.
-
-### `classes`
-Actual scheduled lessons belonging to a module offering.
-
-Important fields:
-- `id`
-- `offering_id`
-- `day`
-- `start_time`
-- `duration_hours`
-- `class_type`
-- `venue`
-- `week_pattern`
-
-### `admin_profiles`
-Whitelist of Supabase users allowed to mutate academic data.
-
-Important fields:
-- `id`
-- `user_id`
-- `email`
-- `display_name`
-
-## Frontend-Compatible Response Shape
-
-The old dummy catalog established the browser contract. The backend preserves that contract for `/api/modules`.
-
-Each module entry is shaped like:
-
-```json
-{
-  "code": "ICT114-TG01",
-  "rootCode": "ICT114",
-  "tg": "TG01",
-  "name": "Computer Architecture",
-  "color": "#84cc16",
-  "lessons": [
-    {
-      "day": "Mon",
-      "start": "1200",
-      "end": "1400",
-      "type": "LEC",
-      "venue": "C.4.08",
-      "weekPattern": "all"
-    }
-  ]
-}
-```
-
-This compatibility layer lives mainly in:
-- [lib/db/queries/offerings.ts](/Users/raventang/Documents/LocalGit/SUSSplanner/lib/db/queries/offerings.ts)
-- [lib/api/catalog.ts](/Users/raventang/Documents/LocalGit/SUSSplanner/lib/api/catalog.ts)
-
-## Validation Rules
-
-Validation is centralized in Zod schemas under:
-- [lib/validation](/Users/raventang/Documents/LocalGit/SUSSplanner/lib/validation)
-
-Important SUSS scheduling constraints:
-- valid class start times: `08:30`, `12:00`, `15:30`, `19:00`
-- valid class durations: `2` or `3` hours
-- week patterns: `all`, `odd`, `even`
-
-This keeps invalid timetable data out of the database before Drizzle writes occur.
-
-## Authentication Boundary
-
-Supabase Auth is used only for admin APIs.
-
-### Public Users
-- no login required
-- no database-backed timetable storage
-- state remains in URL parameters and browser storage
-
-### Admin Users
-- must have a valid Supabase session
-- must also exist in `admin_profiles`
-
-The authorization gate lives in:
-- [lib/auth/admin.ts](/Users/raventang/Documents/LocalGit/SUSSplanner/lib/auth/admin.ts)
-
-## Dummy Data And Seeding
-
-The legacy prototype data still exists in:
-- [backend/sampleModules.json](/Users/raventang/Documents/LocalGit/SUSSplanner/backend/sampleModules.json)
-
-That file now serves two roles:
-- frontend fallback when the backend is unavailable
-- source input for seeding PostgreSQL
-
-Seed script:
-- [scripts/seed-sample-data.js](/Users/raventang/Documents/LocalGit/SUSSplanner/scripts/seed-sample-data.js)
-
-This script converts the old TG-based JSON structure into normalized `modules`, `module_offerings`, and `classes`.
+There is no server-side user timetable persistence in this design.
 
 ## Runtime Topology
 
-In local development there are usually two processes:
+### Server runtime (Node.js)
 
-1. Backend on `http://127.0.0.1:3000`
-2. Static frontend on `http://127.0.0.1:5500`
+- Next.js App Router pages and route handlers execute on the server.
+- `DATABASE_URL` is read only on the server.
+- DB reads are performed via Drizzle + `postgres` driver.
 
-The frontend calls the backend directly across ports. Public API responses include CORS headers so this works during local development.
+### Browser runtime
 
-## Legacy And Transitional Pieces
+- `PlannerClient` and `ShareClient` manage interactive state.
+- Planner state persists in `localStorage`.
+- PNG export is client-side DOM capture.
 
-These files remain in the repo for historical reference or fallback behavior:
-- [server.js](/Users/raventang/Documents/LocalGit/SUSSplanner/server.js)
-- [backend/csvModuleParser.js](/Users/raventang/Documents/LocalGit/SUSSplanner/backend/csvModuleParser.js)
-- [backend/sampleModules.json](/Users/raventang/Documents/LocalGit/SUSSplanner/backend/sampleModules.json)
+### Database
 
-They are no longer the primary backend architecture. The canonical backend is now the Next.js API layer under [app/api](/Users/raventang/Documents/LocalGit/SUSSplanner/app/api).
+- Existing Supabase Postgres schema is the source of truth.
+- This rewrite is read-focused for planner runtime operations.
 
-## Design Constraints
+## Data Model Contract
 
-The architecture intentionally preserves these rules:
-- no normal-user accounts
-- no planner tables
-- no server-side timetable persistence
-- no disruption to the existing share-link system
-- frontend compatibility with the prototype catalog shape
+The app expects these relations:
 
-These constraints keep the system simple: the backend is a content-management layer for academic schedule data, not a multi-user planner platform.
+- `courses`
+- `semesters`
+- `semester_weeks`
+- `classes`
+- `class_events`
+- `assessment_components`
+- `v_class_events_with_week` (read-only view used for timetable expansion by week)
+
+Key business identifiers:
+
+- course-level identity: `course_code`
+- class-level share identity: `course_code + schedule_type + group_code_type + group_code`
+- timetable URL identity: semantic class identifiers, not raw `class_id`
+
+## Data Access Layer
+
+Primary files:
+
+- `lib/db/index.ts`
+- `lib/db/schema.ts`
+- `lib/db/queries.ts`
+
+Rules and behaviors:
+
+- `lib/db/index.ts` throws immediately if `DATABASE_URL` is missing.
+- A shared `postgres` client is reused in development (`globalThis.__sussplanner_sql_client__`) to avoid connection churn during hot reload.
+- Query functions are centralized in `lib/db/queries.ts`; UI code does not query DB directly.
+- All timetable assembly paths resolve through `getTimetableDataFromClassIdentifiers(...)` or `getTimetableDataFromClassIds(...)`.
+- `v_class_events_with_week` rows are validated for required fields before mapping.
+
+## Routing And Page Data Flow
+
+### `/` and `/planner`
+
+- `app/page.tsx` re-exports `/planner`.
+- `app/planner/page.tsx` loads:
+  - `getSemestersWithClassesAndWeeks()`
+  - current semester/week context from date utilities
+- `PlannerClient` then performs client fetches to `/api/classes` using encoded share query state.
+
+### `/courses`
+
+- Server fetches:
+  - semester list
+  - semester-week tree
+  - search facets (`schools`, `courseLevels`)
+- Initial filter state is parsed from URL query params.
+- `CourseSearchPage` performs live search via `/api/courses/search`.
+
+### `/courses/[courseCode]`
+
+- Server fetches:
+  - course metadata
+  - classes (optional `semesterId`)
+  - assessment components
+  - offered semesters
+- Missing course returns Next.js `notFound()`.
+- Client-side semester dropdown re-fetches class groups via `/api/classes?courseCode=...`.
+
+### `/share`
+
+- If no share params: renders an empty-state explainer.
+- If malformed params: renders invalid-link UI.
+- If valid params:
+  - decode `sem` and `classes`
+  - resolve identifiers to classes/events
+  - render read-only shared timetable in `ShareClient`
+- Importing from this page explicitly overwrites local planner selection state.
+
+## API Surface
+
+All route handlers use `runtime = "nodejs"` and are currently `GET` only.
+
+- `/api/courses/search`
+  - parses multi-value search/filter query params
+  - returns `{ courses }`
+
+- `/api/courses/[courseCode]`
+  - validates optional `semesterId`, `scheduleType`
+  - returns `{ course, classes, assessmentComponents }` or `404`
+
+- `/api/classes`
+  - Mode A: class group lookup by `courseCode`
+  - Mode B: timetable assembly from share payload (`sem`, `classes`)
+  - returns `{ classes }` or `{ timetable }`
+
+- `/api/export/ics`
+  - resolves timetable from share payload
+  - returns downloadable ICS file
+
+- `/api/export/pdf`
+  - resolves timetable from share payload
+  - returns downloadable PDF file
+
+No `/api/export/png` route exists; PNG is generated client-side from rendered UI.
+
+## Share URL Architecture
+
+Share state is stateless and URL-based:
+
+```text
+/share?sem=<semesterId>&classes=<courseCode:scheduleType:groupCodeType:groupCode>,...
+```
+
+Validation is enforced by Zod schemas:
+
+- `semesterId` must be a positive integer
+- `scheduleType` must be `daytime` or `evening`
+- `groupCodeType` must be `TG` or `CRN`
+- max `50` selected classes per shared payload
+
+Resolution flow:
+
+1. Parse and validate URL payload.
+2. Match semantic identifiers to `classes` within selected semester.
+3. Build timetable from matching class IDs.
+4. Return non-matching identifiers in `unresolvedSelections` (do not mutate DB or silently drop in UI).
+
+## Local State Architecture
+
+Storage key:
+
+- `sussplanner.timetable.v1`
+
+Persisted fields:
+
+- `semesterId`
+- `selectedClasses`
+- `hiddenClasses`
+- `selectedWeekId`
+- `orientation`
+- `viewMode`
+
+Import behavior from `/share`:
+
+- selected shared classes replace current selected classes
+- `hiddenClasses` resets to empty
+- orientation/view mode are preserved from existing saved state when present
+
+## Export Architecture
+
+### ICS (`lib/export/ics.ts`)
+
+- Built server-side from resolved timetable events.
+- Emits `VEVENT`s with `Asia/Singapore` timezone in `DTSTART/DTEND`.
+
+### PDF (`lib/export/pdf.ts`)
+
+- Built server-side with `pdf-lib`.
+- Includes semester header, generation timestamp, clash summary, and event list.
+
+### PNG (`lib/export/png.ts`)
+
+- Built client-side with `html-to-image` from current rendered timetable container.
+- Preserves current visual state (orientation, filtered week, selected view).
