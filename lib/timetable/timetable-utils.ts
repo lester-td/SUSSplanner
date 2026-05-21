@@ -41,14 +41,39 @@ function formatWeekSummary(events: ClassEventWithWeekRecord[])
   const teachingWeekNumbers = unique(
     events
       .filter((event) => event.weekType === "TEACHING" && event.weekNo !== null)
-      .map((event) => String(event.weekNo)),
+      .map((event) => event.weekNo as number),
   );
 
   if (teachingWeekNumbers.length > 0)
   {
-    return teachingWeekNumbers.length <= 6
-      ? teachingWeekNumbers.join(", ")
-      : `${teachingWeekNumbers.slice(0, 6).join(", ")} +${teachingWeekNumbers.length - 6}`;
+    const sortedWeeks = [...teachingWeekNumbers].sort((left, right) => left - right);
+    const coversAllTeachingWeeks = sortedWeeks.length === 12 && sortedWeeks.every((week, index) => week === index + 1);
+
+    if (coversAllTeachingWeeks)
+    {
+      return "1-12";
+    }
+
+    const rangeLabels: string[] = [];
+    let start = sortedWeeks[0];
+    let previous = sortedWeeks[0];
+
+    for (const current of sortedWeeks.slice(1))
+    {
+      if (current === previous + 1)
+      {
+        previous = current;
+        continue;
+      }
+
+      rangeLabels.push(start === previous ? String(start) : `${start}-${previous}`);
+      start = current;
+      previous = current;
+    }
+
+    rangeLabels.push(start === previous ? String(start) : `${start}-${previous}`);
+
+    return rangeLabels.join(", ");
   }
 
   const labels = unique(events.map((event) => event.weekLabel ?? formatEventDate(event.eventDate)).filter(Boolean));
