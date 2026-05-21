@@ -26,7 +26,7 @@ export const COURSE_COLOR_PALETTE = [
   "#f7cda4",
   "#d4cb84",
   "#9acdbb",
-  "#b3a5c9",
+  "#b576b1",
   "#c0b6cc",
   "#cfb09f",
 ];
