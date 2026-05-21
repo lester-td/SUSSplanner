@@ -389,6 +389,7 @@ export function CourseDetailPage({
             courseName={scheduleGroup.courseName}
             classGroupLabel={formatClassGroupLabel(scheduleGroup.groupCode)}
             events={scheduleGroup.events}
+            onClose={() => setScheduleGroup(null)}
           />
         ) : null}
       </Modal>

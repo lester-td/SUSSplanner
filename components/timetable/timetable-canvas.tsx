@@ -12,6 +12,7 @@ import {
   minutesToLabel,
   minutesToTimeString,
 } from "@/lib/timetable/date-utils";
+import { getCourseColor } from "@/lib/timetable/timetable-utils";
 import type { TimetableBlock } from "@/lib/timetable/types";
 
 const OVERLAP_INSET_PX = 1;
@@ -27,6 +28,82 @@ type TimetableLaneLayout = {
   laneCount: number;
 };
 
+function getDarkToneFromHex(hexColor: string)
+{
+  const normalized = hexColor.trim().replace(/^#/, "");
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized))
+  {
+    return "#111827";
+  }
+
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+
+  const huePreservingDark: [number, number, number] = [
+    Math.round(red * 0.18),
+    Math.round(green * 0.18),
+    Math.round(blue * 0.18),
+  ];
+  const deepNeutral: [number, number, number] = [17, 24, 39];
+
+  const toLinear = (channel: number) => {
+    const s = channel / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = ([r, g, b]: [number, number, number]) => (
+    0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
+  );
+  const contrastRatio = (foreground: [number, number, number], background: [number, number, number]) => {
+    const foregroundLum = luminance(foreground);
+    const backgroundLum = luminance(background);
+    const lighter = Math.max(foregroundLum, backgroundLum);
+    const darker = Math.min(foregroundLum, backgroundLum);
+    return (lighter + 0.05) / (darker + 0.05);
+  };
+
+  const background: [number, number, number] = [red, green, blue];
+  const hueContrast = contrastRatio(huePreservingDark, background);
+  const neutralContrast = contrastRatio(deepNeutral, background);
+  const selected = neutralContrast > hueContrast ? deepNeutral : huePreservingDark;
+
+  if (contrastRatio(selected, background) < 4.5)
+  {
+    return "#0b0f17";
+  }
+
+  return `rgb(${selected[0]} ${selected[1]} ${selected[2]})`;
+}
+
+function compareBlocksForLane(left: TimetableBlock, right: TimetableBlock)
+{
+  if (left.startMinutes !== right.startMinutes)
+  {
+    return left.startMinutes - right.startMinutes;
+  }
+  if (left.endMinutes !== right.endMinutes)
+  {
+    return left.endMinutes - right.endMinutes;
+  }
+  if (left.courseCode !== right.courseCode)
+  {
+    return left.courseCode.localeCompare(right.courseCode);
+  }
+  if (left.groupCodeType !== right.groupCodeType)
+  {
+    return left.groupCodeType.localeCompare(right.groupCodeType);
+  }
+  if (left.groupCode !== right.groupCode)
+  {
+    return left.groupCode.localeCompare(right.groupCode, undefined, { numeric: true, sensitivity: "base" });
+  }
+  if (left.shareKey !== right.shareKey)
+  {
+    return left.shareKey.localeCompare(right.shareKey);
+  }
+  return left.id.localeCompare(right.id);
+}
+
 function assignLaneLayoutForCluster(
   cluster: TimetableBlock[],
   laneLayouts: Map<string, TimetableLaneLayout>,
@@ -38,13 +115,7 @@ function assignLaneLayoutForCluster(
     return;
   }
 
-  const sorted = [...cluster].sort((left, right) => {
-    if (left.startMinutes !== right.startMinutes)
-    {
-      return left.startMinutes - right.startMinutes;
-    }
-    return left.endMinutes - right.endMinutes;
-  });
+  const sorted = [...cluster].sort(compareBlocksForLane);
   const laneEnds: number[] = [];
   const laneById = new Map<string, number>();
 
@@ -93,13 +164,7 @@ function buildLaneLayouts(blocks: TimetableBlock[])
 
   for (const dayBlocks of dayMap.values())
   {
-    const sorted = [...dayBlocks].sort((left, right) => {
-      if (left.startMinutes !== right.startMinutes)
-      {
-        return left.startMinutes - right.startMinutes;
-      }
-      return left.endMinutes - right.endMinutes;
-    });
+    const sorted = [...dayBlocks].sort(compareBlocksForLane);
 
     let cluster: TimetableBlock[] = [];
     let clusterEnd = -1;
@@ -175,7 +240,13 @@ export function TimetableCanvas({
   timeSlots,
   visibleEndMinutes,
   showAllWeeks,
+  dayDateByDay,
   activeShareKey,
+  deEmphasisMode,
+  activeCourseCode,
+  courseCanPickByCode,
+  isPickMode,
+  suppressActiveOutline,
   onBlockClick,
   showCurrentTime,
 }: {
@@ -185,7 +256,13 @@ export function TimetableCanvas({
   timeSlots: number[];
   visibleEndMinutes: number;
   showAllWeeks: boolean;
+  dayDateByDay: Record<number, string>;
   activeShareKey: string | null;
+  deEmphasisMode: "all" | "course-only" | "none";
+  activeCourseCode: string | null;
+  courseCanPickByCode: Record<string, boolean>;
+  isPickMode: boolean;
+  suppressActiveOutline: boolean;
   onBlockClick: (block: TimetableBlock) => void;
   showCurrentTime: boolean;
 })
@@ -208,7 +285,7 @@ export function TimetableCanvas({
   const slotSize = isMobile ? 22 : 30;
   const daySize = 104;
   const contentHeight = (rangeMinutes / 30) * slotSize;
-  const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 58 : 74);
+  const horizontalMinWidthPx = (rangeMinutes / 30) * 58;
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
   const dayLaneCounts = dayBlocksByIndex.map((dayBlocks) => dayBlocks.reduce((maxLaneCount, block) => {
@@ -242,23 +319,13 @@ export function TimetableCanvas({
   if (isHorizontal)
   {
     return (
-      <div className="overflow-hidden bg-[var(--surface-container-lowest)] p-px">
-        <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3">
-          <div className="pt-10">
-            {visibleDays.map((day, dayIndex) => (
-              <div
-                key={day.dayOfWeek}
-                className="flex items-start justify-end pt-2 pr-3 text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]"
-                style={{ height: `${horizontalDayHeights[dayIndex]}px` }}
-              >
-                {day.label}
-              </div>
-            ))}
-          </div>
+      <div className="overflow-visible bg-[var(--surface-container-lowest)] p-px">
+        <div className={`min-w-0 ${isMobile ? "overflow-x-auto" : "overflow-x-visible"}`}>
+          <div style={isMobile ? { minWidth: `${horizontalMinWidthPx}px` } : undefined}>
+            <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] grid-rows-[2rem_minmax(0,1fr)] gap-0">
+              <div />
 
-          <div className="min-w-0 overflow-x-auto">
-            <div style={{ minWidth: `${horizontalMinWidthPx}px` }}>
-              <div className="relative h-10">
+              <div className="relative h-8">
                 {timeSlots.map((slot) => (
                   <div
                     key={slot}
@@ -271,7 +338,25 @@ export function TimetableCanvas({
               </div>
 
               <div
-                className="relative w-full overflow-hidden border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
+                className="relative border border-[var(--outline-variant)] border-r-0 border-t-0 bg-[var(--surface-container-lowest)]"
+                style={{ height: `${horizontalContentHeight}px` }}
+              >
+                {visibleDays.map((day, dayIndex) => (
+                  <div
+                    key={day.dayOfWeek}
+                    className="absolute inset-x-0 flex items-center justify-center border-t border-[var(--outline-variant)] text-center text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]"
+                    style={{
+                      top: `${horizontalDayTops[dayIndex]}px`,
+                      height: `${horizontalDayHeights[dayIndex]}px`,
+                    }}
+                  >
+                    {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? day.label : `${day.label} ${dayDateByDay[day.dayOfWeek]}`}
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className="relative w-full overflow-visible border border-[var(--outline-variant)] border-t-0 bg-[var(--surface-container-lowest)]"
                 style={{ height: `${horizontalContentHeight}px` }}
               >
                 {visibleDays.map((day, index) => (
@@ -311,8 +396,15 @@ export function TimetableCanvas({
                     <TimetableBlockButton
                       key={block.id}
                       block={block}
-                      color={blockColorByKey.get(block.shareKey) ?? "#3556b8"}
+                      color={blockColorByKey.get(block.shareKey) ?? getCourseColor(block.courseCode)}
                       active={activeShareKey === block.shareKey}
+                      available={Boolean(activeShareKey) && activeShareKey !== block.shareKey && (
+                        deEmphasisMode === "all"
+                        || (deEmphasisMode === "course-only" && Boolean(activeCourseCode) && block.courseCode === activeCourseCode)
+                      )}
+                      clickable={isPickMode || Boolean(courseCanPickByCode[block.courseCode])}
+                      showPickHint={!isPickMode && Boolean(courseCanPickByCode[block.courseCode])}
+                      suppressOutline={suppressActiveOutline}
                       dimmed={false}
                       style={{
                         top: `${laneTop}px`,
@@ -323,7 +415,8 @@ export function TimetableCanvas({
                         zIndex: layout.laneIndex + 1,
                       }}
                       onClick={() => onBlockClick(block)}
-                      showWeekLabel={showAllWeeks}
+                      showAllWeeks={showAllWeeks}
+                      showCourseName
                     />
                   );
                 })}
@@ -336,7 +429,7 @@ export function TimetableCanvas({
   }
 
   return (
-    <div className="overflow-hidden bg-[var(--surface-container-lowest)] p-px">
+    <div className="overflow-visible bg-[var(--surface-container-lowest)] p-px">
       <div className="w-full">
         <div className="grid grid-rows-[40px] gap-0" style={{ gridTemplateColumns: verticalGridTemplateColumns }}>
           <div className="border-b border-[var(--outline-variant)]" />
@@ -349,7 +442,12 @@ export function TimetableCanvas({
                 showNowLine && todayVisibleIndex === index ? "bg-[color:rgb(243_243_249_/_0.3)]" : "bg-[var(--surface-container-lowest)]"
               }`}
             >
-              {day.label}
+              {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? day.label : (
+                <span className="leading-4">
+                  {day.label}
+                  <span className="ml-1 text-[10px] font-medium text-[var(--on-surface-variant)]/90">{dayDateByDay[day.dayOfWeek]}</span>
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -431,8 +529,15 @@ export function TimetableCanvas({
                   <TimetableBlockButton
                     key={block.id}
                     block={block}
-                    color={blockColorByKey.get(block.shareKey) ?? "#3556b8"}
+                    color={blockColorByKey.get(block.shareKey) ?? getCourseColor(block.courseCode)}
                     active={activeShareKey === block.shareKey}
+                    available={Boolean(activeShareKey) && activeShareKey !== block.shareKey && (
+                      deEmphasisMode === "all"
+                      || (deEmphasisMode === "course-only" && Boolean(activeCourseCode) && block.courseCode === activeCourseCode)
+                    )}
+                    clickable={isPickMode || Boolean(courseCanPickByCode[block.courseCode])}
+                    showPickHint={!isPickMode && Boolean(courseCanPickByCode[block.courseCode])}
+                    suppressOutline={suppressActiveOutline}
                     dimmed={false}
                     style={{
                       top: `${laneTop}px`,
@@ -442,7 +547,8 @@ export function TimetableCanvas({
                       zIndex: layout.laneIndex + 1,
                     }}
                     onClick={() => onBlockClick(block)}
-                    showWeekLabel={showAllWeeks}
+                    showAllWeeks={showAllWeeks}
+                    showCourseName={false}
                   />
                 );
               })}
@@ -458,57 +564,83 @@ function TimetableBlockButton({
   block,
   color,
   active,
+  available,
+  clickable,
+  showPickHint,
+  suppressOutline,
   dimmed,
   style,
   onClick,
-  showWeekLabel,
+  showAllWeeks,
+  showCourseName = false,
 }: {
   block: TimetableBlock;
   color: string;
   active: boolean;
+  available: boolean;
+  clickable: boolean;
+  showPickHint: boolean;
+  suppressOutline: boolean;
   dimmed: boolean;
   style: CSSProperties;
   onClick: () => void;
-  showWeekLabel: boolean;
+  showAllWeeks: boolean;
+  showCourseName?: boolean;
 })
 {
   const blockHeightPx = typeof style.height === "number"
     ? style.height
     : Number.parseFloat(String(style.height ?? 0));
-  const isTight = Number.isFinite(blockHeightPx) && blockHeightPx <= 60;
+  const isTight = Number.isFinite(blockHeightPx) && blockHeightPx <= 58;
+  const isVeryTight = Number.isFinite(blockHeightPx) && blockHeightPx <= 38;
+  const classGroupLabel = formatClassGroupLabel(block.groupCode);
+  const showWeeks = showAllWeeks && !isVeryTight;
+  const showMode = block.eventMode && !isTight;
+  const showTime = !isVeryTight;
 
   return (
     <button
       type="button"
-      className={`absolute z-10 origin-center overflow-hidden rounded-[0.375rem] border border-[color:var(--block-outline)] bg-[color:var(--block-bg)] text-left text-[color:var(--block-text)] transition-[box-shadow,opacity] ${
-        active ? "ring-2 ring-[var(--primary)] shadow-md" : "shadow-sm"
-      }`}
+      className={`timetable-cell absolute ${active ? "is-active" : ""} ${clickable ? "is-clickable" : ""} ${showPickHint ? "is-group-switchable" : ""} ${suppressOutline ? "no-active-outline" : ""} ${available ? "is-available" : ""} ${isTight ? "is-tight" : ""} ${isVeryTight ? "is-very-tight" : ""}`}
       style={{
         ...style,
         ["--block-bg" as string]: color,
-        ["--block-outline" as string]: "rgba(0, 0, 0, 0.12)",
-        ["--block-text" as string]: "#ffffff",
-        opacity: dimmed ? 0.5 : 1,
-        padding: isTight ? "0.25rem" : "0.375rem",
+        ["--block-border" as string]: color,
+        ["--block-text" as string]: getDarkToneFromHex(color),
+        opacity: dimmed ? 0.5 : undefined,
       }}
       onClick={onClick}
+      title={`${block.courseCode} ${formatClassGroupLabel(block.groupCode)}
+${formatTimeRange(minutesToTimeString(block.startMinutes), minutesToTimeString(block.endMinutes))}${block.weekLabel ? `
+${block.weekLabel}` : ""}${showMode ? `
+${block.eventMode}` : ""}`}
     >
-      <div className="flex h-full min-h-0 flex-col items-start justify-start gap-0.5 overflow-auto text-left">
-        <p className="w-full break-words text-[clamp(9px,1.8vw,12px)] font-bold leading-tight">{block.courseCode}</p>
-        <p className="w-full break-words text-[clamp(8px,1.6vw,11px)] leading-tight opacity-90">{formatClassGroupLabel(block.groupCode)}</p>
-        <p className="w-full break-words text-[clamp(8px,1.6vw,11px)] leading-tight opacity-80">
-          {formatTimeRange(minutesToTimeString(block.startMinutes), minutesToTimeString(block.endMinutes))}
-        </p>
-        {showWeekLabel ? (
-          <p className="w-full break-words text-[clamp(8px,1.6vw,11px)] leading-tight opacity-80">
-            {block.weekLabel}
-          </p>
+      <div className="timetable-cell__content">
+        <div className="timetable-cell__module">
+          {showCourseName && block.courseName ? (
+            <span className="inline-flex min-w-0 max-w-full items-baseline gap-1">
+              <span className="shrink-0">{block.courseCode}</span>
+              <span className="min-w-0 truncate font-medium">{block.courseName}</span>
+            </span>
+          ) : (
+            block.courseCode
+          )}
+        </div>
+
+        <div className="timetable-cell__meta">{classGroupLabel}</div>
+
+        {showTime ? (
+          <div className="timetable-cell__time">
+            {formatTimeRange(minutesToTimeString(block.startMinutes), minutesToTimeString(block.endMinutes))}
+          </div>
         ) : null}
-        {block.venue ? (
-          <p className="mt-0.5 flex w-full items-start gap-1 break-words text-[clamp(8px,1.6vw,11px)] leading-tight opacity-80">
-            <PinIcon className="h-3.5 w-3.5 shrink-0" />
-            <span className="break-words">{block.venue}</span>
-          </p>
+
+        {showWeeks && block.weekLabel ? (
+          <div className="timetable-cell__week">{block.weekLabel}</div>
+        ) : null}
+
+        {showMode ? (
+          <div className="timetable-cell__mode">{block.eventMode}</div>
         ) : null}
       </div>
     </button>

@@ -43,6 +43,7 @@ export const sharedTimetableStateSchema = z.object({
 
 export const plannerStorageStateSchema = sharedTimetableStateSchema.extend({
   hiddenClasses: z.array(z.string()).max(50),
+  courseColorsByCourseCode: z.record(courseCodeSchema, z.string().regex(/^#[0-9A-Fa-f]{6}$/)).default({}),
   selectedWeekId: z.union([z.literal("all"), semesterIdSchema]),
   orientation: timetableOrientationSchema,
   viewMode: plannerViewModeSchema,

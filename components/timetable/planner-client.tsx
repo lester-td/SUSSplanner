@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -46,6 +47,8 @@ import {
   buildSelectedCourseCards,
   buildTimetableBlocks,
   buildWeekOptions,
+  COURSE_COLOR_PALETTE,
+  getCourseColor,
   getLatestEndMinutes,
 } from "@/lib/timetable/timetable-utils";
 import type {
@@ -73,17 +76,6 @@ type ClassesResponse = {
 };
 
 type ClassPickerCourse = Pick<CourseSearchResult, "courseCode" | "courseName">;
-
-const GROUP_PREVIEW_COLORS = [
-  "#3556b8",
-  "#cf5b22",
-  "#008b7b",
-  "#8f4bc4",
-  "#7a8f2d",
-  "#c14953",
-  "#2e6f95",
-  "#a76318",
-];
 
 function buildShareQuery(semesterId: number, selectedClasses: SharedClassIdentifier[])
 {
@@ -120,6 +112,7 @@ function defaultStorageState(
     semesterId,
     selectedClasses: [],
     hiddenClasses: [],
+    courseColorsByCourseCode: {},
     selectedWeekId: currentWeekId && currentSemesterId === semesterId ? currentWeekId : "all",
     orientation: "vertical",
     viewMode: "class",
@@ -135,6 +128,96 @@ function replaceSelectionForCourse(
     ...current.filter((item) => item.courseCode !== incoming.courseCode),
     incoming,
   ];
+}
+
+function compareCourseClassRecords(left: CourseClassRecord, right: CourseClassRecord)
+{
+  if (left.groupCodeType !== right.groupCodeType)
+  {
+    return left.groupCodeType.localeCompare(right.groupCodeType);
+  }
+  return left.groupCode.localeCompare(right.groupCode, undefined, { numeric: true, sensitivity: "base" });
+}
+
+function toMinutes(timeValue: string)
+{
+  const [hour, minute] = timeValue.split(":").map((value) => Number.parseInt(value, 10));
+  return (hour * 60) + minute;
+}
+
+function hasClashWithEvents(candidate: CourseClassRecord, existingEvents: TimetableEventRecord[])
+{
+  for (const candidateEvent of candidate.events)
+  {
+    const candidateStart = toMinutes(candidateEvent.startTime);
+    const candidateEnd = toMinutes(candidateEvent.endTime);
+
+    for (const existingEvent of existingEvents)
+    {
+      if (candidateEvent.eventDate !== existingEvent.eventDate)
+      {
+        continue;
+      }
+
+      const existingStart = toMinutes(existingEvent.startTime);
+      const existingEnd = toMinutes(existingEvent.endTime);
+      if (candidateStart < existingEnd && existingStart < candidateEnd)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function pickPreferredClass(
+  classes: CourseClassRecord[],
+  preferredGroupType: "TG" | "CRN",
+  existingEvents: TimetableEventRecord[],
+)
+{
+  const sorted = [...classes].sort(compareCourseClassRecords);
+  const preferred = sorted.filter((group) => group.groupCodeType === preferredGroupType);
+  const fallback = sorted.filter((group) => group.groupCodeType !== preferredGroupType);
+
+  const preferredNoClash = preferred.find((group) => !hasClashWithEvents(group, existingEvents));
+  if (preferredNoClash)
+  {
+    return preferredNoClash;
+  }
+
+  const fallbackNoClash = fallback.find((group) => !hasClashWithEvents(group, existingEvents));
+  if (fallbackNoClash)
+  {
+    return fallbackNoClash;
+  }
+
+  return preferred[0] ?? fallback[0] ?? null;
+}
+
+function buildDayDateByDay(week: SemesterWeekRecord | null)
+{
+  if (!week)
+  {
+    return {};
+  }
+
+  const baseDate = new Date(`${week.startDate}T00:00:00`);
+  if (Number.isNaN(baseDate.getTime()))
+  {
+    return {};
+  }
+
+  const formatter = new Intl.DateTimeFormat("en-SG", { day: "numeric", month: "short" });
+  const mapping: Record<number, string> = {};
+  for (let day = 1; day <= 7; day += 1)
+  {
+    const date = new Date(baseDate);
+    date.setDate(baseDate.getDate() + (day - 1));
+    mapping[day] = formatter.format(date);
+  }
+  return mapping;
 }
 
 function sortSelectedCards(
@@ -176,8 +259,11 @@ export function PlannerClient({
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [sortMode, setSortMode] = useState<"code" | "exam">("code");
   const [searchInput, setSearchInput] = useState("");
+  const [studyMode, setStudyMode] = useState<"full-time" | "part-time">("full-time");
   const [selectedClasses, setSelectedClasses] = useState<SharedClassIdentifier[]>([]);
   const [hiddenClasses, setHiddenClasses] = useState<string[]>([]);
+  const [courseColorsByCourseCode, setCourseColorsByCourseCode] = useState<Record<string, string>>({});
+  const [courseHasAlternativesByCode, setCourseHasAlternativesByCode] = useState<Record<string, boolean>>({});
   const [selectedWeekId, setSelectedWeekId] = useState<number | "all">("all");
   const [shareMessage, setShareMessage] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -193,11 +279,12 @@ export function PlannerClient({
     unresolvedSelections: [],
   });
   const [classPickerCourse, setClassPickerCourse] = useState<ClassPickerCourse | null>(null);
-  const [classPickerLoading, setClassPickerLoading] = useState(false);
+  const [, setClassPickerLoading] = useState(false);
   const [classPickerClasses, setClassPickerClasses] = useState<CourseClassRecord[]>([]);
-  const [classPickerError, setClassPickerError] = useState("");
+  const [, setClassPickerError] = useState("");
   const [scheduleCourse, setScheduleCourse] = useState<ReturnType<typeof buildSelectedCourseCards>[number] | null>(null);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [colorPickerCourseCode, setColorPickerCourseCode] = useState<string | null>(null);
   const timetableCaptureRef = useRef<HTMLDivElement | null>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
   const deferredSearch = useDeferredValue(searchInput);
@@ -211,6 +298,7 @@ export function PlannerClient({
     setSemesterId(next.semesterId || currentSemesterId || semesters[0]?.semesterId || 0);
     setSelectedClasses(next.selectedClasses);
     setHiddenClasses(next.hiddenClasses);
+    setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
     setSelectedWeekId(next.selectedWeekId);
     setOrientation(next.orientation);
     setViewMode(next.viewMode);
@@ -227,12 +315,61 @@ export function PlannerClient({
       semesterId,
       selectedClasses,
       hiddenClasses,
+      courseColorsByCourseCode,
       selectedWeekId,
       orientation,
       viewMode,
     };
     saveTimetableToLocalStorage(payload);
-  }, [hiddenClasses, orientation, ready, selectedClasses, selectedWeekId, semesterId, viewMode]);
+  }, [courseColorsByCourseCode, hiddenClasses, orientation, ready, selectedClasses, selectedWeekId, semesterId, viewMode]);
+
+  useEffect(() => {
+    if (!ready || !semesterId)
+    {
+      setCourseHasAlternativesByCode({});
+      return;
+    }
+
+    const courseCodes = [...new Set(selectedClasses.map((selection) => selection.courseCode))];
+    if (courseCodes.length === 0)
+    {
+      setCourseHasAlternativesByCode({});
+      return;
+    }
+
+    const controller = new AbortController();
+    Promise.all(courseCodes.map(async (courseCode) => {
+      try
+      {
+        const params = new URLSearchParams({
+          courseCode,
+          semesterId: String(semesterId),
+        });
+        const response = await fetch(`/api/classes?${params.toString()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok)
+        {
+          return [courseCode, false] as const;
+        }
+        const payload = await response.json() as ClassesResponse;
+        return [courseCode, payload.classes.length > 1] as const;
+      }
+      catch {
+        return [courseCode, false] as const;
+      }
+    }))
+      .then((entries) => {
+        if (controller.signal.aborted)
+        {
+          return;
+        }
+        setCourseHasAlternativesByCode(Object.fromEntries(entries));
+      });
+
+    return () => controller.abort();
+  }, [ready, selectedClasses, semesterId]);
 
   useEffect(() => {
     if (!ready || !semesterId)
@@ -327,8 +464,12 @@ export function PlannerClient({
     [sortMode, timetableData],
   );
   const colorByShareKey = useMemo(
-    () => new Map(selectedCards.map((card) => [card.shareKey, card.color])),
-    [selectedCards],
+    () => new Map(selectedCards.map((card) => [card.shareKey, courseColorsByCourseCode[card.courseCode] ?? card.color])),
+    [courseColorsByCourseCode, selectedCards],
+  );
+  const colorByCourseCode = useMemo(
+    () => new Map(selectedCards.map((card) => [card.courseCode, courseColorsByCourseCode[card.courseCode] ?? card.color])),
+    [courseColorsByCourseCode, selectedCards],
   );
   const selectedShareKeyByCourseCode = useMemo(
     () => new Map(selectedClasses.map((selection) => [selection.courseCode, buildSharedClassIdentifier(selection)])),
@@ -345,18 +486,42 @@ export function PlannerClient({
     [pickerPreviewEvents, selectedWeekId],
   );
   const pickerColorByShareKey = useMemo(() => (
-    new Map(classPickerClasses.map((group, index) => {
+    new Map(classPickerClasses.map((group) => {
       const identifier: SharedClassIdentifier = {
         courseCode: group.courseCode,
         scheduleType: group.scheduleType,
         groupCodeType: group.groupCodeType,
         groupCode: group.groupCode,
       };
-      return [buildSharedClassIdentifier(identifier), GROUP_PREVIEW_COLORS[index % GROUP_PREVIEW_COLORS.length]] as const;
+      return [buildSharedClassIdentifier(identifier), colorByCourseCode.get(group.courseCode) ?? getCourseColor(group.courseCode)] as const;
     }))
-  ), [classPickerClasses]);
-  const displayedBlocks = classPickerCourse ? pickerBlocks : allBlocks;
-  const displayedBlockColors = classPickerCourse ? pickerColorByShareKey : colorByShareKey;
+  ), [classPickerClasses, colorByCourseCode]);
+  const displayedBlocks = useMemo(() => {
+    if (!classPickerCourse)
+    {
+      return allBlocks;
+    }
+
+    const selectedShareKey = selectedShareKeyByCourseCode.get(classPickerCourse.courseCode);
+    const alternativeBlocks = selectedShareKey
+      ? pickerBlocks.filter((block) => block.shareKey !== selectedShareKey)
+      : pickerBlocks;
+
+    return [...allBlocks, ...alternativeBlocks];
+  }, [allBlocks, classPickerCourse, pickerBlocks, selectedShareKeyByCourseCode]);
+  const displayedBlockColors = useMemo(() => {
+    if (!classPickerCourse)
+    {
+      return colorByShareKey;
+    }
+
+    const merged = new Map(colorByShareKey);
+    for (const [shareKey, color] of pickerColorByShareKey)
+    {
+      merged.set(shareKey, color);
+    }
+    return merged;
+  }, [classPickerCourse, colorByShareKey, pickerColorByShareKey]);
   const examCards = useMemo(
     () => buildExamCards(visibleEvents).filter((card) => !hiddenClasses.includes(card.shareKey)),
     [hiddenClasses, visibleEvents],
@@ -371,6 +536,13 @@ export function PlannerClient({
     subtitle: `AY${semester.academicYear}`,
   }));
   const showCurrentTime = semesterId === currentSemesterId && (selectedWeekId === "all" || selectedWeekId === currentWeekId);
+  const selectedWeekRecord = selectedWeekId === "all"
+    ? null
+    : semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null;
+  const dayDateByDay = useMemo(
+    () => (selectedWeekId === "all" ? {} : buildDayDateByDay(selectedWeekRecord)),
+    [selectedWeekId, selectedWeekRecord],
+  );
   const activePickerShareKey = classPickerCourse
     ? selectedShareKeyByCourseCode.get(classPickerCourse.courseCode) ?? null
     : null;
@@ -416,6 +588,30 @@ export function PlannerClient({
 
   function addClassSelection(selection: SharedClassIdentifier)
   {
+    setCourseColorsByCourseCode((current) => {
+      if (current[selection.courseCode])
+      {
+        return current;
+      }
+
+      const usedColors = new Set<string>();
+      for (const card of selectedCards)
+      {
+        if (card.courseCode === selection.courseCode)
+        {
+          continue;
+        }
+        usedColors.add(current[card.courseCode] ?? card.color);
+      }
+
+      const nextColor = COURSE_COLOR_PALETTE.find((color) => !usedColors.has(color))
+        ?? COURSE_COLOR_PALETTE[usedColors.size % COURSE_COLOR_PALETTE.length];
+
+      return {
+        ...current,
+        [selection.courseCode]: nextColor,
+      };
+    });
     setSelectedClasses((current) => replaceSelectionForCourse(current, selection));
     setHiddenClasses((current) => current.filter((value) => !value.startsWith(`${selection.courseCode}:`)));
     closeClassPicker();
@@ -427,8 +623,6 @@ export function PlannerClient({
   function handleSemesterChange(nextSemesterId: number)
   {
     setSemesterId(nextSemesterId);
-    setSelectedClasses([]);
-    setHiddenClasses([]);
     setSelectedWeekId(nextSemesterId === currentSemesterId && currentWeekId ? currentWeekId : "all");
     setSearchInput("");
     setSearchResults([]);
@@ -461,7 +655,7 @@ export function PlannerClient({
       .finally(() => setClassPickerLoading(false));
   }
 
-  function handleSearchResultClick(course: CourseSearchResult)
+  async function handleSearchResultClick(course: CourseSearchResult)
   {
     const offeredInSelectedSemester = course.offeredSemesters.some((semester) => semester.semesterId === semesterId);
 
@@ -471,12 +665,40 @@ export function PlannerClient({
       return;
     }
 
-    setSearchInput("");
-    setSearchResults([]);
-    openClassPicker({
-      courseCode: course.courseCode,
-      courseName: course.courseName,
-    });
+    try
+    {
+      const params = new URLSearchParams({
+        courseCode: course.courseCode,
+        semesterId: String(semesterId),
+      });
+      const response = await fetch(`/api/classes?${params.toString()}`, { cache: "no-store" });
+      if (!response.ok)
+      {
+        throw new Error("Unable to load class groups.");
+      }
+      const payload = await response.json() as ClassesResponse;
+      const preferredGroupType = studyMode === "full-time" ? "TG" : "CRN";
+      const firstClass = pickPreferredClass(payload.classes, preferredGroupType, visibleEvents);
+
+      if (!firstClass)
+      {
+        showPlannerBanner("No class groups are available for this course in the selected semester.");
+        return;
+      }
+
+      setSearchInput("");
+      setSearchResults([]);
+      addClassSelection({
+        courseCode: firstClass.courseCode,
+        scheduleType: firstClass.scheduleType,
+        groupCodeType: firstClass.groupCodeType,
+        groupCode: firstClass.groupCode,
+      });
+    }
+    catch (error: unknown)
+    {
+      showPlannerBanner(error instanceof Error ? error.message : "Unable to load class groups.");
+    }
   }
 
   async function handleShare()
@@ -520,6 +742,7 @@ export function PlannerClient({
   {
     setSelectedClasses([]);
     setHiddenClasses([]);
+    setCourseColorsByCourseCode({});
     setSearchInput("");
     setPlannerNotice("");
     setDownloadOpen(false);
@@ -529,6 +752,7 @@ export function PlannerClient({
       semesterId,
       selectedClasses: [],
       hiddenClasses: [],
+      courseColorsByCourseCode: {},
       selectedWeekId,
       orientation,
       viewMode,
@@ -618,39 +842,6 @@ export function PlannerClient({
                 </div>
               </div>
             ) : null}
-            {classPickerCourse ? (
-              <div className={`mb-2.5 rounded-[0.5rem] border px-3 py-2.5 ${
-                classPickerError
-                  ? "border-[var(--error)]/30 bg-[var(--error-container)] text-[var(--error)]"
-                  : "border-[var(--primary)]/20 bg-[var(--primary-fixed)] text-[var(--primary)]"
-              }`}>
-                <div className="flex flex-wrap items-start justify-between gap-2.5">
-                  <div>
-                    <p className="text-[12px] font-semibold leading-4">
-                      {classPickerCourse.courseCode} group selection
-                    </p>
-                    <p className={`mt-1 text-[12px] leading-4 ${
-                      classPickerError ? "text-[var(--error)]" : "text-[var(--primary)]"
-                    }`}>
-                      {classPickerLoading
-                        ? "Loading class group blocks for this course."
-                        : classPickerError
-                          ? classPickerError
-                          : classPickerClasses.length === 0
-                            ? "No class groups are available for this course in the selected semester."
-                            : "Other course blocks are hidden. Click a timetable block to switch to that class group."}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeClassPicker}
-                    className="rounded-[0.4rem] border border-current/20 px-3 py-1.5 text-[11px] font-semibold leading-4 transition-opacity hover:opacity-75"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1">
@@ -663,7 +854,13 @@ export function PlannerClient({
                   timeSlots={timeSlots}
                   visibleEndMinutes={visibleEndMinutes}
                   showAllWeeks={selectedWeekId === "all"}
+                  dayDateByDay={dayDateByDay}
                   activeShareKey={activePickerShareKey}
+                  deEmphasisMode={classPickerCourse ? "course-only" : "all"}
+                  activeCourseCode={classPickerCourse?.courseCode ?? null}
+                  courseCanPickByCode={courseHasAlternativesByCode}
+                  isPickMode={Boolean(classPickerCourse)}
+                  suppressActiveOutline={Boolean(classPickerCourse)}
                   onBlockClick={(block) => {
                     if (classPickerCourse)
                     {
@@ -691,6 +888,11 @@ export function PlannerClient({
                       return;
                     }
 
+                    if (!courseHasAlternativesByCode[block.courseCode])
+                    {
+                      return;
+                    }
+
                     openClassPicker({
                       courseCode: block.courseCode,
                       courseName: block.courseName,
@@ -711,9 +913,29 @@ export function PlannerClient({
               <h3 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">My Courses</h3>
               <p className="text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{selectedSemester ? getCurrentWeekChip(selectedSemester, semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null) : ""}</p>
             </div>
-            <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
-              {selectedCards.length} Selected
-            </span>
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)]">FT</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={studyMode === "part-time"}
+                  aria-label="Toggle study mode"
+                  className="relative h-5 w-9 rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-low)] transition-colors"
+                  onClick={() => setStudyMode((current) => current === "full-time" ? "part-time" : "full-time")}
+                >
+                  <span
+                    className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-[var(--primary)] transition-all ${
+                      studyMode === "part-time" ? "left-[18px]" : "left-0.5"
+                    }`}
+                  />
+                </button>
+                <span className="text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)]">PT</span>
+              </div>
+              <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
+                {selectedCards.length} Selected
+              </span>
+            </div>
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 py-1.5">
@@ -775,12 +997,21 @@ export function PlannerClient({
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1.5">
-            <div className={`grid gap-1.5 ${orientation === "horizontal" ? "grid-cols-5" : "grid-cols-2"}`}>
+            <div className={`grid grid-cols-2 gap-1.5 ${orientation === "horizontal" ? "md:grid-cols-5" : ""}`}>
               <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} />
               <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} />
               <ActionButton variant="ghost" icon={<DownloadIcon className="h-[18px] w-[18px]" />} label="Download" onClick={() => setDownloadOpen((current) => !current)} />
               <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} />
               <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share / Sync" onClick={handleShare} stretch />
+              {selectedWeekId !== "all" ? (
+                <ActionButton
+                  variant="ghost"
+                  icon={<GridIcon className="h-[18px] w-[18px]" />}
+                  label="Show All Weeks"
+                  onClick={() => setSelectedWeekId("all")}
+                  stretch
+                />
+              ) : null}
             </div>
 
             {downloadOpen ? (
@@ -799,25 +1030,61 @@ export function PlannerClient({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-3 pb-3">
-            <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
+            <div className={orientation === "horizontal" ? "space-y-2 md:grid md:auto-rows-fr md:grid-cols-2 md:items-stretch md:gap-2 md:space-y-0 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
               {selectedCards.map((record) => {
                 const isHidden = hiddenClasses.includes(record.shareKey);
+                const recordColor = colorByShareKey.get(record.shareKey) ?? record.color;
                 return (
                   <article
                     key={record.shareKey}
-                    className="elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md"
+                    className={`elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md ${
+                      orientation === "horizontal" ? "md:h-full" : ""
+                    }`}
                   >
-                    <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: record.color }} />
+                    <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: recordColor }} />
 
                     <div className="pl-1.5 pr-12">
                       <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span aria-hidden="true" className="h-4 w-4 rounded-[4px] border border-black/10" style={{ backgroundColor: record.color }} />
+                          <div className="flex items-start gap-2">
+                              <button
+                                type="button"
+                                aria-label={`Change ${record.courseCode} color`}
+                                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-[4px] border border-black/10 transition-opacity hover:opacity-80"
+                                style={{ backgroundColor: recordColor }}
+                                onClick={() => setColorPickerCourseCode((current) => current === record.courseCode ? null : record.courseCode)}
+                              />
+                            {colorPickerCourseCode === record.courseCode ? (
+                              <div className="absolute left-0 top-6 z-20 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5 shadow-md">
+                                <div className="grid grid-cols-4 gap-1">
+                                  {COURSE_COLOR_PALETTE.map((color) => (
+                                    <button
+                                      key={color}
+                                      type="button"
+                                      aria-label={`Use color ${color}`}
+                                      className={`h-4 w-4 rounded-[4px] border ${recordColor.toLowerCase() === color.toLowerCase() ? "border-[var(--on-surface)]" : "border-black/10"}`}
+                                      style={{ backgroundColor: color }}
+                                      onClick={() => {
+                                        setCourseColorsByCourseCode((current) => ({
+                                          ...current,
+                                          [record.courseCode]: color,
+                                        }));
+                                        setColorPickerCourseCode(null);
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
                             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-                              <h4 className="shrink-0 text-[15px] font-extrabold leading-5 text-[var(--on-surface)]">{record.courseCode}</h4>
-                              <p className="min-w-0 text-[14px] font-normal leading-5 text-[var(--on-surface)]">
-                                {record.courseName ?? "Untitled course"}
-                              </p>
+                              <Link
+                                href={`/courses/${record.courseCode}`}
+                                className="inline min-w-0 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                              >
+                                <span className="text-[15px] font-extrabold leading-5">{record.courseCode}</span>{" "}
+                                <span className="text-[15px] font-normal leading-5">
+                                  {record.courseName ?? "Untitled course"}
+                                </span>
+                              </Link>
                             </div>
                           </div>
                           <div className="mt-1 space-y-1 text-[13px] font-medium leading-5 text-[var(--on-surface-variant)]">
@@ -886,6 +1153,7 @@ export function PlannerClient({
             courseName={scheduleCourse.courseName}
             classGroupLabel={formatClassGroupLabel(scheduleCourse.groupCode)}
             events={scheduleCourse.events}
+            onClose={() => setScheduleCourse(null)}
           />
         ) : null}
       </Modal>
@@ -893,15 +1161,18 @@ export function PlannerClient({
       <Modal
         open={confirmResetOpen}
         title="Reset planner"
-        description="This clears the selected courses for the current timetable and keeps your current display layout."
+        description="You are about to clear the selected courses for the current timetable. Are you sure?"
         onClose={() => setConfirmResetOpen(false)}
+        bodyClassName="py-4"
         footer={(
           <>
             <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Cancel" onClick={() => setConfirmResetOpen(false)} />
             <ActionButton variant="primary" icon={<RefreshIcon className="h-4 w-4" />} label="Reset" onClick={resetPlanner} />
           </>
         )}
-      />
+      >
+        <div className="h-1" />
+      </Modal>
     </>
   );
 }
