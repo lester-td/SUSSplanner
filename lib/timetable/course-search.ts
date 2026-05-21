@@ -6,6 +6,8 @@ export type CourseSearchFilters = {
   scheduleTypes: ScheduleType[];
   postgraduateOnly: boolean;
   availableAsGspOnly: boolean;
+  writtenExamOnly: boolean;
+  ecaOnly: boolean;
   schoolNames: string[];
   courseLevels: string[];
   limit: number;
@@ -76,6 +78,8 @@ export function parseCourseSearchFilters(input: SearchInput): CourseSearchFilter
     ]),
     postgraduateOnly: readAll(input, "postgraduateOnly").length > 0 || legacyPostgraduate === "postgraduate",
     availableAsGspOnly: readAll(input, "availableAsGspOnly").length > 0,
+    writtenExamOnly: readAll(input, "writtenExamOnly").length > 0,
+    ecaOnly: readAll(input, "ecaOnly").length > 0,
     schoolNames: normalizeTextList([
       ...readAll(input, "schools"),
       ...readAll(input, "school"),
@@ -115,6 +119,16 @@ export function buildCourseSearchParams(filters: Partial<CourseSearchFilters>)
   if (filters.availableAsGspOnly)
   {
     params.set("availableAsGspOnly", "1");
+  }
+
+  if (filters.writtenExamOnly)
+  {
+    params.set("writtenExamOnly", "1");
+  }
+
+  if (filters.ecaOnly)
+  {
+    params.set("ecaOnly", "1");
   }
 
   for (const schoolName of filters.schoolNames ?? [])

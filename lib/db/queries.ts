@@ -5,6 +5,7 @@ import {
   asc,
   desc,
   eq,
+  exists,
   ilike,
   inArray,
   or,
@@ -281,6 +282,8 @@ export async function searchCourses({
   scheduleTypes,
   postgraduateOnly,
   availableAsGspOnly,
+  writtenExamOnly,
+  ecaOnly,
   schoolNames,
   courseLevels,
   limit,
@@ -315,6 +318,38 @@ export async function searchCourses({
   if (courseLevels.length > 0)
   {
     predicates.push(inArray(courses.courseLevel, courseLevels));
+  }
+
+  if (writtenExamOnly)
+  {
+    predicates.push(exists(
+      db
+        .select({ one: sql<number>`1` })
+        .from(assessmentComponents)
+        .where(and(
+          eq(assessmentComponents.courseCode, courses.courseCode),
+          or(
+            ilike(assessmentComponents.componentName, "%written%"),
+            ilike(assessmentComponents.assessmentMode, "%written%"),
+          ),
+        )),
+    ));
+  }
+
+  if (ecaOnly)
+  {
+    predicates.push(exists(
+      db
+        .select({ one: sql<number>`1` })
+        .from(assessmentComponents)
+        .where(and(
+          eq(assessmentComponents.courseCode, courses.courseCode),
+          or(
+            ilike(assessmentComponents.componentName, "%eca%"),
+            ilike(assessmentComponents.assessmentMode, "%eca%"),
+          ),
+        )),
+    ));
   }
 
   if (semesterIds.length > 0)
@@ -570,6 +605,8 @@ export async function getCoursesWithAvailableClasses(
     scheduleTypes: scheduleType ? [scheduleType] : [],
     postgraduateOnly: false,
     availableAsGspOnly: false,
+    writtenExamOnly: false,
+    ecaOnly: false,
     schoolNames: [],
     courseLevels: [],
     limit: 200,
