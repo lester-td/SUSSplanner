@@ -240,6 +240,7 @@ export function TimetableCanvas({
   timeSlots,
   visibleEndMinutes,
   showAllWeeks,
+  dayDateByDay,
   activeShareKey,
   deEmphasisMode,
   activeCourseCode,
@@ -255,6 +256,7 @@ export function TimetableCanvas({
   timeSlots: number[];
   visibleEndMinutes: number;
   showAllWeeks: boolean;
+  dayDateByDay: Record<number, string>;
   activeShareKey: string | null;
   deEmphasisMode: "all" | "course-only" | "none";
   activeCourseCode: string | null;
@@ -348,7 +350,7 @@ export function TimetableCanvas({
                       height: `${horizontalDayHeights[dayIndex]}px`,
                     }}
                   >
-                    {day.label}
+                    {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? day.label : `${day.label} ${dayDateByDay[day.dayOfWeek]}`}
                   </div>
                 ))}
               </div>
@@ -440,7 +442,12 @@ export function TimetableCanvas({
                 showNowLine && todayVisibleIndex === index ? "bg-[color:rgb(243_243_249_/_0.3)]" : "bg-[var(--surface-container-lowest)]"
               }`}
             >
-              {day.label}
+              {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? day.label : (
+                <span className="leading-4">
+                  {day.label}
+                  <span className="ml-1 text-[10px] font-medium text-[var(--on-surface-variant)]/90">{dayDateByDay[day.dayOfWeek]}</span>
+                </span>
+              )}
             </div>
           ))}
         </div>

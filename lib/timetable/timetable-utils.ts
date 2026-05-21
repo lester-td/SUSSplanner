@@ -128,7 +128,7 @@ export function buildTimetableBlocks(
 
   if (selectedWeekId !== "all")
   {
-    return classEvents
+    return events
       .filter((event) => event.weekId === selectedWeekId)
       .map((event) => ({
         id: `${event.eventId}`,

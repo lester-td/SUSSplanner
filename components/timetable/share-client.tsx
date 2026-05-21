@@ -182,6 +182,7 @@ export function ShareClient({
                   timeSlots={timeSlots}
                   visibleEndMinutes={visibleEndMinutes}
                   showAllWeeks={selectedWeekId === "all"}
+                  dayDateByDay={{}}
                   activeShareKey={null}
                   deEmphasisMode="none"
                   activeCourseCode={null}

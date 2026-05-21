@@ -139,6 +139,87 @@ function compareCourseClassRecords(left: CourseClassRecord, right: CourseClassRe
   return left.groupCode.localeCompare(right.groupCode, undefined, { numeric: true, sensitivity: "base" });
 }
 
+function toMinutes(timeValue: string)
+{
+  const [hour, minute] = timeValue.split(":").map((value) => Number.parseInt(value, 10));
+  return (hour * 60) + minute;
+}
+
+function hasClashWithEvents(candidate: CourseClassRecord, existingEvents: TimetableEventRecord[])
+{
+  for (const candidateEvent of candidate.events)
+  {
+    const candidateStart = toMinutes(candidateEvent.startTime);
+    const candidateEnd = toMinutes(candidateEvent.endTime);
+
+    for (const existingEvent of existingEvents)
+    {
+      if (candidateEvent.eventDate !== existingEvent.eventDate)
+      {
+        continue;
+      }
+
+      const existingStart = toMinutes(existingEvent.startTime);
+      const existingEnd = toMinutes(existingEvent.endTime);
+      if (candidateStart < existingEnd && existingStart < candidateEnd)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function pickPreferredClass(
+  classes: CourseClassRecord[],
+  preferredGroupType: "TG" | "CRN",
+  existingEvents: TimetableEventRecord[],
+)
+{
+  const sorted = [...classes].sort(compareCourseClassRecords);
+  const preferred = sorted.filter((group) => group.groupCodeType === preferredGroupType);
+  const fallback = sorted.filter((group) => group.groupCodeType !== preferredGroupType);
+
+  const preferredNoClash = preferred.find((group) => !hasClashWithEvents(group, existingEvents));
+  if (preferredNoClash)
+  {
+    return preferredNoClash;
+  }
+
+  const fallbackNoClash = fallback.find((group) => !hasClashWithEvents(group, existingEvents));
+  if (fallbackNoClash)
+  {
+    return fallbackNoClash;
+  }
+
+  return preferred[0] ?? fallback[0] ?? null;
+}
+
+function buildDayDateByDay(week: SemesterWeekRecord | null)
+{
+  if (!week)
+  {
+    return {};
+  }
+
+  const baseDate = new Date(`${week.startDate}T00:00:00`);
+  if (Number.isNaN(baseDate.getTime()))
+  {
+    return {};
+  }
+
+  const formatter = new Intl.DateTimeFormat("en-SG", { day: "numeric", month: "short" });
+  const mapping: Record<number, string> = {};
+  for (let day = 1; day <= 7; day += 1)
+  {
+    const date = new Date(baseDate);
+    date.setDate(baseDate.getDate() + (day - 1));
+    mapping[day] = formatter.format(date);
+  }
+  return mapping;
+}
+
 function sortSelectedCards(
   cards: ReturnType<typeof buildSelectedCourseCards>,
   sortMode: "code" | "exam",
@@ -178,6 +259,7 @@ export function PlannerClient({
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [sortMode, setSortMode] = useState<"code" | "exam">("code");
   const [searchInput, setSearchInput] = useState("");
+  const [studyMode, setStudyMode] = useState<"full-time" | "part-time">("full-time");
   const [selectedClasses, setSelectedClasses] = useState<SharedClassIdentifier[]>([]);
   const [hiddenClasses, setHiddenClasses] = useState<string[]>([]);
   const [courseColorsByCourseCode, setCourseColorsByCourseCode] = useState<Record<string, string>>({});
@@ -454,6 +536,13 @@ export function PlannerClient({
     subtitle: `AY${semester.academicYear}`,
   }));
   const showCurrentTime = semesterId === currentSemesterId && (selectedWeekId === "all" || selectedWeekId === currentWeekId);
+  const selectedWeekRecord = selectedWeekId === "all"
+    ? null
+    : semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null;
+  const dayDateByDay = useMemo(
+    () => (selectedWeekId === "all" ? {} : buildDayDateByDay(selectedWeekRecord)),
+    [selectedWeekId, selectedWeekRecord],
+  );
   const activePickerShareKey = classPickerCourse
     ? selectedShareKeyByCourseCode.get(classPickerCourse.courseCode) ?? null
     : null;
@@ -588,7 +677,8 @@ export function PlannerClient({
         throw new Error("Unable to load class groups.");
       }
       const payload = await response.json() as ClassesResponse;
-      const firstClass = [...payload.classes].sort(compareCourseClassRecords)[0];
+      const preferredGroupType = studyMode === "full-time" ? "TG" : "CRN";
+      const firstClass = pickPreferredClass(payload.classes, preferredGroupType, visibleEvents);
 
       if (!firstClass)
       {
@@ -764,6 +854,7 @@ export function PlannerClient({
                   timeSlots={timeSlots}
                   visibleEndMinutes={visibleEndMinutes}
                   showAllWeeks={selectedWeekId === "all"}
+                  dayDateByDay={dayDateByDay}
                   activeShareKey={activePickerShareKey}
                   deEmphasisMode={classPickerCourse ? "course-only" : "all"}
                   activeCourseCode={classPickerCourse?.courseCode ?? null}
@@ -822,9 +913,29 @@ export function PlannerClient({
               <h3 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">My Courses</h3>
               <p className="text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{selectedSemester ? getCurrentWeekChip(selectedSemester, semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null) : ""}</p>
             </div>
-            <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
-              {selectedCards.length} Selected
-            </span>
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)]">FT</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={studyMode === "part-time"}
+                  aria-label="Toggle study mode"
+                  className="relative h-5 w-9 rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-low)] transition-colors"
+                  onClick={() => setStudyMode((current) => current === "full-time" ? "part-time" : "full-time")}
+                >
+                  <span
+                    className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-[var(--primary)] transition-all ${
+                      studyMode === "part-time" ? "left-[18px]" : "left-0.5"
+                    }`}
+                  />
+                </button>
+                <span className="text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)]">PT</span>
+              </div>
+              <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
+                {selectedCards.length} Selected
+              </span>
+            </div>
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 py-1.5">
@@ -1050,15 +1161,18 @@ export function PlannerClient({
       <Modal
         open={confirmResetOpen}
         title="Reset planner"
-        description="This clears the selected courses for the current timetable and keeps your current display layout."
+        description="You are about to clear the selected courses for the current timetable. Are you sure?"
         onClose={() => setConfirmResetOpen(false)}
+        bodyClassName="py-4"
         footer={(
           <>
             <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Cancel" onClick={() => setConfirmResetOpen(false)} />
             <ActionButton variant="primary" icon={<RefreshIcon className="h-4 w-4" />} label="Reset" onClick={resetPlanner} />
           </>
         )}
-      />
+      >
+        <div className="h-1" />
+      </Modal>
     </>
   );
 }
