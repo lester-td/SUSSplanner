@@ -283,7 +283,7 @@ export function CourseSearchPage({
                 type="search"
                 value={filters.q}
                 onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
-                placeholder="Search by course code, course title, or school"
+                placeholder="Search by course code, course title, or descriptions"
                 className="elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-3 pl-12 pr-4 text-[15px] leading-6 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
               />
             </label>

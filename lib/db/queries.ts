@@ -301,6 +301,7 @@ export async function searchCourses({
         ilike(courses.courseCode, `%${searchTerm.toUpperCase()}%`),
         ilike(courses.courseName, `%${searchTerm}%`),
         ilike(courses.schoolName, `%${searchTerm}%`),
+        ilike(courses.courseSynopsis, `%${searchTerm}%`),
       ),
     );
   }
@@ -386,9 +387,11 @@ export async function searchCourses({
       when ${courses.courseName} ilike ${`%${searchTerm}%`} then 4
       when ${courses.schoolName} ilike ${`${searchTerm}%`} then 5
       when ${courses.schoolName} ilike ${`%${searchTerm}%`} then 6
-      else 7
+      when ${courses.courseSynopsis} ilike ${`${searchTerm}%`} then 7
+      when ${courses.courseSynopsis} ilike ${`%${searchTerm}%`} then 8
+      else 9
     end`
-    : sql<number>`7`;
+    : sql<number>`9`;
 
   const rows = hasClassFilters
     ? await db
