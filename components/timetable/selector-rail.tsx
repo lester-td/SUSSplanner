@@ -54,11 +54,16 @@ export function SelectorRail({
 
   return (
     <div
-      className={`relative flex items-center px-3 py-2.5 ${
+      className={`relative flex items-center px-3 py-2 ${
         variant === "semester" ? "border-b border-[var(--outline-variant)]/50" : ""
       } ${subtle ? "bg-[color:rgb(243_243_249_/_0.2)]" : ""}`}
     >
-      <IconButton label="Previous" onClick={onPrev} className="absolute left-2 top-1/2 z-10 -translate-y-1/2" disabled={selectedIndex <= 0}>
+      <IconButton
+        label="Previous"
+        onClick={onPrev}
+        className="absolute left-2 top-1/2 z-20 -translate-y-1/2 border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-sm"
+        disabled={selectedIndex <= 0}
+      >
         <ChevronLeftIcon className="h-4 w-4" />
       </IconButton>
 
@@ -104,16 +109,18 @@ export function SelectorRail({
                     {item.subtitle}
                   </div>
                 ) : null}
-                {active && variant === "semester" ? (
-                  <div className="absolute -bottom-[10px] left-0 right-0 h-0.5 bg-[var(--primary)]" />
-                ) : null}
               </button>
             );
           })}
         </div>
       </div>
 
-      <IconButton label="Next" onClick={onNext} className="absolute right-2 top-1/2 z-10 -translate-y-1/2" disabled={selectedIndex >= items.length - 1}>
+      <IconButton
+        label="Next"
+        onClick={onNext}
+        className="absolute right-2 top-1/2 z-20 -translate-y-1/2 border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-sm"
+        disabled={selectedIndex >= items.length - 1}
+      >
         <ChevronRightIcon className="h-4 w-4" />
       </IconButton>
     </div>

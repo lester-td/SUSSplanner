@@ -283,7 +283,7 @@ export function TimetableCanvas({
   const slotSize = isMobile ? 22 : 30;
   const daySize = 104;
   const contentHeight = (rangeMinutes / 30) * slotSize;
-  const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 58 : 74);
+  const horizontalMinWidthPx = (rangeMinutes / 30) * 58;
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
   const dayLaneCounts = dayBlocksByIndex.map((dayBlocks) => dayBlocks.reduce((maxLaneCount, block) => {
@@ -318,22 +318,12 @@ export function TimetableCanvas({
   {
     return (
       <div className="overflow-visible bg-[var(--surface-container-lowest)] p-px">
-        <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3">
-          <div className="pt-10">
-            {visibleDays.map((day, dayIndex) => (
-              <div
-                key={day.dayOfWeek}
-                className="flex items-start justify-end pt-2 pr-3 text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]"
-                style={{ height: `${horizontalDayHeights[dayIndex]}px` }}
-              >
-                {day.label}
-              </div>
-            ))}
-          </div>
+        <div className={`min-w-0 ${isMobile ? "overflow-x-auto" : "overflow-x-visible"}`}>
+          <div style={isMobile ? { minWidth: `${horizontalMinWidthPx}px` } : undefined}>
+            <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] grid-rows-[2rem_minmax(0,1fr)] gap-0">
+              <div />
 
-          <div className="min-w-0 overflow-x-auto">
-            <div style={{ minWidth: `${horizontalMinWidthPx}px` }}>
-              <div className="relative h-10">
+              <div className="relative h-8">
                 {timeSlots.map((slot) => (
                   <div
                     key={slot}
@@ -346,7 +336,25 @@ export function TimetableCanvas({
               </div>
 
               <div
-                className="relative w-full overflow-visible border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
+                className="relative border border-[var(--outline-variant)] border-r-0 border-t-0 bg-[var(--surface-container-lowest)]"
+                style={{ height: `${horizontalContentHeight}px` }}
+              >
+                {visibleDays.map((day, dayIndex) => (
+                  <div
+                    key={day.dayOfWeek}
+                    className="absolute inset-x-0 flex items-center justify-center border-t border-[var(--outline-variant)] text-center text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]"
+                    style={{
+                      top: `${horizontalDayTops[dayIndex]}px`,
+                      height: `${horizontalDayHeights[dayIndex]}px`,
+                    }}
+                  >
+                    {day.label}
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className="relative w-full overflow-visible border border-[var(--outline-variant)] border-t-0 bg-[var(--surface-container-lowest)]"
                 style={{ height: `${horizontalContentHeight}px` }}
               >
                 {visibleDays.map((day, index) => (
@@ -406,6 +414,7 @@ export function TimetableCanvas({
                       }}
                       onClick={() => onBlockClick(block)}
                       showAllWeeks={showAllWeeks}
+                      showCourseName
                     />
                   );
                 })}
@@ -532,6 +541,7 @@ export function TimetableCanvas({
                     }}
                     onClick={() => onBlockClick(block)}
                     showAllWeeks={showAllWeeks}
+                    showCourseName={false}
                   />
                 );
               })}
@@ -555,6 +565,7 @@ function TimetableBlockButton({
   style,
   onClick,
   showAllWeeks,
+  showCourseName = false,
 }: {
   block: TimetableBlock;
   color: string;
@@ -567,6 +578,7 @@ function TimetableBlockButton({
   style: CSSProperties;
   onClick: () => void;
   showAllWeeks: boolean;
+  showCourseName?: boolean;
 })
 {
   const blockHeightPx = typeof style.height === "number"
@@ -597,7 +609,16 @@ ${block.weekLabel}` : ""}${showMode ? `
 ${block.eventMode}` : ""}`}
     >
       <div className="timetable-cell__content">
-        <div className="timetable-cell__module">{block.courseCode}</div>
+        <div className="timetable-cell__module">
+          {showCourseName && block.courseName ? (
+            <span className="inline-flex min-w-0 max-w-full items-baseline gap-1">
+              <span className="shrink-0">{block.courseCode}</span>
+              <span className="min-w-0 truncate font-medium">{block.courseName}</span>
+            </span>
+          ) : (
+            block.courseCode
+          )}
+        </div>
 
         <div className="timetable-cell__meta">{classGroupLabel}</div>
 

@@ -534,8 +534,6 @@ export function PlannerClient({
   function handleSemesterChange(nextSemesterId: number)
   {
     setSemesterId(nextSemesterId);
-    setSelectedClasses([]);
-    setHiddenClasses([]);
     setSelectedWeekId(nextSemesterId === currentSemesterId && currentWeekId ? currentWeekId : "all");
     setSearchInput("");
     setSearchResults([]);
@@ -888,12 +886,21 @@ export function PlannerClient({
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1.5">
-            <div className={`grid gap-1.5 ${orientation === "horizontal" ? "grid-cols-5" : "grid-cols-2"}`}>
+            <div className={`grid grid-cols-2 gap-1.5 ${orientation === "horizontal" ? "md:grid-cols-5" : ""}`}>
               <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} />
               <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} />
               <ActionButton variant="ghost" icon={<DownloadIcon className="h-[18px] w-[18px]" />} label="Download" onClick={() => setDownloadOpen((current) => !current)} />
               <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} />
               <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share / Sync" onClick={handleShare} stretch />
+              {selectedWeekId !== "all" ? (
+                <ActionButton
+                  variant="ghost"
+                  icon={<GridIcon className="h-[18px] w-[18px]" />}
+                  label="Show All Weeks"
+                  onClick={() => setSelectedWeekId("all")}
+                  stretch
+                />
+              ) : null}
             </div>
 
             {downloadOpen ? (
@@ -912,24 +919,26 @@ export function PlannerClient({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-3 pb-3">
-            <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
+            <div className={orientation === "horizontal" ? "space-y-2 md:grid md:auto-rows-fr md:grid-cols-2 md:items-stretch md:gap-2 md:space-y-0 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
               {selectedCards.map((record) => {
                 const isHidden = hiddenClasses.includes(record.shareKey);
                 const recordColor = colorByShareKey.get(record.shareKey) ?? record.color;
                 return (
                   <article
                     key={record.shareKey}
-                    className="elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md"
+                    className={`elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md ${
+                      orientation === "horizontal" ? "md:h-full" : ""
+                    }`}
                   >
                     <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: recordColor }} />
 
                     <div className="pl-1.5 pr-12">
                       <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-start gap-2">
                               <button
                                 type="button"
                                 aria-label={`Change ${record.courseCode} color`}
-                                className="h-4 w-4 cursor-pointer rounded-[4px] border border-black/10 transition-opacity hover:opacity-80"
+                                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-[4px] border border-black/10 transition-opacity hover:opacity-80"
                                 style={{ backgroundColor: recordColor }}
                                 onClick={() => setColorPickerCourseCode((current) => current === record.courseCode ? null : record.courseCode)}
                               />
@@ -958,12 +967,12 @@ export function PlannerClient({
                             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
                               <Link
                                 href={`/courses/${record.courseCode}`}
-                                className="inline-flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                                className="inline min-w-0 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                               >
-                                <h4 className="shrink-0 text-[15px] font-extrabold leading-5">{record.courseCode}</h4>
-                                <p className="min-w-0 text-[14px] font-normal leading-5">
+                                <span className="text-[15px] font-extrabold leading-5">{record.courseCode}</span>{" "}
+                                <span className="text-[15px] font-normal leading-5">
                                   {record.courseName ?? "Untitled course"}
-                                </p>
+                                </span>
                               </Link>
                             </div>
                           </div>
