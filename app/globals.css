@@ -32,6 +32,9 @@
   --brand-soft: var(--primary-fixed);
   --surface-high: var(--surface-container-high);
   --surface-low: var(--surface-container-low);
+  --shadow-elev-1: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-elev-2: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --shadow-elev-3: 0 14px 34px rgba(15, 23, 42, 0.14);
   --font-sans: "Inter", sans-serif;
   --font-display: "Inter", sans-serif;
 }
@@ -82,4 +85,16 @@ select {
   100% {
     transform: scale(1);
   }
+}
+
+.elev-1 {
+  box-shadow: var(--shadow-elev-1);
+}
+
+.elev-2 {
+  box-shadow: var(--shadow-elev-2);
+}
+
+.elev-3 {
+  box-shadow: var(--shadow-elev-3);
 }

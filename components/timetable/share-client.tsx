@@ -126,7 +126,7 @@ export function ShareClient({
 
       <div className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
-          <div className="flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+          <div className="elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
               items={weekItems}
               selectedId={String(selectedWeekId)}
@@ -190,7 +190,7 @@ export function ShareClient({
               ) : (
                 <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                   {examCards.map((card) => (
-                    <article key={card.id} className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3 shadow-sm">
+                    <article key={card.id} className="elev-1 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: colorByShareKey.get(card.shareKey) ?? "#3556b8" }} />
                         <span className="text-[12px] font-bold leading-4 text-[var(--on-surface)]">{card.courseCode} · {formatClassGroupLabel(card.groupCode)}</span>
@@ -229,7 +229,7 @@ export function ShareClient({
           <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-3 pb-3">
             <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
               {selectedCards.map((record) => (
-                <article key={record.shareKey} className="group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 shadow-sm">
+                <article key={record.shareKey} className="elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2">
                   <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: record.color }} />
                   <div className="pl-2">
                     <h4 className="truncate text-[12px] font-bold leading-4 text-[var(--on-surface)]">{record.courseCode}</h4>

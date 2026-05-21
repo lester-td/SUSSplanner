@@ -22,6 +22,7 @@ import {
 } from "@/components/planner/icons";
 import { ActionButton, IconButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
+import { ClassScheduleModalContent } from "@/components/timetable/class-schedule-modal-content";
 import { SelectorRail } from "@/components/timetable/selector-rail";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { exportElementToPng } from "@/lib/export/png";
@@ -545,7 +546,7 @@ export function PlannerClient({
     <>
       <div className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
-          <div className="flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+          <div className="elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
               items={semesterItems}
               selectedId={String(semesterId)}
@@ -719,14 +720,14 @@ export function PlannerClient({
             <label className="relative block">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
               <input
-                className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-2 pl-10 pr-4 text-[14px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                className="elev-1 w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-2 pl-10 pr-4 text-[14px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                 placeholder="Search courses"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
               />
 
               {searchInput ? (
-                <div className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5 shadow-lg">
+                <div className="elev-3 absolute left-0 right-0 top-full z-30 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                   {searchResults.map((record) => (
                     <button
                       key={record.courseCode}
@@ -804,18 +805,17 @@ export function PlannerClient({
                 return (
                   <article
                     key={record.shareKey}
-                    className="group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 shadow-sm transition-shadow hover:shadow-md"
+                    className="elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md"
                   >
                     <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: record.color }} />
 
-                    <div className="pl-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
+                    <div className="pl-1.5 pr-12">
+                      <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span aria-hidden="true" className="h-4 w-4 rounded-[4px] border border-black/10" style={{ backgroundColor: record.color }} />
-                            <div className="flex min-w-0 items-baseline gap-2">
+                            <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
                               <h4 className="shrink-0 text-[15px] font-extrabold leading-5 text-[var(--on-surface)]">{record.courseCode}</h4>
-                              <p className="min-w-0 truncate text-[14px] font-normal leading-5 text-[var(--on-surface)]">
+                              <p className="min-w-0 text-[14px] font-normal leading-5 text-[var(--on-surface)]">
                                 {record.courseName ?? "Untitled course"}
                               </p>
                             </div>
@@ -845,27 +845,22 @@ export function PlannerClient({
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-center gap-0.5">
-                          <IconButton label="View class schedule" onClick={() => setScheduleCourse(record)} className="h-9 w-9">
-                            <CalendarIcon className="h-5 w-5" />
-                          </IconButton>
-                          <IconButton label={isHidden ? "Show course" : "Hide course"} onClick={() => toggleHidden(record.shareKey)} className="h-9 w-9">
-                            {isHidden ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-                          </IconButton>
-                          <IconButton label="Remove course" onClick={() => removeClass(record.shareKey)} danger className="h-9 w-9">
-                            <TrashIcon className="h-5 w-5" />
-                          </IconButton>
-                        </div>
+                      <div className="absolute right-1.5 top-1.5 flex flex-col items-center gap-0.5">
+                        <IconButton label="View class schedule" onClick={() => setScheduleCourse(record)} className="h-8 w-8">
+                          <CalendarIcon className="h-5 w-5" />
+                        </IconButton>
+                        <IconButton label={isHidden ? "Show course" : "Hide course"} onClick={() => toggleHidden(record.shareKey)} className="h-8 w-8">
+                          {isHidden ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                        </IconButton>
+                        <IconButton label="Remove course" onClick={() => removeClass(record.shareKey)} danger className="h-8 w-8">
+                          <TrashIcon className="h-5 w-5" />
+                        </IconButton>
                       </div>
                     </div>
                   </article>
                 );
               })}
 
-              <div className={`flex flex-col items-center justify-center rounded-[0.5rem] border-2 border-dashed border-[var(--outline-variant)] px-4 text-center text-[var(--on-surface-variant)] opacity-60 ${orientation === "horizontal" ? "py-1" : "h-28"}`}>
-                <BookIcon className="mb-2 h-6 w-6" />
-                <p className="text-[11px] font-medium leading-[14px]">Search to add more courses</p>
-              </div>
             </div>
 
             <div className={`flex items-start justify-between gap-3 border-t border-[var(--outline-variant)] pt-3 ${orientation === "horizontal" ? "mt-2.5" : "mt-2"}`}>
@@ -881,38 +876,18 @@ export function PlannerClient({
 
       <Modal
         open={Boolean(scheduleCourse)}
-        title={scheduleCourse ? `${scheduleCourse.courseCode} Class schedule` : "Class schedule"}
-        description={scheduleCourse?.courseName ?? undefined}
+        title="Class Schedule"
         onClose={() => setScheduleCourse(null)}
-        maxWidthClassName="max-w-3xl"
+        maxWidthClassName="max-w-2xl"
       >
-        {scheduleCourse
-          ? (() => {
-            const classEvents = scheduleCourse.events
-              .filter((event) => event.eventKind === "CLASS")
-              .sort((left, right) => `${left.eventDate}${left.startTime}`.localeCompare(`${right.eventDate}${right.startTime}`));
-
-            if (classEvents.length === 0)
-            {
-              return (
-                <p className="rounded-[0.5rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-4 text-[var(--on-surface-variant)]">
-                  No class schedule events for this course.
-                </p>
-              );
-            }
-
-            return classEvents.map((event) => (
-              <article key={event.eventId} className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] leading-4">
-                <div className="font-semibold text-[var(--on-surface)]">{formatEventDate(event.eventDate)}</div>
-                <div className="mt-1 text-[var(--on-surface-variant)]">{formatTimeRange(event.startTime, event.endTime)}</div>
-                <div className="mt-0.5 text-[var(--on-surface-variant)]">
-                  {event.venue ?? event.eventMode ?? "Venue TBD"}
-                </div>
-                {event.weekLabel ? <div className="mt-0.5 text-[var(--on-surface-variant)]">{event.weekLabel}</div> : null}
-              </article>
-            ));
-          })()
-          : null}
+        {scheduleCourse ? (
+          <ClassScheduleModalContent
+            courseCode={scheduleCourse.courseCode}
+            courseName={scheduleCourse.courseName}
+            classGroupLabel={formatClassGroupLabel(scheduleCourse.groupCode)}
+            events={scheduleCourse.events}
+          />
+        ) : null}
       </Modal>
 
       <Modal
@@ -951,7 +926,7 @@ function ExamCalendar({
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => (
-        <article key={card.id} className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
+        <article key={card.id} className="elev-1 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4">
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: colorByShareKey.get(card.shareKey) ?? "#3556b8" }} />
             <span className="text-[12px] font-bold leading-4 text-[var(--on-surface)]">{card.courseCode} {card.groupCode}</span>

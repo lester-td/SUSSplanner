@@ -24,6 +24,8 @@ type SearchResponse = {
   courses: CourseSearchResult[];
 };
 
+const SYNOPSIS_WORD_LIMIT = 100;
+
 function normalizeSearchTerm(term: string)
 {
   return term.trim();
@@ -71,6 +73,28 @@ function renderHighlightedText(text: string | null, searchTerm: string, fallback
   }
 
   return highlightSearchTerm(normalized, searchTerm);
+}
+
+function truncateWords(text: string | null, maxWords: number)
+{
+  if (!text)
+  {
+    return text;
+  }
+
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized)
+  {
+    return normalized;
+  }
+
+  const words = normalized.split(" ");
+  if (words.length <= maxWords)
+  {
+    return normalized;
+  }
+
+  return `${words.slice(0, maxWords).join(" ")}...`;
 }
 
 function formatCourseLevel(courseLevel: string | null)
@@ -176,10 +200,12 @@ export function CourseSearchPage({
     deferredQuery,
     filters.availableAsGspOnly,
     filters.courseLevels.join("|"),
+    filters.ecaOnly,
     filters.postgraduateOnly,
     filters.scheduleTypes.join("|"),
     filters.schoolNames.join("|"),
     filters.semesterIds.join("|"),
+    filters.writtenExamOnly,
   ]);
 
   useEffect(() => {
@@ -230,17 +256,19 @@ export function CourseSearchPage({
       scheduleTypes: [],
       postgraduateOnly: false,
       availableAsGspOnly: false,
+      writtenExamOnly: false,
+      ecaOnly: false,
       schoolNames: [],
       courseLevels: [],
     }));
   }
 
   return (
-    <div className="px-4 py-4 md:px-[16px]">
-      <div className="mx-auto grid max-w-7xl gap-3 lg:grid-cols-[minmax(0,1fr)_21rem]">
-        <section className="space-y-3">
-          <div className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="px-3 pb-3 pt-8 md:px-[16px]">
+      <div className="mx-auto grid max-w-7xl gap-2.5 lg:grid-cols-[minmax(0,1fr)_21rem]">
+        <section className="space-y-2.5 lg:pr-4">
+          <div className="pb-3">
+            <div className="flex flex-col gap-2.5 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
               </div>
@@ -255,38 +283,31 @@ export function CourseSearchPage({
                 type="search"
                 value={filters.q}
                 onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
-                placeholder="Search by course code, course title, or school"
-                className="w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-3 pl-12 pr-4 text-[15px] leading-6 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                placeholder="Search by course code, course title, or descriptions"
+                className="elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-3 pl-12 pr-4 text-[15px] leading-6 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
               />
             </label>
           </div>
 
-          {!deferredQuery.trim() ? (
-            <div className="flex min-h-[16rem] flex-col items-center justify-center rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-center text-[var(--on-surface-variant)]">
-              <BookIcon className="mb-3 h-8 w-8" />
-              <p className="text-[16px] font-semibold leading-6 text-[var(--on-surface)]">Start typing to search courses</p>
-            </div>
-          ) : results.length === 0 && !loading ? (
-            <div className="rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-[14px] leading-5 text-[var(--on-surface-variant)]">
+          {deferredQuery.trim() && results.length === 0 && !loading ? (
+            <div className="elev-1 rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               No courses matched the current query and checkbox filters.
             </div>
           ) : (
-            <div className="divide-y divide-[color:rgb(6_55_100_/_0.12)] rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+            <div className="divide-y divide-[color:rgb(6_55_100_/_0.12)] border-y border-[color:rgb(6_55_100_/_0.12)]">
               {results.map((course) => {
                 const semesterIndicators = buildSemesterIndicators(course);
 
                 return (
                 <article key={course.courseCode} className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-2.5">
                     <h2 className="min-w-0 flex-1 text-[18px] font-bold leading-7 tracking-[-0.02em]">
                       <Link
                         href={`/courses/${course.courseCode}`}
-                        className="inline items-baseline break-normal text-[var(--primary)] transition-colors hover:text-[var(--on-surface)]"
+                        className="inline items-baseline break-normal text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-blue-600 hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                       >
-                        <span className="mr-2">{renderHighlightedText(course.courseCode, filters.q, course.courseCode)}</span>
-                        <span className="text-[var(--on-surface)]">
-                          {renderHighlightedText(course.courseName, filters.q, "Untitled course")}
-                        </span>
+                        <span>{renderHighlightedText(course.courseCode, filters.q, course.courseCode)}</span>{" "}
+                        <span>{renderHighlightedText(course.courseName, filters.q, "Untitled course")}</span>
                       </Link>
                     </h2>
                     {semesterIndicators.length > 0 ? (
@@ -318,7 +339,11 @@ export function CourseSearchPage({
                   </div>
 
                   <p className="mt-2 text-[13px] leading-5 text-[var(--on-surface-variant)]">
-                    {renderHighlightedText(course.courseSynopsis, filters.q, "No synopsis available.")}
+                    {renderHighlightedText(
+                      truncateWords(course.courseSynopsis, SYNOPSIS_WORD_LIMIT),
+                      filters.q,
+                      "No synopsis available.",
+                    )}
                   </p>
                 </article>
               );
@@ -327,23 +352,23 @@ export function CourseSearchPage({
           )}
         </section>
 
-        <aside className="space-y-2.5 lg:sticky lg:top-3 lg:self-start lg:border-l lg:border-[color:rgb(6_55_100_/_0.12)] lg:pl-3">
-            <div className="flex items-center justify-between gap-3">
+        <aside className="mt-2 border-l border-[color:rgb(6_55_100_/_0.12)] pl-2.5 lg:mt-0 lg:sticky lg:top-[90px] lg:self-start">
+            <div className="flex items-center justify-between gap-2 border-b border-[color:rgb(6_55_100_/_0.12)] pb-2">
               <div className="flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5 text-[var(--primary)]" />
-                <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Search Settings</h2>
+                <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
+                <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
               </div>
               <button
                 type="button"
                 onClick={resetCheckboxFilters}
-                className="inline-flex items-center gap-1 rounded-[0.4rem] border border-[var(--outline-variant)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                className="inline-flex items-center gap-1 rounded-[0.35rem] border border-[var(--outline-variant)] px-2 py-1 text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
               >
-                <RefreshIcon className="h-3.5 w-3.5" />
+                <RefreshIcon className="h-3 w-3" />
                 Reset all
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="divide-y divide-[color:rgb(6_55_100_/_0.12)]">
               <FilterGroup title="Offered In">
                 {semesters.map((semester) => (
                   <CheckboxRow
@@ -377,38 +402,55 @@ export function CourseSearchPage({
                 />
               </FilterGroup>
 
-              <FilterGroup title="Level of Course">
+              <FilterGroup title="Level of Course" contentClassName="grid grid-cols-3 gap-y-px">
                 {levelOptions.map((levelOption) => (
-                  <CheckboxRow
-                    key={levelOption.value}
-                    label={levelOption.label}
-                    checked={filters.courseLevels.includes(levelOption.value)}
-                    onChange={() => setFilters((current) => ({
-                      ...current,
-                      courseLevels: toggleInList(current.courseLevels, levelOption.value),
-                    }))}
-                  />
+                  <div key={levelOption.value}>
+                    <CheckboxRow
+                      label={levelOption.label}
+                      checked={filters.courseLevels.includes(levelOption.value)}
+                      onChange={() => setFilters((current) => ({
+                        ...current,
+                        courseLevels: toggleInList(current.courseLevels, levelOption.value),
+                      }))}
+                    />
+                  </div>
                 ))}
               </FilterGroup>
 
-              <FilterGroup title="Postgraduate Courses">
+              <section className="space-y-px py-2">
                 <CheckboxRow
-                  label="Postgraduate courses only"
+                  label="Postgraduate Courses"
                   checked={filters.postgraduateOnly}
                   onChange={() => setFilters((current) => ({
                     ...current,
                     postgraduateOnly: !current.postgraduateOnly,
                   }))}
                 />
-              </FilterGroup>
-
-              <FilterGroup title="Available as GSP/UNE">
                 <CheckboxRow
-                  label="Available as GSP/UNE only"
+                  label="Available as GSP/UNE"
                   checked={filters.availableAsGspOnly}
                   onChange={() => setFilters((current) => ({
                     ...current,
                     availableAsGspOnly: !current.availableAsGspOnly,
+                  }))}
+                />
+              </section>
+
+              <FilterGroup title="Assessments">
+                <CheckboxRow
+                  label="Written exam"
+                  checked={filters.writtenExamOnly}
+                  onChange={() => setFilters((current) => ({
+                    ...current,
+                    writtenExamOnly: !current.writtenExamOnly,
+                  }))}
+                />
+                <CheckboxRow
+                  label="ECA"
+                  checked={filters.ecaOnly}
+                  onChange={() => setFilters((current) => ({
+                    ...current,
+                    ecaOnly: !current.ecaOnly,
                   }))}
                 />
               </FilterGroup>
@@ -447,20 +489,22 @@ export function CourseSearchPage({
 function FilterGroup({
   title,
   action,
+  contentClassName,
   children,
 }: {
   title: string;
   action?: ReactNode;
+  contentClassName?: string;
   children?: ReactNode;
 })
 {
   return (
-    <section>
-      <div className="mb-1 flex items-center justify-between gap-3">
+    <section className="py-2">
+      <div className="mb-0.5 flex items-center justify-between gap-2">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">{title}</h3>
         {action}
       </div>
-      {children ? <div className="space-y-0.5">{children}</div> : null}
+      {children ? <div className={contentClassName ?? "space-y-px"}>{children}</div> : null}
     </section>
   );
 }
@@ -476,14 +520,14 @@ function CheckboxRow({
 })
 {
   return (
-    <label className="flex cursor-pointer items-start gap-2 rounded-[0.6rem] px-1.5 py-1 transition-colors hover:bg-[var(--surface-container-low)]">
+    <label className="flex cursor-pointer items-start gap-1.5 rounded-[0.5rem] px-1.5 py-0.5 transition-colors hover:bg-[var(--surface-container-low)]">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="mt-[1px] h-4 w-4 rounded border border-[var(--outline-variant)] accent-[var(--primary)]"
+        className="mt-[1px] h-3.5 w-3.5 rounded border border-[var(--outline-variant)] accent-[var(--primary)]"
       />
-      <span className="text-[13px] leading-4 text-[var(--on-surface)]">{label}</span>
+      <span className="text-[12px] leading-4 text-[var(--on-surface)]">{label}</span>
     </label>
   );
 }

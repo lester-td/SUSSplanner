@@ -31,7 +31,7 @@ export default async function SharePage({
   {
     return (
       <AppShell activeSection="share" currentWeekLabel={getCurrentWeekChip(semester, week)}>
-        <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-4 py-4 md:px-[16px]">
+        <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
           <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
             <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.01em] text-[var(--on-surface)]">Shared timetable</h1>
             <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">
@@ -54,7 +54,7 @@ export default async function SharePage({
   catch {
     return (
       <AppShell activeSection="share" currentWeekLabel={getCurrentWeekChip(semester, week)}>
-        <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-4 py-4 md:px-[16px]">
+        <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
           <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
             <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.01em] text-[var(--on-surface)]">Invalid shared link</h1>
             <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">
