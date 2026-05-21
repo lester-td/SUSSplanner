@@ -20,6 +20,7 @@ export type SharedTimetableState = {
 
 export type PlannerStorageState = SharedTimetableState & {
   hiddenClasses: string[];
+  courseColorsByCourseCode: Record<string, string>;
   selectedWeekId: number | "all";
   orientation: TimetableOrientation;
   viewMode: PlannerViewMode;

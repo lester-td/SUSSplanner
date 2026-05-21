@@ -20,16 +20,27 @@ import type {
   TimetableSelectionRecord,
 } from "./types";
 
-const COURSE_COLORS = [
-  "#cf5b22",
-  "#2e6f95",
-  "#7a8f2d",
-  "#8f4bc4",
-  "#008b7b",
-  "#c14953",
-  "#a76318",
-  "#3556b8",
+export const COURSE_COLOR_PALETTE = [
+  "#e694a4",
+  "#e3a995",
+  "#f7cda4",
+  "#d4cb84",
+  "#9acdbb",
+  "#a5c7c9",
+  "#c0b6cc",
+  "#cfb09f",
 ];
+
+export function getCourseColor(courseCode: string)
+{
+  let hash = 0;
+  for (const character of courseCode)
+  {
+    hash = ((hash << 5) - hash) + character.charCodeAt(0);
+    hash |= 0;
+  }
+  return COURSE_COLOR_PALETTE[Math.abs(hash) % COURSE_COLOR_PALETTE.length];
+}
 
 function unique<T>(values: T[])
 {
@@ -100,7 +111,7 @@ export function getCourseColorMap(selections: TimetableSelectionRecord[])
   {
     if (!colorMap.has(selection.courseCode))
     {
-      colorMap.set(selection.courseCode, COURSE_COLORS[colorIndex % COURSE_COLORS.length]);
+      colorMap.set(selection.courseCode, COURSE_COLOR_PALETTE[colorIndex % COURSE_COLOR_PALETTE.length]);
       colorIndex += 1;
     }
   }
@@ -149,7 +160,6 @@ export function buildTimetableBlocks(
       stripSeconds(event.startTime),
       stripSeconds(event.endTime),
       event.venue ?? "",
-      event.eventMode ?? "",
     ].join("|");
 
     const existing = grouped.get(groupKey);
@@ -157,6 +167,20 @@ export function buildTimetableBlocks(
     {
       existing.occurrenceCount += 1;
       existing.eventIds.push(event.eventId);
+      const existingMode = existing.eventMode?.trim() ?? "";
+      const nextMode = event.eventMode?.trim() ?? "";
+      if (existingMode && nextMode && existingMode !== nextMode)
+      {
+        existing.eventMode = "Mixed";
+      }
+      else if (!existingMode && nextMode)
+      {
+        existing.eventMode = nextMode;
+      }
+      else if (existingMode && !nextMode)
+      {
+        existing.eventMode = "Mixed";
+      }
       existing.weekLabel = formatWeekSummary([
         ...existing.eventIds.map((eventId) => classEvents.find((candidate) => candidate.eventId === eventId)).filter(Boolean) as ClassEventWithWeekRecord[],
       ]);
@@ -175,7 +199,7 @@ export function buildTimetableBlocks(
       endMinutes: toMinutes(event.endTime),
       weekLabel: formatWeekSummary([event]),
       venue: event.venue,
-      eventMode: event.eventMode,
+      eventMode: event.eventMode?.trim() || null,
       occurrenceCount: 1,
       eventIds: [event.eventId],
     });
@@ -212,7 +236,7 @@ export function buildSelectedCourseCards(data: TimetableData)
     return {
       ...selection,
       shareKey: buildSharedClassIdentifier(selection.identifier),
-      color: colorMap.get(selection.courseCode) ?? COURSE_COLORS[0],
+      color: colorMap.get(selection.courseCode) ?? getCourseColor(selection.courseCode),
       examDateLabel: exam ? formatEventDate(exam.eventDate) : selection.hasEca ? "ECA" : "No Exam",
       examTimeLabel: exam ? stripSeconds(exam.startTime) : null,
     };

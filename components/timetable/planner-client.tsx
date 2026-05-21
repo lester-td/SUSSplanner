@@ -47,6 +47,8 @@ import {
   buildSelectedCourseCards,
   buildTimetableBlocks,
   buildWeekOptions,
+  COURSE_COLOR_PALETTE,
+  getCourseColor,
   getLatestEndMinutes,
 } from "@/lib/timetable/timetable-utils";
 import type {
@@ -74,17 +76,6 @@ type ClassesResponse = {
 };
 
 type ClassPickerCourse = Pick<CourseSearchResult, "courseCode" | "courseName">;
-
-const GROUP_PREVIEW_COLORS = [
-  "#3556b8",
-  "#cf5b22",
-  "#008b7b",
-  "#8f4bc4",
-  "#7a8f2d",
-  "#c14953",
-  "#2e6f95",
-  "#a76318",
-];
 
 function buildShareQuery(semesterId: number, selectedClasses: SharedClassIdentifier[])
 {
@@ -121,6 +112,7 @@ function defaultStorageState(
     semesterId,
     selectedClasses: [],
     hiddenClasses: [],
+    courseColorsByCourseCode: {},
     selectedWeekId: currentWeekId && currentSemesterId === semesterId ? currentWeekId : "all",
     orientation: "vertical",
     viewMode: "class",
@@ -136,6 +128,15 @@ function replaceSelectionForCourse(
     ...current.filter((item) => item.courseCode !== incoming.courseCode),
     incoming,
   ];
+}
+
+function compareCourseClassRecords(left: CourseClassRecord, right: CourseClassRecord)
+{
+  if (left.groupCodeType !== right.groupCodeType)
+  {
+    return left.groupCodeType.localeCompare(right.groupCodeType);
+  }
+  return left.groupCode.localeCompare(right.groupCode, undefined, { numeric: true, sensitivity: "base" });
 }
 
 function sortSelectedCards(
@@ -179,6 +180,8 @@ export function PlannerClient({
   const [searchInput, setSearchInput] = useState("");
   const [selectedClasses, setSelectedClasses] = useState<SharedClassIdentifier[]>([]);
   const [hiddenClasses, setHiddenClasses] = useState<string[]>([]);
+  const [courseColorsByCourseCode, setCourseColorsByCourseCode] = useState<Record<string, string>>({});
+  const [courseHasAlternativesByCode, setCourseHasAlternativesByCode] = useState<Record<string, boolean>>({});
   const [selectedWeekId, setSelectedWeekId] = useState<number | "all">("all");
   const [shareMessage, setShareMessage] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -194,11 +197,12 @@ export function PlannerClient({
     unresolvedSelections: [],
   });
   const [classPickerCourse, setClassPickerCourse] = useState<ClassPickerCourse | null>(null);
-  const [classPickerLoading, setClassPickerLoading] = useState(false);
+  const [, setClassPickerLoading] = useState(false);
   const [classPickerClasses, setClassPickerClasses] = useState<CourseClassRecord[]>([]);
-  const [classPickerError, setClassPickerError] = useState("");
+  const [, setClassPickerError] = useState("");
   const [scheduleCourse, setScheduleCourse] = useState<ReturnType<typeof buildSelectedCourseCards>[number] | null>(null);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [colorPickerCourseCode, setColorPickerCourseCode] = useState<string | null>(null);
   const timetableCaptureRef = useRef<HTMLDivElement | null>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
   const deferredSearch = useDeferredValue(searchInput);
@@ -212,6 +216,7 @@ export function PlannerClient({
     setSemesterId(next.semesterId || currentSemesterId || semesters[0]?.semesterId || 0);
     setSelectedClasses(next.selectedClasses);
     setHiddenClasses(next.hiddenClasses);
+    setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
     setSelectedWeekId(next.selectedWeekId);
     setOrientation(next.orientation);
     setViewMode(next.viewMode);
@@ -228,12 +233,61 @@ export function PlannerClient({
       semesterId,
       selectedClasses,
       hiddenClasses,
+      courseColorsByCourseCode,
       selectedWeekId,
       orientation,
       viewMode,
     };
     saveTimetableToLocalStorage(payload);
-  }, [hiddenClasses, orientation, ready, selectedClasses, selectedWeekId, semesterId, viewMode]);
+  }, [courseColorsByCourseCode, hiddenClasses, orientation, ready, selectedClasses, selectedWeekId, semesterId, viewMode]);
+
+  useEffect(() => {
+    if (!ready || !semesterId)
+    {
+      setCourseHasAlternativesByCode({});
+      return;
+    }
+
+    const courseCodes = [...new Set(selectedClasses.map((selection) => selection.courseCode))];
+    if (courseCodes.length === 0)
+    {
+      setCourseHasAlternativesByCode({});
+      return;
+    }
+
+    const controller = new AbortController();
+    Promise.all(courseCodes.map(async (courseCode) => {
+      try
+      {
+        const params = new URLSearchParams({
+          courseCode,
+          semesterId: String(semesterId),
+        });
+        const response = await fetch(`/api/classes?${params.toString()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok)
+        {
+          return [courseCode, false] as const;
+        }
+        const payload = await response.json() as ClassesResponse;
+        return [courseCode, payload.classes.length > 1] as const;
+      }
+      catch {
+        return [courseCode, false] as const;
+      }
+    }))
+      .then((entries) => {
+        if (controller.signal.aborted)
+        {
+          return;
+        }
+        setCourseHasAlternativesByCode(Object.fromEntries(entries));
+      });
+
+    return () => controller.abort();
+  }, [ready, selectedClasses, semesterId]);
 
   useEffect(() => {
     if (!ready || !semesterId)
@@ -328,8 +382,12 @@ export function PlannerClient({
     [sortMode, timetableData],
   );
   const colorByShareKey = useMemo(
-    () => new Map(selectedCards.map((card) => [card.shareKey, card.color])),
-    [selectedCards],
+    () => new Map(selectedCards.map((card) => [card.shareKey, courseColorsByCourseCode[card.courseCode] ?? card.color])),
+    [courseColorsByCourseCode, selectedCards],
+  );
+  const colorByCourseCode = useMemo(
+    () => new Map(selectedCards.map((card) => [card.courseCode, courseColorsByCourseCode[card.courseCode] ?? card.color])),
+    [courseColorsByCourseCode, selectedCards],
   );
   const selectedShareKeyByCourseCode = useMemo(
     () => new Map(selectedClasses.map((selection) => [selection.courseCode, buildSharedClassIdentifier(selection)])),
@@ -346,18 +404,42 @@ export function PlannerClient({
     [pickerPreviewEvents, selectedWeekId],
   );
   const pickerColorByShareKey = useMemo(() => (
-    new Map(classPickerClasses.map((group, index) => {
+    new Map(classPickerClasses.map((group) => {
       const identifier: SharedClassIdentifier = {
         courseCode: group.courseCode,
         scheduleType: group.scheduleType,
         groupCodeType: group.groupCodeType,
         groupCode: group.groupCode,
       };
-      return [buildSharedClassIdentifier(identifier), GROUP_PREVIEW_COLORS[index % GROUP_PREVIEW_COLORS.length]] as const;
+      return [buildSharedClassIdentifier(identifier), colorByCourseCode.get(group.courseCode) ?? getCourseColor(group.courseCode)] as const;
     }))
-  ), [classPickerClasses]);
-  const displayedBlocks = classPickerCourse ? pickerBlocks : allBlocks;
-  const displayedBlockColors = classPickerCourse ? pickerColorByShareKey : colorByShareKey;
+  ), [classPickerClasses, colorByCourseCode]);
+  const displayedBlocks = useMemo(() => {
+    if (!classPickerCourse)
+    {
+      return allBlocks;
+    }
+
+    const selectedShareKey = selectedShareKeyByCourseCode.get(classPickerCourse.courseCode);
+    const alternativeBlocks = selectedShareKey
+      ? pickerBlocks.filter((block) => block.shareKey !== selectedShareKey)
+      : pickerBlocks;
+
+    return [...allBlocks, ...alternativeBlocks];
+  }, [allBlocks, classPickerCourse, pickerBlocks, selectedShareKeyByCourseCode]);
+  const displayedBlockColors = useMemo(() => {
+    if (!classPickerCourse)
+    {
+      return colorByShareKey;
+    }
+
+    const merged = new Map(colorByShareKey);
+    for (const [shareKey, color] of pickerColorByShareKey)
+    {
+      merged.set(shareKey, color);
+    }
+    return merged;
+  }, [classPickerCourse, colorByShareKey, pickerColorByShareKey]);
   const examCards = useMemo(
     () => buildExamCards(visibleEvents).filter((card) => !hiddenClasses.includes(card.shareKey)),
     [hiddenClasses, visibleEvents],
@@ -417,6 +499,30 @@ export function PlannerClient({
 
   function addClassSelection(selection: SharedClassIdentifier)
   {
+    setCourseColorsByCourseCode((current) => {
+      if (current[selection.courseCode])
+      {
+        return current;
+      }
+
+      const usedColors = new Set<string>();
+      for (const card of selectedCards)
+      {
+        if (card.courseCode === selection.courseCode)
+        {
+          continue;
+        }
+        usedColors.add(current[card.courseCode] ?? card.color);
+      }
+
+      const nextColor = COURSE_COLOR_PALETTE.find((color) => !usedColors.has(color))
+        ?? COURSE_COLOR_PALETTE[usedColors.size % COURSE_COLOR_PALETTE.length];
+
+      return {
+        ...current,
+        [selection.courseCode]: nextColor,
+      };
+    });
     setSelectedClasses((current) => replaceSelectionForCourse(current, selection));
     setHiddenClasses((current) => current.filter((value) => !value.startsWith(`${selection.courseCode}:`)));
     closeClassPicker();
@@ -462,7 +568,7 @@ export function PlannerClient({
       .finally(() => setClassPickerLoading(false));
   }
 
-  function handleSearchResultClick(course: CourseSearchResult)
+  async function handleSearchResultClick(course: CourseSearchResult)
   {
     const offeredInSelectedSemester = course.offeredSemesters.some((semester) => semester.semesterId === semesterId);
 
@@ -472,12 +578,39 @@ export function PlannerClient({
       return;
     }
 
-    setSearchInput("");
-    setSearchResults([]);
-    openClassPicker({
-      courseCode: course.courseCode,
-      courseName: course.courseName,
-    });
+    try
+    {
+      const params = new URLSearchParams({
+        courseCode: course.courseCode,
+        semesterId: String(semesterId),
+      });
+      const response = await fetch(`/api/classes?${params.toString()}`, { cache: "no-store" });
+      if (!response.ok)
+      {
+        throw new Error("Unable to load class groups.");
+      }
+      const payload = await response.json() as ClassesResponse;
+      const firstClass = [...payload.classes].sort(compareCourseClassRecords)[0];
+
+      if (!firstClass)
+      {
+        showPlannerBanner("No class groups are available for this course in the selected semester.");
+        return;
+      }
+
+      setSearchInput("");
+      setSearchResults([]);
+      addClassSelection({
+        courseCode: firstClass.courseCode,
+        scheduleType: firstClass.scheduleType,
+        groupCodeType: firstClass.groupCodeType,
+        groupCode: firstClass.groupCode,
+      });
+    }
+    catch (error: unknown)
+    {
+      showPlannerBanner(error instanceof Error ? error.message : "Unable to load class groups.");
+    }
   }
 
   async function handleShare()
@@ -521,6 +654,7 @@ export function PlannerClient({
   {
     setSelectedClasses([]);
     setHiddenClasses([]);
+    setCourseColorsByCourseCode({});
     setSearchInput("");
     setPlannerNotice("");
     setDownloadOpen(false);
@@ -530,6 +664,7 @@ export function PlannerClient({
       semesterId,
       selectedClasses: [],
       hiddenClasses: [],
+      courseColorsByCourseCode: {},
       selectedWeekId,
       orientation,
       viewMode,
@@ -619,39 +754,6 @@ export function PlannerClient({
                 </div>
               </div>
             ) : null}
-            {classPickerCourse ? (
-              <div className={`mb-2.5 rounded-[0.5rem] border px-3 py-2.5 ${
-                classPickerError
-                  ? "border-[var(--error)]/30 bg-[var(--error-container)] text-[var(--error)]"
-                  : "border-[var(--primary)]/20 bg-[var(--primary-fixed)] text-[var(--primary)]"
-              }`}>
-                <div className="flex flex-wrap items-start justify-between gap-2.5">
-                  <div>
-                    <p className="text-[12px] font-semibold leading-4">
-                      {classPickerCourse.courseCode} group selection
-                    </p>
-                    <p className={`mt-1 text-[12px] leading-4 ${
-                      classPickerError ? "text-[var(--error)]" : "text-[var(--primary)]"
-                    }`}>
-                      {classPickerLoading
-                        ? "Loading class group blocks for this course."
-                        : classPickerError
-                          ? classPickerError
-                          : classPickerClasses.length === 0
-                            ? "No class groups are available for this course in the selected semester."
-                            : "Other course blocks are hidden. Click a timetable block to switch to that class group."}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeClassPicker}
-                    className="rounded-[0.4rem] border border-current/20 px-3 py-1.5 text-[11px] font-semibold leading-4 transition-opacity hover:opacity-75"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1">
@@ -665,6 +767,11 @@ export function PlannerClient({
                   visibleEndMinutes={visibleEndMinutes}
                   showAllWeeks={selectedWeekId === "all"}
                   activeShareKey={activePickerShareKey}
+                  deEmphasisMode={classPickerCourse ? "course-only" : "all"}
+                  activeCourseCode={classPickerCourse?.courseCode ?? null}
+                  courseCanPickByCode={courseHasAlternativesByCode}
+                  isPickMode={Boolean(classPickerCourse)}
+                  suppressActiveOutline={Boolean(classPickerCourse)}
                   onBlockClick={(block) => {
                     if (classPickerCourse)
                     {
@@ -689,6 +796,11 @@ export function PlannerClient({
                         });
                       }
 
+                      return;
+                    }
+
+                    if (!courseHasAlternativesByCode[block.courseCode])
+                    {
                       return;
                     }
 
@@ -803,17 +915,46 @@ export function PlannerClient({
             <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
               {selectedCards.map((record) => {
                 const isHidden = hiddenClasses.includes(record.shareKey);
+                const recordColor = colorByShareKey.get(record.shareKey) ?? record.color;
                 return (
                   <article
                     key={record.shareKey}
                     className="elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md"
                   >
-                    <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: record.color }} />
+                    <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: recordColor }} />
 
                     <div className="pl-1.5 pr-12">
                       <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span aria-hidden="true" className="h-4 w-4 rounded-[4px] border border-black/10" style={{ backgroundColor: record.color }} />
+                              <button
+                                type="button"
+                                aria-label={`Change ${record.courseCode} color`}
+                                className="h-4 w-4 cursor-pointer rounded-[4px] border border-black/10 transition-opacity hover:opacity-80"
+                                style={{ backgroundColor: recordColor }}
+                                onClick={() => setColorPickerCourseCode((current) => current === record.courseCode ? null : record.courseCode)}
+                              />
+                            {colorPickerCourseCode === record.courseCode ? (
+                              <div className="absolute left-0 top-6 z-20 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5 shadow-md">
+                                <div className="grid grid-cols-4 gap-1">
+                                  {COURSE_COLOR_PALETTE.map((color) => (
+                                    <button
+                                      key={color}
+                                      type="button"
+                                      aria-label={`Use color ${color}`}
+                                      className={`h-4 w-4 rounded-[4px] border ${recordColor.toLowerCase() === color.toLowerCase() ? "border-[var(--on-surface)]" : "border-black/10"}`}
+                                      style={{ backgroundColor: color }}
+                                      onClick={() => {
+                                        setCourseColorsByCourseCode((current) => ({
+                                          ...current,
+                                          [record.courseCode]: color,
+                                        }));
+                                        setColorPickerCourseCode(null);
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
                             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
                               <Link
                                 href={`/courses/${record.courseCode}`}

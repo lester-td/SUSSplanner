@@ -33,7 +33,6 @@ import {
   buildSelectedCourseCards,
   buildTimetableBlocks,
   buildWeekOptions,
-  getCourseColorMap,
   getLatestEndMinutes,
 } from "@/lib/timetable/timetable-utils";
 import type {
@@ -184,6 +183,11 @@ export function ShareClient({
                   visibleEndMinutes={visibleEndMinutes}
                   showAllWeeks={selectedWeekId === "all"}
                   activeShareKey={null}
+                  deEmphasisMode="none"
+                  activeCourseCode={null}
+                  courseCanPickByCode={{}}
+                  isPickMode={false}
+                  suppressActiveOutline
                   onBlockClick={() => undefined}
                   showCurrentTime={false}
                 />

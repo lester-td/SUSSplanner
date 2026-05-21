@@ -60,6 +60,7 @@ export function importSharedTimetableToLocalStorage(
     semesterId: state.semesterId,
     selectedClasses: state.selectedClasses,
     hiddenClasses: [],
+    courseColorsByCourseCode: current?.courseColorsByCourseCode ?? {},
     selectedWeekId: "all",
     orientation: current?.orientation ?? "horizontal",
     viewMode: current?.viewMode ?? "class",
