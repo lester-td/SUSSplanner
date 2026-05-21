@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -814,10 +815,15 @@ export function PlannerClient({
                           <div className="flex items-center gap-2">
                             <span aria-hidden="true" className="h-4 w-4 rounded-[4px] border border-black/10" style={{ backgroundColor: record.color }} />
                             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-                              <h4 className="shrink-0 text-[15px] font-extrabold leading-5 text-[var(--on-surface)]">{record.courseCode}</h4>
-                              <p className="min-w-0 text-[14px] font-normal leading-5 text-[var(--on-surface)]">
-                                {record.courseName ?? "Untitled course"}
-                              </p>
+                              <Link
+                                href={`/courses/${record.courseCode}`}
+                                className="inline-flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                              >
+                                <h4 className="shrink-0 text-[15px] font-extrabold leading-5">{record.courseCode}</h4>
+                                <p className="min-w-0 text-[14px] font-normal leading-5">
+                                  {record.courseName ?? "Untitled course"}
+                                </p>
+                              </Link>
                             </div>
                           </div>
                           <div className="mt-1 space-y-1 text-[13px] font-medium leading-5 text-[var(--on-surface-variant)]">
@@ -886,6 +892,7 @@ export function PlannerClient({
             courseName={scheduleCourse.courseName}
             classGroupLabel={formatClassGroupLabel(scheduleCourse.groupCode)}
             events={scheduleCourse.events}
+            onClose={() => setScheduleCourse(null)}
           />
         ) : null}
       </Modal>
