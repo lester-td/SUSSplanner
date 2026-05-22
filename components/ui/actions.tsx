@@ -24,7 +24,7 @@ export function ActionButton({
       } ${
         variant === "primary"
           ? "bg-[var(--primary)] text-[var(--on-primary)] hover:bg-[var(--primary-container)] hover:text-[var(--on-primary)]"
-          : "border border-[var(--outline-variant)] bg-[var(--surface-container)] text-[var(--on-surface)] hover:bg-[var(--surface-container-high)]"
+          : "border border-[var(--brand-divider)] bg-[var(--surface-container)] text-[var(--on-surface)] hover:bg-[var(--surface-container-high)]"
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       onClick={onClick}
       disabled={disabled}
@@ -58,8 +58,8 @@ export function IconButton({
       title={label}
       className={`inline-flex h-8 w-8 items-center justify-center rounded-[0.5rem] border transition-colors ${
         danger
-          ? "border-transparent text-[var(--error)] hover:bg-[var(--error-container)]"
-          : "border-transparent text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+          ? "border-transparent text-[var(--error)] hover:bg-[var(--accent-soft)]"
+          : "border-transparent text-[var(--on-surface-variant)] hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)]"
       } ${disabled ? "cursor-not-allowed opacity-40" : ""} ${className}`}
       onClick={onClick}
       disabled={disabled}

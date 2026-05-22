@@ -30,7 +30,7 @@ export function buildIcs(semester: SemesterRecord | null, events: TimetableEvent
 
   for (const event of events)
   {
-    const summary = `${event.courseCode} ${event.groupCodeType} ${event.groupCode}`;
+    const summary = `${event.courseCode} ${event.groupCodeType} ${event.groupCode}${event.eventKind === "EXAM" ? " EXAM" : ""}`;
     const description = [
       event.courseName ? `Course: ${event.courseName}` : null,
       `Kind: ${event.eventKind}`,
@@ -49,7 +49,6 @@ export function buildIcs(semester: SemesterRecord | null, events: TimetableEvent
       `DTEND;TZID=Asia/Singapore:${toIcsDateTime(event.eventDate, event.endTime)}`,
       `SUMMARY:${escapeIcsText(summary)}`,
       `DESCRIPTION:${escapeIcsText(description)}`,
-      `LOCATION:${escapeIcsText(event.venue ?? "TBA")}`,
       "END:VEVENT",
     );
   }

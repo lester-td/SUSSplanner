@@ -12,7 +12,6 @@ import {
   EyeOffIcon,
   GridIcon,
   ListIcon,
-  PlusIcon,
   RefreshIcon,
   RowsIcon,
   SchoolIcon,
@@ -24,9 +23,11 @@ import {
 import { ActionButton, IconButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
 import { ClassScheduleModalContent } from "@/components/timetable/class-schedule-modal-content";
+import { ExamCalendar } from "@/components/timetable/exam-calendar";
 import { SelectorRail } from "@/components/timetable/selector-rail";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
-import { exportElementToPng } from "@/lib/export/png";
+import { exportPngDataUrlToPdf } from "@/lib/export/pdf-client";
+import { exportElementToPng, renderElementToPngDataUrl } from "@/lib/export/png";
 import {
   buildTimeSlots,
   formatClassGroupLabel,
@@ -222,10 +223,21 @@ function buildDayDateByDay(week: SemesterWeekRecord | null)
 
 function sortSelectedCards(
   cards: ReturnType<typeof buildSelectedCourseCards>,
-  sortMode: "code" | "exam",
+  sortMode: "code" | "exam" | "credit",
 )
 {
   return [...cards].sort((left, right) => {
+    if (sortMode === "credit")
+    {
+      const leftCredit = left.creditUnits ?? Number.POSITIVE_INFINITY;
+      const rightCredit = right.creditUnits ?? Number.POSITIVE_INFINITY;
+      const creditDiff = leftCredit - rightCredit;
+      if (creditDiff !== 0)
+      {
+        return creditDiff;
+      }
+    }
+
     if (sortMode === "exam")
     {
       const leftExam = left.events.find((event) => event.eventKind === "EXAM");
@@ -257,7 +269,7 @@ export function PlannerClient({
   const [semesterId, setSemesterId] = useState<number>(currentSemesterId);
   const [orientation, setOrientation] = useState<TimetableOrientation>("vertical");
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
-  const [sortMode, setSortMode] = useState<"code" | "exam">("code");
+  const [sortMode, setSortMode] = useState<"code" | "exam" | "credit">("code");
   const [searchInput, setSearchInput] = useState("");
   const [studyMode, setStudyMode] = useState<"full-time" | "part-time">("full-time");
   const [selectedClasses, setSelectedClasses] = useState<SharedClassIdentifier[]>([]);
@@ -285,7 +297,7 @@ export function PlannerClient({
   const [scheduleCourse, setScheduleCourse] = useState<ReturnType<typeof buildSelectedCourseCards>[number] | null>(null);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [colorPickerCourseCode, setColorPickerCourseCode] = useState<string | null>(null);
-  const timetableCaptureRef = useRef<HTMLDivElement | null>(null);
+  const exportCaptureRef = useRef<HTMLDivElement | null>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
   const deferredSearch = useDeferredValue(searchInput);
 
@@ -426,7 +438,7 @@ export function PlannerClient({
 
     const params = new URLSearchParams({
       q: deferredSearch,
-      limit: "8",
+      limit: "20",
     });
     params.append("semesterIds", String(semesterId));
 
@@ -553,6 +565,34 @@ export function PlannerClient({
       window.clearTimeout(noticeTimeoutRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (!downloadOpen && !colorPickerCourseCode)
+    {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element))
+      {
+        return;
+      }
+
+      if (downloadOpen && !target.closest("[data-download-popover-root]"))
+      {
+        setDownloadOpen(false);
+      }
+
+      if (colorPickerCourseCode && !target.closest("[data-color-popover-root]"))
+      {
+        setColorPickerCourseCode(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [colorPickerCourseCode, downloadOpen]);
 
   function toggleHidden(shareKey: string)
   {
@@ -724,18 +764,38 @@ export function PlannerClient({
     setDownloadOpen(false);
   }
 
+  async function waitForExportLayout()
+  {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
   async function handlePngExport()
   {
-    if (!timetableCaptureRef.current)
+    if (!exportCaptureRef.current)
     {
       return;
     }
 
+    setDownloadOpen(false);
+    await waitForExportLayout();
     await exportElementToPng(
-      timetableCaptureRef.current,
+      exportCaptureRef.current,
       `suss-planner-${semesterId}-${viewMode}.png`,
     );
+  }
+
+  async function handlePdfExport()
+  {
+    if (!exportCaptureRef.current)
+    {
+      return;
+    }
+
     setDownloadOpen(false);
+    await waitForExportLayout();
+    const pngDataUrl = await renderElementToPngDataUrl(exportCaptureRef.current);
+    await exportPngDataUrlToPdf(pngDataUrl, `suss-planner-${semesterId}-${viewMode}.pdf`);
   }
 
   function resetPlanner()
@@ -768,7 +828,7 @@ export function PlannerClient({
 
   return (
     <>
-      <div className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
+      <div ref={exportCaptureRef} className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
           <div className="elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
@@ -844,8 +904,8 @@ export function PlannerClient({
             ) : null}
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1">
-            <div ref={timetableCaptureRef} className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
+          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-1 pb-1">
+            <div className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
               {viewMode === "class" ? (
                 <TimetableCanvas
                   blocks={displayedBlocks}
@@ -932,14 +992,14 @@ export function PlannerClient({
                 </button>
                 <span className="text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)]">PT</span>
               </div>
-              <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
+              <span className="rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
                 {selectedCards.length} Selected
               </span>
             </div>
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 py-1.5">
-            <label className="relative block">
+            <label className="relative z-40 block">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
               <input
                 className="elev-1 w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-2 pl-10 pr-4 text-[14px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
@@ -949,35 +1009,24 @@ export function PlannerClient({
               />
 
               {searchInput ? (
-                <div className="elev-3 absolute left-0 right-0 top-full z-30 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
+                <div className="elev-3 absolute left-0 right-0 top-full z-50 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                   {searchResults.map((record) => (
                     <button
                       key={record.courseCode}
                       type="button"
-                      className="flex w-full items-center justify-between gap-2 rounded-[0.5rem] px-2.5 py-1.5 text-left transition-colors hover:bg-[var(--surface-container-high)]"
+                      className="flex w-full items-start rounded-[0.5rem] px-2.5 py-1.5 text-left transition-colors hover:bg-[var(--surface-container-high)]"
                       onClick={() => handleSearchResultClick(record)}
                     >
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
-                          {record.courseCode}
+                        <span className="block truncate text-[12px] leading-4 text-[var(--on-surface)]">
+                          <span className="font-semibold">{record.courseCode}</span>{" "}
+                          <span className="font-normal text-[var(--on-surface-variant)]">
+                            {record.courseName ?? "Untitled course"}
+                          </span>
                         </span>
-                        <span className="block truncate text-[11px] leading-[14px] text-[var(--on-surface-variant)]">
-                          {record.courseName ?? "Untitled course"}
+                        <span className="mt-1 block truncate text-[10px] font-semibold uppercase tracking-tight text-[var(--on-surface-variant)]">
+                          {record.offeredSemesters.map((semester) => semester.semesterName).join(" · ")}
                         </span>
-                        <span className="mt-1 flex flex-wrap gap-1">
-                          {record.offeredSemesters.map((semester) => (
-                            <span key={`${record.courseCode}-${semester.semesterId}`} className="rounded-[999px] border border-[var(--outline-variant)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-tight text-[var(--on-surface-variant)]">
-                              {semester.semesterName}
-                            </span>
-                          ))}
-                        </span>
-                      </span>
-                      <span className={`inline-flex h-8 w-8 items-center justify-center rounded-[0.5rem] border ${
-                        record.hasAvailableClasses
-                          ? "border-[var(--primary)]/20 bg-[var(--primary-fixed)] text-[var(--primary)]"
-                          : "border-[var(--outline-variant)] text-[var(--on-surface-variant)]"
-                      }`}>
-                        {record.hasAvailableClasses ? <PlusIcon className="h-4 w-4" /> : <XIcon className="h-4 w-4" />}
                       </span>
                     </button>
                   ))}
@@ -997,12 +1046,37 @@ export function PlannerClient({
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1.5">
-            <div className={`grid grid-cols-2 gap-1.5 ${orientation === "horizontal" ? "md:grid-cols-5" : ""}`}>
-              <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} />
-              <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} />
-              <ActionButton variant="ghost" icon={<DownloadIcon className="h-[18px] w-[18px]" />} label="Download" onClick={() => setDownloadOpen((current) => !current)} />
-              <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} />
-              <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share / Sync" onClick={handleShare} stretch />
+            <div className="space-y-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
+                <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share" onClick={handleShare} stretch />
+                <div className="relative" data-download-popover-root>
+                  <ActionButton
+                    variant="ghost"
+                    icon={<DownloadIcon className="h-[18px] w-[18px]" />}
+                    label="Download"
+                    onClick={() => setDownloadOpen((current) => !current)}
+                    stretch
+                  />
+                  {downloadOpen ? (
+                    <div className="elev-3 absolute left-0 top-full z-30 mt-1.5 w-full min-w-[9.5rem] rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -top-[7px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
+                      />
+                      <div className="grid grid-cols-1 gap-1.5">
+                        <ActionButton variant="ghost" icon={<DownloadIcon className="h-[18px] w-[18px]" />} label="PDF" onClick={() => void handlePdfExport()} />
+                        <ActionButton variant="ghost" icon={<CalendarIcon className="h-[18px] w-[18px]" />} label="ICS" onClick={() => triggerDownload("/api/export/ics", `suss-planner-${semesterId}-${viewMode}.ics`)} />
+                        <ActionButton variant="ghost" icon={<GridIcon className="h-[18px] w-[18px]" />} label="PNG" onClick={() => void handlePngExport()} />
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+                <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} stretch />
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} stretch />
+                <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} stretch />
+              </div>
               {selectedWeekId !== "all" ? (
                 <ActionButton
                   variant="ghost"
@@ -1013,14 +1087,6 @@ export function PlannerClient({
                 />
               ) : null}
             </div>
-
-            {downloadOpen ? (
-              <div className="mt-2 grid grid-cols-3 gap-1.5">
-                <ActionButton variant="ghost" icon={<DownloadIcon className="h-[18px] w-[18px]" />} label="PDF" onClick={() => triggerDownload("/api/export/pdf", `suss-planner-${semesterId}-${viewMode}.pdf`)} />
-                <ActionButton variant="ghost" icon={<CalendarIcon className="h-[18px] w-[18px]" />} label="ICS" onClick={() => triggerDownload("/api/export/ics", `suss-planner-${semesterId}-${viewMode}.ics`)} />
-                <ActionButton variant="ghost" icon={<GridIcon className="h-[18px] w-[18px]" />} label="PNG" onClick={() => void handlePngExport()} />
-              </div>
-            ) : null}
 
             {shareMessage ? (
               <div className="mt-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--primary)]">
@@ -1037,7 +1103,9 @@ export function PlannerClient({
                 return (
                   <article
                     key={record.shareKey}
-                    className={`elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md ${
+                    className={`elev-1 group relative rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md ${
+                      colorPickerCourseCode === record.courseCode ? "overflow-visible" : "overflow-hidden"
+                    } ${
                       orientation === "horizontal" ? "md:h-full" : ""
                     }`}
                   >
@@ -1046,22 +1114,27 @@ export function PlannerClient({
                     <div className="pl-1.5 pr-12">
                       <div className="min-w-0">
                           <div className="flex items-start gap-2">
+                            <div className="relative mt-0.5 z-30" data-color-popover-root>
                               <button
                                 type="button"
                                 aria-label={`Change ${record.courseCode} color`}
-                                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-[4px] border border-black/10 transition-opacity hover:opacity-80"
+                                className="h-4 w-4 shrink-0 cursor-pointer rounded-[4px] border border-black/10 transition-opacity hover:opacity-80"
                                 style={{ backgroundColor: recordColor }}
                                 onClick={() => setColorPickerCourseCode((current) => current === record.courseCode ? null : record.courseCode)}
                               />
                             {colorPickerCourseCode === record.courseCode ? (
-                              <div className="absolute left-0 top-6 z-20 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5 shadow-md">
-                                <div className="grid grid-cols-4 gap-1">
+                              <div className="absolute left-0 top-7 z-20 min-w-[7.25rem] rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2 shadow-md">
+                                <div
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute -top-[7px] left-[5px] h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
+                                />
+                                <div className="grid grid-cols-4 gap-1.5">
                                   {COURSE_COLOR_PALETTE.map((color) => (
                                     <button
                                       key={color}
                                       type="button"
                                       aria-label={`Use color ${color}`}
-                                      className={`h-4 w-4 rounded-[4px] border ${recordColor.toLowerCase() === color.toLowerCase() ? "border-[var(--on-surface)]" : "border-black/10"}`}
+                                      className={`h-5 w-5 rounded-[4px] border ${recordColor.toLowerCase() === color.toLowerCase() ? "border-[var(--on-surface)]" : "border-black/10"}`}
                                       style={{ backgroundColor: color }}
                                       onClick={() => {
                                         setCourseColorsByCourseCode((current) => ({
@@ -1075,6 +1148,7 @@ export function PlannerClient({
                                 </div>
                               </div>
                             ) : null}
+                            </div>
                             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
                               <Link
                                 href={`/courses/${record.courseCode}`}
@@ -1130,12 +1204,26 @@ export function PlannerClient({
 
             </div>
 
-            <div className={`flex items-start justify-between gap-3 border-t border-[var(--outline-variant)] pt-3 ${orientation === "horizontal" ? "mt-2.5" : "mt-2"}`}>
-              <div className="text-left text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
-                <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
-                <div className="mt-1 text-[18px] font-bold leading-6 text-[var(--primary)]">{totalCredits.toFixed(1)} CU</div>
+            <div className={`border-t border-[var(--brand-divider)] pt-3 ${orientation === "horizontal" ? "mt-2.5" : "mt-2"}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 text-left text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
+                  <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
+                  <div className="mt-1 text-[18px] font-bold leading-6 text-[var(--primary)]">{totalCredits.toFixed(1)} CU</div>
+                </div>
+                <div className="relative w-[11.5rem] shrink-0">
+                  <ListIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
+                  <select
+                    value={sortMode}
+                    aria-label="Order selected courses"
+                    onChange={(event) => setSortMode(event.target.value as "code" | "exam" | "credit")}
+                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-8 py-1.5 text-center text-[11px] font-bold leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  >
+                    <option value="code">Order by Code</option>
+                    <option value="exam">Order by Exam</option>
+                    <option value="credit">Order by CU</option>
+                  </select>
+                </div>
               </div>
-              <SortDropdown sortMode={sortMode} onSelect={setSortMode} />
             </div>
           </div>
         </aside>
@@ -1174,65 +1262,5 @@ export function PlannerClient({
         <div className="h-1" />
       </Modal>
     </>
-  );
-}
-
-function ExamCalendar({
-  cards,
-  colorByShareKey,
-}: {
-  cards: ReturnType<typeof buildExamCards>;
-  colorByShareKey: Map<string, string>;
-})
-{
-  if (cards.length === 0)
-  {
-    return (
-      <div className="rounded-[0.5rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-6 text-center text-[14px] leading-5 text-[var(--on-surface-variant)]">
-        No exam events for selected courses.
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {cards.map((card) => (
-        <article key={card.id} className="elev-1 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4">
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: colorByShareKey.get(card.shareKey) ?? "#3556b8" }} />
-            <span className="text-[12px] font-bold leading-4 text-[var(--on-surface)]">{card.courseCode} {card.groupCode}</span>
-          </div>
-          <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{card.courseName ?? "Untitled course"}</p>
-          <p className="mt-3 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatEventDate(card.eventDate)}</p>
-          <p className="text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatTimeRange(card.startTime, card.endTime)}</p>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function SortDropdown({
-  sortMode,
-  onSelect,
-}: {
-  sortMode: "code" | "exam";
-  onSelect: (mode: "code" | "exam") => void;
-})
-{
-  return (
-    <div className="min-w-[10rem] shrink-0">
-      <label className="mb-1 block text-left text-[11px] font-medium uppercase tracking-tight text-[var(--on-surface-variant)]" htmlFor="my-courses-sort-mode">
-        Sort by
-      </label>
-      <select
-        id="my-courses-sort-mode"
-        value={sortMode}
-        onChange={(event) => onSelect(event.target.value as "code" | "exam")}
-        className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-1.5 text-[12px] font-semibold leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-      >
-        <option value="code">Code</option>
-        <option value="exam">Exam</option>
-      </select>
-    </div>
   );
 }
