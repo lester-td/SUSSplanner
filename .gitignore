@@ -75,3 +75,4 @@ Thumbs.db
 scraper/data/input/course-pdfs/
 scraper/data/output/
 venv/
+.DS_Store

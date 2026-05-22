@@ -2,7 +2,7 @@ export type ScheduleType = "daytime" | "evening";
 export type GroupCodeType = "TG" | "CRN";
 export type EventKind = "CLASS" | "EXAM" | "OTHER";
 export type WeekType = "TEACHING" | "STUDY" | "EXAM";
-export type PlannerSection = "planner" | "courses" | "share";
+export type PlannerSection = "planner" | "study-plan" | "courses" | "share";
 export type PlannerViewMode = "class" | "exam";
 export type TimetableOrientation = "horizontal" | "vertical";
 
