@@ -102,8 +102,9 @@ Important:
 
 ### Pages
 
-- `/` -> renders the same page as `/planner` (`app/page.tsx` re-export)
-- `/planner` -> interactive timetable planner
+- `/` -> renders the same page as `/timetable` (`app/page.tsx` re-export)
+- `/timetable` -> interactive timetable planner
+- `/planner` -> semester planner
 - `/courses` -> course search page with filters
 - `/courses/[courseCode]` -> course detail page; optional query `semesterId`
 - `/share` -> shared timetable preview/import page

@@ -73,13 +73,14 @@ Rules and behaviors:
 
 ## Routing And Page Data Flow
 
-### `/` and `/planner`
+### `/` and `/timetable`
 
-- `app/page.tsx` re-exports `/planner`.
-- `app/planner/page.tsx` loads:
+- `app/page.tsx` re-exports `/timetable`.
+- `app/timetable/page.tsx` loads:
   - `getSemestersWithClassesAndWeeks()`
   - current semester/week context from date utilities
 - `PlannerClient` then performs client fetches to `/api/classes` using encoded share query state.
+- `app/planner/page.tsx` loads the semester planner UI via `StudyPlanClient`.
 
 ### `/courses`
 

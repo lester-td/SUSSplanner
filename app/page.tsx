@@ -1,1 +1,1 @@
-export { default } from "./planner/page";
+export { default } from "./timetable/page";
