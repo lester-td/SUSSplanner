@@ -84,6 +84,7 @@ export function StudyPlanClient({
   const [editingCode, setEditingCode] = useState("");
   const [editingCredits, setEditingCredits] = useState("5");
   const [editingSemesterSpan, setEditingSemesterSpan] = useState("1");
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<DropZone>(null);
@@ -659,7 +660,7 @@ export function StudyPlanClient({
 
               <button
                 type="button"
-                onClick={resetPlan}
+                onClick={() => setResetConfirmOpen(true)}
                 className="inline-flex items-center gap-2 self-start rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
               >
                 <RefreshIcon className="h-4 w-4" />
@@ -929,6 +930,39 @@ export function StudyPlanClient({
           </section>
         </section>
       </div>
+
+      <Modal
+        open={resetConfirmOpen}
+        title="Reset Planner?"
+        description="This will clear all modules, semester assignments, and planner settings."
+        onClose={() => setResetConfirmOpen(false)}
+        maxWidthClassName="max-w-md"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(false)}
+              className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                resetPlan();
+                setResetConfirmOpen(false);
+              }}
+              className="rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
+            >
+              Reset Planner
+            </button>
+          </>
+        )}
+      >
+        <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
+          You can&apos;t undo this reset. If you only want to rearrange modules, use drag and drop instead.
+        </p>
+      </Modal>
 
       <Modal
         open={editingCourse !== null}
