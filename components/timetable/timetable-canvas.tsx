@@ -3,13 +3,10 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
-import { PinIcon } from "@/components/planner/icons";
 import {
   DAY_LABELS,
   START_MINUTES,
   formatClassGroupLabel,
-  formatTimeRange,
-  minutesToLabel,
   minutesToTimeString,
 } from "@/lib/timetable/date-utils";
 import { getCourseColor } from "@/lib/timetable/timetable-utils";
@@ -20,8 +17,197 @@ const OVERLAP_GAP_PX = 1;
 const OVERLAP_COMPRESS_RATIO = 0.99;
 const MIN_LANE_WIDTH_PX = 38;
 const MIN_LANE_HEIGHT_PX = 18;
-const VERTICAL_TIME_AXIS_COLUMN = "clamp(2.6rem, 8vw, 4.25rem)";
-const VERTICAL_DAY_COLUMN_MIN = "clamp(2.9rem, 12vw, 8.5rem)";
+const VERTICAL_TIME_AXIS_COLUMN = "clamp(1.95rem, 5.8vw, 2.75rem)";
+const VERTICAL_DAY_COLUMN_MIN = "clamp(2.8rem, 11vw, 8rem)";
+const TIMETABLE_GRID_CLASS = "timetable-grid";
+const TIMETABLE_GRID_TIME_LABEL_CLASS = "timetable-grid__time-label";
+const TIMETABLE_GRID_DAY_LABEL_CLASS = "timetable-grid__day-label";
+const TIMETABLE_GRID_DAY_DATE_CLASS = "timetable-grid__day-date";
+const TIMETABLE_BLOCK_CLASS = "timetable-cell";
+
+function formatCompactMinutes(minutes: number)
+{
+  return minutesToTimeString(minutes).replace(":", "");
+}
+
+function formatCompactMinuteRange(startMinutes: number, endMinutes: number)
+{
+  return `${formatCompactMinutes(startMinutes)}-${formatCompactMinutes(endMinutes)}`;
+}
+
+function formatDayHeaderLabel(label: string)
+{
+  return label.toUpperCase();
+}
+
+function normalizeCommaSpacing(text: string)
+{
+  const tokens = text.split(",").map((token) => token.trim()).filter(Boolean);
+  return tokens.length > 0 ? tokens.join(", ") : text;
+}
+
+function parseNumericWeekList(weekList: string)
+{
+  const tokens = weekList.split(",").map((token) => token.trim()).filter(Boolean);
+  const weekNumbers: number[] = [];
+
+  for (const token of tokens)
+  {
+    const rangeMatch = token.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (rangeMatch)
+    {
+      const startWeek = Number.parseInt(rangeMatch[1], 10);
+      const endWeek = Number.parseInt(rangeMatch[2], 10);
+      if (Number.isFinite(startWeek) && Number.isFinite(endWeek) && startWeek <= endWeek && endWeek - startWeek <= 52)
+      {
+        for (let week = startWeek; week <= endWeek; week += 1)
+        {
+          weekNumbers.push(week);
+        }
+        continue;
+      }
+    }
+
+    if (/^\d+$/.test(token))
+    {
+      weekNumbers.push(Number.parseInt(token, 10));
+      continue;
+    }
+
+    if (/^\d+(?:\s+\d+)+$/.test(token))
+    {
+      for (const part of token.split(/\s+/))
+      {
+        weekNumbers.push(Number.parseInt(part, 10));
+      }
+      continue;
+    }
+
+    return null;
+  }
+
+  return weekNumbers;
+}
+
+function normalizeNumericWeekList(weekList: string)
+{
+  const weekNumbers = parseNumericWeekList(weekList);
+  if (!weekNumbers)
+  {
+    return normalizeCommaSpacing(weekList);
+  }
+
+  if (weekNumbers.length === 0)
+  {
+    return normalizeCommaSpacing(weekList);
+  }
+
+  const uniqueSortedWeeks = [...new Set(weekNumbers)].sort((left, right) => left - right);
+  const normalizedLabels: string[] = [];
+  let rangeStart = uniqueSortedWeeks[0];
+  let rangeEnd = uniqueSortedWeeks[0];
+
+  const flushRange = () => {
+    const rangeLength = rangeEnd - rangeStart + 1;
+    if (rangeLength >= 3)
+    {
+      normalizedLabels.push(`${rangeStart}-${rangeEnd}`);
+      return;
+    }
+    if (rangeLength === 2)
+    {
+      normalizedLabels.push(String(rangeStart));
+      normalizedLabels.push(String(rangeEnd));
+      return;
+    }
+    normalizedLabels.push(String(rangeStart));
+  };
+
+  for (const week of uniqueSortedWeeks.slice(1))
+  {
+    if (week === rangeEnd + 1)
+    {
+      rangeEnd = week;
+      continue;
+    }
+
+    flushRange();
+    rangeStart = week;
+    rangeEnd = week;
+  }
+
+  flushRange();
+  return normalizedLabels.join(", ");
+}
+
+function getEarliestWeekStart(weekLabel: string)
+{
+  const trimmed = weekLabel.trim();
+  if (!trimmed)
+  {
+    return null;
+  }
+
+  const numericText = trimmed.replace(/^weeks?\b/i, "").replace(/\+/g, ",").trim();
+  if (!numericText || !/^[\d,\s-]+$/.test(numericText))
+  {
+    return null;
+  }
+
+  const weekNumbers = parseNumericWeekList(numericText);
+  if (!weekNumbers || weekNumbers.length === 0)
+  {
+    return null;
+  }
+
+  return weekNumbers.reduce((minWeek, week) => Math.min(minWeek, week), Number.POSITIVE_INFINITY);
+}
+
+function formatBlockWeekLabel(weekLabel: string)
+{
+  const trimmed = weekLabel.trim();
+  if (!trimmed)
+  {
+    return "";
+  }
+
+  if (/^weeks?\b/i.test(trimmed))
+  {
+    const suffix = trimmed.replace(/^weeks?\s*/i, "").trim();
+    if (!suffix)
+    {
+      return "Weeks";
+    }
+    if (/^[\d,\s-]+$/.test(suffix))
+    {
+      return `Weeks ${normalizeNumericWeekList(suffix)}`;
+    }
+    return `Weeks ${normalizeCommaSpacing(suffix)}`;
+  }
+
+  if (/^[\d,\s-]+$/.test(trimmed))
+  {
+    return `Weeks ${normalizeNumericWeekList(trimmed)}`;
+  }
+
+  if (/^[\d,\s+\-]+$/.test(trimmed))
+  {
+    return `Weeks ${normalizeCommaSpacing(trimmed)}`;
+  }
+
+  return normalizeCommaSpacing(trimmed);
+}
+
+function formatEventModeLabel(mode: string)
+{
+  const trimmed = mode.trim();
+  if (!trimmed)
+  {
+    return "";
+  }
+  const lower = trimmed.toLowerCase();
+  return `${lower.charAt(0).toUpperCase()}${lower.slice(1)}`;
+}
 
 type TimetableLaneLayout = {
   laneIndex: number;
@@ -81,14 +267,6 @@ function compareBlocksForLane(left: TimetableBlock, right: TimetableBlock)
   {
     return left.startMinutes - right.startMinutes;
   }
-  if (left.endMinutes !== right.endMinutes)
-  {
-    return left.endMinutes - right.endMinutes;
-  }
-  if (left.courseCode !== right.courseCode)
-  {
-    return left.courseCode.localeCompare(right.courseCode);
-  }
   if (left.groupCodeType !== right.groupCodeType)
   {
     return left.groupCodeType.localeCompare(right.groupCodeType);
@@ -96,6 +274,28 @@ function compareBlocksForLane(left: TimetableBlock, right: TimetableBlock)
   if (left.groupCode !== right.groupCode)
   {
     return left.groupCode.localeCompare(right.groupCode, undefined, { numeric: true, sensitivity: "base" });
+  }
+  const leftWeekStart = getEarliestWeekStart(left.weekLabel);
+  const rightWeekStart = getEarliestWeekStart(right.weekLabel);
+  if (leftWeekStart !== rightWeekStart)
+  {
+    if (leftWeekStart === null)
+    {
+      return 1;
+    }
+    if (rightWeekStart === null)
+    {
+      return -1;
+    }
+    return leftWeekStart - rightWeekStart;
+  }
+  if (left.endMinutes !== right.endMinutes)
+  {
+    return left.endMinutes - right.endMinutes;
+  }
+  if (left.courseCode !== right.courseCode)
+  {
+    return left.courseCode.localeCompare(right.courseCode);
   }
   if (left.shareKey !== right.shareKey)
   {
@@ -282,9 +482,9 @@ export function TimetableCanvas({
     .map((label, index) => ({ label, dayOfWeek: index + 1 }))
     .filter((day) => day.dayOfWeek <= 5 || hasSaturdayClasses);
   const rangeMinutes = Math.max(30, visibleEndMinutes - START_MINUTES);
-  const slotSize = isMobile ? 22 : 30;
-  const daySize = 104;
-  const contentHeight = (rangeMinutes / 30) * slotSize;
+  const verticalSlotSize = isMobile ? 36 : 30;
+  const daySize = 84;
+  const contentHeight = (rangeMinutes / 30) * verticalSlotSize;
   const horizontalMinWidthPx = (rangeMinutes / 30) * 58;
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
@@ -315,48 +515,54 @@ export function TimetableCanvas({
   const todayVisibleIndex = visibleDays.findIndex((day) => day.dayOfWeek === todayIndex);
   const showNowLine = showCurrentTime && todayVisibleIndex >= 0;
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const verticalHeaderHeightPx = showAllWeeks ? 32 : 36;
 
   if (isHorizontal)
   {
     return (
-      <div className="overflow-visible bg-[var(--surface-container-lowest)] p-px">
+      <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`}>
         <div className={`min-w-0 ${isMobile ? "overflow-x-auto" : "overflow-x-visible"}`}>
           <div style={isMobile ? { minWidth: `${horizontalMinWidthPx}px` } : undefined}>
-            <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] grid-rows-[2rem_minmax(0,1fr)] gap-0">
-              <div />
+            <div className="grid grid-cols-[3.75rem_minmax(0,1fr)] grid-rows-[1.25rem_minmax(0,1fr)] gap-0">
+              <div className="sticky left-0 z-30 bg-[var(--surface-container-lowest)]" />
 
-              <div className="relative h-8">
+              <div className="relative h-5">
                 {timeSlots.map((slot) => (
                   <div
                     key={slot}
-                    className="absolute top-0 text-[11px] font-medium leading-[14px] text-[var(--on-surface-variant)]"
+                    className={`${TIMETABLE_GRID_TIME_LABEL_CLASS} absolute bottom-1`}
                     style={getVerticalTimeLabelStyle(slot, timeSlots[0], timeSlots[timeSlots.length - 1], rangeMinutes)}
                   >
-                    {slot % 60 === 0 ? minutesToLabel(slot) : ""}
+                    {slot % 60 === 0 ? formatCompactMinutes(slot) : ""}
                   </div>
                 ))}
               </div>
 
               <div
-                className="relative border border-[var(--outline-variant)] border-r-0 border-t-0 bg-[var(--surface-container-lowest)]"
+                className="sticky left-0 z-30 border border-[var(--outline-variant)] border-t-0 bg-[var(--surface-container-lowest)]"
                 style={{ height: `${horizontalContentHeight}px` }}
               >
                 {visibleDays.map((day, dayIndex) => (
                   <div
                     key={day.dayOfWeek}
-                    className="absolute inset-x-0 flex items-center justify-center border-t border-[var(--outline-variant)] text-center text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]"
+                    className={`absolute inset-x-0 flex items-center justify-center border-t border-[var(--outline-variant)] text-center ${TIMETABLE_GRID_DAY_LABEL_CLASS}`}
                     style={{
                       top: `${horizontalDayTops[dayIndex]}px`,
                       height: `${horizontalDayHeights[dayIndex]}px`,
                     }}
                   >
-                    {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? day.label : `${day.label} ${dayDateByDay[day.dayOfWeek]}`}
+                    {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? formatDayHeaderLabel(day.label) : (
+                      <span className="flex flex-col leading-tight">
+                        <span>{formatDayHeaderLabel(day.label)}</span>
+                        <span className={TIMETABLE_GRID_DAY_DATE_CLASS}>{dayDateByDay[day.dayOfWeek]}</span>
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
 
               <div
-                className="relative w-full overflow-visible border border-[var(--outline-variant)] border-t-0 bg-[var(--surface-container-lowest)]"
+                className="relative w-full overflow-visible border border-[var(--outline-variant)] border-l-0 border-t-0 bg-[var(--surface-container-lowest)]"
                 style={{ height: `${horizontalContentHeight}px` }}
               >
                 {visibleDays.map((day, index) => (
@@ -417,6 +623,8 @@ export function TimetableCanvas({
                       onClick={() => onBlockClick(block)}
                       showAllWeeks={showAllWeeks}
                       showCourseName
+                      hideTime={isMobile}
+                      isMobileView={isMobile}
                     />
                   );
                 })}
@@ -429,23 +637,25 @@ export function TimetableCanvas({
   }
 
   return (
-    <div className="overflow-visible bg-[var(--surface-container-lowest)] p-px">
+    <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`}>
       <div className="w-full">
-        <div className="grid grid-rows-[40px] gap-0" style={{ gridTemplateColumns: verticalGridTemplateColumns }}>
-          <div className="border-b border-[var(--outline-variant)]" />
+        <div className="grid gap-0" style={{ gridTemplateColumns: verticalGridTemplateColumns, gridTemplateRows: `${verticalHeaderHeightPx}px` }}>
+          <div />
           {visibleDays.map((day, index) => (
             <div
               key={day.dayOfWeek}
-              className={`flex items-end justify-center border-b border-l border-[var(--outline-variant)] px-2 pb-2 text-center text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)] ${
+              className={`flex items-center justify-center border-b border-l border-t border-[var(--outline-variant)] px-1.5 pb-0.5 text-center ${
                 index === visibleDays.length - 1 ? "border-r" : ""
               } ${
-                showNowLine && todayVisibleIndex === index ? "bg-[color:rgb(243_243_249_/_0.3)]" : "bg-[var(--surface-container-lowest)]"
+                showNowLine && todayVisibleIndex === index ? "bg-[var(--today-column-bg)]" : "bg-[var(--surface-container-lowest)]"
               }`}
             >
-              {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? day.label : (
-                <span className="leading-4">
-                  {day.label}
-                  <span className="ml-1 text-[10px] font-medium text-[var(--on-surface-variant)]/90">{dayDateByDay[day.dayOfWeek]}</span>
+              {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? (
+                <span className={TIMETABLE_GRID_DAY_LABEL_CLASS}>{formatDayHeaderLabel(day.label)}</span>
+              ) : (
+                <span className={isMobile ? "flex flex-col items-center leading-tight" : "inline-flex items-baseline gap-1 leading-tight"}>
+                  <span className={TIMETABLE_GRID_DAY_LABEL_CLASS}>{formatDayHeaderLabel(day.label)}</span>
+                  <span className={TIMETABLE_GRID_DAY_DATE_CLASS}>{dayDateByDay[day.dayOfWeek]}</span>
                 </span>
               )}
             </div>
@@ -457,12 +667,13 @@ export function TimetableCanvas({
             {timeSlots.map((slot) => (
               <div
                 key={slot}
-                className={`absolute left-0 w-full pr-3 text-right text-[11px] leading-[14px] ${
-                  slot % 60 === 0 ? "font-medium text-[var(--on-surface-variant)]" : "text-[var(--on-surface-variant)]/60"
-                }`}
-                style={getHorizontalTimeLabelStyle(slot, timeSlots[0], timeSlots[timeSlots.length - 1], rangeMinutes, contentHeight)}
+                className={`absolute w-full ${isMobile ? "-left-0.2 pl-0 text-left" : "left-0 pr-1.5 text-right"} ${TIMETABLE_GRID_TIME_LABEL_CLASS}`}
+                style={{
+                  ...getHorizontalTimeLabelStyle(slot, timeSlots[0], timeSlots[timeSlots.length - 1], rangeMinutes, contentHeight),
+                  ...(isMobile ? { fontSize: "12px", lineHeight: "0.95rem" } : {}),
+                }}
               >
-                {slot % 60 === 0 ? minutesToLabel(slot) : ""}
+                {slot % 60 === 0 ? formatCompactMinutes(slot) : ""}
               </div>
             ))}
           </div>
@@ -473,7 +684,7 @@ export function TimetableCanvas({
               className={`relative border-l border-[var(--outline-variant)] ${
                 dayIndex === visibleDays.length - 1 ? "border-r" : ""
               } ${
-                showNowLine && todayVisibleIndex === dayIndex ? "bg-[color:rgb(243_243_249_/_0.3)]" : "bg-[var(--surface-container-lowest)]"
+                showNowLine && todayVisibleIndex === dayIndex ? "bg-[var(--today-column-bg)]" : "bg-[var(--surface-container-lowest)]"
               }`}
               style={{ height: `${contentHeight}px` }}
             >
@@ -487,10 +698,10 @@ export function TimetableCanvas({
 
               {showNowLine && todayVisibleIndex === dayIndex && nowMinutes >= START_MINUTES && nowMinutes <= visibleEndMinutes ? (
                 <div
-                  className="absolute inset-x-0 z-20 border-t border-[#ba1a1a]"
+                  className="absolute inset-x-0 z-20 border-t border-[var(--now-line)]"
                   style={{ top: `${((nowMinutes - START_MINUTES) / rangeMinutes) * contentHeight}px` }}
                 >
-                  <div className="absolute -left-1 -top-[5px] h-2.5 w-2.5 rounded-full bg-[#ba1a1a]" />
+                  <div className="absolute -left-1 -top-[5px] h-2.5 w-2.5 rounded-full bg-[var(--now-line)]" />
                 </div>
               ) : null}
 
@@ -549,6 +760,8 @@ export function TimetableCanvas({
                     onClick={() => onBlockClick(block)}
                     showAllWeeks={showAllWeeks}
                     showCourseName={false}
+                    hideTime={isMobile}
+                    isMobileView={isMobile}
                   />
                 );
               })}
@@ -573,6 +786,8 @@ function TimetableBlockButton({
   onClick,
   showAllWeeks,
   showCourseName = false,
+  hideTime = false,
+  isMobileView = false,
 }: {
   block: TimetableBlock;
   color: string;
@@ -586,6 +801,8 @@ function TimetableBlockButton({
   onClick: () => void;
   showAllWeeks: boolean;
   showCourseName?: boolean;
+  hideTime?: boolean;
+  isMobileView?: boolean;
 })
 {
   const blockHeightPx = typeof style.height === "number"
@@ -594,14 +811,16 @@ function TimetableBlockButton({
   const isTight = Number.isFinite(blockHeightPx) && blockHeightPx <= 58;
   const isVeryTight = Number.isFinite(blockHeightPx) && blockHeightPx <= 38;
   const classGroupLabel = formatClassGroupLabel(block.groupCode);
-  const showWeeks = showAllWeeks && !isVeryTight;
-  const showMode = block.eventMode && !isTight;
-  const showTime = !isVeryTight;
+  const weekLabel = block.weekLabel ? formatBlockWeekLabel(block.weekLabel) : "";
+  const modeLabel = block.eventMode ? formatEventModeLabel(block.eventMode) : "";
+  const showWeeks = showAllWeeks && !isVeryTight && Boolean(weekLabel);
+  const showMode = !isTight && Boolean(modeLabel);
+  const showTime = !isVeryTight && !hideTime;
 
   return (
     <button
       type="button"
-      className={`timetable-cell absolute ${active ? "is-active" : ""} ${clickable ? "is-clickable" : ""} ${showPickHint ? "is-group-switchable" : ""} ${suppressOutline ? "no-active-outline" : ""} ${available ? "is-available" : ""} ${isTight ? "is-tight" : ""} ${isVeryTight ? "is-very-tight" : ""}`}
+      className={`${TIMETABLE_BLOCK_CLASS} absolute ${active ? "is-active" : ""} ${clickable ? "is-clickable" : ""} ${showPickHint ? "is-group-switchable" : ""} ${suppressOutline ? "no-active-outline" : ""} ${available ? "is-available" : ""} ${isMobileView ? "is-mobile" : ""} ${isTight ? "is-tight" : ""} ${isVeryTight ? "is-very-tight" : ""}`}
       style={{
         ...style,
         ["--block-bg" as string]: color,
@@ -611,9 +830,9 @@ function TimetableBlockButton({
       }}
       onClick={onClick}
       title={`${block.courseCode} ${formatClassGroupLabel(block.groupCode)}
-${formatTimeRange(minutesToTimeString(block.startMinutes), minutesToTimeString(block.endMinutes))}${block.weekLabel ? `
-${block.weekLabel}` : ""}${showMode ? `
-${block.eventMode}` : ""}`}
+${formatCompactMinuteRange(block.startMinutes, block.endMinutes)}${weekLabel ? `
+${weekLabel}` : ""}${showMode ? `
+${modeLabel}` : ""}`}
     >
       <div className="timetable-cell__content">
         <div className="timetable-cell__module">
@@ -631,16 +850,16 @@ ${block.eventMode}` : ""}`}
 
         {showTime ? (
           <div className="timetable-cell__time">
-            {formatTimeRange(minutesToTimeString(block.startMinutes), minutesToTimeString(block.endMinutes))}
+            {formatCompactMinuteRange(block.startMinutes, block.endMinutes)}
           </div>
         ) : null}
 
-        {showWeeks && block.weekLabel ? (
-          <div className="timetable-cell__week">{block.weekLabel}</div>
+        {showWeeks ? (
+          <div className="timetable-cell__week">{weekLabel}</div>
         ) : null}
 
         {showMode ? (
-          <div className="timetable-cell__mode">{block.eventMode}</div>
+          <div className="timetable-cell__mode">{modeLabel}</div>
         ) : null}
       </div>
     </button>

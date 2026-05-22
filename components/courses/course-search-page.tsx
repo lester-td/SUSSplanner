@@ -294,7 +294,7 @@ export function CourseSearchPage({
               No courses matched the current query and checkbox filters.
             </div>
           ) : (
-            <div className="divide-y divide-[color:rgb(6_55_100_/_0.12)] border-y border-[color:rgb(6_55_100_/_0.12)]">
+            <div className="divide-y divide-[var(--brand-divider)] border-y border-[var(--brand-divider)]">
               {results.map((course) => {
                 const semesterIndicators = buildSemesterIndicators(course);
 
@@ -304,7 +304,7 @@ export function CourseSearchPage({
                     <h2 className="min-w-0 flex-1 text-[18px] font-bold leading-7 tracking-[-0.02em]">
                       <Link
                         href={`/courses/${course.courseCode}`}
-                        className="inline items-baseline break-normal text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-blue-600 hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                        className="inline items-baseline break-normal text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                       >
                         <span>{renderHighlightedText(course.courseCode, filters.q, course.courseCode)}</span>{" "}
                         <span>{renderHighlightedText(course.courseName, filters.q, "Untitled course")}</span>
@@ -352,8 +352,8 @@ export function CourseSearchPage({
           )}
         </section>
 
-        <aside className="mt-2 border-l border-[color:rgb(6_55_100_/_0.12)] pl-2.5 lg:mt-0 lg:sticky lg:top-[90px] lg:self-start">
-            <div className="flex items-center justify-between gap-2 border-b border-[color:rgb(6_55_100_/_0.12)] pb-2">
+        <aside className="mt-2 border-l border-[var(--brand-divider)] pl-2.5 lg:mt-0 lg:sticky lg:top-[90px] lg:self-start">
+            <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2">
               <div className="flex items-center gap-2">
                 <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
                 <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
@@ -368,7 +368,7 @@ export function CourseSearchPage({
               </button>
             </div>
 
-            <div className="divide-y divide-[color:rgb(6_55_100_/_0.12)]">
+            <div className="divide-y divide-[var(--brand-divider)]">
               <FilterGroup title="Offered In">
                 {semesters.map((semester) => (
                   <CheckboxRow
@@ -520,7 +520,7 @@ function CheckboxRow({
 })
 {
   return (
-    <label className="flex cursor-pointer items-start gap-1.5 rounded-[0.5rem] px-1.5 py-0.5 transition-colors hover:bg-[var(--surface-container-low)]">
+    <label className="flex cursor-pointer items-start gap-1.5 rounded-[0.5rem] px-1.5 py-0.5 transition-colors hover:bg-[var(--brand-chip-bg)]">
       <input
         type="checkbox"
         checked={checked}

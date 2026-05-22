@@ -56,12 +56,12 @@ export function SelectorRail({
     <div
       className={`relative flex items-center px-3 py-2 ${
         variant === "semester" ? "border-b border-[var(--outline-variant)]/50" : ""
-      } ${subtle ? "bg-[color:rgb(243_243_249_/_0.2)]" : ""}`}
+      } ${subtle ? "bg-[var(--brand-chip-bg)]" : ""}`}
     >
       <IconButton
         label="Previous"
         onClick={onPrev}
-        className="absolute left-2 top-1/2 z-20 -translate-y-1/2 border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-sm"
+        className="absolute left-2 top-1/2 z-20 -translate-y-1/2 border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] shadow-sm"
         disabled={selectedIndex <= 0}
       >
         <ChevronLeftIcon className="h-4 w-4" />
@@ -118,7 +118,7 @@ export function SelectorRail({
       <IconButton
         label="Next"
         onClick={onNext}
-        className="absolute right-2 top-1/2 z-20 -translate-y-1/2 border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-sm"
+        className="absolute right-2 top-1/2 z-20 -translate-y-1/2 border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] shadow-sm"
         disabled={selectedIndex >= items.length - 1}
       >
         <ChevronRightIcon className="h-4 w-4" />

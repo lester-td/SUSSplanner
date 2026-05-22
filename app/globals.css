@@ -1,27 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f9f9ff;
-  --surface: #f9f9ff;
-  --surface-bright: #f9f9ff;
-  --surface-dim: #d9dadf;
+  --suss-blue: #001e60;
+  --suss-red: #da291c;
+  --suss-blue-rgb: 0 30 96;
+  --suss-red-rgb: 218 41 28;
+  --background: #f7f9fd;
+  --surface: #f7f9fd;
+  --surface-bright: #fcfdff;
+  --surface-dim: #d8deea;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #f3f3f9;
-  --surface-container: #ededf3;
-  --surface-container-high: #e7e8ee;
-  --surface-container-highest: #e2e2e8;
-  --surface-variant: #e2e2e8;
-  --outline: #727781;
-  --outline-variant: #c2c6d2;
-  --primary: #00305d;
-  --primary-container: #004684;
-  --primary-fixed: #d4e3ff;
+  --surface-container-low: #f3f6fb;
+  --surface-container: #ecf1f8;
+  --surface-container-high: #e5ecf6;
+  --surface-container-highest: #dde6f2;
+  --surface-variant: #dde6f2;
+  --outline: #687488;
+  --outline-variant: #c3ccdc;
+  --primary: var(--suss-blue);
+  --primary-container: #15357a;
+  --primary-fixed: #e7edfb;
   --on-primary: #ffffff;
   --on-primary-container: #ffffff;
-  --on-surface: #191c20;
-  --on-surface-variant: #424750;
-  --error: #ba1a1a;
-  --error-container: #ffdad6;
+  --on-surface: #131a26;
+  --on-surface-variant: #42516a;
+  --error: var(--suss-red);
+  --error-container: #fdecea;
+  --accent: var(--suss-red);
+  --accent-soft: #fdebe8;
+  --brand-divider: color-mix(in srgb, var(--suss-blue), #fff 84%);
+  --brand-chip-bg: color-mix(in srgb, var(--suss-blue), #fff 90%);
+  --today-column-bg: color-mix(in srgb, var(--suss-blue), #fff 94%);
+  --header-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 6%);
+  --footer-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 4%);
+  --primary-ring-soft: rgb(var(--suss-blue-rgb) / 0.22);
+  --primary-ring-strong: rgb(var(--suss-blue-rgb) / 0.3);
+  --now-line: var(--suss-red);
   --bg: var(--background);
   --panel: var(--surface-container-lowest);
   --panel-strong: var(--surface-container-low);
@@ -51,7 +65,10 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--background);
+  background:
+    radial-gradient(1200px 640px at 0% -12%, rgb(var(--suss-blue-rgb) / 0.09), transparent 56%),
+    radial-gradient(900px 500px at 100% 0%, rgb(var(--suss-red-rgb) / 0.06), transparent 52%),
+    var(--background);
   color: var(--on-surface);
   font-family: var(--font-sans), sans-serif;
   line-height: 1.4;
@@ -70,7 +87,7 @@ select {
 }
 
 ::selection {
-  background: rgba(0, 70, 132, 0.18);
+  background: rgb(var(--suss-blue-rgb) / 0.2);
 }
 
 @keyframes timetable-pop {
@@ -124,6 +141,37 @@ select {
   }
 }
 
+/* Timetable chrome: grid, axes, and day headers. */
+.timetable-grid {
+  --timetable-grid-label-size: 14px;
+  --timetable-grid-date-size: 11px;
+}
+
+.timetable-grid__time-label {
+  font-size: var(--timetable-grid-label-size);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--on-surface-variant);
+}
+
+.timetable-grid__day-label {
+  font-size: var(--timetable-grid-label-size);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+
+.timetable-grid__day-date {
+  font-size: var(--timetable-grid-date-size);
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: none;
+  color: color-mix(in srgb, var(--on-surface-variant), #fff 10%);
+}
+
+/* Timetable blocks and block text lines. */
 .timetable-cell {
   z-index: 10;
   display: flex;
@@ -217,6 +265,7 @@ select {
 
 .timetable-cell__time {
   flex-shrink: 0;
+  margin-top: 0.18rem;
   font-size: 0.74rem;
   font-weight: 400;
   line-height: 0.94rem;
@@ -228,24 +277,43 @@ select {
 .timetable-cell__week,
 .timetable-cell__mode {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
   overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .timetable-cell__title {
-  display: -webkit-box;
+  display: block;
   font-weight: 500;
   opacity: 1;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .timetable-cell__meta,
 .timetable-cell__week,
 .timetable-cell__mode {
-  white-space: nowrap;
+  white-space: normal;
   opacity: 1;
+}
+
+.timetable-cell__week,
+.timetable-cell__mode {
+  margin-top: 0.18rem;
+}
+
+.timetable-cell.is-mobile {
+  font-size: 0.68rem;
+  line-height: 0.86rem;
+}
+
+.timetable-cell.is-mobile .timetable-cell__module {
+  font-size: 0.78rem;
+  line-height: 0.92rem;
+}
+
+.timetable-cell.is-mobile .timetable-cell__time {
+  font-size: 0.68rem;
+  line-height: 0.86rem;
 }
 
 .timetable-cell.is-tight {

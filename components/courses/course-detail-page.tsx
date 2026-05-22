@@ -350,7 +350,7 @@ export function CourseDetailPage({
                           key={group.classId}
                           type="button"
                           onClick={() => setScheduleGroup(group)}
-                          className="border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-left text-[13px] font-semibold leading-5 text-[var(--on-surface)] transition-[box-shadow,border-color,background-color,color] hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] hover:shadow-[0_0_0_1px_rgba(0,87,160,0.25),0_0_14px_rgba(0,87,160,0.18)] focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_rgba(0,87,160,0.28),0_0_16px_rgba(0,87,160,0.22)]"
+                          className="border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-left text-[13px] font-semibold leading-5 text-[var(--on-surface)] transition-[box-shadow,border-color,background-color,color] hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] hover:shadow-[0_0_0_1px_var(--primary-ring-soft),0_0_14px_var(--primary-ring-soft)] focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--primary-ring-strong),0_0_16px_var(--primary-ring-soft)]"
                           aria-label={`View schedule for ${formatClassGroupLabel(group.groupCode)}`}
                           title="View schedule"
                         >

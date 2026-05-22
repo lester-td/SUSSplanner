@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -8,15 +9,19 @@ import {
   ColumnsIcon,
   DownloadIcon,
   GridIcon,
+  ListIcon,
   RowsIcon,
+  SchoolIcon,
   ShareIcon,
   XIcon,
 } from "@/components/planner/icons";
 import { ActionButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
+import { ExamCalendar } from "@/components/timetable/exam-calendar";
 import { SelectorRail } from "@/components/timetable/selector-rail";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
-import { exportElementToPng } from "@/lib/export/png";
+import { exportPngDataUrlToPdf } from "@/lib/export/pdf-client";
+import { exportElementToPng, renderElementToPngDataUrl } from "@/lib/export/png";
 import {
   buildTimeSlots,
   formatClassGroupLabel,
@@ -50,12 +55,13 @@ export function ShareClient({
 })
 {
   const router = useRouter();
-  const [orientation, setOrientation] = useState<TimetableOrientation>("horizontal");
+  const savedLocalState = useMemo(() => loadSavedTimetable(), []);
+  const [orientation, setOrientation] = useState<TimetableOrientation>(() => savedLocalState?.orientation ?? "vertical");
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [selectedWeekId, setSelectedWeekId] = useState<number | "all">("all");
   const [importOpen, setImportOpen] = useState(false);
-  const [hasSavedLocalState, setHasSavedLocalState] = useState(() => Boolean(loadSavedTimetable()));
-  const captureRef = useRef<HTMLDivElement | null>(null);
+  const hasSavedLocalState = Boolean(savedLocalState);
+  const exportCaptureRef = useRef<HTMLDivElement | null>(null);
 
   const selectedCards = useMemo(() => buildSelectedCourseCards(timetable), [timetable]);
   const colorByShareKey = useMemo(
@@ -91,12 +97,23 @@ export function ShareClient({
 
   async function handlePngExport()
   {
-    if (!captureRef.current)
+    if (!exportCaptureRef.current)
     {
       return;
     }
 
-    await exportElementToPng(captureRef.current, `suss-shared-timetable-${sharedState.semesterId}.png`);
+    await exportElementToPng(exportCaptureRef.current, `suss-shared-timetable-${sharedState.semesterId}.png`);
+  }
+
+  async function handlePdfExport()
+  {
+    if (!exportCaptureRef.current)
+    {
+      return;
+    }
+
+    const pngDataUrl = await renderElementToPngDataUrl(exportCaptureRef.current);
+    await exportPngDataUrlToPdf(pngDataUrl, `suss-shared-${sharedState.semesterId}.pdf`);
   }
 
   function handleImport()
@@ -112,18 +129,18 @@ export function ShareClient({
       <div className="border-b border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-3 py-2.5">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <p className="text-[12px] font-semibold leading-4 text-[var(--primary)]">
-            Shared timetable view. Your saved local planner is unchanged until you choose to import this selection.
+            Viewing shared timetable. Your planner is unchanged until you choose to import this timetable.
           </p>
           <div className="flex flex-wrap gap-2">
             {hasSavedLocalState ? (
-              <ActionButton variant="ghost" icon={<ShareIcon className="h-4 w-4" />} label="Go back to saved timetable" onClick={() => router.push("/planner")} />
+              <ActionButton variant="ghost" icon={<ShareIcon className="h-4 w-4" />} label="Go Back" onClick={() => router.push("/planner")} />
             ) : null}
-            <ActionButton variant="primary" icon={<ShareIcon className="h-4 w-4" />} label="Import timetable" onClick={() => setImportOpen(true)} />
+            <ActionButton variant="primary" icon={<ShareIcon className="h-4 w-4" />} label="Import" onClick={() => setImportOpen(true)} />
           </div>
         </div>
       </div>
 
-      <div className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
+      <div ref={exportCaptureRef} className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
           <div className="elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
@@ -173,7 +190,7 @@ export function ShareClient({
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1">
-            <div ref={captureRef} className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
+            <div className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
               {viewMode === "class" ? (
                 <TimetableCanvas
                   blocks={blocks}
@@ -193,19 +210,7 @@ export function ShareClient({
                   showCurrentTime={false}
                 />
               ) : (
-                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-                  {examCards.map((card) => (
-                    <article key={card.id} className="elev-1 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="h-3 w-3 rounded-[3px]" style={{ backgroundColor: colorByShareKey.get(card.shareKey) ?? "#3556b8" }} />
-                        <span className="text-[12px] font-bold leading-4 text-[var(--on-surface)]">{card.courseCode} · {formatClassGroupLabel(card.groupCode)}</span>
-                      </div>
-                      <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{card.courseName ?? "Untitled course"}</p>
-                      <p className="mt-2 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatEventDate(card.eventDate)}</p>
-                      <p className="text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatTimeRange(card.startTime, card.endTime)}</p>
-                    </article>
-                  ))}
-                </div>
+                <ExamCalendar cards={examCards} colorByShareKey={colorByShareKey} />
               )}
             </div>
           </div>
@@ -214,7 +219,7 @@ export function ShareClient({
         <aside className={`flex min-h-0 w-full flex-col border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] ${orientation === "horizontal" ? "md:w-full md:border-l-0 md:border-t" : "md:w-[30%] md:border-l md:border-t-0"}`}>
           <div className="flex h-14 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-3">
             <h3 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Shared Courses</h3>
-            <span className="rounded-[0.75rem] bg-[color:rgb(0_48_93_/_0.1)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
+            <span className="rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
               {selectedCards.length} Selected
             </span>
           </div>
@@ -223,7 +228,7 @@ export function ShareClient({
             <div className={`grid gap-1.5 ${orientation === "horizontal" ? "grid-cols-4" : "grid-cols-2"}`}>
               <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} />
               <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} />
-              <ActionButton variant="ghost" icon={<DownloadIcon className="h-4 w-4" />} label="PDF" onClick={() => triggerDownload("/api/export/pdf", `suss-shared-${sharedState.semesterId}.pdf`)} />
+              <ActionButton variant="ghost" icon={<DownloadIcon className="h-4 w-4" />} label="PDF" onClick={() => void handlePdfExport()} />
               <ActionButton variant="ghost" icon={<CalendarIcon className="h-4 w-4" />} label="ICS" onClick={() => triggerDownload("/api/export/ics", `suss-shared-${sharedState.semesterId}.ics`)} />
             </div>
             <div className="mt-1.5 grid grid-cols-1 gap-1.5">
@@ -232,17 +237,57 @@ export function ShareClient({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-3 pb-3">
-            <div className={orientation === "horizontal" ? "grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
-              {selectedCards.map((record) => (
-                <article key={record.shareKey} className="elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2">
-                  <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: record.color }} />
-                  <div className="pl-2">
-                    <h4 className="truncate text-[12px] font-bold leading-4 text-[var(--on-surface)]">{record.courseCode}</h4>
-                    <p className="mt-1 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{record.courseName ?? "Untitled course"}</p>
-                    <p className="mt-1 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{formatClassGroupLabel(record.groupCode)} · {record.creditUnits?.toFixed(1) ?? "0.0"} CU</p>
-                  </div>
-                </article>
-              ))}
+            <div className={orientation === "horizontal" ? "space-y-2 md:grid md:auto-rows-fr md:grid-cols-2 md:items-stretch md:gap-2 md:space-y-0 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
+              {selectedCards.map((record) => {
+                const recordColor = colorByShareKey.get(record.shareKey) ?? record.color;
+                return (
+                  <article
+                    key={record.shareKey}
+                    className={`elev-1 group relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md ${
+                      orientation === "horizontal" ? "md:h-full" : ""
+                    }`}
+                  >
+                    <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: recordColor }} />
+
+                    <div className="pl-1.5 pr-1">
+                      <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
+                        <Link
+                          href={`/courses/${record.courseCode}`}
+                          className="inline min-w-0 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                        >
+                          <span className="text-[15px] font-extrabold leading-5">{record.courseCode}</span>{" "}
+                          <span className="text-[15px] font-normal leading-5">
+                            {record.courseName ?? "Untitled course"}
+                          </span>
+                        </Link>
+                      </div>
+                      <div className="mt-1 space-y-1 text-[13px] font-medium leading-5 text-[var(--on-surface-variant)]">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <ListIcon className="h-4 w-4 shrink-0" />
+                          <span className="shrink-0 font-semibold text-[var(--on-surface)]">Group:</span>
+                          <span className="truncate">{formatClassGroupLabel(record.groupCode)}</span>
+                        </div>
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <CalendarIcon className="h-4 w-4 shrink-0" />
+                          {record.examDateLabel === "No Exam" || record.examDateLabel === "ECA" ? (
+                            <span className="truncate font-bold text-[var(--on-surface)]">{record.examDateLabel}</span>
+                          ) : (
+                            <>
+                              <span className="shrink-0 font-semibold text-[var(--on-surface)]">Exam:</span>
+                              <span className="truncate">{record.examDateLabel}{record.examTimeLabel ? `, ${record.examTimeLabel}` : ""}</span>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <SchoolIcon className="h-4 w-4 shrink-0" />
+                          <span className="shrink-0 font-semibold text-[var(--on-surface)]">Credit Units:</span>
+                          <span>{record.creditUnits?.toFixed(1) ?? "0.0"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         </aside>
@@ -251,7 +296,7 @@ export function ShareClient({
       <Modal
         open={importOpen}
         title="Import shared timetable"
-        description="Importing will replace your currently saved local planner state. This cannot be undone automatically."
+        description="Importing will replace your currently saved timetable. This cannot be undone."
         onClose={() => setImportOpen(false)}
         footer={(
           <>
@@ -259,7 +304,9 @@ export function ShareClient({
             <ActionButton variant="primary" icon={<ShareIcon className="h-4 w-4" />} label="Confirm import" onClick={handleImport} />
           </>
         )}
-      />
+      >
+        <div className="h-2" />
+      </Modal>
     </>
   );
 }

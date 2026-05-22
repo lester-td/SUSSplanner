@@ -32,7 +32,7 @@ export default async function SharePage({
     return (
       <AppShell activeSection="share" currentWeekLabel={getCurrentWeekChip(semester, week)}>
         <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
-          <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
+          <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
             <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.01em] text-[var(--on-surface)]">Shared timetable</h1>
             <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               Open a shared timetable URL here to preview it in read-only mode, compare clashes, and import it into your saved planner only if you choose to.
@@ -55,7 +55,7 @@ export default async function SharePage({
     return (
       <AppShell activeSection="share" currentWeekLabel={getCurrentWeekChip(semester, week)}>
         <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
-          <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
+          <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
             <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.01em] text-[var(--on-surface)]">Invalid shared link</h1>
             <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               This share URL is missing required timetable information or has malformed class identifiers.
