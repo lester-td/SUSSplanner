@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
+  AddToStudyPlanButton,
+} from "@/components/planner/add-to-study-plan-button";
+import {
   ArrowUpRightIcon,
   BookIcon,
   CalendarWeekIcon,
@@ -188,6 +191,7 @@ export function CourseDetailPage({
                     <CalendarWeekIcon className="h-4 w-4 text-[var(--primary)]" />
                     {displaySemesterLabel}
                   </span>
+                  <AddToStudyPlanButton course={course} />
                   {course.synopsisUrl ? (
                     <a
                       href={course.synopsisUrl}

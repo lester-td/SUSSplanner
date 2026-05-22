@@ -22,6 +22,12 @@ const navItems = [
     href: "/courses",
     icon: BookIcon,
   },
+  {
+    id: "study-plan",
+    label: "Planner",
+    href: "/study-plan",
+    icon: LayersIcon,
+  },
 ] as const satisfies Array<{
   id: PlannerSection;
   label: string;
@@ -68,13 +74,6 @@ export function AppShell({
                     </Link>
                   );
                 })}
-                <span
-                  aria-disabled="true"
-                  className="inline-flex items-center gap-2 rounded-[999px] border border-dashed border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)] opacity-70"
-                >
-                  <LayersIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">Planner</span>
-                </span>
               </nav>
             </div>
 

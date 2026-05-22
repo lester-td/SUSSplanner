@@ -13,6 +13,7 @@ import {
   SearchIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
+import { AddToStudyPlanButton } from "@/components/planner/add-to-study-plan-button";
 import {
   buildCourseSearchParams,
   extractCourseLevelNumber,
@@ -336,6 +337,8 @@ export function CourseSearchPage({
                         {course.isPostgraduate ? "Postgraduate" : "Undergraduate"}
                       </span>
                     </div>
+
+                    <AddToStudyPlanButton course={course} />
                   </div>
 
                   <p className="mt-2 text-[13px] leading-5 text-[var(--on-surface-variant)]">

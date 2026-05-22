@@ -19,6 +19,7 @@ import {
   TbList,
   TbMapPin,
   TbMoon,
+  TbPencil,
   TbPlus,
   TbRefresh,
   TbSchool,
@@ -183,4 +184,9 @@ export function EditCalendarIcon({ className }: IconProps)
 export function PinIcon({ className }: IconProps)
 {
   return renderIcon(TbMapPin, className);
+}
+
+export function EditIcon({ className }: IconProps)
+{
+  return renderIcon(TbPencil, className);
 }
