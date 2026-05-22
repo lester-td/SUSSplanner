@@ -21,9 +21,11 @@ type CatalogCourseLike = {
 export function AddToStudyPlanButton({
   course,
   compact = false,
+  onAdded,
 }: {
   course: CatalogCourseLike;
   compact?: boolean;
+  onAdded?: () => void;
 })
 {
   const [added, setAdded] = useState(false);
@@ -53,6 +55,7 @@ export function AddToStudyPlanButton({
         saveStudyPlanState(next);
         announceStudyPlanUpdated();
         setAdded(true);
+        onAdded?.();
       }}
       className={`inline-flex items-center gap-1.5 rounded-[0.55rem] border px-3 py-2 text-[12px] font-semibold leading-4 transition-colors ${
         added

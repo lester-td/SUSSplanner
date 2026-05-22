@@ -619,7 +619,11 @@ export function StudyPlanClient({
                           </p>
                         </div>
 
-                        <AddToStudyPlanButton course={course} compact />
+                        <AddToStudyPlanButton
+                          course={course}
+                          compact
+                          onAdded={() => setSearchQuery("")}
+                        />
                       </div>
 
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-5 text-[var(--on-surface-variant)]">
