@@ -76,6 +76,10 @@ type ClassesResponse = {
   classes: CourseClassRecord[];
 };
 
+type ClassCountsResponse = {
+  counts: Record<string, number>;
+};
+
 type ClassPickerCourse = Pick<CourseSearchResult, "courseCode" | "courseName">;
 
 function buildShareQuery(semesterId: number, selectedClasses: SharedClassIdentifier[])
@@ -350,34 +354,37 @@ export function PlannerClient({
     }
 
     const controller = new AbortController();
-    Promise.all(courseCodes.map(async (courseCode) => {
-      try
-      {
-        const params = new URLSearchParams({
-          courseCode,
-          semesterId: String(semesterId),
-        });
-        const response = await fetch(`/api/classes?${params.toString()}`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
+    const params = new URLSearchParams({
+      semesterId: String(semesterId),
+      courseCodes: courseCodes.join(","),
+    });
+
+    fetch(`/api/classes/counts?${params.toString()}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
         if (!response.ok)
         {
-          return [courseCode, false] as const;
+          throw new Error("Unable to load class counts.");
         }
-        const payload = await response.json() as ClassesResponse;
-        return [courseCode, payload.classes.length > 1] as const;
-      }
-      catch {
-        return [courseCode, false] as const;
-      }
-    }))
-      .then((entries) => {
+        return response.json() as Promise<ClassCountsResponse>;
+      })
+      .then((payload) => {
         if (controller.signal.aborted)
         {
           return;
         }
-        setCourseHasAlternativesByCode(Object.fromEntries(entries));
+
+        setCourseHasAlternativesByCode(Object.fromEntries(
+          courseCodes.map((courseCode) => [courseCode, (payload.counts[courseCode] ?? 0) > 1]),
+        ));
+      })
+      .catch((error: unknown) => {
+        if ((error as { name?: string })?.name === "AbortError")
+        {
+          return;
+        }
+        setCourseHasAlternativesByCode({});
       });
 
     return () => controller.abort();
@@ -389,9 +396,28 @@ export function PlannerClient({
       return;
     }
 
+    if (selectedClasses.length === 0)
+    {
+      setTimetableData({
+        semester: selectedSemester
+          ? {
+              semesterId: selectedSemester.semesterId,
+              academicYear: selectedSemester.academicYear,
+              semesterNo: selectedSemester.semesterNo,
+              semesterName: selectedSemester.semesterName,
+            }
+          : null,
+        semesterWeeks,
+        selections: [],
+        events: [],
+        clashes: [],
+        unresolvedSelections: [],
+      });
+      return;
+    }
+
     const controller = new AbortController();
     fetch(`/api/classes?${buildShareQuery(semesterId, selectedClasses)}`, {
-      cache: "no-store",
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -424,7 +450,7 @@ export function PlannerClient({
         });
       })
     return () => controller.abort();
-  }, [ready, selectedClasses, semesterId]);
+  }, [ready, selectedClasses, selectedSemester, semesterId, semesterWeeks]);
 
   useEffect(() => {
     if (!deferredSearch.trim())
@@ -443,7 +469,6 @@ export function PlannerClient({
     params.append("semesterIds", String(semesterId));
 
     fetch(`/api/courses/search?${params.toString()}`, {
-      cache: "no-store",
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -682,7 +707,7 @@ export function PlannerClient({
       semesterId: String(semesterId),
     });
 
-    fetch(`/api/classes?${params.toString()}`, { cache: "no-store" })
+    fetch(`/api/classes?${params.toString()}`)
       .then(async (response) => {
         if (!response.ok)
         {
@@ -711,7 +736,7 @@ export function PlannerClient({
         courseCode: course.courseCode,
         semesterId: String(semesterId),
       });
-      const response = await fetch(`/api/classes?${params.toString()}`, { cache: "no-store" });
+      const response = await fetch(`/api/classes?${params.toString()}`);
       if (!response.ok)
       {
         throw new Error("Unable to load class groups.");

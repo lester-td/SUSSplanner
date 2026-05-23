@@ -8,6 +8,7 @@ import {
 import { optionalSemesterIdSchema, scheduleTypeSchema } from "@/lib/validation/timetable";
 
 export const runtime = "nodejs";
+const COURSE_DETAIL_CACHE_CONTROL = "s-maxage=3600, stale-while-revalidate=86400";
 
 export async function GET(
   request: NextRequest,
@@ -30,5 +31,12 @@ export async function GET(
     getAssessmentComponents(courseCode, scheduleType),
   ]);
 
-  return NextResponse.json({ course, classes, assessmentComponents });
+  return NextResponse.json(
+    { course, classes, assessmentComponents },
+    {
+      headers: {
+        "Cache-Control": COURSE_DETAIL_CACHE_CONTROL,
+      },
+    },
+  );
 }

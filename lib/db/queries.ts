@@ -546,6 +546,32 @@ export async function getCourseClasses(
   } satisfies CourseClassRecord));
 }
 
+export async function getClassCountsByCourseCodes(
+  courseCodes: string[],
+  semesterId: number,
+)
+{
+  const normalizedCourseCodes = unique(courseCodes.map(normalizeCourseCode));
+  if (normalizedCourseCodes.length === 0)
+  {
+    return {} as Record<string, number>;
+  }
+
+  const rows = await db
+    .select({
+      courseCode: classes.courseCode,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(classes)
+    .where(and(
+      inArray(classes.courseCode, normalizedCourseCodes),
+      eq(classes.semesterId, semesterId),
+    ))
+    .groupBy(classes.courseCode);
+
+  return Object.fromEntries(rows.map((row) => [row.courseCode, row.count]));
+}
+
 export async function getClassEvents(classId: number)
 {
   const rows = await db

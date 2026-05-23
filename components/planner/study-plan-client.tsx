@@ -152,7 +152,6 @@ export function StudyPlanClient({
 
     setSearchLoading(true);
     fetch(`/api/courses/search?${params.toString()}`, {
-      cache: "no-store",
       signal: controller.signal,
     })
       .then(async (response) => {

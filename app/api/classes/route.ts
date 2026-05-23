@@ -13,6 +13,8 @@ import {
 
 export const runtime = "nodejs";
 
+const CLASS_RESPONSE_CACHE_CONTROL = "s-maxage=3600, stale-while-revalidate=86400";
+
 export async function GET(request: NextRequest)
 {
   const courseCode = request.nextUrl.searchParams.get("courseCode");
@@ -27,10 +29,24 @@ export async function GET(request: NextRequest)
   if (courseCode)
   {
     const classes = await getCourseClasses(courseCodeSchema.parse(courseCode), semesterId, scheduleType);
-    return NextResponse.json({ classes });
+    return NextResponse.json(
+      { classes },
+      {
+        headers: {
+          "Cache-Control": CLASS_RESPONSE_CACHE_CONTROL,
+        },
+      },
+    );
   }
 
   const decoded = decodeShareUrlState(request.nextUrl.searchParams);
   const timetable = await getTimetableDataFromClassIdentifiers(decoded.selectedClasses, decoded.semesterId);
-  return NextResponse.json({ timetable });
+  return NextResponse.json(
+    { timetable },
+    {
+      headers: {
+        "Cache-Control": CLASS_RESPONSE_CACHE_CONTROL,
+      },
+    },
+  );
 }

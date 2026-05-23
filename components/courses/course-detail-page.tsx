@@ -148,9 +148,7 @@ export function CourseDetailPage({
 
     try
     {
-      const response = await fetch(`/api/classes?${params.toString()}`, {
-        cache: "no-store",
-      });
+      const response = await fetch(`/api/classes?${params.toString()}`);
 
       if (!response.ok)
       {
