@@ -17,6 +17,10 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# Generated database artifacts
+drizzle/*.sql
+drizzle/meta/
+
 # Python local artifacts
 __pycache__/
 *.py[cod]

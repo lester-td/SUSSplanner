@@ -121,7 +121,7 @@ export function ShareClient({
     const current = loadSavedTimetable();
     importSharedTimetableToLocalStorage(sharedState, current);
     setImportOpen(false);
-    router.push("/planner");
+    router.push("/timetable");
   }
 
   return (
@@ -133,7 +133,7 @@ export function ShareClient({
           </p>
           <div className="flex flex-wrap gap-2">
             {hasSavedLocalState ? (
-              <ActionButton variant="ghost" icon={<ShareIcon className="h-4 w-4" />} label="Go Back" onClick={() => router.push("/planner")} />
+              <ActionButton variant="ghost" icon={<ShareIcon className="h-4 w-4" />} label="Go Back" onClick={() => router.push("/timetable")} />
             ) : null}
             <ActionButton variant="primary" icon={<ShareIcon className="h-4 w-4" />} label="Import" onClick={() => setImportOpen(true)} />
           </div>
