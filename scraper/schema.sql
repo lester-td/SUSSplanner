@@ -1,6 +1,12 @@
 -- =========================================
--- SIMPLIFIED TIMETABLE PLANNING APP SCHEMA
+-- SUSSplanner
 -- Supabase / PostgreSQL
+-- =========================================
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- =========================================
+-- TABLES
 -- =========================================
 
 CREATE TABLE IF NOT EXISTS courses (
@@ -102,15 +108,100 @@ CREATE TABLE IF NOT EXISTS assessment_components (
     )
 );
 
-CREATE INDEX IF NOT EXISTS idx_classes_course ON classes(course_code);
-CREATE INDEX IF NOT EXISTS idx_classes_semester ON classes(semester_id);
-CREATE INDEX IF NOT EXISTS idx_classes_lookup ON classes(semester_id, schedule_type, course_code, group_code);
-CREATE INDEX IF NOT EXISTS idx_class_events_class ON class_events(class_id);
-CREATE INDEX IF NOT EXISTS idx_class_events_date ON class_events(event_date);
-CREATE INDEX IF NOT EXISTS idx_class_events_class_date ON class_events(class_id, event_date, start_time);
-CREATE INDEX IF NOT EXISTS idx_semester_weeks_semester_dates ON semester_weeks(semester_id, start_date, end_date);
-CREATE INDEX IF NOT EXISTS idx_assessment_components_course ON assessment_components(course_code);
-CREATE INDEX IF NOT EXISTS idx_assessment_components_course_schedule ON assessment_components(course_code, schedule_type);
+-- =========================================
+-- BTREE INDEXES
+-- Joins, filters, timetable loading
+-- =========================================
+
+CREATE INDEX IF NOT EXISTS idx_courses_school_name
+ON courses (school_name);
+
+CREATE INDEX IF NOT EXISTS idx_courses_course_level
+ON courses (course_level);
+
+CREATE INDEX IF NOT EXISTS idx_courses_is_postgraduate
+ON courses (is_postgraduate);
+
+CREATE INDEX IF NOT EXISTS idx_classes_course
+ON classes (course_code);
+
+CREATE INDEX IF NOT EXISTS idx_classes_semester
+ON classes (semester_id);
+
+CREATE INDEX IF NOT EXISTS idx_classes_schedule_type
+ON classes (schedule_type);
+
+CREATE INDEX IF NOT EXISTS idx_classes_available_as_gsp
+ON classes (available_as_gsp);
+
+CREATE INDEX IF NOT EXISTS idx_classes_course_semester
+ON classes (course_code, semester_id);
+
+CREATE INDEX IF NOT EXISTS idx_classes_lookup
+ON classes (semester_id, schedule_type, course_code, group_code);
+
+CREATE INDEX IF NOT EXISTS idx_classes_course_semester_schedule_group
+ON classes (course_code, semester_id, schedule_type, group_code_type, group_code);
+
+CREATE INDEX IF NOT EXISTS idx_class_events_class
+ON class_events (class_id);
+
+CREATE INDEX IF NOT EXISTS idx_class_events_date
+ON class_events (event_date);
+
+CREATE INDEX IF NOT EXISTS idx_class_events_kind
+ON class_events (event_kind);
+
+CREATE INDEX IF NOT EXISTS idx_class_events_class_date
+ON class_events (class_id, event_date, start_time);
+
+CREATE INDEX IF NOT EXISTS idx_class_events_class_date_time
+ON class_events (class_id, event_date, start_time, end_time);
+
+CREATE INDEX IF NOT EXISTS idx_semester_weeks_semester
+ON semester_weeks (semester_id);
+
+CREATE INDEX IF NOT EXISTS idx_semester_weeks_semester_dates
+ON semester_weeks (semester_id, start_date, end_date);
+
+CREATE INDEX IF NOT EXISTS idx_assessment_components_course
+ON assessment_components (course_code);
+
+CREATE INDEX IF NOT EXISTS idx_assessment_components_schedule_type
+ON assessment_components (schedule_type);
+
+CREATE INDEX IF NOT EXISTS idx_assessment_components_course_schedule
+ON assessment_components (course_code, schedule_type);
+
+-- =========================================
+-- TRIGRAM INDEXES FOR LIVE SEARCH
+-- Supports ILIKE '%term%' efficiently
+-- =========================================
+
+CREATE INDEX IF NOT EXISTS idx_courses_course_code_trgm
+ON courses USING gin (course_code gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_courses_course_name_trgm
+ON courses USING gin (course_name gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_courses_school_name_trgm
+ON courses USING gin (school_name gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_courses_synopsis_trgm
+ON courses USING gin (course_synopsis gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_courses_upper_course_code_trgm
+ON courses USING gin (upper(course_code) gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_assessment_component_name_trgm
+ON assessment_components USING gin (component_name gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_assessment_assessment_mode_trgm
+ON assessment_components USING gin (assessment_mode gin_trgm_ops);
+
+-- =========================================
+-- VIEW
+-- =========================================
 
 CREATE OR REPLACE VIEW v_class_events_with_week
 WITH (security_invoker = true) AS
@@ -135,10 +226,15 @@ SELECT
     sw.week_type,
     sw.label AS week_label
 FROM class_events ce
-JOIN classes c ON c.class_id = ce.class_id
+JOIN classes c
+    ON c.class_id = ce.class_id
 LEFT JOIN semester_weeks sw
     ON sw.semester_id = c.semester_id
    AND ce.event_date BETWEEN sw.start_date AND sw.end_date;
+
+-- =========================================
+-- TRIGGER FUNCTION
+-- =========================================
 
 CREATE OR REPLACE FUNCTION set_last_updated()
 RETURNS TRIGGER AS $$
@@ -183,3 +279,10 @@ CREATE TRIGGER trg_assessment_components_last_updated
 BEFORE UPDATE ON assessment_components
 FOR EACH ROW
 EXECUTE FUNCTION set_last_updated();
+
+ANALYZE courses;
+ANALYZE semesters;
+ANALYZE semester_weeks;
+ANALYZE classes;
+ANALYZE class_events;
+ANALYZE assessment_components;
