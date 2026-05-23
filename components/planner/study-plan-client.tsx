@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import { AddToStudyPlanButton } from "@/components/planner/add-to-study-plan-button";
 import {
   BookIcon,
   CalendarWeekIcon,
   EditIcon,
+  EditCalendarIcon,
   LayersIcon,
+  ListIcon,
   PlusIcon,
   RefreshIcon,
   SchoolIcon,
@@ -19,6 +19,7 @@ import {
 import { Modal } from "@/components/ui/modal";
 import {
   STUDY_PLAN_UPDATED_EVENT,
+  createCatalogStudyPlanCourse,
   createManualStudyPlanCourse,
   defaultStudyPlanState,
   loadStudyPlanState,
@@ -41,7 +42,7 @@ function formatCredits(value: number)
 
 function formatCreditCount(value: number)
 {
-  return `${Number(value.toFixed(1)).toString()} credits`;
+  return `${Number(value.toFixed(1)).toString()} Credit Units`;
 }
 
 function buildSemesterOptions(numSemesters: number)
@@ -71,7 +72,7 @@ export function StudyPlanClient({
 {
   const [ready, setReady] = useState(false);
   const [plan, setPlan] = useState<StudyPlanState>(defaultStudyPlanState());
-  const [moduleSourceMode, setModuleSourceMode] = useState<"custom" | "search">("search");
+  const [isCustomCourse, setIsCustomCourse] = useState(false);
   const [showAllModules, setShowAllModules] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSemesterId, setSearchSemesterId] = useState<number | "all">("all");
@@ -193,17 +194,32 @@ export function StudyPlanClient({
       .reduce((sum, course) => sum + course.creditUnits, 0),
     [sortedCourses],
   );
-  const totalCredits = useMemo(
-    () => sortedCourses.reduce((sum, course) => sum + course.creditUnits, 0),
-    [sortedCourses],
+  const creditProgressPercent = useMemo(() => {
+    if (plan.totalCreditsGoal <= 0)
+    {
+      return 0;
+    }
+    return (assignedCredits / plan.totalCreditsGoal) * 100;
+  }, [assignedCredits, plan.totalCreditsGoal]);
+  const creditProgressBarPercent = useMemo(
+    () => Math.min(100, Math.max(0, creditProgressPercent)),
+    [creditProgressPercent],
+  );
+  const isOverTargetCredits = useMemo(
+    () => plan.totalCreditsGoal > 0 && assignedCredits > plan.totalCreditsGoal,
+    [assignedCredits, plan.totalCreditsGoal],
   );
   const semesterIndexes = useMemo(
     () => buildSemesterOptions(plan.numSemesters),
     [plan.numSemesters],
   );
   const selectedCodes = useMemo(
-    () => new Set(sortedCourses.map((course) => course.courseCode)),
+    () => new Set(sortedCourses.map((course) => course.courseCode.trim().toUpperCase())),
     [sortedCourses],
+  );
+  const searchDropdownResults = useMemo(
+    () => searchResults.filter((course) => !selectedCodes.has(course.courseCode.trim().toUpperCase())),
+    [searchResults, selectedCodes],
   );
   const editingCourse = useMemo(
     () => sortedCourses.find((course) => course.id === editingCourseId && course.source === "manual") ?? null,
@@ -216,8 +232,7 @@ export function StudyPlanClient({
       return;
     }
 
-    setEditingCode(editingCourse.courseCode);
-    setEditingCode(editingCourse.courseName);
+    setEditingCode(editingCourse.courseName || editingCourse.courseCode);
     setEditingCredits(String(editingCourse.creditUnits));
     setEditingSemesterSpan(String(editingCourse.semesterSpan));
   }, [editingCourse]);
@@ -474,54 +489,70 @@ export function StudyPlanClient({
     }
   }
 
+  function handleSearchResultClick(course: CourseSearchResult)
+  {
+    const normalizedCode = course.courseCode.trim().toUpperCase();
+    if (selectedCodes.has(normalizedCode))
+    {
+      return;
+    }
+
+    const catalogCourse = createCatalogStudyPlanCourse(course);
+    updatePlan((current) => ({
+      ...current,
+      courses: [...current.courses, catalogCourse],
+    }));
+    setSearchQuery("");
+  }
+
   return (
     <div className="px-3 pb-6 pt-8 md:px-[16px]">
       <div className="mx-auto max-w-7xl space-y-4">
-        <section className="grid gap-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(18rem,0.7fr)]">
+        <section className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-center gap-2">
-                {moduleSourceMode === "search" ? (
-                  <SearchIcon className="h-5 w-5 text-[var(--primary)]" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {isCustomCourse ? (
+                <BookIcon className="h-7 w-7 text-[var(--primary)]" />
                 ) : (
-                  <BookIcon className="h-5 w-5 text-[var(--primary)]" />
+                <SearchIcon className="h-7 w-7 text-[var(--primary)]" />
                 )}
                 <div>
-                  <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Add Modules</h2>
-                  <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                    Switch between catalog search and a custom module entry form.
-                  </p>
+                <h2 className="text-[28px] font-medium leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Add a Course</h2>
                 </div>
               </div>
-
-              <div className="inline-flex rounded-[999px] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1">
-                <button
-                  type="button"
-                  onClick={() => setModuleSourceMode("search")}
-                  className={`rounded-[999px] px-3 py-1.5 text-[12px] font-semibold leading-4 transition-colors ${
-                    moduleSourceMode === "search"
-                      ? "bg-[var(--primary)] text-[var(--on-primary)]"
-                      : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
-                  }`}
-                >
-                  Search
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModuleSourceMode("custom")}
-                  className={`rounded-[999px] px-3 py-1.5 text-[12px] font-semibold leading-4 transition-colors ${
-                    moduleSourceMode === "custom"
-                      ? "bg-[var(--primary)] text-[var(--on-primary)]"
-                      : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
-                  }`}
-                >
-                  Custom
-                </button>
-              </div>
+              <label className="inline-flex items-center gap-2 self-start text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
+                <input
+                  type="checkbox"
+                  checked={isCustomCourse}
+                  onChange={(event) => setIsCustomCourse(event.target.checked)}
+                  className="h-4 w-4 rounded border-[var(--outline)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                />
+                Custom Course
+              </label>
             </div>
 
-            {moduleSourceMode === "custom" ? (
-              <div className="mt-4 grid gap-3">
+            {!isCustomCourse ? (
+              <div className="mt-3">
+                <label className="sr-only" htmlFor="study-plan-offered-in">Offered In</label>
+                <select
+                  id="study-plan-offered-in"
+                  value={searchSemesterId === "all" ? "" : String(searchSemesterId)}
+                  onChange={(event) => setSearchSemesterId(event.target.value ? Number.parseInt(event.target.value, 10) : "all")}
+                  className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                >
+                  <option value="">Any Semester</option>
+                  {semesters.map((semester) => (
+                    <option key={semester.semesterId} value={semester.semesterId}>
+                      {semester.semesterName} ({semester.academicYear})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
+            {isCustomCourse ? (
+              <div className="mt-3 grid gap-3">
                 <input
                   type="text"
                   value={manualCode}
@@ -559,96 +590,62 @@ export function StudyPlanClient({
                 </button>
               </div>
             ) : (
-              <div className="mt-4">
-                <label className="relative block">
+              <div className="mt-3">
+                <label className="relative z-30 block">
                   <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                   <input
                     type="search"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search by code or title"
-                    className="w-full rounded-[999px] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-4 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    placeholder="Search by Course Code or Title..."
+                    className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-4 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                   />
-                </label>
+                  {searchQuery.trim() ? (
+                    <div className="elev-3 absolute left-0 right-0 top-full z-40 mt-1.5 max-h-[28rem] overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
+                      {searchDropdownResults.map((course) => (
+                        <button
+                          key={course.courseCode}
+                          type="button"
+                          className="block w-full rounded-[0.6rem] px-2.5 py-2 text-left transition-colors hover:bg-[var(--surface-container-high)]"
+                          onClick={() => handleSearchResultClick(course)}
+                        >
+                          <div className="min-w-0">
+                            <span className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
+                              {course.courseCode}
+                            </span>
+                            <p className="mt-0.5 truncate text-[12px] leading-5 text-[var(--on-surface)]">
+                              {course.courseName ?? "Untitled course"}
+                            </p>
+                          </div>
 
-                <label className="mt-3 block space-y-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Offered In</span>
-                  <select
-                    value={searchSemesterId === "all" ? "" : String(searchSemesterId)}
-                    onChange={(event) => setSearchSemesterId(event.target.value ? Number.parseInt(event.target.value, 10) : "all")}
-                    className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  >
-                    <option value="">Any semester</option>
-                    {semesters.map((semester) => (
-                      <option key={semester.semesterId} value={semester.semesterId}>
-                        {semester.semesterName} ({semester.academicYear})
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] leading-4 text-[var(--on-surface-variant)]">
+                            <span className="inline-flex items-center gap-1">
+                              <BookIcon className="h-3.5 w-3.5" />
+                              {formatCredits(course.creditUnits ?? 0)}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <SchoolIcon className="h-3.5 w-3.5" />
+                              {course.schoolName ?? "School unavailable"}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              {formatOfferedSemesters(course)}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
 
-                <div className="mt-4 max-h-[26rem] space-y-2 overflow-y-auto pr-1">
-                  {!deferredSearch.trim() ? (
-                    <p className="rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                      Start typing to search the course catalog and add modules straight into the planner bank.
-                    </p>
-                  ) : null}
-
-                  {searchLoading ? (
-                    <p className="text-[12px] font-medium leading-5 text-[var(--on-surface-variant)]">Searching courses...</p>
-                  ) : null}
-
-                  {deferredSearch.trim() && !searchLoading && searchResults.length === 0 ? (
-                    <p className="rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                      No catalog modules matched the current planner search.
-                    </p>
-                  ) : null}
-
-                  {searchResults.map((course) => (
-                    <article key={course.courseCode} className="rounded-[0.9rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-3 py-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <Link
-                            href={`/courses/${course.courseCode}`}
-                            className="text-[14px] font-semibold leading-5 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] hover:text-[var(--primary)] hover:decoration-current"
-                          >
-                            {course.courseCode}
-                          </Link>
-                          <p className="mt-0.5 text-[13px] leading-5 text-[var(--on-surface)]">
-                            {course.courseName ?? "Untitled course"}
-                          </p>
-                        </div>
-
-                        <AddToStudyPlanButton
-                          course={course}
-                          compact
-                          onAdded={() => setSearchQuery("")}
-                        />
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-5 text-[var(--on-surface-variant)]">
-                        <span className="inline-flex items-center gap-1">
-                          <BookIcon className="h-3.5 w-3.5" />
-                          {formatCredits(course.creditUnits ?? 0)}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <SchoolIcon className="h-3.5 w-3.5" />
-                          {course.schoolName ?? "School unavailable"}
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-[11px] leading-5 text-[var(--on-surface-variant)]">
-                        {formatOfferedSemesters(course)}
-                      </p>
-
-                      {selectedCodes.has(course.courseCode.trim().toUpperCase()) ? (
-                        <p className="mt-2 text-[11px] font-semibold leading-5 text-[var(--primary)]">
-                          Already in planner
-                        </p>
+                      {searchLoading ? (
+                        <div className="px-3 py-2 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">Searching…</div>
                       ) : null}
-                    </article>
-                  ))}
-                </div>
+
+                      {!searchLoading && searchDropdownResults.length === 0 ? (
+                        <div className="rounded-[0.5rem] border border-dashed border-[var(--outline-variant)] px-4 py-3 text-center text-[11px] font-medium leading-4 text-[var(--on-surface-variant)]">
+                          No matching courses
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </label>
               </div>
             )}
           </div>
@@ -656,9 +653,12 @@ export function StudyPlanClient({
           <div className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
-                <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Semester Planner</h1>
+                <div className="flex items-center gap-2">
+                  <CalendarWeekIcon className="h-7 w-7 text-[var(--primary)]" />
+                  <h1 className="text-[28px] font-extrabold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Semester Planner</h1>
+                </div>
                 <p className="mt-1 max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
-                  This planner recreates the module-bank and semester-allocation flow inside SUSSplanner so it can share the same catalog search and course data.
+                  Forecast your courses and credit units fulfilment
                 </p>
               </div>
 
@@ -702,15 +702,32 @@ export function StudyPlanClient({
                   className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                 />
               </label>
-
-              <SummaryStat icon={<LayersIcon className="h-5 w-5" />} label="Planned" value={formatCredits(totalCredits)} />
-              <SummaryStat icon={<CalendarWeekIcon className="h-5 w-5" />} label="Assigned" value={formatCredits(assignedCredits)} />
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-              <span>{sortedCourses.length} modules in plan</span>
-              <span>{unassignedCourses.length} still in bank</span>
-              <span>{formatCredits(Math.max(plan.totalCreditsGoal - totalCredits, 0))} remaining to target</span>
+            <div className="mt-4 rounded-[0.85rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[12px] font-semibold text-[var(--on-surface)]">Credits Allocated</span>
+                <span className={`text-[12px] font-semibold ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
+                  {formatCredits(assignedCredits)} / {formatCredits(plan.totalCreditsGoal)}
+                </span>
+              </div>
+              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+                <div
+                  className={`h-full rounded-full transition-all ${isOverTargetCredits ? "bg-[var(--error)]" : "bg-[var(--primary)]"}`}
+                  style={{ width: `${creditProgressBarPercent}%` }}
+                />
+              </div>
+              <p className={`mt-2 text-[11px] font-medium ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
+                {plan.totalCreditsGoal > 0
+                  ? `${Number(creditProgressPercent.toFixed(1))}% of target credits allocated`
+                  : "Set a target credits value to track allocation progress."}
+              </p>
+            </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <SummaryStat icon={<CalendarWeekIcon className="h-5 w-5" />} label="Assigned" value={formatCredits(assignedCredits)} />
+              <SummaryStat icon={<EditCalendarIcon className="h-5 w-5" />} label="Planned" value={formatCredits(plan.totalCreditsGoal)} />
+              <SummaryStat icon={<ListIcon className="h-5 w-5" />} label="Total Courses" value={String(sortedCourses.length)} />
             </div>
           </div>
         </section>
@@ -722,7 +739,9 @@ export function StudyPlanClient({
         ) : null}
 
         <section className="grid gap-4 xl:grid-cols-[21rem_minmax(0,1fr)]">
-          <aside className="space-y-4">
+          <aside className={`space-y-4 lg:sticky lg:top-[90px] lg:max-h-[calc(100vh-110px)] lg:self-start lg:pr-1 ${
+            draggedCourseId ? "lg:overflow-visible" : "lg:overflow-y-auto"
+          }`}>
             <div
               onDragOver={(event) => {
                 event.preventDefault();
@@ -748,9 +767,11 @@ export function StudyPlanClient({
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Module Bank</h2>
-                  <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                    {showAllModules ? "(Edit Mode)" : draggedCourseId ? "Drop here to send a module back to the bank." : "Unassigned modules waiting for a semester."}
-                  </p>
+                  {showAllModules || draggedCourseId ? (
+                    <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                      {showAllModules ? "(Edit Mode)" : "Drop here to send a module back to the bank."}
+                    </p>
+                  ) : null}
                 </div>
                 <button
                   type="button"
@@ -820,7 +841,7 @@ export function StudyPlanClient({
           </aside>
 
           <section className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+            <div className="space-y-3">
               {semesterIndexes.map((semesterIndex) => {
                 const startingCourses = sortedCourses.filter((course) => course.assignedSemester === semesterIndex);
                 const continuedCourses = sortedCourses.filter((course) => (
@@ -862,7 +883,7 @@ export function StudyPlanClient({
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="text-[12px] font-semibold leading-5 text-[var(--primary)]">
+                        <span className="text-[16px] font-bold leading-6 text-[var(--primary)]">
                           {formatCreditCount(semesterCreditUnits)}
                         </span>
                         <button
@@ -889,9 +910,9 @@ export function StudyPlanClient({
                       </div>
                     ) : null}
 
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                       {startingCourses.length === 0 ? (
-                        <p className="rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-5 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                        <p className="rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-5 text-[12px] leading-5 text-[var(--on-surface-variant)] sm:col-span-2 xl:col-span-3">
                           {draggedCourseId ? "Drop module here." : "Move modules here from the planner bank."}
                         </p>
                       ) : null}
