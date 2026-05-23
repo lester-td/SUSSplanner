@@ -739,7 +739,9 @@ export function StudyPlanClient({
         ) : null}
 
         <section className="grid gap-4 xl:grid-cols-[21rem_minmax(0,1fr)]">
-          <aside className="space-y-4 lg:sticky lg:top-[90px] lg:max-h-[calc(100vh-110px)] lg:self-start lg:overflow-y-auto lg:pr-1">
+          <aside className={`space-y-4 lg:sticky lg:top-[90px] lg:max-h-[calc(100vh-110px)] lg:self-start lg:pr-1 ${
+            draggedCourseId ? "lg:overflow-visible" : "lg:overflow-y-auto"
+          }`}>
             <div
               onDragOver={(event) => {
                 event.preventDefault();
