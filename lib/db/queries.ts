@@ -11,7 +11,9 @@ import {
   or,
   sql,
 } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { CourseSearchFilters } from "@/lib/timetable/course-search";
 import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
 import { buildSharedClassIdentifier } from "@/lib/timetable/share-url";
@@ -39,6 +41,8 @@ import {
   semesterWeeks,
   vClassEventsWithWeek,
 } from "./schema";
+
+const LOOKUP_REVALIDATE_SECONDS = 600;
 
 function normalizeCourseCode(courseCode: string)
 {
@@ -146,81 +150,136 @@ function mapClassEventWithWeekRow(
   };
 }
 
+const getSemestersCached = unstable_cache(
+  async () => {
+    const rows = await db
+      .select()
+      .from(semesters)
+      .orderBy(asc(semesters.academicYear), asc(semesters.semesterNo), asc(semesters.semesterId));
+
+    return rows.map(mapSemesterRow);
+  },
+  ["db:getSemesters"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.semesters],
+  },
+);
+
 export async function getSemesters()
 {
-  const rows = await db
-    .select()
-    .from(semesters)
-    .orderBy(asc(semesters.academicYear), asc(semesters.semesterNo), asc(semesters.semesterId));
-
-  return rows.map(mapSemesterRow);
+  return getSemestersCached();
 }
+
+const getSemesterWeeksCached = unstable_cache(
+  async (semesterId?: number) => {
+    const rows = semesterId
+      ? await db
+          .select()
+          .from(semesterWeeks)
+          .where(eq(semesterWeeks.semesterId, semesterId))
+          .orderBy(asc(semesterWeeks.startDate), asc(semesterWeeks.weekId))
+      : await db
+          .select()
+          .from(semesterWeeks)
+          .orderBy(asc(semesterWeeks.startDate), asc(semesterWeeks.weekId));
+
+    return rows.map(mapSemesterWeekRow);
+  },
+  ["db:getSemesterWeeks"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.semesterWeeks],
+  },
+);
 
 export async function getSemesterWeeks(semesterId?: number)
 {
-  const rows = semesterId
-    ? await db
-        .select()
-        .from(semesterWeeks)
-        .where(eq(semesterWeeks.semesterId, semesterId))
-        .orderBy(asc(semesterWeeks.startDate), asc(semesterWeeks.weekId))
-    : await db
-        .select()
-        .from(semesterWeeks)
-        .orderBy(asc(semesterWeeks.startDate), asc(semesterWeeks.weekId));
-
-  return rows.map(mapSemesterWeekRow);
+  return getSemesterWeeksCached(semesterId);
 }
+
+const getSemestersWithWeeksCached = unstable_cache(
+  async () => {
+    const [semesterRows, weekRows] = await Promise.all([
+      getSemesters(),
+      getSemesterWeeks(),
+    ]);
+
+    return semesterRows.map((semester) => ({
+      ...semester,
+      weeks: weekRows.filter((week) => week.semesterId === semester.semesterId),
+    }));
+  },
+  ["db:getSemestersWithWeeks"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.semesters, CACHE_TAGS.semesterWeeks],
+  },
+);
 
 export async function getSemestersWithWeeks()
 {
-  const [semesterRows, weekRows] = await Promise.all([
-    getSemesters(),
-    getSemesterWeeks(),
-  ]);
-
-  return semesterRows.map((semester) => ({
-    ...semester,
-    weeks: weekRows.filter((week) => week.semesterId === semester.semesterId),
-  }));
+  return getSemestersWithWeeksCached();
 }
+
+const getSemestersWithClassesAndWeeksCached = unstable_cache(
+  async () => {
+    const [semesterRows, weekRows] = await Promise.all([
+      db
+        .selectDistinct({
+          semesterId: semesters.semesterId,
+          academicYear: semesters.academicYear,
+          semesterNo: semesters.semesterNo,
+          semesterName: semesters.semesterName,
+        })
+        .from(semesters)
+        .innerJoin(classes, eq(classes.semesterId, semesters.semesterId))
+        .orderBy(asc(semesters.academicYear), asc(semesters.semesterNo), asc(semesters.semesterId)),
+      getSemesterWeeks(),
+    ]);
+
+    return semesterRows
+      .map((semester) => ({
+        semesterId: semester.semesterId,
+        academicYear: semester.academicYear,
+        semesterNo: semester.semesterNo as 1 | 2 | 3,
+        semesterName: semester.semesterName,
+        weeks: weekRows.filter((week) => week.semesterId === semester.semesterId),
+      }))
+      .filter((semester) => semester.weeks.length > 0);
+  },
+  ["db:getSemestersWithClassesAndWeeks"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.semesters, CACHE_TAGS.semesterWeeks, CACHE_TAGS.classes],
+  },
+);
 
 export async function getSemestersWithClassesAndWeeks()
 {
-  const [semesterRows, weekRows] = await Promise.all([
-    db
-      .selectDistinct({
-        semesterId: semesters.semesterId,
-        academicYear: semesters.academicYear,
-        semesterNo: semesters.semesterNo,
-        semesterName: semesters.semesterName,
-      })
-      .from(semesters)
-      .innerJoin(classes, eq(classes.semesterId, semesters.semesterId))
-      .orderBy(asc(semesters.academicYear), asc(semesters.semesterNo), asc(semesters.semesterId)),
-    getSemesterWeeks(),
-  ]);
-
-  return semesterRows
-    .map((semester) => ({
-      semesterId: semester.semesterId,
-      academicYear: semester.academicYear,
-      semesterNo: semester.semesterNo as 1 | 2 | 3,
-      semesterName: semester.semesterName,
-      weeks: weekRows.filter((week) => week.semesterId === semester.semesterId),
-    }))
-    .filter((semester) => semester.weeks.length > 0);
+  return getSemestersWithClassesAndWeeksCached();
 }
+
+const getSemesterByIdCached = unstable_cache(
+  async (semesterId: number) => {
+    const [row] = await db
+      .select()
+      .from(semesters)
+      .where(eq(semesters.semesterId, semesterId))
+      .limit(1);
+
+    return row ? mapSemesterRow(row) : null;
+  },
+  ["db:getSemesterById"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.semesters],
+  },
+);
 
 export async function getSemesterById(semesterId: number)
 {
-  const [row] = await db
-    .select()
-    .from(semesters)
-    .where(eq(semesters.semesterId, semesterId))
-    .limit(1);
-
-  return row ? mapSemesterRow(row) : null;
+  return getSemesterByIdCached(semesterId);
 }
 
 async function getOfferedSemestersForCourseCodes(courseCodes: string[])
@@ -546,6 +605,32 @@ export async function getCourseClasses(
   } satisfies CourseClassRecord));
 }
 
+export async function getClassCountsByCourseCodes(
+  courseCodes: string[],
+  semesterId: number,
+)
+{
+  const normalizedCourseCodes = unique(courseCodes.map(normalizeCourseCode));
+  if (normalizedCourseCodes.length === 0)
+  {
+    return {} as Record<string, number>;
+  }
+
+  const rows = await db
+    .select({
+      courseCode: classes.courseCode,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(classes)
+    .where(and(
+      inArray(classes.courseCode, normalizedCourseCodes),
+      eq(classes.semesterId, semesterId),
+    ))
+    .groupBy(classes.courseCode);
+
+  return Object.fromEntries(rows.map((row) => [row.courseCode, row.count]));
+}
+
 export async function getClassEvents(classId: number)
 {
   const rows = await db
@@ -616,24 +701,35 @@ export async function getCoursesWithAvailableClasses(
   });
 }
 
+const getCourseSearchFacetsCached = unstable_cache(
+  async () => {
+    const schoolRows = await db
+      .selectDistinct({ schoolName: courses.schoolName })
+      .from(courses)
+      .where(sql`${courses.schoolName} is not null`)
+      .orderBy(asc(courses.schoolName));
+
+    const levelRows = await db
+      .selectDistinct({ courseLevel: courses.courseLevel })
+      .from(courses)
+      .where(sql`${courses.courseLevel} is not null`)
+      .orderBy(asc(courses.courseLevel));
+
+    return {
+      schools: schoolRows.map((row) => row.schoolName).filter(Boolean) as string[],
+      courseLevels: levelRows.map((row) => row.courseLevel).filter(Boolean) as string[],
+    };
+  },
+  ["db:getCourseSearchFacets"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.courses, CACHE_TAGS.classes],
+  },
+);
+
 export async function getCourseSearchFacets()
 {
-  const schoolRows = await db
-    .selectDistinct({ schoolName: courses.schoolName })
-    .from(courses)
-    .where(sql`${courses.schoolName} is not null`)
-    .orderBy(asc(courses.schoolName));
-
-  const levelRows = await db
-    .selectDistinct({ courseLevel: courses.courseLevel })
-    .from(courses)
-    .where(sql`${courses.courseLevel} is not null`)
-    .orderBy(asc(courses.courseLevel));
-
-  return {
-    schools: schoolRows.map((row) => row.schoolName).filter(Boolean) as string[],
-    courseLevels: levelRows.map((row) => row.courseLevel).filter(Boolean) as string[],
-  };
+  return getCourseSearchFacetsCached();
 }
 
 export async function getTimetableDataFromClassIds(classIds: number[])

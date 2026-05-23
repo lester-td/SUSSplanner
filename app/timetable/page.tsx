@@ -3,6 +3,8 @@ import { PlannerClient } from "@/components/timetable/planner-client";
 import { getSemestersWithClassesAndWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function TimetablePage()
 {
   const semesters = await getSemestersWithClassesAndWeeks();

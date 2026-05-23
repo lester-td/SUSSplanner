@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -142,6 +142,21 @@ function toggleInList<T>(values: T[], value: T)
     : [...values, value];
 }
 
+function useDebouncedValue<T>(value: T, delayMs: number)
+{
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedValue(value);
+    }, delayMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [delayMs, value]);
+
+  return debouncedValue;
+}
+
 function buildLevelOptions(courseLevels: string[])
 {
   const mappedLevels = new Map<number, string>();
@@ -186,7 +201,7 @@ export function CourseSearchPage({
   const [filters, setFilters] = useState(initialFilters);
   const [results, setResults] = useState<CourseSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const deferredQuery = useDeferredValue(filters.q);
+  const deferredQuery = useDebouncedValue(filters.q, 250);
   const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
 
   useEffect(() => {
@@ -221,7 +236,6 @@ export function CourseSearchPage({
     setLoading(true);
 
     fetch(`/api/courses/search?${requestQuery}`, {
-      cache: "no-store",
       signal: controller.signal,
     })
       .then(async (response) => {

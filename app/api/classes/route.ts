@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { CACHE_TAG_GROUPS, getCacheHeaders } from "@/lib/cache-tags";
 import {
   getCourseClasses,
   getTimetableDataFromClassIdentifiers,
@@ -12,6 +13,8 @@ import {
 } from "@/lib/validation/timetable";
 
 export const runtime = "nodejs";
+
+const CLASS_RESPONSE_CACHE_CONTROL = "s-maxage=3600, stale-while-revalidate=86400";
 
 export async function GET(request: NextRequest)
 {
@@ -27,10 +30,20 @@ export async function GET(request: NextRequest)
   if (courseCode)
   {
     const classes = await getCourseClasses(courseCodeSchema.parse(courseCode), semesterId, scheduleType);
-    return NextResponse.json({ classes });
+    return NextResponse.json(
+      { classes },
+      {
+        headers: getCacheHeaders(CLASS_RESPONSE_CACHE_CONTROL, CACHE_TAG_GROUPS.classData),
+      },
+    );
   }
 
   const decoded = decodeShareUrlState(request.nextUrl.searchParams);
   const timetable = await getTimetableDataFromClassIdentifiers(decoded.selectedClasses, decoded.semesterId);
-  return NextResponse.json({ timetable });
+  return NextResponse.json(
+    { timetable },
+    {
+      headers: getCacheHeaders(CLASS_RESPONSE_CACHE_CONTROL, CACHE_TAG_GROUPS.classData),
+    },
+  );
 }

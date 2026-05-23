@@ -67,12 +67,14 @@ Create `.env.local` in repo root:
 DATABASE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+CACHE_REVALIDATE_SECRET=
 ```
 
 Notes:
 
 - `DATABASE_URL` is required and used server-side by the app and Drizzle config.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently not required by runtime code, but are kept for compatibility/future browser integrations.
+- `CACHE_REVALIDATE_SECRET` secures the on-demand cache invalidation endpoint used after DB refreshes/imports.
 - Never commit real credentials.
 
 ## Install And Run
@@ -112,7 +114,7 @@ Important:
 
 ### API Routes
 
-All current API routes are `GET` and run on Node.js runtime.
+All current API routes run on Node.js runtime. Most are `GET`; cache invalidation uses `POST`.
 
 1. `/api/courses/search`
 - Query params:
@@ -144,11 +146,48 @@ All current API routes are `GET` and run on Node.js runtime.
   - Query: `sem` + `classes`
   - Response: `{ timetable: TimetableData }`
 
-4. `/api/export/ics`
+4. `/api/cache/revalidate`
+- Method: `POST`
+- Headers:
+  - `x-revalidate-secret: <CACHE_REVALIDATE_SECRET>` or `Authorization: Bearer <CACHE_REVALIDATE_SECRET>`
+- JSON body:
+  - `tags?: string[]` (`semesters`, `semester-weeks`, `classes`, `courses`, `assessments`)
+  - `paths?: string[]`
+- Behavior:
+  - Revalidates the provided cache tags; if `tags` is omitted, all known tags are revalidated.
+  - Optional `paths` can also be revalidated when you want to clear route-level caches alongside data caches.
+- Example: revalidate all known tags
+
+```bash
+curl -X POST http://localhost:3000/api/cache/revalidate \
+  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
+  -H "content-type: application/json" \
+  -d '{}'
+```
+
+- Example: revalidate only class and course data after a schedules import
+
+```bash
+curl -X POST http://localhost:3000/api/cache/revalidate \
+  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
+  -H "content-type: application/json" \
+  -d '{"tags":["classes","courses","assessments"]}'
+```
+
+- Example: revalidate tags and route paths together
+
+```bash
+curl -X POST http://localhost:3000/api/cache/revalidate \
+  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
+  -H "content-type: application/json" \
+  -d '{"tags":["semesters","semester-weeks","classes"],"paths":["/","/planner","/timetable"]}'
+```
+
+5. `/api/export/ics`
 - Query: share params (`sem`, `classes`)
 - Response: calendar attachment (`text/calendar`)
 
-5. `/api/export/pdf`
+6. `/api/export/pdf`
 - Query: share params (`sem`, `classes`)
 - Response: PDF attachment (`application/pdf`)
 
