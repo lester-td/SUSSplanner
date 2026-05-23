@@ -1,23 +1,23 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { PlannerClient } from "@/components/timetable/planner-client";
-import { getSemestersWithClassesAndWeeks } from "@/lib/db/queries";
+import { StudyPlanClient } from "@/components/planner/study-plan-client";
+import { getSemesters, getSemestersWithWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
 
 export default async function PlannerPage()
 {
-  const semesters = await getSemestersWithClassesAndWeeks();
+  const [allSemesters, semesterTree] = await Promise.all([
+    getSemesters(),
+    getSemestersWithWeeks(),
+  ]);
+
   const { semester, week } = getCurrentSemesterContext(
-    semesters.map(({ weeks, ...semesterData }) => semesterData),
-    semesters.flatMap((item) => item.weeks),
+    semesterTree.map(({ weeks, ...semesterData }) => semesterData),
+    semesterTree.flatMap((item) => item.weeks),
   );
 
   return (
-    <AppShell activeSection="planner" currentWeekLabel={getCurrentWeekChip(semester, week)}>
-      <PlannerClient
-        semesters={semesters}
-        currentSemesterId={semester?.semesterId ?? semesters[0]?.semesterId ?? 0}
-        currentWeekId={week?.weekId ?? null}
-      />
+    <AppShell activeSection="study-plan" currentWeekLabel={getCurrentWeekChip(semester, week)}>
+      <StudyPlanClient semesters={allSemesters} />
     </AppShell>
   );
 }

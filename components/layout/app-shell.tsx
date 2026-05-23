@@ -13,7 +13,7 @@ const navItems = [
   {
     id: "planner",
     label: "Timetable",
-    href: "/planner",
+    href: "/timetable",
     icon: CalendarWeekIcon,
   },
   {
@@ -25,7 +25,7 @@ const navItems = [
   {
     id: "study-plan",
     label: "Planner",
-    href: "/study-plan",
+    href: "/planner",
     icon: LayersIcon,
   },
 ] as const satisfies Array<{
@@ -51,7 +51,7 @@ export function AppShell({
         <div className="px-3 py-2.5 md:px-[16px] md:py-3">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2.5 xl:gap-3">
-              <Link href="/planner" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--primary-container)] sm:inline sm:text-[24px] sm:leading-8">
+              <Link href="/timetable" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--primary-container)] sm:inline sm:text-[24px] sm:leading-8">
                 SUSS Planner
               </Link>
 
