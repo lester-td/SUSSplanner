@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { CourseSearchFilters } from "@/lib/timetable/course-search";
 import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
 import { buildSharedClassIdentifier } from "@/lib/timetable/share-url";
@@ -161,7 +162,7 @@ const getSemestersCached = unstable_cache(
   ["db:getSemesters"],
   {
     revalidate: LOOKUP_REVALIDATE_SECONDS,
-    tags: ["semesters"],
+    tags: [CACHE_TAGS.semesters],
   },
 );
 
@@ -188,7 +189,7 @@ const getSemesterWeeksCached = unstable_cache(
   ["db:getSemesterWeeks"],
   {
     revalidate: LOOKUP_REVALIDATE_SECONDS,
-    tags: ["semester-weeks"],
+    tags: [CACHE_TAGS.semesterWeeks],
   },
 );
 
@@ -212,7 +213,7 @@ const getSemestersWithWeeksCached = unstable_cache(
   ["db:getSemestersWithWeeks"],
   {
     revalidate: LOOKUP_REVALIDATE_SECONDS,
-    tags: ["semesters", "semester-weeks"],
+    tags: [CACHE_TAGS.semesters, CACHE_TAGS.semesterWeeks],
   },
 );
 
@@ -250,7 +251,7 @@ const getSemestersWithClassesAndWeeksCached = unstable_cache(
   ["db:getSemestersWithClassesAndWeeks"],
   {
     revalidate: LOOKUP_REVALIDATE_SECONDS,
-    tags: ["semesters", "semester-weeks", "classes"],
+    tags: [CACHE_TAGS.semesters, CACHE_TAGS.semesterWeeks, CACHE_TAGS.classes],
   },
 );
 
@@ -272,7 +273,7 @@ const getSemesterByIdCached = unstable_cache(
   ["db:getSemesterById"],
   {
     revalidate: LOOKUP_REVALIDATE_SECONDS,
-    tags: ["semesters"],
+    tags: [CACHE_TAGS.semesters],
   },
 );
 
@@ -722,7 +723,7 @@ const getCourseSearchFacetsCached = unstable_cache(
   ["db:getCourseSearchFacets"],
   {
     revalidate: LOOKUP_REVALIDATE_SECONDS,
-    tags: ["courses", "classes"],
+    tags: [CACHE_TAGS.courses, CACHE_TAGS.classes],
   },
 );
 

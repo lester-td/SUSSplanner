@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { CACHE_TAG_GROUPS, getCacheHeaders } from "@/lib/cache-tags";
 import {
   getCourseClasses,
   getTimetableDataFromClassIdentifiers,
@@ -32,9 +33,7 @@ export async function GET(request: NextRequest)
     return NextResponse.json(
       { classes },
       {
-        headers: {
-          "Cache-Control": CLASS_RESPONSE_CACHE_CONTROL,
-        },
+        headers: getCacheHeaders(CLASS_RESPONSE_CACHE_CONTROL, CACHE_TAG_GROUPS.classData),
       },
     );
   }
@@ -44,9 +43,7 @@ export async function GET(request: NextRequest)
   return NextResponse.json(
     { timetable },
     {
-      headers: {
-        "Cache-Control": CLASS_RESPONSE_CACHE_CONTROL,
-      },
+      headers: getCacheHeaders(CLASS_RESPONSE_CACHE_CONTROL, CACHE_TAG_GROUPS.classData),
     },
   );
 }

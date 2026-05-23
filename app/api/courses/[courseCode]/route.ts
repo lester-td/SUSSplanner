@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { CACHE_TAG_GROUPS, getCacheHeaders } from "@/lib/cache-tags";
 import {
   getAssessmentComponents,
   getCourseByCode,
@@ -34,9 +35,7 @@ export async function GET(
   return NextResponse.json(
     { course, classes, assessmentComponents },
     {
-      headers: {
-        "Cache-Control": COURSE_DETAIL_CACHE_CONTROL,
-      },
+      headers: getCacheHeaders(COURSE_DETAIL_CACHE_CONTROL, CACHE_TAG_GROUPS.courseDetail),
     },
   );
 }

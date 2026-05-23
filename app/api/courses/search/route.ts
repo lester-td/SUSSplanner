@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { CACHE_TAG_GROUPS, getCacheHeaders } from "@/lib/cache-tags";
 import { searchCourses } from "@/lib/db/queries";
 import { parseCourseSearchFilters } from "@/lib/timetable/course-search";
 
@@ -12,9 +13,7 @@ export async function GET(request: NextRequest)
   return NextResponse.json(
     { courses },
     {
-      headers: {
-        "Cache-Control": "s-maxage=300, stale-while-revalidate=3600",
-      },
+      headers: getCacheHeaders("s-maxage=300, stale-while-revalidate=3600", CACHE_TAG_GROUPS.courseSearch),
     },
   );
 }

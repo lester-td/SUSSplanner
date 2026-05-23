@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { CACHE_TAG_GROUPS, getCacheHeaders } from "@/lib/cache-tags";
 import { getClassCountsByCourseCodes } from "@/lib/db/queries";
 import { semesterIdSchema } from "@/lib/validation/timetable";
 
@@ -19,9 +20,7 @@ export async function GET(request: NextRequest)
   return NextResponse.json(
     { counts },
     {
-      headers: {
-        "Cache-Control": "s-maxage=3600, stale-while-revalidate=86400",
-      },
+      headers: getCacheHeaders("s-maxage=3600, stale-while-revalidate=86400", CACHE_TAG_GROUPS.classCounts),
     },
   );
 }
