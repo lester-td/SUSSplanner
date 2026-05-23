@@ -51,7 +51,7 @@ export function AppShell({
         <div className="px-3 py-2.5 md:px-[16px] md:py-3">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2.5 xl:gap-3">
-              <Link href="/timetable" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--primary-container)] sm:inline sm:text-[24px] sm:leading-8">
+              <Link prefetch href="/timetable" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--primary-container)] sm:inline sm:text-[24px] sm:leading-8">
                 SUSS Planner
               </Link>
 
@@ -62,6 +62,7 @@ export function AppShell({
                   return (
                     <Link
                       key={item.id}
+                      prefetch
                       href={item.href}
                       className={`inline-flex items-center gap-1.5 rounded-[999px] px-2.5 py-1.5 text-[12px] font-semibold leading-4 transition-colors sm:gap-2 sm:px-3 sm:py-2 ${
                         activeSection === item.id
