@@ -156,6 +156,32 @@ All current API routes run on Node.js runtime. Most are `GET`; cache invalidatio
 - Behavior:
   - Revalidates the provided cache tags; if `tags` is omitted, all known tags are revalidated.
   - Optional `paths` can also be revalidated when you want to clear route-level caches alongside data caches.
+- Example: revalidate all known tags
+
+```bash
+curl -X POST http://localhost:3000/api/cache/revalidate \
+  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
+  -H "content-type: application/json" \
+  -d '{}'
+```
+
+- Example: revalidate only class and course data after a schedules import
+
+```bash
+curl -X POST http://localhost:3000/api/cache/revalidate \
+  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
+  -H "content-type: application/json" \
+  -d '{"tags":["classes","courses","assessments"]}'
+```
+
+- Example: revalidate tags and route paths together
+
+```bash
+curl -X POST http://localhost:3000/api/cache/revalidate \
+  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
+  -H "content-type: application/json" \
+  -d '{"tags":["semesters","semester-weeks","classes"],"paths":["/","/planner","/timetable"]}'
+```
 
 5. `/api/export/ics`
 - Query: share params (`sem`, `classes`)
