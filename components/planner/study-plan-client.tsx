@@ -7,7 +7,9 @@ import {
   BookIcon,
   CalendarWeekIcon,
   EditIcon,
+  EditCalendarIcon,
   LayersIcon,
+  ListIcon,
   PlusIcon,
   RefreshIcon,
   SchoolIcon,
@@ -70,7 +72,7 @@ export function StudyPlanClient({
 {
   const [ready, setReady] = useState(false);
   const [plan, setPlan] = useState<StudyPlanState>(defaultStudyPlanState());
-  const [moduleSourceMode, setModuleSourceMode] = useState<"custom" | "search">("search");
+  const [isCustomCourse, setIsCustomCourse] = useState(false);
   const [showAllModules, setShowAllModules] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSemesterId, setSearchSemesterId] = useState<number | "all">("all");
@@ -192,8 +194,19 @@ export function StudyPlanClient({
       .reduce((sum, course) => sum + course.creditUnits, 0),
     [sortedCourses],
   );
-  const remainingCredits = useMemo(
-    () => Math.max(plan.totalCreditsGoal - assignedCredits, 0),
+  const creditProgressPercent = useMemo(() => {
+    if (plan.totalCreditsGoal <= 0)
+    {
+      return 0;
+    }
+    return (assignedCredits / plan.totalCreditsGoal) * 100;
+  }, [assignedCredits, plan.totalCreditsGoal]);
+  const creditProgressBarPercent = useMemo(
+    () => Math.min(100, Math.max(0, creditProgressPercent)),
+    [creditProgressPercent],
+  );
+  const isOverTargetCredits = useMemo(
+    () => plan.totalCreditsGoal > 0 && assignedCredits > plan.totalCreditsGoal,
     [assignedCredits, plan.totalCreditsGoal],
   );
   const semesterIndexes = useMemo(
@@ -497,63 +510,48 @@ export function StudyPlanClient({
       <div className="mx-auto max-w-7xl space-y-4">
         <section className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
-            <div className="flex items-center gap-3">
-                {moduleSourceMode === "search" ? (
-                <SearchIcon className="h-7 w-7 text-[var(--primary)]" />
-                ) : (
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {isCustomCourse ? (
                 <BookIcon className="h-7 w-7 text-[var(--primary)]" />
+                ) : (
+                <SearchIcon className="h-7 w-7 text-[var(--primary)]" />
                 )}
                 <div>
-                <h2 className="text-[28px] font-medium leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Add Modules</h2>
+                <h2 className="text-[28px] font-medium leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Add a Course</h2>
                 </div>
               </div>
-
-            <div className="mt-1 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <label className="sr-only" htmlFor="study-plan-offered-in">Offered In</label>
-              <select
-                id="study-plan-offered-in"
-                value={searchSemesterId === "all" ? "" : String(searchSemesterId)}
-                onChange={(event) => setSearchSemesterId(event.target.value ? Number.parseInt(event.target.value, 10) : "all")}
-                disabled={moduleSourceMode !== "search"}
-                className={`rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] ${
-                  moduleSourceMode !== "search" ? "cursor-not-allowed opacity-60" : ""
-                }`}
-              >
-                <option value="">Any Semester</option>
-                {semesters.map((semester) => (
-                  <option key={semester.semesterId} value={semester.semesterId}>
-                    {semester.semesterName} ({semester.academicYear})
-                  </option>
-                ))}
-              </select>
-
-              <div className="grid grid-cols-2 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1">
-                <button
-                  type="button"
-                  onClick={() => setModuleSourceMode("search")}
-                  className={`rounded-[0.55rem] px-3 py-1.5 text-[12px] font-semibold leading-4 transition-colors ${
-                    moduleSourceMode === "search"
-                      ? "bg-[var(--primary)] text-[var(--on-primary)]"
-                      : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
-                  }`}
-                >
-                  Search
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModuleSourceMode("custom")}
-                  className={`rounded-[0.55rem] px-3 py-1.5 text-[12px] font-semibold leading-4 transition-colors ${
-                    moduleSourceMode === "custom"
-                      ? "bg-[var(--primary)] text-[var(--on-primary)]"
-                      : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
-                  }`}
-                >
-                  Custom
-                </button>
-              </div>
+              <label className="inline-flex items-center gap-2 self-start text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
+                <input
+                  type="checkbox"
+                  checked={isCustomCourse}
+                  onChange={(event) => setIsCustomCourse(event.target.checked)}
+                  className="h-4 w-4 rounded border-[var(--outline)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                />
+                Custom Course
+              </label>
             </div>
 
-            {moduleSourceMode === "custom" ? (
+            {!isCustomCourse ? (
+              <div className="mt-3">
+                <label className="sr-only" htmlFor="study-plan-offered-in">Offered In</label>
+                <select
+                  id="study-plan-offered-in"
+                  value={searchSemesterId === "all" ? "" : String(searchSemesterId)}
+                  onChange={(event) => setSearchSemesterId(event.target.value ? Number.parseInt(event.target.value, 10) : "all")}
+                  className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                >
+                  <option value="">Any Semester</option>
+                  {semesters.map((semester) => (
+                    <option key={semester.semesterId} value={semester.semesterId}>
+                      {semester.semesterName} ({semester.academicYear})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
+            {isCustomCourse ? (
               <div className="mt-3 grid gap-3">
                 <input
                   type="text"
@@ -706,10 +704,30 @@ export function StudyPlanClient({
               </label>
             </div>
 
+            <div className="mt-4 rounded-[0.85rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[12px] font-semibold text-[var(--on-surface)]">Credits Allocated</span>
+                <span className={`text-[12px] font-semibold ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
+                  {formatCredits(assignedCredits)} / {formatCredits(plan.totalCreditsGoal)}
+                </span>
+              </div>
+              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+                <div
+                  className={`h-full rounded-full transition-all ${isOverTargetCredits ? "bg-[var(--error)]" : "bg-[var(--primary)]"}`}
+                  style={{ width: `${creditProgressBarPercent}%` }}
+                />
+              </div>
+              <p className={`mt-2 text-[11px] font-medium ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
+                {plan.totalCreditsGoal > 0
+                  ? `${Number(creditProgressPercent.toFixed(1))}% of target credits allocated`
+                  : "Set a target credits value to track allocation progress."}
+              </p>
+            </div>
+
             <div className="mt-3 grid gap-3 md:grid-cols-3">
-              <SummaryStat icon={<CalendarWeekIcon className="h-5 w-5" />} label="Credit Units Assigned" value={formatCredits(assignedCredits)} />
-              <SummaryStat icon={<LayersIcon className="h-5 w-5" />} label="Credit Units Remaining" value={formatCredits(remainingCredits)} />
-              <SummaryStat icon={<BookIcon className="h-5 w-5" />} label="Total Courses in Plan" value={String(sortedCourses.length)} />
+              <SummaryStat icon={<CalendarWeekIcon className="h-5 w-5" />} label="Assigned" value={formatCredits(assignedCredits)} />
+              <SummaryStat icon={<EditCalendarIcon className="h-5 w-5" />} label="Planned" value={formatCredits(plan.totalCreditsGoal)} />
+              <SummaryStat icon={<ListIcon className="h-5 w-5" />} label="Total Courses" value={String(sortedCourses.length)} />
             </div>
           </div>
         </section>
