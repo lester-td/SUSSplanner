@@ -520,15 +520,30 @@ export function StudyPlanClient({
                 <h2 className="text-[28px] font-medium leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Add a Course</h2>
                 </div>
               </div>
-              <label className="inline-flex items-center gap-2 self-start text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
-                <input
-                  type="checkbox"
-                  checked={isCustomCourse}
-                  onChange={(event) => setIsCustomCourse(event.target.checked)}
-                  className="h-4 w-4 rounded border-[var(--outline)] text-[var(--primary)] focus:ring-[var(--primary)]"
+              <button
+                type="button"
+                onClick={() => setIsCustomCourse((current) => !current)}
+                className="relative inline-grid grid-cols-2 self-start rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[3px]"
+                aria-pressed={isCustomCourse}
+                aria-label={`Add course mode: ${isCustomCourse ? "Custom" : "Search"}. Click to toggle.`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`absolute bottom-[3px] left-[3px] top-[3px] w-[calc(50%-3px)] rounded-[0.55rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomCourse ? "translate-x-full" : "translate-x-0"}`}
                 />
-                Custom Course
-              </label>
+                <span
+                  aria-hidden="true"
+                  className={`relative z-10 min-w-[3.9rem] rounded-[0.55rem] px-2 py-1.5 text-[11px] font-semibold leading-4 transition-colors duration-300 ${!isCustomCourse ? "text-[var(--on-primary)]" : "text-[var(--on-surface-variant)]"}`}
+                >
+                  Search
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`relative z-10 min-w-[3.9rem] rounded-[0.55rem] px-2 py-1.5 text-[11px] font-semibold leading-4 transition-colors duration-300 ${isCustomCourse ? "text-[var(--on-primary)]" : "text-[var(--on-surface-variant)]"}`}
+                >
+                  Custom
+                </span>
+              </button>
             </div>
 
             {!isCustomCourse ? (
