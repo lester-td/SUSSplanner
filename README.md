@@ -81,14 +81,29 @@ Notes:
 
 ```bash
 npm install
+npm run validate:setup
 npm run dev
 ```
 
 Open `http://localhost:3000`.
 
+The validation step checks first-run prerequisites before you spend time waiting on a failed boot:
+
+- supported Node/npm versions
+- installed dependencies
+- presence of local environment files
+- required `DATABASE_URL` shape
+- optional warnings for Supabase public envs and cache revalidation secret
+
+`npm run dev`, `npm run build`, and `npm run start` also run mode-specific validation automatically and fail fast with actionable messages if setup is incomplete.
+
 ## Useful Commands
 
 ```bash
+npm run validate:setup # First-run setup validation
+npm run validate:dev   # Validation used before `npm run dev`
+npm run validate:build # Validation used before `npm run build`
+npm run validate:start # Validation used before `npm run start`
 npm run typecheck   # TypeScript checks
 npm run build       # Production build
 npm run start       # Run production build locally
