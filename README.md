@@ -99,6 +99,8 @@ generation, import order, validation, and troubleshooting.
 
 ## Documentation
 
+- [User Guide](./docs/UserGuide.md): student-facing instructions for
+  timetables, sharing, course search, exports, and study planning
 - [Developer Guide](./docs/DeveloperGuide.md): architecture, setup, routes,
   state models, diagrams, deployment, and development workflows
 - [Scraper Guide](./scraper/README.md): academic-data maintenance and import
