@@ -5,28 +5,6 @@ describes the architecture and workflows that are verifiable in this repository.
 Where the intended production process is not represented in code, it is called
 out under [Assumptions / Gaps](#assumptions--gaps).
 
-## Table of Contents
-
-- [Project Overview](#project-overview)
-- [System Architecture](#system-architecture)
-- [Tech Stack](#tech-stack)
-- [Repository Structure](#repository-structure)
-- [Setup Instructions](#setup-instructions)
-- [Environment Variables](#environment-variables)
-- [Database and Schema](#database-and-schema)
-- [Frontend Routes and Pages](#frontend-routes-and-pages)
-- [API and Backend Routes](#api-and-backend-routes)
-- [Authentication and Authorization](#authentication-and-authorization)
-- [Core User Flows](#core-user-flows)
-- [Important State Models](#important-state-models)
-- [Key Sequence Diagrams](#key-sequence-diagrams)
-- [Data Maintenance and Admin Flow](#data-maintenance-and-admin-flow)
-- [Caching](#caching)
-- [Deployment Notes](#deployment-notes)
-- [Common Development Tasks](#common-development-tasks)
-- [Known Limitations](#known-limitations)
-- [Assumptions / Gaps](#assumptions--gaps)
-
 ## Project Overview
 
 SUSSPlanner is a student-built academic planning platform with three main
@@ -68,7 +46,7 @@ flowchart LR
     NextPages["Next.js App Router pages<br/>server components"]
     API["Next.js route handlers<br/>Node.js runtime"]
     DAL["Data access layer<br/>lib/db/queries.ts"]
-    Cache["Next.js data cache<br/>tags + timed revalidation"]
+    Cache["Next.js data cache<br/>selected tagged lookups"]
     DB["Supabase-compatible Postgres<br/>academic data"]
     Sources["Schedule PDFs + course synopsis PDFs<br/>semester-week JSON"]
     Scraper["Local scraper pipeline<br/>Node.js + TypeScript + Python"]
@@ -77,6 +55,7 @@ flowchart LR
 
     User --> Browser
     Browser <--> LocalStorage
+    Browser --> NextPages
     Browser --> ShareURL
     ShareURL --> NextPages
     Browser --> API
@@ -114,7 +93,7 @@ flowchart LR
 - The application runtime is read-only with respect to academic tables.
 - Data updates happen outside the deployed app through generated SQL and
   `psql`.
-- Selected lookup queries use Next.js `unstable_cache` with a ten-minute
+- Selected semester/week/facet lookup queries use Next.js `unstable_cache` with a ten-minute
   revalidation period and cache tags.
 
 ## Tech Stack
@@ -146,13 +125,13 @@ flowchart LR
 
 ### Supported Tool Versions
 
-The root `package.json` and setup validator require:
+The root `package.json` declares:
 
 - Node.js `>=20`
 - npm `>=10`
 
-The scraper README recommends Python `3.10+` and a PostgreSQL client containing
-`psql`.
+The setup validator rejects Node.js below 20 but only warns for npm below 10.
+The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 
 ## Repository Structure
 
@@ -212,7 +191,7 @@ application runtime.
    cp .env.example .env.local
    ```
 
-4. Set at least a valid `DATABASE_URL` for a Postgres database containing the
+4. Set a valid `DATABASE_URL` for a Postgres database containing the
    expected schema and data.
 5. Validate setup:
 
@@ -247,8 +226,7 @@ checks. It needs network access when downloading current course synopsis PDFs.
 
 ### Verification Commands
 
-There is no automated test suite configured in either `package.json`. The
-available static and production checks are:
+No automated test suite is configured. Available checks are:
 
 ```bash
 npm run typecheck
@@ -420,7 +398,7 @@ All route handlers explicitly use the Node.js runtime.
 
 | Method and route | Inputs | Response / purpose |
 |---|---|---|
-| `GET /api/courses/search` | `q`; repeatable `semesterIds`/`semesterId`; repeatable `scheduleTypes`/`scheduleType`; presence flags `postgraduateOnly`, `availableAsGspOnly`, `writtenExamOnly`, `ecaOnly`; repeatable `schools`/`school`; repeatable `courseLevels`/`courseLevel`; `limit` (1-100, default 25) | `{ courses }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
+| `GET /api/courses/search` | `q`; repeatable `semesterIds`/`semesterId`; repeatable `scheduleTypes`/`scheduleType`; presence flags `postgraduateOnly`, `availableAsGspOnly`, `writtenExamOnly`, `ecaOnly`; legacy `postgraduate=postgraduate`; repeatable `schools`/`school`; repeatable `courseLevels`/`courseLevel`; `limit` (1-100, default 25) | `{ courses }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
 | `GET /api/courses/[courseCode]` | Optional `semesterId`, optional `scheduleType` | `{ course, classes, assessmentComponents }`; returns `404` when the course is missing. |
 | `GET /api/classes` | Mode A: `courseCode` plus optional `semesterId`/`sem` and `scheduleType` | `{ classes }`; class groups and their events. |
 | `GET /api/classes` | Mode B: share query `sem` plus optional comma-separated `classes` | `{ timetable }`; resolves selections, events, clashes, weeks, and unresolved selections. |
@@ -467,9 +445,9 @@ timetable and study-plan data remains in their browser.
 ### Maintainer Controls
 
 There is no admin page, admin session, role table, or login route in this
-repository. The code implements two operational authorization controls:
+repository. The repository shows two operational access gates:
 
-1. **Database update access:** a maintainer must possess a privileged
+1. **Database update access:** a maintainer must possess a writable
    `DATABASE_URL` to import generated SQL with `psql`.
 2. **Cache invalidation access:** `POST /api/cache/revalidate` requires an exact
    match with `CACHE_REVALIDATE_SECRET`, supplied through
@@ -531,9 +509,11 @@ flowchart TD
     Restore{"Valid saved timetable<br/>in localStorage?"}
     Default["Use current/first available semester<br/>and default UI state"]
     Saved["Restore semester, selections,<br/>hidden classes, colors, week, view"]
-    Load["Resolve selected semantic class identifiers<br/>through GET /api/classes"]
+    HasSelections{"Selected classes?"}
+    Resolve["Resolve semantic class identifiers<br/>through GET /api/classes"]
     Browse["Search courses for selected semester"]
-    Pick["Fetch class groups and choose one"]
+    AutoPick["Fetch class groups and auto-pick preferred<br/>TG/CRN group, preferring no clash"]
+    Alternate["Optionally preview and choose<br/>an alternative class group"]
     Update["Replace selection for that course"]
     Derive["Server assembles events and detects clashes"]
     Render["Render timetable or exam view"]
@@ -541,25 +521,76 @@ flowchart TD
     Action{"Next action"}
     Share["Encode sem + selected classes into /share URL"]
     Export["Export current rendered view or ICS"]
-    Continue["Hide, remove, recolor, switch week,<br/>or choose alternative group"]
+    LocalChange["Hide, recolor, switch week/view,<br/>or change orientation"]
+    SelectionChange["Remove course or change semester"]
 
     Open --> Restore
     Restore -->|Yes| Saved
     Restore -->|No| Default
-    Saved --> Load
-    Default --> Browse
-    Load --> Render
-    Browse --> Pick
-    Pick --> Update
+    Saved --> HasSelections
+    Default --> HasSelections
+    HasSelections -->|Yes| Resolve
+    HasSelections -->|No| Render
+    Resolve --> Derive
+    Browse --> AutoPick
+    AutoPick --> Update
+    Alternate --> Update
+    Update --> Persist
     Update --> Derive
     Derive --> Render
-    Render --> Persist
-    Persist --> Action
+    Render --> Action
     Action --> Share
     Action --> Export
-    Action --> Continue
-    Continue --> Derive
+    Action --> Browse
+    Action --> Alternate
+    Action --> LocalChange
+    Action --> SelectionChange
+    LocalChange --> Persist
+    LocalChange --> Render
+    SelectionChange --> Persist
+    SelectionChange --> HasSelections
 ```
+
+Changing semester does not clear saved selections; identifiers that do not exist
+in the new semester are returned as `unresolvedSelections`.
+
+### Study Plan Flow Diagram
+
+```mermaid
+flowchart TD
+    Open["Open /planner"]
+    Restore{"Valid study plan<br/>in localStorage?"}
+    Default["Use default goal: 130 CU,<br/>8 semesters, empty course bank"]
+    Ready["Render course bank, semesters,<br/>and assigned-credit progress"]
+    Add{"Add course"}
+    Catalog["Search catalog through<br/>GET /api/courses/search"]
+    CoursePage["Add to Planner from<br/>course search/detail page"]
+    Manual["Enter manual course,<br/>credits, and semester span"]
+    Bank["Add unassigned course to bank"]
+    Arrange["Drag course to semester,<br/>bank, or trash"]
+    Normalize["Normalize semester span<br/>and assignment bounds"]
+    Persist["Persist plan to localStorage"]
+
+    Open --> Restore
+    Restore -->|No| Default
+    Restore -->|Yes| Ready
+    Default --> Ready
+    Ready --> Add
+    Add --> Catalog
+    Add --> Manual
+    Catalog --> Bank
+    CoursePage --> Bank
+    Manual --> Bank
+    Bank --> Normalize
+    Ready --> Arrange
+    Arrange --> Normalize
+    Normalize --> Persist
+    Persist --> Ready
+```
+
+The study plan also listens for browser `storage` events and the local
+`sussplanner:study-plan-updated` event used by course-page "Add to Planner"
+buttons.
 
 ### Admin Flow Diagram
 
@@ -568,9 +599,9 @@ admin panel.
 
 ```mermaid
 flowchart TD
-    Inputs["Collect schedule PDFs,<br/>semester-week JSON, and course codes"]
+    Inputs["Collect schedule PDFs<br/>and semester-week JSON"]
     Weeks["Generate semester-week SQL"]
-    Schedule["Extract schedule PDFs to CSV,<br/>parse, and generate schedule SQL"]
+    Schedule["Extract and parse schedule PDFs;<br/>generate schedule SQL and course-code list"]
     Download["Download daytime/evening<br/>course synopsis PDFs"]
     Course["Extract and parse course PDFs,<br/>generate course-detail SQL"]
     Review{"Review JSON, TSV issues,<br/>warnings, and generated SQL"}
@@ -619,12 +650,12 @@ stateDiagram-v2
     DefaultState --> Ready
     RestoredState --> Ready
 
-    Ready --> Resolving: semester or selectedClasses changes
+    Ready --> Resolving: semester or selectedClasses changes with selections
     Resolving --> Ready: timetable API succeeds
     Resolving --> ErrorFallback: timetable API fails
     ErrorFallback --> Ready: next valid change
 
-    Ready --> Ready: hide / show / recolor / change week / change view
+    Ready --> Ready: empty selection or local-only display change
     Ready --> Persisted: tracked state changes
     Persisted --> Ready: localStorage write completes
 
@@ -637,10 +668,9 @@ stateDiagram-v2
 
 ```mermaid
 stateDiagram-v2
-    [*] --> NoShareParams
-    NoShareParams --> EmptyExplanation
-
-    [*] --> DecodeRequested
+    [*] --> CheckParameters
+    CheckParameters --> EmptyExplanation: neither sem nor classes is present
+    CheckParameters --> DecodeRequested: share parameter present
     DecodeRequested --> InvalidLink: Zod or identifier parsing fails
     DecodeRequested --> Resolving: share state is valid
     Resolving --> ReadOnlyPreview: identifiers resolved
@@ -713,15 +743,18 @@ sequenceDiagram
     Classes->>Queries: getCourseClasses(...)
     Queries->>DB: Load classes and events-with-week view
     DB-->>Queries: Class groups and dated events
-    Queries-->>UI: { classes }
+    Queries-->>Classes: Class groups and dated events
+    Classes-->>UI: { classes }
+    UI->>UI: Auto-pick preferred group or accept chosen alternative
+    UI->>Storage: Persist semantic selection
 
     UI->>Classes: sem + selected semantic identifiers
     Classes->>Queries: getTimetableDataFromClassIdentifiers(...)
     Queries->>DB: Resolve class IDs, events, weeks, assessments
     DB-->>Queries: Academic rows
     Queries->>Queries: Build selections and detect clashes
-    Queries-->>UI: TimetableData
-    UI->>Storage: Persist planner state
+    Queries-->>Classes: TimetableData
+    Classes-->>UI: { timetable }
     UI-->>Student: Render timetable / exam view
 ```
 
@@ -767,11 +800,11 @@ sequenceDiagram
     participant Artifacts as JSON / TSV / SQL artifacts
     participant DB as Postgres
     participant Revalidate as POST /api/cache/revalidate
-    participant Cache as Next.js/Vercel cache
+    participant Cache as Next.js tagged data cache
     participant App as Public application
 
     Maintainer->>Scraper: Run week, schedule, download, and course parse commands
-    Scraper->>Source: Read local PDFs/JSON and download course PDFs
+    Scraper->>Source: Read local inputs or request course PDFs
     Source-->>Scraper: Source data
     Scraper->>Artifacts: Write parsed data, issues, and transactional SQL
     Maintainer->>Artifacts: Review warnings and generated output
@@ -779,16 +812,19 @@ sequenceDiagram
     DB-->>Maintainer: Import result and verification queries
     Maintainer->>Revalidate: Secret-authenticated tags/paths request
     Revalidate->>Cache: revalidateTag / revalidatePath
-    App->>Cache: Next read
+    App->>Cache: Next selected cached lookup
     Cache->>DB: Refresh stale academic data
-    DB-->>App: Updated academic data
+    DB-->>Cache: Updated academic data
+    Cache-->>App: Refreshed lookup result
 ```
 
 ## Data Maintenance and Admin Flow
 
 ### Recommended Import Order
 
-For a fresh database, the scraper README specifies:
+For a fresh database, `scraper/README.md` specifies the first six steps below.
+Cache revalidation is a separate application operation documented by the root
+README and route handler.
 
 1. Apply `scraper/schema.sql`.
 2. Generate and import semester-week SQL.
@@ -798,45 +834,13 @@ For a fresh database, the scraper README specifies:
 6. Verify database counts/sample rows.
 7. Revalidate application caches.
 
-Run scraper commands from `scraper/`.
+Run scraper commands from `scraper/`. The key commands are
+`generate:weeks`, `scrape:all`, `download:courses`, and `parse:courses`; import
+the generated SQL with `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f <file>`.
+See `scraper/README.md` for exact arguments, review queries, and troubleshooting.
 
-```bash
-# 1. Schema
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
-
-# 2. Semester weeks
-npm run generate:weeks -- \
-  --input data/input/semester-weeks.2026.json \
-  --out data/output/semester-weeks-import.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/semester-weeks-import.sql
-
-# 3. Schedules
-npm run scrape:all -- \
-  --manifest data/input/schedule-manifest.json \
-  --out data/output/schedules-import.sql \
-  --json data/output/schedules-parsed.json \
-  --course-codes-out data/output/course-codes.txt
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules-import.sql
-
-# 4. Course synopsis PDFs
-npm run download:courses -- \
-  --codes-file data/output/course-codes.txt \
-  --out-dir data/input/course-pdfs \
-  --report-out data/output/course-pdf-download-report.tsv \
-  --manifest-out data/output/course-pdf-downloads.json
-
-# 5. Course details and assessments
-npm run parse:courses -- \
-  --pdf-dir data/input/course-pdfs \
-  --codes-file data/output/course-codes.txt \
-  --out data/output/course-details-import.sql \
-  --json data/output/course-details-parsed.json \
-  --issues-out data/output/course-parse-issues.tsv
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/course-details-import.sql
-```
-
-Generated scraper output and downloaded course PDFs are gitignored. The scraper
-SQL generator wraps generated statements in `BEGIN`/`COMMIT` by default.
+Generated scraper output and downloaded course PDFs are gitignored. Generated
+SQL is wrapped in `BEGIN`/`COMMIT` by default.
 
 ### Cache Revalidation After Import
 
@@ -861,7 +865,7 @@ The application uses two cache layers visible in the repository:
 
 1. **Next.js data cache:** selected lookup functions in `lib/db/queries.ts` use
    `unstable_cache` with a 600-second revalidation interval and cache tags.
-2. **HTTP/CDN cache headers:** API routes set `Cache-Control` and
+2. **HTTP shared-cache headers:** API routes set `Cache-Control` and
    `Vercel-Cache-Tag` headers.
 
 | Route group | Cache-Control |
@@ -883,100 +887,35 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 - API route handlers require the Node.js runtime, not the Edge runtime.
 - Database connection limits are intentionally small in production (`max: 3`).
 - The scraper is designed to run on a maintainer's machine, not inside Vercel.
-- Academic tables must already exist before the application starts.
+- Academic tables must already exist before database-backed requests can
+  succeed.
 - Do not use `drizzle-kit push` against a shared or production database unless a
   schema change is explicitly intended and reviewed.
 
 ## Common Development Tasks
 
-### Run the Application
-
-```bash
-npm run dev
-```
-
-### Validate, Typecheck, and Build
-
-```bash
-npm run validate:setup
-npm run validate:dev
-npm run typecheck
-npm run build
-```
-
-### Change a Database Query
-
-1. Update or add a function in `lib/db/queries.ts`.
-2. Keep database access out of client components.
-3. Update the relevant type in `lib/timetable/types.ts` if the returned contract
-   changes.
-4. Update cache tags/groups in `lib/cache-tags.ts` when the query's data
-   dependencies change.
-5. Typecheck and build.
-
-### Change the Database Schema
-
-1. Treat `scraper/schema.sql` as the complete DDL reference.
-2. Keep `lib/db/schema.ts` synchronized with tables/views used by the app.
-3. Review scraper SQL generation against the new constraints.
-4. Generate Drizzle migration artifacts only when intentionally adopting a
-   migration workflow:
-
-   ```bash
-   npm run db:generate
-   ```
-
-5. Do not assume generated migrations are currently the source of truth; the
-   `drizzle/` directory is intentionally empty.
-
-### Add or Change a Page
-
-- Add page/server-loading behavior under `app/`.
-- Put interactive browser behavior in a `"use client"` component under
-  `components/`.
-- Use `AppShell` for standard navigation and current-week display.
-- Use route handlers for client-side database reads rather than importing
-  server-only database code into client components.
-
-### Change Timetable Share State
-
-Update these together:
-
-- `lib/timetable/types.ts`
-- `lib/validation/timetable.ts`
-- `lib/timetable/share-url.ts`
-- `lib/timetable/local-storage.ts`
-- `/share` and planner client behavior
-
-Changing the semantic class identifier format can invalidate existing shared
-links and locally saved state, so it should be versioned deliberately.
-
-### Refresh Academic Data
-
-Follow [Data Maintenance and Admin Flow](#data-maintenance-and-admin-flow) and
-the more detailed `scraper/README.md`. Review issue TSVs before importing.
-
-### Inspect Cache Behavior
-
-- Confirm route response headers include the expected `Cache-Control` and
-  `Vercel-Cache-Tag`.
-- Use `POST /api/cache/revalidate` with the configured secret after data imports.
-- Remember that some database lookups can remain cached for up to ten minutes
-  without explicit revalidation.
+| Task | Guidance |
+|---|---|
+| Run/check the app | Use `npm run dev`, `npm run typecheck`, and `npm run build`. |
+| Change a query | Keep DB access in `lib/db/queries.ts`; update returned types and cache tags when dependencies change. |
+| Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. `drizzle/` is not currently the schema source of truth. |
+| Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered DB reads behind route handlers. |
+| Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
+| Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and revalidate caches afterward. |
 
 ## Known Limitations
 
 - There is no user account, cloud synchronization, or server-side backup of
   timetable/study-plan state.
 - Clearing browser storage or changing browsers loses locally saved plans.
-- Only timetable selections are shareable. The multi-semester study plan has no
-  share/import/export format in the repository.
+- Only timetable semester/selections are shareable. The multi-semester study
+  plan has no share/import/export format in the repository.
 - Share links are limited to 50 class identifiers and depend on those semantic
   identifiers continuing to exist in the selected semester.
 - Shared links do not preserve hidden classes, custom colors, selected week,
   orientation, or view mode.
-- Academic data freshness depends on maintainers running the local scraper,
-  reviewing generated artifacts, importing SQL, and revalidating caches.
+- Immediate academic-data freshness depends on maintainers running the local
+  scraper, reviewing/importing generated artifacts, and revalidating caches.
 - Assessment components represent the latest strategy by course and schedule
   type, not historical semester-specific assessments.
 - The codebase has no configured automated test suite.
