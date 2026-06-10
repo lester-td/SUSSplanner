@@ -54,14 +54,16 @@ flowchart LR
     Revalidate["POST /api/cache/revalidate"]
 
     User --> Browser
-    Browser <--> LocalStorage
+    Browser --> LocalStorage
+    LocalStorage --> Browser
     Browser --> NextPages
     Browser --> ShareURL
     ShareURL --> NextPages
     Browser --> API
     NextPages --> DAL
     API --> DAL
-    DAL <--> Cache
+    DAL --> Cache
+    Cache --> DAL
     DAL --> DB
 
     Maintainer --> Scraper
@@ -86,7 +88,8 @@ flowchart LR
 
 - UI components do not query Postgres directly; database access is centralized
   in `lib/db/queries.ts`.
-- `DATABASE_URL` is only read by server-side database code and Drizzle tooling.
+- `DATABASE_URL` is read by the server-side database client, Drizzle tooling,
+  and the setup validator; maintainers also pass it to `psql`.
 - Anonymous user state is not persisted server-side.
 - Share URLs use semantic class identifiers instead of database `class_id`
   values, making links independent of raw surrogate IDs.
@@ -162,7 +165,7 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 │   ├── src/parsers/             Schedule and course-detail parsers
 │   ├── src/sql/                 SQL generation
 │   ├── tools/                   Python PDF extraction helpers
-│   └── schema.sql               Canonical database DDL used by scraper setup
+│   └── schema.sql               Complete database DDL used by scraper setup
 ├── scripts/validate-project.mjs Environment and toolchain validation
 ├── ARCHITECTURE.md              Existing shorter architecture summary
 ├── README.md                    Project and route overview
@@ -242,7 +245,7 @@ The root `.env.example` defines the complete documented environment surface:
 
 | Variable | Required | Used by | Notes |
 |---|---:|---|---|
-| `DATABASE_URL` | Yes for app runtime and database tooling | `lib/db/index.ts`, `drizzle.config.ts`, maintainer `psql` commands | Must be a `postgres://` or `postgresql://` URL. Keep server-side and secret. |
+| `DATABASE_URL` | Yes for app runtime and database tooling | `lib/db/index.ts`, `drizzle.config.ts`, setup validator, maintainer `psql` commands | Must be a `postgres://` or `postgresql://` URL. Keep server-side and secret. |
 | `CACHE_REVALIDATE_SECRET` | Required only to enable cache revalidation endpoint | `app/api/cache/revalidate/route.ts` | Accepted through `x-revalidate-secret` or `Authorization: Bearer ...`. |
 | `NEXT_PUBLIC_SUPABASE_URL` | No | Setup validator only | Present for compatibility/future browser integrations; not used by runtime application code. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No | Setup validator only | Present for compatibility/future browser integrations; not used by runtime application code. |
@@ -403,14 +406,14 @@ All route handlers explicitly use the Node.js runtime.
 | `GET /api/classes` | Mode A: `courseCode` plus optional `semesterId`/`sem` and `scheduleType` | `{ classes }`; class groups and their events. |
 | `GET /api/classes` | Mode B: share query `sem` plus optional comma-separated `classes` | `{ timetable }`; resolves selections, events, clashes, weeks, and unresolved selections. |
 | `GET /api/classes/counts` | Required `semesterId`, comma-separated `courseCodes` | `{ counts }`; used to show whether selected courses have alternative class groups. |
-| `GET /api/export/ics` | Share query `sem` and `classes` | Downloadable ICS containing all resolved events in `Asia/Singapore` timezone. |
-| `GET /api/export/pdf` | Share query `sem` and `classes` | Downloadable event-list PDF with clash summary. The current timetable/share UI instead creates its PDF from a browser-rendered PNG. |
+| `GET /api/export/ics` | Required `sem`; optional `classes` list | Downloadable ICS containing all resolved events in `Asia/Singapore` timezone. |
+| `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable event-list PDF with clash summary. The current timetable/share UI instead creates its PDF from a browser-rendered PNG. |
 | `POST /api/cache/revalidate` | Secret header; JSON `{ tags?: string[], paths?: string[] }` | Revalidates known cache tags and optional paths. Defaults to all known tags when valid tags are absent. |
 
 ### Share URL Contract
 
 ```text
-/share?sem=<positive-semester-id>&classes=<identifier>,<identifier>,...
+/share?sem=<positive-semester-id>[&classes=<identifier>,<identifier>,...]
 ```
 
 Each class identifier is:
@@ -564,7 +567,6 @@ flowchart TD
     Ready["Render course bank, semesters,<br/>and assigned-credit progress"]
     Add{"Add course"}
     Catalog["Search catalog through<br/>GET /api/courses/search"]
-    CoursePage["Add to Planner from<br/>course search/detail page"]
     Manual["Enter manual course,<br/>credits, and semester span"]
     Bank["Add unassigned course to bank"]
     Arrange["Drag course to semester,<br/>bank, or trash"]
@@ -579,7 +581,6 @@ flowchart TD
     Add --> Catalog
     Add --> Manual
     Catalog --> Bank
-    CoursePage --> Bank
     Manual --> Bank
     Bank --> Normalize
     Ready --> Arrange
@@ -590,7 +591,8 @@ flowchart TD
 
 The study plan also listens for browser `storage` events and the local
 `sussplanner:study-plan-updated` event used by course-page "Add to Planner"
-buttons.
+buttons. Those buttons write directly to the same local-storage plan; the next
+planner visit hydrates that saved plan.
 
 ### Admin Flow Diagram
 
@@ -600,28 +602,37 @@ admin panel.
 ```mermaid
 flowchart TD
     Inputs["Collect schedule PDFs<br/>and semester-week JSON"]
-    Weeks["Generate semester-week SQL"]
+    Schema["For a fresh database:<br/>apply schema.sql"]
+    Weeks["Generate and review<br/>semester-week SQL"]
+    ImportWeeks["Import semester-week SQL"]
     Schedule["Extract and parse schedule PDFs;<br/>generate schedule SQL and course-code list"]
+    ReviewSchedule{"Review schedule JSON,<br/>warnings, and SQL"}
+    ImportSchedule["Import schedule SQL"]
     Download["Download daytime/evening<br/>course synopsis PDFs"]
     Course["Extract and parse course PDFs,<br/>generate course-detail SQL"]
-    Review{"Review JSON, TSV issues,<br/>warnings, and generated SQL"}
-    Fix["Correct inputs or parser output<br/>and regenerate"]
-    Import["Import in order with psql<br/>using DATABASE_URL"]
+    ReviewCourse{"Review course JSON,<br/>TSV issues, and SQL"}
+    Fix["Correct input or parser output<br/>and regenerate affected artifacts"]
+    ImportCourse["Import course-detail SQL"]
     Verify["Run database count and sample queries"]
-    Revalidate["POST /api/cache/revalidate<br/>using CACHE_REVALIDATE_SECRET"]
+    Revalidate["Optionally POST /api/cache/revalidate<br/>using CACHE_REVALIDATE_SECRET"]
     Public["Users receive refreshed academic data"]
 
+    Schema --> ImportWeeks
     Inputs --> Weeks
     Inputs --> Schedule
-    Schedule --> Download
+    Weeks --> ImportWeeks
+    ImportWeeks --> ReviewSchedule
+    Schedule --> ReviewSchedule
+    ReviewSchedule -->|Issues found| Fix
+    ReviewSchedule -->|Approved| ImportSchedule
+    ImportSchedule --> Download
     Download --> Course
-    Weeks --> Review
-    Schedule --> Review
-    Course --> Review
-    Review -->|Issues found| Fix
-    Fix --> Review
-    Review -->|Approved| Import
-    Import --> Verify
+    Course --> ReviewCourse
+    ReviewCourse -->|Issues found| Fix
+    ReviewCourse -->|Approved| ImportCourse
+    Fix -->|schedule issue| Schedule
+    Fix -->|course issue| Course
+    ImportCourse --> Verify
     Verify --> Revalidate
     Revalidate --> Public
 ```
@@ -704,7 +715,7 @@ stateDiagram-v2
 
     Ready --> Ready: add catalog or manual course
     Ready --> Ready: drag course to semester or bank
-    Ready --> Ready: edit/remove manual course
+    Ready --> Ready: edit manual course or remove course
     Ready --> Ready: add/delete empty semester
     Ready --> Ready: change credit goal
     Ready --> Persisted: plan changes
@@ -810,7 +821,7 @@ sequenceDiagram
     Maintainer->>Artifacts: Review warnings and generated output
     Maintainer->>DB: psql import using DATABASE_URL
     DB-->>Maintainer: Import result and verification queries
-    Maintainer->>Revalidate: Secret-authenticated tags/paths request
+    Maintainer->>Revalidate: Optionally send secret-authenticated tags/paths request
     Revalidate->>Cache: revalidateTag / revalidatePath
     App->>Cache: Next selected cached lookup
     Cache->>DB: Refresh stale academic data
@@ -832,7 +843,7 @@ README and route handler.
 4. Download course synopsis PDFs.
 5. Parse course synopsis PDFs and import course-detail SQL.
 6. Verify database counts/sample rows.
-7. Revalidate application caches.
+7. Optionally revalidate application caches for a prompt refresh.
 
 Run scraper commands from `scraper/`. The key commands are
 `generate:weeks`, `scrape:all`, `download:courses`, and `parse:courses`; import
@@ -901,7 +912,7 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 | Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. `drizzle/` is not currently the schema source of truth. |
 | Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered DB reads behind route handlers. |
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
-| Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and revalidate caches afterward. |
+| Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and optionally revalidate caches afterward. |
 
 ## Known Limitations
 
@@ -914,8 +925,8 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
   identifiers continuing to exist in the selected semester.
 - Shared links do not preserve hidden classes, custom colors, selected week,
   orientation, or view mode.
-- Immediate academic-data freshness depends on maintainers running the local
-  scraper, reviewing/importing generated artifacts, and revalidating caches.
+- Prompt academic-data refresh depends on maintainers running the local scraper,
+  reviewing/importing generated artifacts, and revalidating caches.
 - Assessment components represent the latest strategy by course and schedule
   type, not historical semester-specific assessments.
 - The codebase has no configured automated test suite.
