@@ -168,7 +168,7 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 │   └── schema.sql               Complete database DDL used by scraper setup
 ├── scripts/validate-project.mjs Environment and toolchain validation
 ├── ARCHITECTURE.md              Existing shorter architecture summary
-├── README.md                    Project and route overview
+├── README.md                    Project overview and quick reference
 ├── drizzle.config.ts            Drizzle Kit configuration
 ├── next.config.js               Allowed development origins
 └── vercel.json                  Vercel region configuration
@@ -238,6 +238,28 @@ npm run build
 cd scraper
 npm run typecheck
 ```
+
+### Development Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run validate:setup` | Validate first-run dependencies and local environment configuration. |
+| `npm run validate:dev` | Run the validation used automatically before `npm run dev`. |
+| `npm run validate:build` | Run the validation used automatically before `npm run build`. |
+| `npm run validate:start` | Run the validation used automatically before `npm run start`. |
+| `npm run dev` | Start the Next.js development server. |
+| `npm run typecheck` | Run root TypeScript checks without emitting files. |
+| `npm run build` | Create a production build. |
+| `npm run start` | Run the production build locally. |
+| `npm run db:generate` | Generate Drizzle migration files after an intentional schema change. |
+
+The setup validator checks supported Node/npm versions, installed dependencies,
+local environment files, and the shape of `DATABASE_URL`. It also warns about
+missing optional Supabase public variables and the cache-revalidation secret.
+
+The application assumes that the academic database schema already exists. Do
+not run `drizzle-kit push` against a shared or production database unless the
+schema change is intentional and reviewed.
 
 ## Environment Variables
 
@@ -401,14 +423,17 @@ All route handlers explicitly use the Node.js runtime.
 
 | Method and route | Inputs | Response / purpose |
 |---|---|---|
-| `GET /api/courses/search` | `q`; repeatable `semesterIds`/`semesterId`; repeatable `scheduleTypes`/`scheduleType`; presence flags `postgraduateOnly`, `availableAsGspOnly`, `writtenExamOnly`, `ecaOnly`; legacy `postgraduate=postgraduate`; repeatable `schools`/`school`; repeatable `courseLevels`/`courseLevel`; `limit` (1-100, default 25) | `{ courses }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
+| `GET /api/courses/search` | `q`; repeatable `semesterIds`/`semesterId`; repeatable `scheduleTypes`/`scheduleType`; presence flags `postgraduateOnly`, `availableAsGspOnly`, `writtenExamOnly`, `ecaOnly`; legacy `postgraduate=postgraduate`; repeatable `schools`/`school`; repeatable `courseLevels`/`courseLevel`; `limit` (1-100, default 25) | `{ courses: CourseSearchResult[] }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
 | `GET /api/courses/[courseCode]` | Optional `semesterId`, optional `scheduleType` | `{ course, classes, assessmentComponents }`; returns `404` when the course is missing. |
-| `GET /api/classes` | Mode A: `courseCode` plus optional `semesterId`/`sem` and `scheduleType` | `{ classes }`; class groups and their events. |
-| `GET /api/classes` | Mode B: share query `sem` plus optional comma-separated `classes` | `{ timetable }`; resolves selections, events, clashes, weeks, and unresolved selections. |
+| `GET /api/classes` | Mode A: `courseCode` plus optional `semesterId`/`sem` and `scheduleType` | `{ classes: CourseClassRecord[] }`; class groups and their events. |
+| `GET /api/classes` | Mode B: share query `sem` plus optional comma-separated `classes` | `{ timetable: TimetableData }`; resolves selections, events, clashes, weeks, and unresolved selections. |
 | `GET /api/classes/counts` | Required `semesterId`, comma-separated `courseCodes` | `{ counts }`; used to show whether selected courses have alternative class groups. |
-| `GET /api/export/ics` | Required `sem`; optional `classes` list | Downloadable ICS containing all resolved events in `Asia/Singapore` timezone. |
-| `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable event-list PDF with clash summary. The current timetable/share UI instead creates its PDF from a browser-rendered PNG. |
+| `GET /api/export/ics` | Required `sem`; optional `classes` list | Downloadable `text/calendar` attachment containing all resolved events in `Asia/Singapore` timezone. |
+| `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable `application/pdf` event-list attachment with clash summary. The current timetable/share UI instead creates its PDF from a browser-rendered PNG. |
 | `POST /api/cache/revalidate` | Secret header; JSON `{ tags?: string[], paths?: string[] }` | Revalidates known cache tags and optional paths. Defaults to all known tags when valid tags are absent. |
+
+PNG export is intentionally browser-side so it can preserve the rendered
+timetable view; there is no `/api/export/png` route.
 
 ### Share URL Contract
 
@@ -834,8 +859,8 @@ sequenceDiagram
 ### Recommended Import Order
 
 For a fresh database, `scraper/README.md` specifies the first six steps below.
-Cache revalidation is a separate application operation documented by the root
-README and route handler.
+Cache revalidation is a separate application operation implemented by its route
+handler.
 
 1. Apply `scraper/schema.sql`.
 2. Generate and import semester-week SQL.
@@ -861,6 +886,9 @@ curl -X POST https://<deployment>/api/cache/revalidate \
   -H "content-type: application/json" \
   -d '{"tags":["semesters","semester-weeks","classes","courses","assessments"],"paths":["/","/timetable","/planner","/courses"]}'
 ```
+
+Use an empty JSON body (`{}`) to revalidate all known tags, or provide only the
+`tags` and optional `paths` that should be invalidated.
 
 Valid tags are:
 
