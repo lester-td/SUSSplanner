@@ -91,6 +91,7 @@ export function StudyPlanClient({
   const [editingCredits, setEditingCredits] = useState("5");
   const [editingSemesterSpan, setEditingSemesterSpan] = useState("1");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [backupMenuOpen, setBackupMenuOpen] = useState(false);
   const [importedPlan, setImportedPlan] = useState<StudyPlanState | null>(null);
   const [importedPlanFileName, setImportedPlanFileName] = useState("");
   const [notice, setNotice] = useState("");
@@ -138,6 +139,24 @@ export function StudyPlanClient({
       window.clearTimeout(noticeTimeoutRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (!backupMenuOpen)
+    {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && !target.closest("[data-backup-popover-root]"))
+      {
+        setBackupMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [backupMenuOpen]);
 
   useEffect(() => {
     if (!deferredSearch.trim())
@@ -286,6 +305,7 @@ export function StudyPlanClient({
     anchor.click();
     anchor.remove();
     window.URL.revokeObjectURL(url);
+    setBackupMenuOpen(false);
     showNoticeMessage("Semester plan exported.");
   }
 
@@ -744,31 +764,69 @@ export function StudyPlanClient({
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2 self-start">
-                <button
-                  type="button"
-                  onClick={exportPlan}
-                  className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                >
-                  <DownloadIcon className="h-4 w-4" />
-                  Export Plan
-                </button>
-                <button
-                  type="button"
-                  onClick={() => importFileInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                >
-                  <UploadIcon className="h-4 w-4" />
-                  Import Plan
-                </button>
-                <button
-                  type="button"
-                  onClick={openPlanPdf}
-                  className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                >
-                  <DownloadIcon className="h-4 w-4" />
-                  Download PDF
-                </button>
+              <div className="flex flex-col items-start gap-1.5 self-start md:items-end">
+                <div className="flex gap-2 md:justify-end">
+                  <button
+                    type="button"
+                    onClick={openPlanPdf}
+                    className="inline-flex items-center gap-2 rounded-[0.6rem] bg-[var(--primary)] px-3.5 py-2.5 text-[12px] font-semibold leading-4 text-[var(--on-primary)] shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
+                  >
+                    <DownloadIcon className="h-4 w-4" />
+                    Download PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResetConfirmOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--error)] bg-[var(--surface-container-lowest)] px-3.5 py-2.5 text-[12px] font-semibold leading-4 text-[var(--error)] transition-colors hover:bg-[var(--error-container)]"
+                  >
+                    <RefreshIcon className="h-4 w-4" />
+                    Reset Planner
+                  </button>
+                </div>
+                <div className="relative self-start md:self-end" data-backup-popover-root>
+                  <button
+                    type="button"
+                    onClick={() => setBackupMenuOpen((current) => !current)}
+                    aria-expanded={backupMenuOpen}
+                    aria-haspopup="menu"
+                    className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-transparent px-2 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:border-[var(--outline-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  >
+                    <DownloadIcon className="h-3.5 w-3.5" />
+                    Backup Plan
+                  </button>
+                  {backupMenuOpen ? (
+                    <div className="elev-3 absolute right-auto top-full z-30 mt-1.5 w-[17rem] rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2 md:right-0">
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -top-[7px] left-5 h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] md:left-auto md:right-5"
+                      />
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={exportPlan}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
+                        >
+                          <DownloadIcon className="h-4 w-4" />
+                          Export
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBackupMenuOpen(false);
+                            importFileInputRef.current?.click();
+                          }}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
+                        >
+                          <UploadIcon className="h-4 w-4" />
+                          Import
+                        </button>
+                      </div>
+                      <p className="mt-2 border-t border-[var(--outline-variant)] px-1 pt-2 text-[10px] leading-4 text-[var(--on-surface-variant)]">
+                        Export a restorable JSON backup, or import one to replace your current semester plan after confirmation.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
                 <input
                   ref={importFileInputRef}
                   type="file"
@@ -779,14 +837,6 @@ export function StudyPlanClient({
                     event.target.value = "";
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setResetConfirmOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                >
-                  <RefreshIcon className="h-4 w-4" />
-                  Reset Planner
-                </button>
               </div>
             </div>
 
