@@ -597,6 +597,8 @@ flowchart TD
     Arrange["Drag course to semester,<br/>bank, or trash"]
     Normalize["Normalize semester span<br/>and assignment bounds"]
     Persist["Persist plan to localStorage"]
+    Export["Export versioned JSON backup"]
+    Import["Validate JSON backup and<br/>confirm replacement"]
 
     Open --> Restore
     Restore -->|No| Default
@@ -612,6 +614,9 @@ flowchart TD
     Arrange --> Normalize
     Normalize --> Persist
     Persist --> Ready
+    Ready --> Export
+    Ready --> Import
+    Import --> Normalize
 ```
 
 The study plan also listens for browser `storage` events and the local
@@ -751,6 +756,11 @@ stateDiagram-v2
 Study-plan normalization limits plans to 1-20 semesters and 300 courses.
 Catalog courses normally span one semester; `NIE301`, `NIE351`, and course codes
 ending in `499` are inferred to span two semesters.
+
+Study plans can be exported and restored through a versioned JSON backup with
+format identifier `sussplanner-study-plan`. Imports must pass the backup and
+study-plan Zod schemas before the user can confirm replacement of the current
+plan.
 
 ## Key Sequence Diagrams
 
@@ -946,9 +956,10 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 
 - There is no user account, cloud synchronization, or server-side backup of
   timetable/study-plan state.
-- Clearing browser storage or changing browsers loses locally saved plans.
+- Clearing browser storage or changing browsers loses locally saved plans that
+  were not exported as JSON backups.
 - Only timetable semester/selections are shareable. The multi-semester study
-  plan has no share/import/export format in the repository.
+  plan can be imported/exported as JSON but cannot be shared through a URL.
 - Share links are limited to 50 class identifiers and depend on those semantic
   identifiers continuing to exist in the selected semester.
 - Shared links do not preserve hidden classes, custom colors, selected week,

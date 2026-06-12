@@ -29,6 +29,7 @@ import {
   TbSun,
   TbSwitchHorizontal,
   TbTrash,
+  TbUpload,
   TbX,
 } from "react-icons/tb";
 
@@ -69,6 +70,11 @@ export function TrashIcon({ className }: IconProps)
 export function DownloadIcon({ className }: IconProps)
 {
   return renderIcon(TbDownload, className);
+}
+
+export function UploadIcon({ className }: IconProps)
+{
+  return renderIcon(TbUpload, className);
 }
 
 export function CalendarIcon({ className }: IconProps)

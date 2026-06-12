@@ -502,8 +502,10 @@ SUSSPlanner keeps one multi-semester study plan at a time. To compare options:
 - Avoid clearing browser data if you want to keep your plans.
 - Do not rely on private or incognito windows for long-term saving.
 - Download or share important timetables as a reference.
-- Remember that the multi-semester Planner does not currently have an export or
-  backup feature.
+- Select **Export Plan** in the Semester Planner to download a restorable JSON
+  backup.
+- Select **Import Plan** to validate a backup and review its module and semester
+  counts before replacing the current plan.
 
 ## Frequently Asked Questions
 

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import {
   BookIcon,
   CalendarWeekIcon,
+  DownloadIcon,
   EditIcon,
   EditCalendarIcon,
   LayersIcon,
@@ -15,6 +16,7 @@ import {
   SchoolIcon,
   SearchIcon,
   TrashIcon,
+  UploadIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
 import {
@@ -24,7 +26,9 @@ import {
   defaultStudyPlanState,
   loadStudyPlanState,
   normalizeStudyPlanState,
+  parseStudyPlanBackup,
   saveStudyPlanState,
+  serializeStudyPlanBackup,
 } from "@/lib/planner/storage";
 import type { StudyPlanCourse, StudyPlanState } from "@/lib/planner/types";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
@@ -86,10 +90,13 @@ export function StudyPlanClient({
   const [editingCredits, setEditingCredits] = useState("5");
   const [editingSemesterSpan, setEditingSemesterSpan] = useState("1");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [importedPlan, setImportedPlan] = useState<StudyPlanState | null>(null);
+  const [importedPlanFileName, setImportedPlanFileName] = useState("");
   const [notice, setNotice] = useState("");
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<DropZone>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const deferredSearch = useDeferredValue(searchQuery);
 
   useEffect(() => {
@@ -263,6 +270,58 @@ export function StudyPlanClient({
   {
     setPlan(defaultStudyPlanState());
     showNoticeMessage("Planner reset.");
+  }
+
+  function exportPlan()
+  {
+    const date = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([serializeStudyPlanBackup(plan)], { type: "application/json" });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = `sussplanner-semester-plan-${date}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
+    showNoticeMessage("Semester plan exported.");
+  }
+
+  async function selectImportFile(file: File | undefined)
+  {
+    if (!file)
+    {
+      return;
+    }
+
+    if (file.size > 1_000_000)
+    {
+      showNoticeMessage("Import failed: backup file is too large.");
+      return;
+    }
+
+    try
+    {
+      setImportedPlan(parseStudyPlanBackup(await file.text()));
+      setImportedPlanFileName(file.name);
+    }
+    catch {
+      showNoticeMessage("Import failed: select a valid SUSSPlanner semester plan backup.");
+    }
+  }
+
+  function confirmPlanImport()
+  {
+    if (!importedPlan)
+    {
+      return;
+    }
+
+    setPlan(importedPlan);
+    setImportedPlan(null);
+    setImportedPlanFileName("");
+    showNoticeMessage("Semester plan imported.");
   }
 
   function addSemester()
@@ -676,14 +735,42 @@ export function StudyPlanClient({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setResetConfirmOpen(true)}
-                className="inline-flex items-center gap-2 self-start rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <RefreshIcon className="h-4 w-4" />
-                Reset Planner
-              </button>
+              <div className="flex flex-wrap gap-2 self-start">
+                <button
+                  type="button"
+                  onClick={exportPlan}
+                  className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                >
+                  <DownloadIcon className="h-4 w-4" />
+                  Export Plan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => importFileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                >
+                  <UploadIcon className="h-4 w-4" />
+                  Import Plan
+                </button>
+                <input
+                  ref={importFileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  className="hidden"
+                  onChange={(event) => {
+                    void selectImportFile(event.target.files?.[0]);
+                    event.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setResetConfirmOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                >
+                  <RefreshIcon className="h-4 w-4" />
+                  Reset Planner
+                </button>
+              </div>
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -969,6 +1056,42 @@ export function StudyPlanClient({
           </section>
         </section>
       </div>
+
+      <Modal
+        open={importedPlan !== null}
+        title="Import Semester Plan?"
+        description={`Importing ${importedPlanFileName || "this backup"} will replace your current semester plan.`}
+        onClose={() => {
+          setImportedPlan(null);
+          setImportedPlanFileName("");
+        }}
+        maxWidthClassName="max-w-md"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setImportedPlan(null);
+                setImportedPlanFileName("");
+              }}
+              className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmPlanImport}
+              className="rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)]"
+            >
+              Replace Current Plan
+            </button>
+          </>
+        )}
+      >
+        <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
+          The backup contains {importedPlan?.courses.length ?? 0} modules across {importedPlan?.numSemesters ?? 0} semesters. Export your current plan first if you may need it later.
+        </p>
+      </Modal>
 
       <Modal
         open={resetConfirmOpen}
