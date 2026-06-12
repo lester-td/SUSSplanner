@@ -19,6 +19,7 @@ import {
   UploadIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
+import { openStudyPlanPrintView } from "@/lib/export/study-plan-print";
 import {
   STUDY_PLAN_UPDATED_EVENT,
   createCatalogStudyPlanCourse,
@@ -286,6 +287,14 @@ export function StudyPlanClient({
     anchor.remove();
     window.URL.revokeObjectURL(url);
     showNoticeMessage("Semester plan exported.");
+  }
+
+  function openPlanPdf()
+  {
+    if (!openStudyPlanPrintView(plan))
+    {
+      showNoticeMessage("Unable to open PDF view. Allow pop-ups and try again.");
+    }
   }
 
   async function selectImportFile(file: File | undefined)
@@ -751,6 +760,14 @@ export function StudyPlanClient({
                 >
                   <UploadIcon className="h-4 w-4" />
                   Import Plan
+                </button>
+                <button
+                  type="button"
+                  onClick={openPlanPdf}
+                  className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                >
+                  <DownloadIcon className="h-4 w-4" />
+                  Download PDF
                 </button>
                 <input
                   ref={importFileInputRef}

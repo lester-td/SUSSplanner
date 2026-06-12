@@ -506,6 +506,8 @@ SUSSPlanner keeps one multi-semester study plan at a time. To compare options:
   backup.
 - Select **Import Plan** to validate a backup and review its module and semester
   counts before replacing the current plan.
+- Select **Download PDF** to open an A4-formatted plan in a new tab, then use
+  **Print / Save as PDF**.
 
 ## Frequently Asked Questions
 

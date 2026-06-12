@@ -760,7 +760,9 @@ ending in `499` are inferred to span two semesters.
 Study plans can be exported and restored through a versioned JSON backup with
 format identifier `sussplanner-study-plan`. Imports must pass the backup and
 study-plan Zod schemas before the user can confirm replacement of the current
-plan.
+plan. The study-plan PDF action uses the same normalized state model to open an
+A4 print view in a new tab. User-entered plan strings are HTML-escaped before
+the print document is written.
 
 ## Key Sequence Diagrams
 
