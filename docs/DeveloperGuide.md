@@ -647,12 +647,14 @@ planner visit hydrates that saved plan.
 
 The planner header provides these data-protection and presentation actions:
 
-- **Export Plan** serializes the current normalized plan into a versioned JSON
-  backup and downloads it as
+- **Backup Plan** opens a menu containing the JSON **Export** and **Import**
+  actions.
+- **Export** serializes the current normalized plan into a versioned JSON backup
+  and downloads it as
   `sussplanner-semester-plan-YYYY-MM-DD.json`.
-- **Import Plan** reads a local JSON file, rejects files larger than 1 MB,
-  parses and validates the backup, and shows a module/semester summary before
-  the user confirms replacement of the current plan.
+- **Import** reads a local JSON file, rejects files larger than 1 MB, parses and
+  validates the backup, and shows a module/semester summary before the user
+  confirms replacement of the current plan.
 - **Download PDF** uses the same normalized `StudyPlanState` as JSON export to
   create an escaped A4 HTML document. It opens the document through a temporary
   Blob URL in a new tab, where the user selects **Print / Save as PDF**.
@@ -873,13 +875,13 @@ sequenceDiagram
     participant Browser as Browser file / print APIs
 
     alt Export JSON backup
-        Student->>UI: Select Export Plan
+        Student->>UI: Select Backup Plan, then Export
         UI->>Storage: serializeStudyPlanBackup(plan)
         Storage->>Validation: Validate and normalize plan
         Storage-->>UI: Versioned JSON string
         UI->>Browser: Download JSON Blob
     else Import JSON backup
-        Student->>UI: Select Import Plan and local JSON file
+        Student->>UI: Select Backup Plan, then Import and local JSON file
         UI->>UI: Reject file if larger than 1 MB
         UI->>Storage: parseStudyPlanBackup(file text)
         Storage->>Validation: Validate envelope and plan
