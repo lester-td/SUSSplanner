@@ -769,17 +769,17 @@ export function StudyPlanClient({
                   <button
                     type="button"
                     onClick={openPlanPdf}
-                    className="inline-flex items-center gap-2 rounded-[0.6rem] bg-[var(--primary)] px-3.5 py-2.5 text-[12px] font-semibold leading-4 text-[var(--on-primary)] shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
+                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-primary)] shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
                   >
-                    <DownloadIcon className="h-4 w-4" />
+                    <DownloadIcon className="h-3.5 w-3.5" />
                     Download PDF
                   </button>
                   <button
                     type="button"
                     onClick={() => setResetConfirmOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-[0.6rem] border border-[var(--error)] bg-[var(--surface-container-lowest)] px-3.5 py-2.5 text-[12px] font-semibold leading-4 text-[var(--error)] transition-colors hover:bg-[var(--error-container)]"
+                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] border border-[var(--error)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--error)] transition-colors hover:bg-[var(--error-container)]"
                   >
-                    <RefreshIcon className="h-4 w-4" />
+                    <RefreshIcon className="h-3.5 w-3.5" />
                     Reset Planner
                   </button>
                 </div>
