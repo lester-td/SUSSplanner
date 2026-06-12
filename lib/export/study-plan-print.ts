@@ -125,7 +125,7 @@ export function openStudyPlanPrintView(state: StudyPlanState)
       .subtitle { margin-top: 4px; color: #42516a; font-size: 12px; }
       .summary {
         display: grid;
-        grid-template-columns: 2fr 2fr 1fr 1fr;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 8px;
         margin: 16px 0;
       }
@@ -141,6 +141,7 @@ export function openStudyPlanPrintView(state: StudyPlanState)
         font-size: 9px;
         font-weight: 700;
         letter-spacing: 0.08em;
+        white-space: nowrap;
         text-transform: uppercase;
       }
       .summary-value { display: block; margin-top: 3px; font-size: 15px; }
@@ -210,7 +211,7 @@ export function openStudyPlanPrintView(state: StudyPlanState)
           <strong class="summary-value">${formatCredits(assignedCredits)}</strong>
         </div>
         <div class="summary-item">
-          <span class="summary-label">Modules</span>
+          <span class="summary-label">Total Modules</span>
           <strong class="summary-value">${plan.courses.length}</strong>
         </div>
         <div class="summary-item">
