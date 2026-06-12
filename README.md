@@ -1,11 +1,8 @@
 # SUSS Planner
 
-SUSS Planner is a full-stack timetable planner for SUSS students. It is built on Next.js App Router and reads directly from an existing Supabase Postgres schema via Drizzle.
-
-This repo contains:
-
-- the web app (`/`)
-- a local scraping/import pipeline (`/scraper`) for updating academic data
+SUSS Planner is a student-built academic planning platform for SUSS students.
+It includes a Next.js web application and a local scraping/import pipeline for
+maintaining academic data.
 
 ## What This App Does
 
@@ -14,278 +11,102 @@ This repo contains:
 - Supports read-only shared links with optional one-click import into local state
 - Exports selected timetable data as PDF, ICS, or PNG
 - Stores planner state in browser `localStorage` (no user auth required)
+- Supports course search, course details, and multi-semester study planning
 
-## Tech Stack
+## At a Glance
 
-### Web app (`/`)
+| Area | Main technologies |
+|---|---|
+| Web application | Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4 |
+| Data and validation | Supabase-compatible Postgres, Drizzle ORM, Zod |
+| Exports | `pdf-lib`, `html-to-image`, and ICS generation |
+| Data ingestion | Local Node.js/TypeScript scraper with Python `pdfplumber` helpers |
 
-- Next.js 16 (App Router + Route Handlers)
-- React 19
-- TypeScript
-- Drizzle ORM + `postgres` driver
-- Supabase Postgres (via `DATABASE_URL`)
-- Tailwind CSS v4
-- Zod
-- `pdf-lib` (PDF export)
-- `html-to-image` (client-side PNG export)
-
-### Scraper (`/scraper`)
-
-- Node.js + TypeScript CLI scripts
-- Python (`pdfplumber`) for PDF extraction helpers
-- SQL generation for `psql`/Supabase import
-
-## Repository Layout
-
-```text
-app/                    Next.js routes (pages + API route handlers)
-components/             UI components
-lib/db/                 Drizzle client, schema, queries
-lib/timetable/          Timetable domain logic (share URL, clash detection, storage)
-lib/export/             ICS/PDF/PNG export logic
-lib/validation/         Zod schemas
-drizzle/                Intentionally empty for this rewrite (no destructive migrations)
-scraper/                Local data scraping + SQL generation workflow
-```
+The repository contains the web application at the root and a separate
+maintainer-operated ingestion pipeline under [`scraper/`](./scraper).
 
 ## Prerequisites
 
-- Node.js (current LTS recommended)
-- npm
-- A Postgres connection string (Supabase or compatible) with the expected schema/data
+- Node.js 20+
+- npm 10+
+- A Postgres connection string for a database containing the expected academic
+  schema and data
 
-Optional for scraper workflow:
+The scraper additionally uses Python 3.10+ and `psql`.
 
-- Python 3.10+
-- `psql`
-
-## Environment Variables
-
-Create `.env.local` in repo root:
-
-```env
-DATABASE_URL=
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-CACHE_REVALIDATE_SECRET=
-```
-
-Notes:
-
-- `DATABASE_URL` is required and used server-side by the app and Drizzle config.
-- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently not required by runtime code, but are kept for compatibility/future browser integrations.
-- `CACHE_REVALIDATE_SECRET` secures the on-demand cache invalidation endpoint used after DB refreshes/imports.
-- Never commit real credentials.
-
-## Install And Run
+## Quick Start
 
 ```bash
 npm install
+cp .env.example .env.local
+# Set DATABASE_URL in .env.local
 npm run validate:setup
 npm run dev
 ```
 
 Open `http://localhost:3000`.
 
-The validation step checks first-run prerequisites before you spend time waiting on a failed boot:
+## Quick Reference
 
-- supported Node/npm versions
-- installed dependencies
-- presence of local environment files
-- required `DATABASE_URL` shape
-- optional warnings for Supabase public envs and cache revalidation secret
-
-`npm run dev`, `npm run build`, and `npm run start` also run mode-specific validation automatically and fail fast with actionable messages if setup is incomplete.
-
-## Useful Commands
+### Common Commands
 
 ```bash
-npm run validate:setup # First-run setup validation
-npm run validate:dev   # Validation used before `npm run dev`
-npm run validate:build # Validation used before `npm run build`
-npm run validate:start # Validation used before `npm run start`
-npm run typecheck   # TypeScript checks
-npm run build       # Production build
-npm run start       # Run production build locally
-npm run db:generate # Generate Drizzle migration files (only when you intentionally change schema)
+npm run dev             # Start the development server
+npm run typecheck       # Run TypeScript checks
+npm run build           # Create a production build
+npm run start           # Run the production build
+npm run validate:setup  # Validate first-run setup
 ```
 
-Important:
+### Primary Routes
 
-- The current architecture assumes the existing Supabase academic tables already exist.
-- Do not run `drizzle-kit push` against production/shared Supabase unless you explicitly intend schema changes.
+| Route | Purpose |
+|---|---|
+| `/` and `/timetable` | Interactive timetable planner |
+| `/courses` | Search and filter the course catalog |
+| `/courses/[courseCode]` | View course, assessment, and class details |
+| `/planner` | Build a browser-local multi-semester study plan |
+| `/share?sem=...&classes=...` | Preview and optionally import a shared timetable |
 
-## App Routes
+### Environment
 
-### Pages
+Copy `.env.example` to `.env.local`. `DATABASE_URL` is required for the
+application. `CACHE_REVALIDATE_SECRET` enables authenticated on-demand cache
+invalidation. The `NEXT_PUBLIC_SUPABASE_*` variables are currently optional and
+unused by runtime application code. Never commit real credentials.
 
-- `/` -> renders the same page as `/timetable` (`app/page.tsx` re-export)
-- `/timetable` -> interactive timetable planner
-- `/planner` -> semester planner
-- `/courses` -> course search page with filters
-- `/courses/[courseCode]` -> course detail page; optional query `semesterId`
-- `/share` -> shared timetable preview/import page
-  - expected query params: `sem`, `classes`
+### Important Architecture Notes
 
-### API Routes
+- Normal users do not sign in. Timetable and study-plan state is stored in
+  browser `localStorage`; clearing browser storage loses that state.
+- Shared timetable links are read-only until the recipient explicitly imports
+  them.
+- The application reads academic data but does not update academic tables.
+- The academic database schema must already exist before the app can run.
+- Do not run `drizzle-kit push` against shared or production databases unless
+  an intentional schema change has been reviewed.
 
-All current API routes run on Node.js runtime. Most are `GET`; cache invalidation uses `POST`.
-
-1. `/api/courses/search`
-- Query params:
-  - `q`
-  - `semesterIds` (repeatable) or `semesterId`
-  - `scheduleTypes` (repeatable) or `scheduleType` (`daytime` | `evening`)
-  - `postgraduateOnly` or legacy `postgraduate=postgraduate`
-  - `availableAsGspOnly`
-  - `schools` (repeatable) or `school`
-  - `courseLevels` (repeatable) or `courseLevel`
-  - `limit` (default `25`, max `100`)
-- Response:
-  - `{ courses: CourseSearchResult[] }`
-
-2. `/api/courses/[courseCode]`
-- Query params:
-  - `semesterId` (optional)
-  - `scheduleType` (optional: `daytime` | `evening`)
-- Response:
-  - `{ course, classes, assessmentComponents }`
-- Error:
-  - `404` when course code is not found
-
-3. `/api/classes`
-- Mode A (course group lookup):
-  - Query: `courseCode` + optional `semesterId`/`sem`, `scheduleType`
-  - Response: `{ classes: CourseClassRecord[] }`
-- Mode B (timetable resolution from share params):
-  - Query: `sem` + `classes`
-  - Response: `{ timetable: TimetableData }`
-
-4. `/api/cache/revalidate`
-- Method: `POST`
-- Headers:
-  - `x-revalidate-secret: <CACHE_REVALIDATE_SECRET>` or `Authorization: Bearer <CACHE_REVALIDATE_SECRET>`
-- JSON body:
-  - `tags?: string[]` (`semesters`, `semester-weeks`, `classes`, `courses`, `assessments`)
-  - `paths?: string[]`
-- Behavior:
-  - Revalidates the provided cache tags; if `tags` is omitted, all known tags are revalidated.
-  - Optional `paths` can also be revalidated when you want to clear route-level caches alongside data caches.
-- Example: revalidate all known tags
-
-```bash
-curl -X POST http://localhost:3000/api/cache/revalidate \
-  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
-  -H "content-type: application/json" \
-  -d '{}'
-```
-
-- Example: revalidate only class and course data after a schedules import
-
-```bash
-curl -X POST http://localhost:3000/api/cache/revalidate \
-  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
-  -H "content-type: application/json" \
-  -d '{"tags":["classes","courses","assessments"]}'
-```
-
-- Example: revalidate tags and route paths together
-
-```bash
-curl -X POST http://localhost:3000/api/cache/revalidate \
-  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
-  -H "content-type: application/json" \
-  -d '{"tags":["semesters","semester-weeks","classes"],"paths":["/","/planner","/timetable"]}'
-```
-
-5. `/api/export/ics`
-- Query: share params (`sem`, `classes`)
-- Response: calendar attachment (`text/calendar`)
-
-6. `/api/export/pdf`
-- Query: share params (`sem`, `classes`)
-- Response: PDF attachment (`application/pdf`)
-
-PNG export is intentionally client-side (no `/api/export/png`) to preserve the rendered UI view.
-
-## Share URL Format
-
-Share URLs are stateless and encode selected classes semantically.
-
-Format:
-
-```text
-/share?sem=<semesterId>&classes=<identifier>,<identifier>,...
-```
-
-Class identifier format:
-
-```text
-COURSECODE:scheduleType:groupCodeType:groupCode
-```
-
-Example:
-
-```text
-/share?sem=1&classes=ICT133:evening:TG:T01,ANL252:daytime:CRN:12345
-```
-
-Validation constraints:
-
-- `scheduleType`: `daytime` | `evening`
-- `groupCodeType`: `TG` | `CRN`
-- up to 50 selected class identifiers in one shared payload
-
-If a shared identifier no longer maps to current DB rows, it is returned in `unresolvedSelections` and surfaced in the UI.
-
-## Local State Persistence
-
-Planner state is stored in browser `localStorage` under:
-
-```text
-sussplanner.timetable.v1
-```
-
-Persisted fields:
-
-- `semesterId`
-- `selectedClasses`
-- `hiddenClasses`
-- `selectedWeekId`
-- `orientation`
-- `viewMode`
-
-Shared links do not auto-overwrite local state. Overwrite only happens after explicit import confirmation in `/share`.
-
-## Database And Schema Expectations
-
-The app expects these tables/views (read path):
-
-- `courses`
-- `semesters`
-- `semester_weeks`
-- `classes`
-- `class_events`
-- `assessment_components`
-- `v_class_events_with_week` (treated as read-only)
-
-`lib/db/schema.ts` mirrors this schema manually. This rewrite intentionally avoids destructive migration workflows for core academic tables.
+For the complete architecture, setup, environment-variable table, repository
+structure, API contracts, share/local-state formats, database notes, diagrams,
+development workflows, and deployment guidance, see the
+[Developer Guide](./docs/DeveloperGuide.md).
 
 ## Scraper Workflow
 
-The scraper is a separate local workflow under [`scraper/`](./scraper):
+The scraper is a separate maintainer workflow under [`scraper/`](./scraper).
+See the [scraper guide](./scraper/README.md) for setup, PDF parsing, SQL
+generation, import order, validation, and troubleshooting.
 
-```bash
-cd scraper
-npm install
-```
+## Documentation
 
-See [`scraper/README.md`](./scraper/README.md) for:
-
-- schedule PDF parsing
-- course synopsis PDF download/parsing
-- semester week SQL generation
-- import order and validation checks
+- [User Guide](./docs/UserGuide.md): student-facing instructions for
+  timetables, sharing, course search, exports, and study planning
+- [Developer Guide](./docs/DeveloperGuide.md): architecture, setup, routes,
+  state models, diagrams, deployment, and development workflows
+- [Scraper Guide](./scraper/README.md): academic-data maintenance and import
+  workflow
+- [Architecture Summary](./ARCHITECTURE.md): focused runtime and data-flow
+  reference
 
 ## License
 
