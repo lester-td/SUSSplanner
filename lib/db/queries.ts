@@ -507,6 +507,37 @@ export async function searchCourses({
   } satisfies CourseSearchResult));
 }
 
+export async function searchCalculatorCourses(searchTerm: string, limit = 8)
+{
+  const normalizedSearchTerm = searchTerm.trim().slice(0, 120);
+  if (!normalizedSearchTerm)
+  {
+    return [];
+  }
+
+  const searchRanking = sql<number>`case
+    when upper(${courses.courseCode}) = upper(${normalizedSearchTerm}) then 0
+    when upper(${courses.courseCode}) like upper(${`${normalizedSearchTerm}%`}) then 1
+    when upper(${courses.courseCode}) like upper(${`%${normalizedSearchTerm}%`}) then 2
+    when ${courses.courseName} ilike ${`${normalizedSearchTerm}%`} then 3
+    else 4
+  end`;
+
+  return db
+    .select({
+      courseCode: courses.courseCode,
+      courseName: courses.courseName,
+      creditUnits: courses.creditUnits,
+    })
+    .from(courses)
+    .where(or(
+      ilike(courses.courseCode, `%${normalizedSearchTerm}%`),
+      ilike(courses.courseName, `%${normalizedSearchTerm}%`),
+    ))
+    .orderBy(asc(searchRanking), asc(courses.courseCode))
+    .limit(Math.min(20, Math.max(1, limit)));
+}
+
 export async function getCourseOfferedSemesters(courseCode: string)
 {
   return (await getOfferedSemestersForCourseCodes([courseCode])).get(normalizeCourseCode(courseCode)) ?? [];

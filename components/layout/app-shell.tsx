@@ -40,7 +40,7 @@ export function AppShell({
   currentWeekLabel,
   children,
 }: {
-  activeSection: PlannerSection;
+  activeSection: PlannerSection | null;
   currentWeekLabel: string;
   children: ReactNode;
 })

@@ -7,7 +7,7 @@ out under [Assumptions / Gaps](#assumptions--gaps).
 
 ## Project Overview
 
-SUSSPlanner is a student-built academic planning platform with three main
+SUSSPlanner is a student-built academic planning platform with four main
 anonymous-user capabilities:
 
 1. Build a semester timetable from SUSS course class groups, inspect clashes,
@@ -17,13 +17,15 @@ anonymous-user capabilities:
 3. Build a multi-semester study plan using catalog courses or manually entered
    courses, export/import a restorable JSON backup, and open an A4 print view
    for saving as PDF.
+4. Calculate current and cumulative GPA from catalog or custom modules and
+   compare current-semester Pass/Fail strategies.
 
-Normal users do not have accounts. Timetable and study-plan state are stored in
-browser `localStorage`. Study plans can additionally be backed up to and
-restored from a local JSON file, or opened as an A4 print view for saving as
-PDF. A timetable can be shared through a semantic URL that contains a semester
-ID and selected class identifiers. The shared page remains read-only until the
-recipient explicitly imports it into their local timetable.
+Normal users do not have accounts. Timetable, study-plan, and GPA-calculator
+state are stored in browser `localStorage`. Study plans can additionally be
+backed up to and restored from a local JSON file, or opened as an A4 print view
+for saving as PDF. A timetable can be shared through a semantic URL that
+contains a semester ID and selected class identifiers. The shared page remains
+read-only until the recipient explicitly imports it into their local timetable.
 
 The repository contains two cooperating workspaces:
 
@@ -44,7 +46,7 @@ flowchart LR
     User["Anonymous student"]
     Maintainer["Maintainer / data operator"]
     Browser["Browser<br/>React client components"]
-    LocalStorage["Browser localStorage<br/>timetable + study plan"]
+    LocalStorage["Browser localStorage<br/>timetable + study plan + GPA calculator"]
     StudyPlanBackup["Study-plan JSON backup<br/>local file"]
     StudyPlanPrint["A4 study-plan print view<br/>Blob URL in new tab"]
     ShareURL["Share URL<br/>sem + semantic class identifiers"]
@@ -86,7 +88,7 @@ flowchart LR
 
 | Boundary | Responsibilities | Key files |
 |---|---|---|
-| Browser | Interactive timetable, course search UI, study planner, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 study-plan print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/study-plan-print.ts` |
+| Browser | Interactive timetable, course search UI, study planner, GPA calculator, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 study-plan print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/study-plan-print.ts` |
 | Next.js server | Server-rendered pages, validation, API route handlers, server-side ICS/PDF endpoints | `app/`, `lib/validation/`, `lib/export/ics.ts`, `lib/export/pdf.ts` |
 | Data access layer | Centralized Drizzle queries, timetable assembly, clash detection, cached lookups | `lib/db/queries.ts`, `lib/db/index.ts`, `lib/timetable/clash-detection.ts` |
 | Postgres | Source of truth for academic catalog, semester, class, event, and assessment data | `scraper/schema.sql`, mirrored by `lib/db/schema.ts` |
@@ -151,11 +153,13 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 .
 ├── app/                         Next.js pages and API route handlers
 │   ├── api/                     JSON, export, and cache-revalidation routes
+│   ├── calculator/              Unlinked GPA-calculator page
 │   ├── courses/                 Course search and detail pages
 │   ├── planner/                 Multi-semester study-plan page
 │   ├── share/                   Read-only shared timetable page
 │   └── timetable/               Interactive timetable page
 ├── components/
+│   ├── calculator/              GPA calculator client UI and browser-local state
 │   ├── courses/                 Course search/detail client components
 │   ├── layout/                  Shared application shell and navigation
 │   ├── planner/                 Study-plan UI and shared icons
@@ -419,12 +423,15 @@ class-group, semester, and optional week information.
 | `/` | Re-exports `/timetable`; force-dynamic. |
 | `/timetable` | Server-loads semesters with classes/weeks, then `PlannerClient` restores local state and fetches timetable/course/class data interactively. |
 | `/planner` | Server-loads semester metadata, then `StudyPlanClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
+| `/calculator` | Force-dynamic, unlinked, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` manages browser-local current/cumulative GPA calculations and Pass/Fail strategy. |
 | `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` performs debounced API search using filters. |
 | `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
 | `/share?sem=...&classes=...` | Validates and resolves the shared timetable on the server, then renders a read-only `ShareClient` with explicit import. Missing or malformed parameters get explanatory UI. |
 
 The shared `AppShell` provides navigation to Timetable, Courses, and Planner.
-`/share` is not a primary navigation item and is reached through a share URL.
+`/share` is reached through a share URL. `/calculator` is intentionally not a
+navigation item and passes `activeSection={null}` so no existing navigation
+item appears active.
 
 ## API and Backend Routes
 
@@ -433,6 +440,7 @@ All route handlers explicitly use the Node.js runtime.
 | Method and route | Inputs | Response / purpose |
 |---|---|---|
 | `GET /api/courses/search` | `q`; repeatable `semesterIds`/`semesterId`; repeatable `scheduleTypes`/`scheduleType`; presence flags `postgraduateOnly`, `availableAsGspOnly`, `writtenExamOnly`, `ecaOnly`; legacy `postgraduate=postgraduate`; repeatable `schools`/`school`; repeatable `courseLevels`/`courseLevel`; `limit` (1-100, default 25) | `{ courses: CourseSearchResult[] }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
+| `GET /api/calculator/courses` | `q` | `{ courses: { courseCode, courseName, creditUnits }[] }`; searches the complete course catalog by code or name without joining classes or filtering by semester presentation. Returns up to 8 ranked results. |
 | `GET /api/courses/[courseCode]` | Optional `semesterId`, optional `scheduleType` | `{ course, classes, assessmentComponents }`; returns `404` when the course is missing. |
 | `GET /api/classes` | Mode A: `courseCode` plus optional `semesterId`/`sem` and `scheduleType` | `{ classes: CourseClassRecord[] }`; class groups and their events. |
 | `GET /api/classes` | Mode B: share query `sem` plus optional comma-separated `classes` | `{ timetable: TimetableData }`; resolves selections, events, clashes, weeks, and unresolved selections. |
@@ -447,6 +455,9 @@ timetable view; there is no `/api/export/png` route.
 Study-plan JSON backup/import and the A4 print view are also browser-only.
 There are no study-plan export/import/print API routes, and study-plan data is
 not sent to the server during these flows.
+
+GPA calculations are browser-side. The calculator search API is the only
+calculator request and returns the minimum catalog fields needed by the UI.
 
 ### Share URL Contract
 
@@ -481,7 +492,7 @@ Zod validation in `lib/validation/timetable.ts` enforces:
 
 There is no user authentication or account model in the web application.
 Anonymous users can access all pages and all read/export API routes. Their
-timetable and study-plan data remains in their browser.
+timetable, study-plan, and GPA-calculator data remains in their browser.
 
 ### Maintainer Controls
 
@@ -513,6 +524,7 @@ flowchart LR
         Clash["Inspect timetable clashes"]
         Search["Search and inspect courses"]
         Study["Build multi-semester study plan"]
+        GPA["Calculate GPA and compare Pass/Fail strategy"]
         Backup["Export or import study-plan JSON backup"]
         Print["Open A4 study-plan print/PDF view"]
         Share["Create shared timetable URL"]
@@ -532,6 +544,7 @@ flowchart LR
     Student --> Clash
     Student --> Search
     Student --> Study
+    Student --> GPA
     Student --> Backup
     Student --> Print
     Student --> Share
@@ -660,6 +673,52 @@ The planner header provides these data-protection and presentation actions:
   Blob URL in a new tab, where the user selects **Print / Save as PDF**.
 - **Reset Planner** still requires confirmation and replaces the plan with the
   default state.
+
+### GPA Calculator Flow Diagram
+
+```mermaid
+flowchart TD
+    Open["Open direct /calculator route"]
+    Restore{"Saved calculator JSON<br/>in localStorage?"}
+    Empty["Use empty modules and zero prior record"]
+    Ready["Render Current GPA, Cumulative GPA,<br/>module count, and CU summaries"]
+    Add{"Add current-semester module"}
+    Catalog["Search full catalog through<br/>GET /api/calculator/courses"]
+    Custom["Enter custom module label and credits"]
+    Grade["Set Credits, Grade, or GPV"]
+    Sync["Synchronize Grade and GPV"]
+    PF["Toggle Pass/Fail strategy"]
+    Prior["Set previous cumulative GPA<br/>and GPA-counted completed CUs"]
+    Calculate["Recalculate weighted current<br/>and cumulative GPA"]
+    Persist["Persist calculator JSON to localStorage"]
+    Clear["Confirm clearing all current modules"]
+
+    Open --> Restore
+    Restore -->|No or invalid JSON| Empty
+    Restore -->|Yes| Ready
+    Empty --> Ready
+    Ready --> Add
+    Add --> Catalog
+    Add --> Custom
+    Catalog --> Grade
+    Custom --> Grade
+    Ready --> Grade
+    Grade --> Sync
+    Sync --> Calculate
+    Ready --> PF
+    PF --> Calculate
+    Ready --> Prior
+    Prior --> Calculate
+    Calculate --> Persist
+    Persist --> Ready
+    Ready --> Clear
+    Clear --> Persist
+```
+
+Calculator catalog search deliberately does not use class joins, offered
+semesters, or current-semester filters. This lets users calculate GPA for any
+course present in the `courses` table, including courses that are not currently
+presented.
 
 ### Admin Flow Diagram
 
@@ -811,6 +870,55 @@ stateDiagram-v2
 Study-plan normalization limits plans to 1-20 semesters and 300 courses.
 Catalog courses normally span one semester; `NIE301`, `NIE351`, and course codes
 ending in `499` are inferred to span two semesters.
+
+### GPA Calculator State and Formulas
+
+Storage key: `sussplanner:gpa-calculator`
+
+Persisted JSON fields:
+
+- `modules`
+- `priorGpa`
+- `priorCredits`
+- Per-module `courseCode`, `courseName`, `creditUnits`, `grade`, `gradePoint`,
+  and `isPassFail`
+
+The calculator is implemented directly in
+`components/calculator/gpa-calculator-client.tsx`; it does not currently have a
+separate type, validation, or storage module. Hydration catches malformed JSON,
+starts clean when parsing fails, and defaults a missing legacy `isPassFail`
+field to `false`. Every subsequent module/prior-record change is written back
+to `localStorage`.
+
+Grade and GPV are bidirectionally synchronized through the fixed SUSS scale.
+Both `A+` and `A` map to `5.0`; selecting GPV `5.0` uses `A` as the canonical
+displayed grade.
+
+Pass/Fail modules remain in the current-semester module list and enrolled-CU
+total, but are excluded from both GPA point totals and GPA-counted CU
+denominators. Their Grade and GPV controls are disabled while Pass/Fail is
+selected.
+
+```text
+currentGpaCredits = sum(module.creditUnits where !module.isPassFail)
+
+currentGpa =
+  sum(module.creditUnits * module.gradePoint where !module.isPassFail)
+  / currentGpaCredits
+
+cumulativeGpa =
+  (priorGpa * priorCredits
+    + sum(module.creditUnits * module.gradePoint where !module.isPassFail))
+  / (priorCredits + currentGpaCredits)
+```
+
+Current GPA is empty when `currentGpaCredits` is zero. Cumulative GPA is empty
+only when `priorCredits + currentGpaCredits` is zero. Users are instructed to
+exclude historical Pass/Fail modules from `priorCredits`; the UI cannot verify
+that input.
+
+`Clear all` opens the shared `Modal` confirmation and removes only current
+modules. It preserves `priorGpa` and `priorCredits`.
 
 ### Study Plan Backup Contract
 
@@ -1063,6 +1171,7 @@ The application uses two cache layers visible in the repository:
 
 The cache-revalidation route can invalidate both known data tags and explicitly
 provided paths. If no valid tags are supplied, it invalidates all known tags.
+`GET /api/calculator/courses` does not currently set shared-cache headers.
 
 ## Deployment Notes
 
@@ -1071,7 +1180,9 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 - Configure `CACHE_REVALIDATE_SECRET` if maintainers need on-demand refreshes.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently
   optional and unused by runtime code.
-- `/` and `/timetable` are force-dynamic. `/planner` is also force-dynamic.
+- `/`, `/timetable`, `/planner`, and `/calculator` are force-dynamic.
+- `/calculator` sets `robots.index` and `robots.follow` to `false` and is not
+  linked from the primary navigation.
 - API route handlers require the Node.js runtime, not the Edge runtime.
 - Database connection limits are intentionally small in production (`max: 3`).
 - The scraper is designed to run on a maintainer's machine, not inside Vercel.
@@ -1089,6 +1200,8 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 | Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. `drizzle/` is not currently the schema source of truth. |
 | Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered DB reads behind route handlers. |
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
+| Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, legacy `isPassFail` hydration, and local-storage compatibility aligned. |
+| Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/db/queries.ts`; do not accidentally add semester/class filters. |
 | Change study-plan backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, import compatibility behavior, and this guide. Preserve support for existing versions or reject them with a clear notice. |
 | Change study-plan print output | Update `lib/export/study-plan-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
 | Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and optionally revalidate caches afterward. |
@@ -1096,9 +1209,16 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 ## Known Limitations
 
 - There is no user account, cloud synchronization, or server-side backup of
-  timetable/study-plan state.
+  timetable, study-plan, or GPA-calculator state.
 - Clearing browser storage or changing browsers loses locally saved plans that
   were not exported as JSON backups.
+- GPA-calculator state has no export, import, share, cloud backup, or formal
+  Zod validation layer.
+- `/calculator` is intentionally unlinked and excluded from search-engine
+  indexing.
+- Calculator results depend on user-entered grades, prior GPA, prior
+  GPA-counted CUs, and Pass/Fail selections; the app cannot verify them against
+  official academic records or policy.
 - Only timetable semester/selections are shareable. The multi-semester study
   plan can be imported/exported as JSON but cannot be shared through a URL.
 - Study-plan PDF output depends on the browser print dialog and may require
