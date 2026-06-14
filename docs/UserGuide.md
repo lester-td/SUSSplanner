@@ -10,6 +10,11 @@
   - [View Course Information](#view-course-information)
   - [Add Courses to Your Study Plan](#add-courses-to-your-study-plan)
   - [Organise Your Study Plan](#organise-your-study-plan)
+- [Calculating GPA](#calculating-gpa)
+  - [Add Current-Semester Modules](#add-current-semester-modules)
+  - [Enter Grades and Credit Units](#enter-grades-and-credit-units)
+  - [Calculate Cumulative GPA](#calculate-cumulative-gpa)
+  - [Compare a Pass/Fail Strategy](#compare-a-passfail-strategy)
 - [Building a Timetable](#building-a-timetable)
   - [Create a Timetable](#create-a-timetable)
   - [Change a Class Group](#change-a-class-group)
@@ -26,7 +31,7 @@
 
 SUSSPlanner is a student-built planning tool for SUSS students. It helps you
 explore courses, plan your degree, build a semester timetable, check for
-clashes, and share a timetable with friends.
+clashes, calculate GPA, and share a timetable with friends.
 
 You do not need an account or sign-in.
 
@@ -36,13 +41,15 @@ You do not need an account or sign-in.
 |---|---|
 | **Courses** | Search for courses and review course, assessment, and class information. |
 | **Planner** | Arrange courses across semesters, back up or restore the plan, and download a PDF. |
+| **GPA Calculator** | Calculate current and cumulative GPA and compare a Pass/Fail strategy. |
 | **Timetable** | Build a semester timetable and check for schedule clashes. |
 | **Share** | Send a read-only timetable preview to a friend. |
 | **Download** | Save your timetable as a PNG, PDF, or calendar file. |
 
 ### Before You Start
 
-SUSSPlanner saves your timetable and study plan in your current browser.
+SUSSPlanner saves your timetable, study plan, and GPA Calculator entries in
+your current browser.
 
 - Your plans do not automatically appear on another device or browser.
 - Clearing your browser data may permanently remove your plans.
@@ -61,6 +68,9 @@ SUSSPlanner saves your timetable and study plan in your current browser.
    - **Timetable** for your semester schedule.
    - **Courses** for course search and details.
    - **Planner** for your multi-semester study plan.
+
+The GPA Calculator is currently not shown in the top navigation. Open it
+directly by adding `/calculator` to the SUSSPlanner website address.
 
 No installation is required.
 
@@ -141,6 +151,23 @@ to avoid clashes with your current timetable.
 
 [Screenshot: Timetable Builder]
 
+### GPA Calculator
+
+Use **GPA Calculator** to estimate your current-semester GPA, combine it with
+your prior academic record, and compare which current modules to mark
+Pass/Fail.
+
+1. Open `/calculator` directly.
+2. Search the full course catalog or switch **Add a Module** to Custom mode.
+3. Add current-semester modules.
+4. Check each module's credits, Grade, and GPV.
+5. Enter your previous cumulative GPA and previously completed CUs.
+6. Select **Pass/Fail** beside a module to exclude it from the GPA calculation.
+
+The calculator is saved automatically in the current browser.
+
+[Screenshot: GPA Calculator]
+
 ### Timetable Sharing
 
 Use **Share** to send your selected timetable to a friend.
@@ -173,12 +200,13 @@ unless they choose to import yours.
 
 ### Search for Courses
 
-There are three places where you can search:
+There are four places where you can search:
 
 | Where | Best Used For |
 |---|---|
 | **Courses** | Exploring the full course catalog and viewing details. |
 | **Planner** | Adding courses to your long-term study plan. |
+| **GPA Calculator** | Adding any catalog module to a current/cumulative GPA estimate. |
 | **Timetable** | Adding courses offered in the selected semester. |
 
 #### Search the Full Course Catalog
@@ -323,6 +351,105 @@ Allow the new tab if your browser blocks it.
 
 This clears all courses, semester assignments, and Planner settings. It cannot
 be undone.
+
+## Calculating GPA
+
+### Open the GPA Calculator
+
+The calculator does not currently have a navigation button.
+
+1. Open SUSSPlanner.
+2. Add `/calculator` to the website address.
+
+For local development, open `http://localhost:3000/calculator`.
+
+### Add Current-Semester Modules
+
+#### Search the Course Catalog
+
+1. Keep **Add a Module** in Search mode.
+2. Search by module code or title.
+3. Select a result to add it.
+
+Calculator search checks the full course catalog. A module can be selected even
+when it is not presented in the current semester. Search results use only the
+module code, module name, and credit units.
+
+#### Add a Custom Module
+
+Use Custom mode for an unlisted module, work attachment, or placeholder.
+
+1. Switch **Add a Module** to Custom mode.
+2. Enter a module code or name.
+3. Enter its credit units.
+4. Select **Add Module**.
+
+Duplicate module codes cannot be added.
+
+### Enter Grades and Credit Units
+
+Each current-semester module has:
+
+- **Credits**, which determine its GPA weight.
+- **Grade**, using the SUSS grade scale.
+- **GPV**, the Grade Point Value.
+- **Pass/Fail**, which excludes the module from GPA calculations when selected.
+
+Changing the Grade automatically updates the GPV. Changing the GPV
+automatically updates the Grade. Because both **A+** and **A** have a GPV of
+5.0, selecting GPV 5.0 displays **A**.
+
+| Grade | GPV |
+|---|---:|
+| A+, A | 5.0 |
+| A- | 4.5 |
+| B+ | 4.0 |
+| B | 3.5 |
+| B- | 3.0 |
+| C+ | 2.5 |
+| C | 2.0 |
+| D+ | 1.5 |
+| D | 1.0 |
+| F | 0.0 |
+
+**Current GPA** is the credit-weighted GPA of current modules that are not
+marked Pass/Fail. The summary shows how many current-semester CUs are counted
+out of the total enrolled CUs.
+
+### Calculate Cumulative GPA
+
+Under **Prior academic record**, enter:
+
+1. Your cumulative GPA before the current semester.
+2. Your previously completed CUs that count towards GPA.
+
+Do **not** include credit units from Pass/Fail modules in **Previously Completed
+CUs**. Select the information button in the top-right of the card to see this
+reminder.
+
+**Cumulative GPA** combines the prior academic record with current-semester
+modules that are not marked Pass/Fail.
+
+### Compare a Pass/Fail Strategy
+
+1. Enter the expected grades for all current-semester modules.
+2. Select **Pass/Fail** beside a module you are considering.
+3. Compare the updated **Current GPA** and **Cumulative GPA**.
+4. Select or clear other Pass/Fail checkboxes to compare strategies.
+
+A module marked Pass/Fail remains listed and still counts towards the displayed
+total enrolled CUs, but its credits and grade points are excluded from both GPA
+calculations. Its Grade and GPV controls are disabled until Pass/Fail is
+cleared.
+
+### Remove or Clear Calculator Modules
+
+- Select the trash button beside a module to remove only that module.
+- Select **Clear all**, then **Clear All Modules**, to remove every
+  current-semester module.
+
+Clearing modules does not change the prior cumulative GPA or previously
+completed CUs. The clear-all confirmation cannot be undone.
 
 ## Building a Timetable
 
@@ -490,6 +617,14 @@ SUSSPlanner keeps one multi-semester study plan at a time. To compare options:
    combination.
 4. Compare the saved images and clash warnings.
 
+### Compare Pass/Fail Strategies
+
+1. Open `/calculator`.
+2. Add your current-semester modules and expected grades.
+3. Enter your prior cumulative GPA and GPA-counted CUs.
+4. Toggle **Pass/Fail** for different modules.
+5. Compare the Current GPA, Cumulative GPA, and counted-CU summaries.
+
 ### Share a Timetable with a Friend
 
 1. Build the timetable you want to share.
@@ -544,7 +679,8 @@ No. SUSSPlanner does not require an account or sign-in.
 
 ### Where are my plans saved?
 
-They are saved in your current browser.
+Your timetable, study plan, and GPA Calculator entries are saved in your
+current browser.
 
 ### Will my plans appear on another device?
 
@@ -592,7 +728,19 @@ course automatically.
 ### Can I add a course that is not listed?
 
 You can add it as a custom course in **Planner**. It cannot be added to
-**Timetable** because it has no class schedule.
+**Timetable** because it has no class schedule. You can also add a custom
+module directly in **GPA Calculator**.
+
+### Why is the GPA Calculator not in the navigation?
+
+The calculator is currently available through the direct `/calculator` route.
+It has not yet been added to the main navigation.
+
+### Do Pass/Fail modules count towards the calculator GPA?
+
+No. Current modules marked Pass/Fail are excluded from both Current GPA and
+Cumulative GPA. Previously completed CUs should also exclude historical
+Pass/Fail modules.
 
 ### Can I edit a course in the Planner?
 
@@ -643,6 +791,13 @@ or you changed browsers or devices. If you previously exported a JSON backup,
 open **Planner**, select **Backup Plan**, then select **Import** to restore it.
 SUSSPlanner cannot recover a plan without an exported backup.
 
+### My GPA Calculator Entries Disappeared
+
+Calculator entries are stored only in the current browser. They may disappear
+if browser data is cleared, a private-browsing session ends, or you change
+browsers or devices. The calculator does not currently provide an export or
+restore feature.
+
 ### Course Information Is Missing
 
 Some courses may not have complete details, schedules, or assessment
@@ -653,6 +808,12 @@ information available in SUSSPlanner.
 - SUSSPlanner has no accounts, online syncing, or recovery without an exported
   JSON backup.
 - Your plans are saved only in your current browser.
+- The GPA Calculator is available only through the direct `/calculator` route
+  and is not shown in the top navigation.
+- Calculator entries are browser-local and cannot currently be exported,
+  imported, shared, or recovered after browser data is cleared.
+- GPA and Pass/Fail results are planning estimates. Confirm official GPA and
+  Pass/Fail rules with SUSS before making academic decisions.
 - The Planner keeps one study plan at a time.
 - Multi-semester study plans can be imported/exported as JSON and downloaded
   through the PDF print view, but they cannot be shared through a URL.
