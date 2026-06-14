@@ -9,6 +9,7 @@ import {
   TrashIcon,
   XIcon,
 } from "@/components/planner/icons";
+import { Modal } from "@/components/ui/modal";
 
 type Grade = "A+" | "A" | "A-" | "B+" | "B" | "B-" | "C+" | "C" | "D+" | "D" | "F";
 
@@ -117,6 +118,7 @@ export function GpaCalculatorClient()
   const [customModuleLabel, setCustomModuleLabel] = useState("");
   const [customModuleCredits, setCustomModuleCredits] = useState("");
   const [customModuleNotice, setCustomModuleNotice] = useState("");
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebouncedValue(searchQuery, 250);
@@ -502,7 +504,7 @@ export function GpaCalculatorClient()
               {modules.length > 0 ? (
                 <button
                   type="button"
-                  onClick={() => setModules([])}
+                  onClick={() => setClearConfirmOpen(true)}
                   className="shrink-0 text-[12px] font-bold text-[var(--error)] hover:underline"
                 >
                   Clear all
@@ -587,8 +589,24 @@ export function GpaCalculatorClient()
         </section>
 
         <aside className="space-y-4">
-          <section className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
-            <h2 className="text-[15px] font-bold text-[var(--on-surface)]">Prior academic record</h2>
+          <section className="relative rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
+            <div className="group absolute right-3 top-3">
+              <button
+                type="button"
+                aria-label="Previously completed credit units information"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[13px] font-extrabold italic leading-none text-[var(--primary)] ring-1 ring-inset ring-[var(--brand-divider)] transition-all hover:bg-[var(--primary)] hover:text-[var(--on-primary)] hover:shadow-[var(--shadow-elev-1)] focus:bg-[var(--primary)] focus:text-[var(--on-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring-soft)]"
+              >
+                i
+              </button>
+              <div
+                role="tooltip"
+                className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-64 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-[var(--on-primary)] shadow-[var(--shadow-elev-2)] group-hover:block group-focus-within:block"
+              >
+                <span className="mb-0.5 block font-bold">Calculating completed CUs</span>
+                Exclude credit units from pass/fail modules.
+              </div>
+            </div>
+            <h2 className="pr-10 text-[15px] font-bold text-[var(--on-surface)]">Prior academic record</h2>
             <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
               Add your record before this semester to calculate cumulative GPA.
             </p>
@@ -630,6 +648,39 @@ export function GpaCalculatorClient()
           </section>
         </aside>
       </div>
+
+      <Modal
+        open={clearConfirmOpen}
+        title="Clear All Modules?"
+        description="This will remove every module from the current semester GPA calculation."
+        onClose={() => setClearConfirmOpen(false)}
+        maxWidthClassName="max-w-md"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={() => setClearConfirmOpen(false)}
+              className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setModules([]);
+                setClearConfirmOpen(false);
+              }}
+              className="rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
+            >
+              Clear All Modules
+            </button>
+          </>
+        )}
+      >
+        <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
+          You can&apos;t undo this action. Your previous cumulative GPA and completed credit units will not be changed.
+        </p>
+      </Modal>
     </div>
   );
 }
