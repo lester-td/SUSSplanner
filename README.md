@@ -78,7 +78,8 @@ unused by runtime application code. Never commit real credentials.
 ### Important Architecture Notes
 
 - Normal users do not sign in. Timetable and study-plan state is stored in
-  browser `localStorage`; clearing browser storage loses that state.
+  browser `localStorage`; clearing browser storage loses that state unless the
+  study plan was exported as a JSON backup.
 - Shared timetable links are read-only until the recipient explicitly imports
   them.
 - The application reads academic data but does not update academic tables.

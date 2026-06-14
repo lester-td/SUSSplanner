@@ -1,9 +1,11 @@
 import type { CourseRecord, CourseSearchResult } from "@/lib/timetable/types";
-import { studyPlanStateSchema } from "@/lib/validation/planner";
+import { studyPlanBackupSchema, studyPlanStateSchema } from "@/lib/validation/planner";
 import type { StudyPlanCourse, StudyPlanState } from "./types";
 
 export const STUDY_PLAN_STORAGE_KEY = "sussplanner.study-plan.v1";
 export const STUDY_PLAN_UPDATED_EVENT = "sussplanner:study-plan-updated";
+export const STUDY_PLAN_BACKUP_FORMAT = "sussplanner-study-plan";
+export const STUDY_PLAN_BACKUP_VERSION = 1;
 
 const DEFAULT_TOTAL_CREDITS = 130;
 const DEFAULT_SEMESTERS = 8;
@@ -117,6 +119,22 @@ export function normalizeStudyPlanState(state: StudyPlanState): StudyPlanState
       };
     }),
   };
+}
+
+export function serializeStudyPlanBackup(state: StudyPlanState, exportedAt = new Date())
+{
+  return JSON.stringify({
+    format: STUDY_PLAN_BACKUP_FORMAT,
+    version: STUDY_PLAN_BACKUP_VERSION,
+    exportedAt: exportedAt.toISOString(),
+    plan: normalizeStudyPlanState(state),
+  }, null, 2);
+}
+
+export function parseStudyPlanBackup(raw: string)
+{
+  const backup = studyPlanBackupSchema.parse(JSON.parse(raw) as unknown);
+  return normalizeStudyPlanState(backup.plan);
 }
 
 export function loadStudyPlanState()

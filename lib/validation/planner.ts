@@ -16,3 +16,10 @@ export const studyPlanStateSchema = z.object({
   numSemesters: z.number().int().min(1).max(20),
   courses: z.array(studyPlanCourseSchema).max(300),
 });
+
+export const studyPlanBackupSchema = z.object({
+  format: z.literal("sussplanner-study-plan"),
+  version: z.literal(1),
+  exportedAt: z.string().trim().min(1),
+  plan: studyPlanStateSchema,
+});

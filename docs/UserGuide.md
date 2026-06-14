@@ -35,7 +35,7 @@ You do not need an account or sign-in.
 | Feature | What It Helps You Do |
 |---|---|
 | **Courses** | Search for courses and review course, assessment, and class information. |
-| **Planner** | Arrange courses and credit units across multiple semesters. |
+| **Planner** | Arrange courses across semesters, back up or restore the plan, and download a PDF. |
 | **Timetable** | Build a semester timetable and check for schedule clashes. |
 | **Share** | Send a read-only timetable preview to a friend. |
 | **Download** | Save your timetable as a PNG, PDF, or calendar file. |
@@ -48,7 +48,8 @@ SUSSPlanner saves your timetable and study plan in your current browser.
 - Clearing your browser data may permanently remove your plans.
 - Private or incognito browsing may not keep your plans after you close the
   window.
-- There is no account-based backup or recovery.
+- There is no account-based or online backup. Export a Planner JSON backup if
+  you may need to restore the plan later or move it to another browser.
 
 ## Getting Started
 
@@ -286,6 +287,33 @@ Available** to show only courses that have not been assigned.
 Courses that span more than one semester are shown as continuing in later
 semesters.
 
+### Back Up or Restore Your Study Plan
+
+To download a restorable backup:
+
+1. Open **Planner**.
+2. Select **Backup Plan**.
+3. Select **Export**.
+
+To restore a backup:
+
+1. Open **Planner**.
+2. Select **Backup Plan**.
+3. Select **Import**, then choose a SUSSPlanner semester-plan JSON backup.
+4. Review the module and semester counts.
+5. Select **Replace Current Plan** to confirm.
+
+Importing replaces the current plan. Invalid, unsupported, or oversized backup
+files are rejected without changing it.
+
+### Download Your Study Plan as a PDF
+
+1. Open **Planner**.
+2. Select **Download PDF**.
+3. In the new print-view tab, select **Print / Save as PDF**.
+
+Allow the new tab if your browser blocks it.
+
 ### Reset Your Study Plan
 
 1. Open **Planner**.
@@ -502,8 +530,11 @@ SUSSPlanner keeps one multi-semester study plan at a time. To compare options:
 - Avoid clearing browser data if you want to keep your plans.
 - Do not rely on private or incognito windows for long-term saving.
 - Download or share important timetables as a reference.
-- Remember that the multi-semester Planner does not currently have an export or
-  backup feature.
+- Select **Backup Plan**, then **Export**, to download a restorable JSON backup.
+- Select **Backup Plan**, then **Import**, to validate a backup and review its
+  module and semester counts before replacing the current plan.
+- Select **Download PDF** to open an A4-formatted plan in a new tab, then use
+  **Print / Save as PDF**.
 
 ## Frequently Asked Questions
 
@@ -521,7 +552,9 @@ No. Plans do not automatically sync between devices or browsers.
 
 ### Can I recover a plan after clearing browser data?
 
-No. SUSSPlanner does not provide plan recovery or online backup.
+Only if you exported a JSON backup before clearing the browser data. Open
+**Planner**, select **Backup Plan**, then select **Import** to restore it.
+SUSSPlanner does not provide online or account-based recovery.
 
 ### Can I share my multi-semester study plan?
 
@@ -606,7 +639,9 @@ You can plan between 1 and 20 semesters.
 ### My Saved Plan Disappeared
 
 This can happen if browser data was cleared, a private-browsing session ended,
-or you changed browsers or devices. SUSSPlanner cannot recover a deleted plan.
+or you changed browsers or devices. If you previously exported a JSON backup,
+open **Planner**, select **Backup Plan**, then select **Import** to restore it.
+SUSSPlanner cannot recover a plan without an exported backup.
 
 ### Course Information Is Missing
 
@@ -615,11 +650,12 @@ information available in SUSSPlanner.
 
 ## Limitations
 
-- SUSSPlanner has no accounts, online syncing, or plan recovery.
+- SUSSPlanner has no accounts, online syncing, or recovery without an exported
+  JSON backup.
 - Your plans are saved only in your current browser.
 - The Planner keeps one study plan at a time.
-- Multi-semester study plans cannot currently be shared, imported, or
-  downloaded.
+- Multi-semester study plans can be imported/exported as JSON and downloaded
+  through the PDF print view, but they cannot be shared through a URL.
 - Shared timetable links do not include hidden courses, custom colours,
   selected week, layout, or view.
 - Shared links support up to 50 selected classes.

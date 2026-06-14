@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import {
   BookIcon,
   CalendarWeekIcon,
+  DownloadIcon,
   EditIcon,
   EditCalendarIcon,
   LayersIcon,
@@ -15,8 +16,10 @@ import {
   SchoolIcon,
   SearchIcon,
   TrashIcon,
+  UploadIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
+import { openStudyPlanPrintView } from "@/lib/export/study-plan-print";
 import {
   STUDY_PLAN_UPDATED_EVENT,
   createCatalogStudyPlanCourse,
@@ -24,7 +27,9 @@ import {
   defaultStudyPlanState,
   loadStudyPlanState,
   normalizeStudyPlanState,
+  parseStudyPlanBackup,
   saveStudyPlanState,
+  serializeStudyPlanBackup,
 } from "@/lib/planner/storage";
 import type { StudyPlanCourse, StudyPlanState } from "@/lib/planner/types";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
@@ -86,10 +91,14 @@ export function StudyPlanClient({
   const [editingCredits, setEditingCredits] = useState("5");
   const [editingSemesterSpan, setEditingSemesterSpan] = useState("1");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [backupMenuOpen, setBackupMenuOpen] = useState(false);
+  const [importedPlan, setImportedPlan] = useState<StudyPlanState | null>(null);
+  const [importedPlanFileName, setImportedPlanFileName] = useState("");
   const [notice, setNotice] = useState("");
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
   const [activeDropZone, setActiveDropZone] = useState<DropZone>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const deferredSearch = useDeferredValue(searchQuery);
 
   useEffect(() => {
@@ -130,6 +139,24 @@ export function StudyPlanClient({
       window.clearTimeout(noticeTimeoutRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (!backupMenuOpen)
+    {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && !target.closest("[data-backup-popover-root]"))
+      {
+        setBackupMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [backupMenuOpen]);
 
   useEffect(() => {
     if (!deferredSearch.trim())
@@ -263,6 +290,67 @@ export function StudyPlanClient({
   {
     setPlan(defaultStudyPlanState());
     showNoticeMessage("Planner reset.");
+  }
+
+  function exportPlan()
+  {
+    const date = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([serializeStudyPlanBackup(plan)], { type: "application/json" });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = `sussplanner-semester-plan-${date}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
+    setBackupMenuOpen(false);
+    showNoticeMessage("Semester plan exported.");
+  }
+
+  function openPlanPdf()
+  {
+    if (!openStudyPlanPrintView(plan))
+    {
+      showNoticeMessage("Unable to open PDF view. Allow pop-ups and try again.");
+    }
+  }
+
+  async function selectImportFile(file: File | undefined)
+  {
+    if (!file)
+    {
+      return;
+    }
+
+    if (file.size > 1_000_000)
+    {
+      showNoticeMessage("Import failed: backup file is too large.");
+      return;
+    }
+
+    try
+    {
+      setImportedPlan(parseStudyPlanBackup(await file.text()));
+      setImportedPlanFileName(file.name);
+    }
+    catch {
+      showNoticeMessage("Import failed: select a valid SUSSPlanner semester plan backup.");
+    }
+  }
+
+  function confirmPlanImport()
+  {
+    if (!importedPlan)
+    {
+      return;
+    }
+
+    setPlan(importedPlan);
+    setImportedPlan(null);
+    setImportedPlanFileName("");
+    showNoticeMessage("Semester plan imported.");
   }
 
   function addSemester()
@@ -676,14 +764,80 @@ export function StudyPlanClient({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setResetConfirmOpen(true)}
-                className="inline-flex items-center gap-2 self-start rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <RefreshIcon className="h-4 w-4" />
-                Reset Planner
-              </button>
+              <div className="flex flex-col items-start gap-1.5 self-start md:items-end">
+                <div className="flex gap-2 md:justify-end">
+                  <button
+                    type="button"
+                    onClick={openPlanPdf}
+                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-primary)] shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
+                  >
+                    <DownloadIcon className="h-3.5 w-3.5" />
+                    Download PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResetConfirmOpen(true)}
+                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] border border-[var(--error)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--error)] transition-colors hover:bg-[var(--error-container)]"
+                  >
+                    <RefreshIcon className="h-3.5 w-3.5" />
+                    Reset Planner
+                  </button>
+                </div>
+                <div className="relative self-start md:self-end" data-backup-popover-root>
+                  <button
+                    type="button"
+                    onClick={() => setBackupMenuOpen((current) => !current)}
+                    aria-expanded={backupMenuOpen}
+                    aria-haspopup="menu"
+                    className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-transparent px-2 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:border-[var(--outline-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  >
+                    <DownloadIcon className="h-3.5 w-3.5" />
+                    Backup Plan
+                  </button>
+                  {backupMenuOpen ? (
+                    <div className="elev-3 absolute right-auto top-full z-30 mt-1.5 w-[17rem] rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2 md:right-0">
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -top-[7px] left-5 h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] md:left-auto md:right-5"
+                      />
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={exportPlan}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
+                        >
+                          <DownloadIcon className="h-4 w-4" />
+                          Export
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBackupMenuOpen(false);
+                            importFileInputRef.current?.click();
+                          }}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
+                        >
+                          <UploadIcon className="h-4 w-4" />
+                          Import
+                        </button>
+                      </div>
+                      <p className="mt-2 border-t border-[var(--outline-variant)] px-1 pt-2 text-[10px] leading-4 text-[var(--on-surface-variant)]">
+                        Export a restorable JSON backup, or import one to replace your current semester plan after confirmation.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+                <input
+                  ref={importFileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  className="hidden"
+                  onChange={(event) => {
+                    void selectImportFile(event.target.files?.[0]);
+                    event.target.value = "";
+                  }}
+                />
+              </div>
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -969,6 +1123,42 @@ export function StudyPlanClient({
           </section>
         </section>
       </div>
+
+      <Modal
+        open={importedPlan !== null}
+        title="Import Semester Plan?"
+        description={`Importing ${importedPlanFileName || "this backup"} will replace your current semester plan.`}
+        onClose={() => {
+          setImportedPlan(null);
+          setImportedPlanFileName("");
+        }}
+        maxWidthClassName="max-w-md"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setImportedPlan(null);
+                setImportedPlanFileName("");
+              }}
+              className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmPlanImport}
+              className="rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)]"
+            >
+              Replace Current Plan
+            </button>
+          </>
+        )}
+      >
+        <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
+          The backup contains {importedPlan?.courses.length ?? 0} modules across {importedPlan?.numSemesters ?? 0} semesters. Export your current plan first if you may need it later.
+        </p>
+      </Modal>
 
       <Modal
         open={resetConfirmOpen}
