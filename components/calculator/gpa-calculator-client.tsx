@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  BookIcon,
   PlusIcon,
   SearchIcon,
   TrashIcon,
@@ -109,9 +110,13 @@ export function GpaCalculatorClient()
   const [modules, setModules] = useState<CalculatorModule[]>([]);
   const [priorGpa, setPriorGpa] = useState(0);
   const [priorCredits, setPriorCredits] = useState(0);
+  const [isCustomModule, setIsCustomModule] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<CalculatorCourseSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [customModuleLabel, setCustomModuleLabel] = useState("");
+  const [customModuleCredits, setCustomModuleCredits] = useState("");
+  const [customModuleNotice, setCustomModuleNotice] = useState("");
   const [ready, setReady] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebouncedValue(searchQuery, 250);
@@ -247,6 +252,47 @@ export function GpaCalculatorClient()
     setSearchResults([]);
   }
 
+  function addCustomModule()
+  {
+    const label = customModuleLabel.trim();
+    const creditUnits = customModuleCredits.trim() === ""
+      ? 0
+      : Number.parseFloat(customModuleCredits);
+    const courseCode = label.toUpperCase();
+
+    if (!label)
+    {
+      setCustomModuleNotice("Enter a module code or module name.");
+      return;
+    }
+
+    if (!Number.isFinite(creditUnits) || creditUnits < 0)
+    {
+      setCustomModuleNotice("Credit units must be 0 or more.");
+      return;
+    }
+
+    if (modules.some((module) => module.courseCode.toUpperCase() === courseCode))
+    {
+      setCustomModuleNotice(`${courseCode} has already been added.`);
+      return;
+    }
+
+    setModules((current) => [
+      ...current,
+      {
+        courseCode,
+        courseName: label,
+        creditUnits,
+        grade: DEFAULT_GRADE,
+        gradePoint: DEFAULT_GRADE_POINT,
+      },
+    ]);
+    setCustomModuleLabel("");
+    setCustomModuleCredits("");
+    setCustomModuleNotice("");
+  }
+
   function updateModule(courseCode: string, update: Partial<CalculatorModule>)
   {
     setModules((current) => current.map((module) => (
@@ -292,73 +338,157 @@ export function GpaCalculatorClient()
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0">
           <div ref={searchContainerRef} className="relative z-20 mb-4">
-            <label htmlFor="calculator-course-search" className="mb-2 block text-[13px] font-bold text-[var(--on-surface)]">
-              Add a module
-            </label>
-            <div className="relative">
-              <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--on-surface-variant)]" />
-              <input
-                id="calculator-course-search"
-                type="search"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search by module code or name"
-                autoComplete="off"
-                className="elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-3 pl-12 pr-11 text-[15px] leading-6 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-              />
-              {searchQuery ? (
+            <div className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {isCustomModule ? (
+                    <BookIcon className="h-7 w-7 text-[var(--primary)]" />
+                  ) : (
+                    <SearchIcon className="h-7 w-7 text-[var(--primary)]" />
+                  )}
+                  <h2 className="text-[24px] font-medium leading-8 tracking-[-0.02em] text-[var(--on-surface)]">
+                    Add a Module
+                  </h2>
+                </div>
                 <button
                   type="button"
-                  aria-label="Clear search"
                   onClick={() => {
+                    setIsCustomModule((current) => !current);
                     setSearchQuery("");
                     setSearchResults([]);
+                    setCustomModuleNotice("");
                   }}
-                  className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
+                  className="relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
+                  aria-pressed={isCustomModule}
+                  aria-label={`Add module mode: ${isCustomModule ? "Custom" : "Search"}. Click to toggle.`}
                 >
-                  <XIcon className="h-4 w-4" />
+                  <span
+                    aria-hidden="true"
+                    className={`absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomModule ? "translate-x-full" : "translate-x-0"}`}
+                  />
+                  <span
+                    aria-hidden="true"
+                    className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomModule ? "text-[var(--on-primary)]" : "text-[var(--on-surface-variant)]"}`}
+                  >
+                    Search
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomModule ? "text-[var(--on-primary)]" : "text-[var(--on-surface-variant)]"}`}
+                  >
+                    Custom
+                  </span>
                 </button>
-              ) : null}
-            </div>
-
-            {searchQuery.trim() ? (
-              <div className="elev-3 absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
-                {searchLoading ? (
-                  <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">Searching modules...</p>
-                ) : searchResults.length > 0 ? (
-                  <ul className="max-h-80 overflow-y-auto py-1">
-                    {searchResults.map((course) => {
-                      const alreadyAdded = modules.some((module) => module.courseCode === course.courseCode);
-                      return (
-                        <li key={course.courseCode}>
-                          <button
-                            type="button"
-                            disabled={alreadyAdded}
-                            onClick={() => addModule(course)}
-                            className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-container-low)] disabled:cursor-not-allowed disabled:opacity-45"
-                          >
-                            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[var(--primary)]">
-                              <PlusIcon className="h-4 w-4" />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block text-[13px] font-bold text-[var(--on-surface)]">{course.courseCode}</span>
-                              <span className="block truncate text-[12px] text-[var(--on-surface-variant)]">
-                                {course.courseName ?? "Course name unavailable"}
-                              </span>
-                            </span>
-                            <span className="shrink-0 text-[12px] font-semibold text-[var(--on-surface-variant)]">
-                              {alreadyAdded ? "Added" : `${course.creditUnits ?? 5} CU`}
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">No matching modules found.</p>
-                )}
               </div>
-            ) : null}
+
+              {isCustomModule ? (
+                <form
+                  className="mt-3 grid gap-3"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    addCustomModule();
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={customModuleLabel}
+                    onChange={(event) => {
+                      setCustomModuleLabel(event.target.value);
+                      setCustomModuleNotice("");
+                    }}
+                    placeholder="Module Code or Module Name (E.g. 'NCO101' or 'Work Attachment')"
+                    className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={customModuleCredits}
+                    onChange={(event) => {
+                      setCustomModuleCredits(event.target.value);
+                      setCustomModuleNotice("");
+                    }}
+                    placeholder="Credit units"
+                    className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  />
+                  {customModuleNotice ? (
+                    <p className="text-[12px] font-semibold text-[var(--error)]">{customModuleNotice}</p>
+                  ) : null}
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-4 py-2.5 text-[13px] font-semibold leading-5 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)]"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                    Add Custom Module
+                  </button>
+                </form>
+              ) : (
+                <div className="relative mt-3">
+                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
+                  <input
+                    id="calculator-course-search"
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search by Module Code or Title..."
+                    autoComplete="off"
+                    className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  />
+                  {searchQuery ? (
+                    <button
+                      type="button"
+                      aria-label="Clear search"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSearchResults([]);
+                      }}
+                      className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  ) : null}
+
+                  {searchQuery.trim() ? (
+                    <div className="elev-3 absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+                      {searchLoading ? (
+                        <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">Searching modules...</p>
+                      ) : searchResults.length > 0 ? (
+                        <ul className="max-h-80 overflow-y-auto py-1">
+                          {searchResults.map((course) => {
+                            const alreadyAdded = modules.some((module) => module.courseCode === course.courseCode);
+                            return (
+                              <li key={course.courseCode}>
+                                <button
+                                  type="button"
+                                  disabled={alreadyAdded}
+                                  onClick={() => addModule(course)}
+                                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-container-low)] disabled:cursor-not-allowed disabled:opacity-45"
+                                >
+                                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[var(--primary)]">
+                                    <PlusIcon className="h-4 w-4" />
+                                  </span>
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block text-[13px] font-bold text-[var(--on-surface)]">{course.courseCode}</span>
+                                    <span className="block truncate text-[12px] text-[var(--on-surface-variant)]">
+                                      {course.courseName ?? "Course name unavailable"}
+                                    </span>
+                                  </span>
+                                  <span className="shrink-0 text-[12px] font-semibold text-[var(--on-surface-variant)]">
+                                    {alreadyAdded ? "Added" : `${course.creditUnits ?? 5} CU`}
+                                  </span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : (
+                        <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">No matching modules found.</p>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
