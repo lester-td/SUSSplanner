@@ -515,8 +515,8 @@ export function GpaCalculatorClient()
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3.5 elev-1">
+          <div className="overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-3.5">
               <div>
                 <h2 className="text-[15px] font-bold text-[var(--on-surface)]">Current semester modules</h2>
                 <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">Pass/Fail modules are excluded from GPA calculations.</p>
@@ -533,33 +533,37 @@ export function GpaCalculatorClient()
             </div>
 
             {modules.length === 0 ? (
-              <div className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-12 text-center elev-1">
+              <div className="px-5 py-12 text-center">
                 <p className="text-[15px] font-bold text-[var(--on-surface)]">No modules added yet</p>
                 <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)]">
                   Search above to add modules and calculate your GPA.
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="divide-y divide-[var(--brand-divider)]">
                 {modules.map((module) => (
-                  <div key={module.courseCode} className="grid grid-cols-[4.25rem_minmax(0,1fr)] items-stretch gap-2">
-                    <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[0.75rem] border px-1.5 py-2 text-center text-[10px] font-bold uppercase tracking-[0.04em] transition-colors ${
+                  <div key={module.courseCode} className="grid grid-cols-[4.75rem_minmax(0,1fr)] items-stretch">
+                    <div className={`flex items-center justify-center border-r border-[var(--brand-divider)] px-2 py-3 transition-colors ${
+                      module.isPassFail ? "bg-[var(--surface-container-low)]" : ""
+                    }`}>
+                      <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 text-center text-[10px] font-bold uppercase tracking-[0.04em] transition-colors ${
                         module.isPassFail
-                          ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
-                          : "border-[var(--outline-variant)] bg-[var(--surface-container-low)] text-[var(--on-surface-variant)] hover:border-[var(--primary)] hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)]"
+                          ? "text-[var(--primary)]"
+                          : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
                       }`}>
-                      <input
-                        type="checkbox"
-                        checked={module.isPassFail}
-                        onChange={(event) => updateModule(module.courseCode, {
-                          isPassFail: event.target.checked,
-                        })}
-                        className="h-4 w-4 accent-[var(--primary)]"
-                      />
-                      Pass/Fail
-                    </label>
+                        <input
+                          type="checkbox"
+                          checked={module.isPassFail}
+                          onChange={(event) => updateModule(module.courseCode, {
+                            isPassFail: event.target.checked,
+                          })}
+                          className="h-4 w-4 accent-[var(--primary)]"
+                        />
+                        Pass/Fail
+                      </label>
+                    </div>
                     <article
-                      className={`grid min-w-0 gap-3 rounded-[0.9rem] border border-[var(--outline-variant)] px-4 py-4 transition-colors elev-1 md:grid-cols-[minmax(0,1fr)_7rem_7rem_8rem_2.5rem] md:items-end ${
+                      className={`grid min-w-0 gap-3 px-4 py-4 transition-colors md:grid-cols-[minmax(0,1fr)_5.5rem_5.25rem_5.25rem_2.5rem] md:items-end ${
                         module.isPassFail ? "bg-[var(--surface-container-low)]" : "bg-[var(--surface-container-lowest)]"
                       }`}
                     >
@@ -572,7 +576,7 @@ export function GpaCalculatorClient()
                           </span>
                         ) : null}
                       </div>
-                      <CalculatorField label="Credit Units">
+                      <CalculatorField label="Credits">
                         <input
                           type="number"
                           min="0"
@@ -581,7 +585,7 @@ export function GpaCalculatorClient()
                           onChange={(event) => updateModule(module.courseCode, {
                             creditUnits: Math.max(0, Number(event.target.value) || 0),
                           })}
-                          className="w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                          className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                         />
                       </CalculatorField>
                       <CalculatorField label="Grade">
@@ -595,14 +599,14 @@ export function GpaCalculatorClient()
                               gradePoint: gradeToPoint(grade),
                             });
                           }}
-                          className="w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-45"
+                          className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-45"
                         >
                           {GRADE_OPTIONS.map((option) => (
                             <option key={option.grade} value={option.grade}>{option.grade}</option>
                           ))}
                         </select>
                       </CalculatorField>
-                      <CalculatorField label="Grade Point Value">
+                      <CalculatorField label="GPV">
                         <select
                           value={module.gradePoint}
                           disabled={module.isPassFail}
@@ -613,7 +617,7 @@ export function GpaCalculatorClient()
                               grade: pointToGrade(gradePoint),
                             });
                           }}
-                          className="w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-45"
+                          className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-45"
                         >
                           {POINT_OPTIONS.map((point) => (
                             <option key={point} value={point}>{point.toFixed(1)}</option>
@@ -773,8 +777,8 @@ function CalculatorField({
 })
 {
   return (
-    <label className="block">
-      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--on-surface-variant)]">
+    <label className="grid min-w-0 grid-rows-[1rem_2.25rem] gap-1">
+      <span className="block whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.04em] text-[var(--on-surface-variant)]">
         {label}
       </span>
       {children}
