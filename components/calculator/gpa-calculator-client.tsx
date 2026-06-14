@@ -383,47 +383,49 @@ export function GpaCalculatorClient()
 
               {isCustomModule ? (
                 <form
-                  className="mt-3 grid gap-3"
+                  className="relative mt-3 h-[42px]"
                   onSubmit={(event) => {
                     event.preventDefault();
                     addCustomModule();
                   }}
                 >
-                  <input
-                    type="text"
-                    value={customModuleLabel}
-                    onChange={(event) => {
-                      setCustomModuleLabel(event.target.value);
-                      setCustomModuleNotice("");
-                    }}
-                    placeholder="Module Code or Module Name (E.g. 'NCO101' or 'Work Attachment')"
-                    className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={customModuleCredits}
-                    onChange={(event) => {
-                      setCustomModuleCredits(event.target.value);
-                      setCustomModuleNotice("");
-                    }}
-                    placeholder="Credit units"
-                    className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  />
+                  <div className="grid h-full grid-cols-[minmax(0,1fr)_7rem_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_8rem_auto] sm:gap-3">
+                    <input
+                      type="text"
+                      value={customModuleLabel}
+                      onChange={(event) => {
+                        setCustomModuleLabel(event.target.value);
+                        setCustomModuleNotice("");
+                      }}
+                      placeholder="Module Code or Module Name"
+                      className="h-full min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={customModuleCredits}
+                      onChange={(event) => {
+                        setCustomModuleCredits(event.target.value);
+                        setCustomModuleNotice("");
+                      }}
+                      placeholder="Credit units"
+                      className="h-full min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:px-3 sm:text-[14px]"
+                    />
+                    <button
+                      type="submit"
+                      className="inline-flex h-full items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)] sm:px-4"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                      <span className="hidden sm:inline">Add Module</span>
+                    </button>
+                  </div>
                   {customModuleNotice ? (
-                    <p className="text-[12px] font-semibold text-[var(--error)]">{customModuleNotice}</p>
+                    <p className="absolute mt-1 text-[12px] font-semibold text-[var(--error)]">{customModuleNotice}</p>
                   ) : null}
-                  <button
-                    type="submit"
-                    className="inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-4 py-2.5 text-[13px] font-semibold leading-5 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)]"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    Add Custom Module
-                  </button>
                 </form>
               ) : (
-                <div className="relative mt-3">
+                <div className="relative mt-3 h-[42px]">
                   <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                   <input
                     id="calculator-course-search"
@@ -432,7 +434,7 @@ export function GpaCalculatorClient()
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder="Search by Module Code or Title..."
                     autoComplete="off"
-                    className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    className="h-full w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                   />
                   {searchQuery ? (
                     <button
