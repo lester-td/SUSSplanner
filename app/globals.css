@@ -4,40 +4,52 @@
   --color-primary: var(--primary);
   --color-primary-container: var(--primary-container);
   --color-on-primary: var(--on-primary);
+  --color-secondary: var(--secondary);
+  --color-tertiary: var(--tertiary);
 }
 
 @layer base {
   :root {
     --suss-blue: #001E60;
-    --suss-red: #da291c;
+    --suss-red: #DA291C;
+    --suss-grey: #D6D2C4;
+    --suss-lime: #D0DF00;
+    --suss-light-blue: #9ADBE8;
     --suss-blue-rgb: 0 30 96;
     --suss-red-rgb: 218 41 28;
-    --background: #f7f9fd;
-    --surface: #f7f9fd;
-    --surface-bright: #fcfdff;
-    --surface-dim: #d8deea;
-    --surface-container-lowest: #ffffff;
-    --surface-container-low: #f3f6fb;
-    --surface-container: #ecf1f8;
-    --surface-container-high: #e5ecf6;
-    --surface-container-highest: #dde6f2;
-    --surface-variant: #dde6f2;
-    --outline: #687488;
-    --outline-variant: #c3ccdc;
+    --suss-grey-rgb: 214 210 196;
+    --suss-lime-rgb: 208 223 0;
+    --suss-light-blue-rgb: 154 219 232;
+    --background: #f7f5ef;
+    --surface: #f7f5ef;
+    --surface-bright: #fbfaf7;
+    --surface-dim: #d8d3c6;
+    --surface-container-lowest: #fcfbf8;
+    --surface-container-low: color-mix(in srgb, var(--suss-grey), #fff 60%);
+    --surface-container: color-mix(in srgb, var(--suss-grey), #fff 44%);
+    --surface-container-high: color-mix(in srgb, var(--suss-grey), #fff 30%);
+    --surface-container-highest: var(--suss-grey);
+    --surface-variant: color-mix(in srgb, var(--suss-grey), #fff 14%);
+    --outline: #7a7668;
+    --outline-variant: color-mix(in srgb, var(--suss-grey), #8f8979 32%);
     --primary: var(--suss-blue);
-    --primary-container: #001E60;
-    --primary-fixed: #e7edfb;
+    --primary-container: color-mix(in srgb, var(--suss-blue), #fff 12%);
+    --primary-fixed: color-mix(in srgb, var(--suss-light-blue), #fff 72%);
     --on-primary: #ffffff;
     --on-primary-container: #ffffff;
     --on-surface: #131a26;
-    --on-surface-variant: #42516a;
+    --on-surface-variant: #4a5261;
     --error: var(--suss-red);
-    --error-container: #fdecea;
+    --error-container: color-mix(in srgb, var(--suss-red), #fff 88%);
     --accent: var(--suss-red);
-    --accent-soft: #fdebe8;
-    --brand-divider: color-mix(in srgb, var(--suss-blue), #fff 84%);
-    --brand-chip-bg: color-mix(in srgb, var(--suss-blue), #fff 90%);
-    --today-column-bg: color-mix(in srgb, var(--suss-blue), #fff 94%);
+    --accent-soft: color-mix(in srgb, var(--suss-red), #fff 86%);
+    --secondary: var(--suss-light-blue);
+    --secondary-soft: color-mix(in srgb, var(--suss-light-blue), #fff 76%);
+    --tertiary: var(--suss-lime);
+    --tertiary-soft: color-mix(in srgb, var(--suss-lime), #fff 84%);
+    --brand-divider: color-mix(in srgb, var(--suss-grey), #fff 26%);
+    --brand-chip-bg: color-mix(in srgb, var(--suss-light-blue), #fff 74%);
+    --today-column-bg: color-mix(in srgb, var(--suss-light-blue), #fff 86%);
     --header-surface: var(--suss-blue);
     --header-text: #ffffff;
     --header-text-muted: rgb(255 255 255 / 0.78);
@@ -45,7 +57,7 @@
     --header-chip-active-bg: #ffffff;
     --header-chip-active-text: var(--suss-blue);
     --header-divider: rgb(255 255 255 / 0.14);
-    --footer-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 4%);
+    --footer-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-grey) 18%);
     --primary-ring-soft: rgb(var(--suss-blue-rgb) / 0.22);
     --primary-ring-strong: rgb(var(--suss-blue-rgb) / 0.3);
     --now-line: var(--suss-red);
@@ -81,6 +93,8 @@
     background:
       radial-gradient(1200px 640px at 0% -12%, rgb(var(--suss-blue-rgb) / 0.09), transparent 56%),
       radial-gradient(900px 500px at 100% 0%, rgb(var(--suss-red-rgb) / 0.06), transparent 52%),
+      radial-gradient(880px 520px at 100% 100%, rgb(var(--suss-light-blue-rgb) / 0.12), transparent 50%),
+      radial-gradient(860px 520px at 0% 100%, rgb(var(--suss-lime-rgb) / 0.08), transparent 48%),
       var(--background);
     color: var(--on-surface);
     font-family: var(--font-sans), sans-serif;
@@ -100,7 +114,7 @@
   }
 
   ::selection {
-    background: rgb(var(--suss-blue-rgb) / 0.2);
+    background: rgb(var(--suss-light-blue-rgb) / 0.35);
   }
 }
 

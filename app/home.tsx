@@ -43,7 +43,7 @@ const projectAreas = [
     description: "Arrange courses across semesters and track your degree progress.",
     href: "/planner",
     icon: LayersIcon,
-    tone: "bg-[var(--primary)] text-on-primary",
+    tone: "bg-[var(--suss-light-blue)] text-[var(--on-surface)]",
   },
   {
     title: "Calculators",
@@ -51,7 +51,7 @@ const projectAreas = [
     description: "Estimate your GPA based on your current grades and plan for the future by simulating different grade outcomes.",
     href: "/calculators",
     icon: CalculatorIcon,
-    tone: "bg-[var(--primary)] text-on-primary",
+    tone: "bg-[var(--suss-lime)] text-[var(--on-surface)]",
   },
 ] as const;
 
