@@ -1296,15 +1296,17 @@ function CourseCard({
       assignedSemester: course.assignedSemester,
     },
   });
-  const style: CSSProperties = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        pointerEvents: isDndDragging ? "none" : "auto",
-      }
-    : {
-        pointerEvents: isDndDragging ? "none" : "auto",
-      };
   const active = isDragging || isDndDragging;
+  const activeTransform = active ? " rotate(1deg) scale(1.05)" : "";
+  const style: CSSProperties = {
+    pointerEvents: isDndDragging ? "none" : "auto",
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)${activeTransform}`
+      : active
+        ? activeTransform.trim()
+        : undefined,
+    transformOrigin: "center",
+  };
 
   return (
     <article
@@ -1316,7 +1318,7 @@ function CourseCard({
         draggable ? "cursor-grab active:cursor-grabbing select-none touch-manipulation" : ""
       } ${
         active
-          ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] opacity-60 shadow-[0_12px_28px_rgba(15,23,42,0.12)]"
+          ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] opacity-50 shadow-[0_12px_28px_rgba(15,23,42,0.12)]"
           : ghost
             ? "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] opacity-55"
             : "border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] hover:border-[var(--outline-variant)]"
