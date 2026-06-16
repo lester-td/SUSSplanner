@@ -50,6 +50,13 @@ type SearchResponse = {
   courses: CourseSearchResult[];
 };
 
+type DragTranslate = {
+  x: number;
+  y: number;
+};
+
+const GHOST_CATCHUP_RATE = 0.09;
+
 function formatCredits(value: number)
 {
   return `${Number(value.toFixed(1)).toString()} CU`;
@@ -77,6 +84,75 @@ function formatOfferedSemesters(course: CourseSearchResult)
 function sortCourses(courses: StudyPlanCourse[])
 {
   return [...courses].sort((left, right) => left.courseCode.localeCompare(right.courseCode));
+}
+
+function useCatchingGhostTransform(transform: DragTranslate | null, active: boolean)
+{
+  const [ghostTransform, setGhostTransform] = useState<DragTranslate | null>(null);
+  const activeRef = useRef(active);
+  const frameRef = useRef<number | null>(null);
+  const currentRef = useRef<DragTranslate>({ x: 0, y: 0 });
+  const targetRef = useRef<DragTranslate>({ x: 0, y: 0 });
+  const hasGhostRef = useRef(false);
+
+  activeRef.current = active;
+
+  useEffect(() => {
+    if (!active || !transform)
+    {
+      if (frameRef.current !== null)
+      {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+
+      currentRef.current = { x: 0, y: 0 };
+      targetRef.current = { x: 0, y: 0 };
+      hasGhostRef.current = false;
+      setGhostTransform(null);
+      return;
+    }
+
+    targetRef.current = { x: transform.x, y: transform.y };
+
+    if (!hasGhostRef.current)
+    {
+      hasGhostRef.current = true;
+      setGhostTransform({ ...currentRef.current });
+    }
+
+    if (frameRef.current !== null)
+    {
+      return;
+    }
+
+    const animate = () => {
+      const current = currentRef.current;
+      const target = targetRef.current;
+      const next = {
+        x: current.x + ((target.x - current.x) * GHOST_CATCHUP_RATE),
+        y: current.y + ((target.y - current.y) * GHOST_CATCHUP_RATE),
+      };
+
+      currentRef.current = next;
+      setGhostTransform(next);
+
+      frameRef.current = activeRef.current
+        ? window.requestAnimationFrame(animate)
+        : null;
+    };
+
+    frameRef.current = window.requestAnimationFrame(animate);
+  }, [active, transform]);
+
+  useEffect(() => () => {
+    if (frameRef.current !== null)
+    {
+      window.cancelAnimationFrame(frameRef.current);
+    }
+  }, []);
+
+  return ghostTransform;
 }
 
 export function StudyPlanClient({
@@ -1302,11 +1378,13 @@ function CourseCard({
     },
   });
   const active = isDragging || isDndDragging;
+  const catchingTransform = useCatchingGhostTransform(transform, active);
+  const displayedTransform = catchingTransform ?? transform;
   const activeTransform = active ? " rotate(1deg) scale(1.05)" : "";
   const style: CSSProperties = {
     pointerEvents: isDndDragging ? "none" : "auto",
-    transform: transform
-      ? `translate3d(${transform.x}px, ${transform.y}px, 0)${activeTransform}`
+    transform: displayedTransform
+      ? `translate3d(${displayedTransform.x}px, ${displayedTransform.y}px, 0)${activeTransform}`
       : active
         ? activeTransform.trim()
         : undefined,
@@ -1319,7 +1397,7 @@ function CourseCard({
       style={style}
       {...(draggable ? listeners : {})}
       {...(draggable ? attributes : {})}
-      className={`rounded-[0.85rem] border px-3 py-2.5 transition-all ${
+      className={`rounded-[0.85rem] border px-3 py-2.5 ${active ? "transition-colors duration-200" : "transition-all duration-200"} ${
         draggable ? "cursor-grab active:cursor-grabbing select-none touch-none" : ""
       } ${
         active
