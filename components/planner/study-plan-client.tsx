@@ -1,7 +1,18 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
 import {
   BookIcon,
@@ -37,8 +48,6 @@ import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 type SearchResponse = {
   courses: CourseSearchResult[];
 };
-
-type DropZone = "bank" | "trash" | `semester:${number}` | null;
 
 function formatCredits(value: number)
 {
@@ -96,10 +105,22 @@ export function StudyPlanClient({
   const [importedPlanFileName, setImportedPlanFileName] = useState("");
   const [notice, setNotice] = useState("");
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
-  const [activeDropZone, setActiveDropZone] = useState<DropZone>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const deferredSearch = useDeferredValue(searchQuery);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 8,
+      },
+    }),
+  );
 
   useEffect(() => {
     setPlan(loadStudyPlanState() ?? defaultStudyPlanState());
@@ -250,6 +271,10 @@ export function StudyPlanClient({
   const editingCourse = useMemo(
     () => sortedCourses.find((course) => course.id === editingCourseId && course.source === "manual") ?? null,
     [editingCourseId, sortedCourses],
+  );
+  const draggedCourse = useMemo(
+    () => sortedCourses.find((course) => course.id === draggedCourseId) ?? null,
+    [draggedCourseId, sortedCourses],
   );
 
   useEffect(() => {
@@ -518,61 +543,44 @@ export function StudyPlanClient({
     showNoticeMessage("Custom module updated.");
   }
 
-  function handleCourseDragStart(courseId: string)
+  function handleCourseDragStart(event: DragStartEvent)
   {
-    setDraggedCourseId(courseId);
+    setDraggedCourseId(String(event.active.id));
   }
 
-  function handleCourseDragEnd()
+  function handleCourseDragEnd(event: DragEndEvent)
   {
+    const courseId = String(event.active.id);
+    const overId = event.over ? String(event.over.id) : null;
+
     setDraggedCourseId(null);
-    setActiveDropZone(null);
-  }
 
-  function allowDrop(zone: DropZone)
-  {
-    setActiveDropZone(zone);
-  }
-
-  function handleDropToBank()
-  {
-    if (!draggedCourseId)
+    if (!overId)
     {
       return;
     }
 
-    moveCourseToSemester(draggedCourseId, null);
-    setActiveDropZone(null);
-    setDraggedCourseId(null);
-  }
-
-  function handleDropToSemester(semesterIndex: number)
-  {
-    if (!draggedCourseId)
+    if (overId === "course-bank")
     {
+      moveCourseToSemester(courseId, null);
       return;
     }
 
-    moveCourseToSemester(draggedCourseId, semesterIndex);
-    setActiveDropZone(null);
-    setDraggedCourseId(null);
-  }
-
-  function handleDropToTrash()
-  {
-    if (!draggedCourseId)
+    if (overId === "trash-zone")
     {
+      const course = plan.courses.find((item) => item.id === courseId);
+      removeCourse(courseId);
+
+      if (course)
+      {
+        showNoticeMessage(`${course.courseCode} deleted from planner.`);
+      }
       return;
     }
 
-    const course = plan.courses.find((item) => item.id === draggedCourseId);
-    removeCourse(draggedCourseId);
-    setActiveDropZone(null);
-    setDraggedCourseId(null);
-
-    if (course)
+    if (overId.startsWith("semester-"))
     {
-      showNoticeMessage(`${course.courseCode} deleted from planner.`);
+      moveCourseToSemester(courseId, Number.parseInt(overId.slice("semester-".length), 10));
     }
   }
 
@@ -906,28 +914,19 @@ export function StudyPlanClient({
           </div>
         ) : null}
 
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleCourseDragStart}
+          onDragEnd={handleCourseDragEnd}
+        >
         <section className="grid gap-4 xl:grid-cols-[21rem_minmax(0,1fr)]">
           <aside className={`space-y-4 lg:sticky lg:top-[90px] lg:max-h-[calc(100vh-110px)] lg:self-start lg:pr-1 ${
             draggedCourseId ? "lg:overflow-visible" : "lg:overflow-y-auto"
           }`}>
-            <div
-              onDragOver={(event) => {
-                event.preventDefault();
-                allowDrop("bank");
-              }}
-              onDragLeave={(event) => {
-                if (event.currentTarget.contains(event.relatedTarget as Node | null))
-                {
-                  return;
-                }
-                setActiveDropZone((current) => (current === "bank" ? null : current));
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                handleDropToBank();
-              }}
-              className={`rounded-[1rem] border px-4 py-4 transition-all ${
-                activeDropZone === "bank"
+            <DroppableDiv
+              id="course-bank"
+              className={(isOver) => `rounded-[1rem] border px-4 py-4 transition-all ${
+                isOver
                   ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
                   : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
               }`}
@@ -964,48 +963,36 @@ export function StudyPlanClient({
                     ghost={showAllModules && course.assignedSemester !== null}
                     isDragging={draggedCourseId === course.id}
                     draggable={course.assignedSemester === null}
-                    onDragStart={() => handleCourseDragStart(course.id)}
-                    onDragEnd={handleCourseDragEnd}
                     onEdit={course.source === "manual" ? () => setEditingCourseId(course.id) : undefined}
                   />
                 ))}
               </div>
-            </div>
+            </DroppableDiv>
 
-            <div
-              onDragOver={(event) => {
-                event.preventDefault();
-                allowDrop("trash");
-              }}
-              onDragLeave={(event) => {
-                if (event.currentTarget.contains(event.relatedTarget as Node | null))
-                {
-                  return;
-                }
-                setActiveDropZone((current) => (current === "trash" ? null : current));
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                handleDropToTrash();
-              }}
-              className={`rounded-[1rem] border-2 border-dashed px-4 py-5 text-center transition-all ${
-                activeDropZone === "trash"
+            <DroppableDiv
+              id="trash-zone"
+              className={(isOver) => `rounded-[1rem] border-2 border-dashed px-4 py-5 text-center transition-all ${
+                isOver
                   ? "scale-[1.03] border-red-500 bg-red-500/10 text-red-400 shadow-[0_12px_30px_rgba(239,68,68,0.15)]"
                   : draggedCourseId
                     ? "border-red-400 bg-red-500/6 text-red-300"
                     : "border-red-500/60 bg-transparent text-red-300/90"
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <TrashIcon className={`h-5 w-5 transition-transform ${activeDropZone === "trash" ? "scale-110" : ""}`} />
-                <span className="text-[15px] font-semibold leading-6">
-                  {activeDropZone === "trash" ? "Release to delete course" : "Drag here to delete course"}
-                </span>
-              </div>
-              <p className="mt-2 text-[12px] leading-5 opacity-80">
-                This action cannot be undone.
-              </p>
-            </div>
+              {(isOver) => (
+                <>
+                  <div className="flex items-center justify-center gap-2">
+                    <TrashIcon className={`h-5 w-5 transition-transform ${isOver ? "scale-110" : ""}`} />
+                    <span className="text-[15px] font-semibold leading-6">
+                      {isOver ? "Release to delete course" : "Drag here to delete course"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[12px] leading-5 opacity-80">
+                    This action cannot be undone.
+                  </p>
+                </>
+              )}
+            </DroppableDiv>
           </aside>
 
           <section className="space-y-4">
@@ -1020,25 +1007,11 @@ export function StudyPlanClient({
                 const semesterCreditUnits = startingCourses.reduce((sum, course) => sum + course.creditUnits, 0);
 
                 return (
-                  <article
+                  <DroppableArticle
                     key={semesterIndex}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      allowDrop(`semester:${semesterIndex}`);
-                    }}
-                    onDragLeave={(event) => {
-                      if (event.currentTarget.contains(event.relatedTarget as Node | null))
-                      {
-                        return;
-                      }
-                      setActiveDropZone((current) => (current === `semester:${semesterIndex}` ? null : current));
-                    }}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      handleDropToSemester(semesterIndex);
-                    }}
-                    className={`rounded-[1rem] border px-4 py-4 transition-all ${
-                      activeDropZone === `semester:${semesterIndex}`
+                    id={`semester-${semesterIndex}`}
+                    className={(isOver) => `rounded-[1rem] border px-4 py-4 transition-all ${
+                      isOver
                         ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
                         : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
                     }`}
@@ -1091,13 +1064,11 @@ export function StudyPlanClient({
                           course={course}
                           isDragging={draggedCourseId === course.id}
                           draggable
-                          onDragStart={() => handleCourseDragStart(course.id)}
-                          onDragEnd={handleCourseDragEnd}
                           onEdit={course.source === "manual" ? () => setEditingCourseId(course.id) : undefined}
                         />
                       ))}
                     </div>
-                  </article>
+                  </DroppableArticle>
                 );
               })}
 
@@ -1122,6 +1093,14 @@ export function StudyPlanClient({
             </div>
           </section>
         </section>
+        <DragOverlay
+          dropAnimation={null}
+          style={{ zIndex: 9999 }}
+          adjustScale={false}
+        >
+          {draggedCourse ? <CourseDragOverlay course={draggedCourse} /> : null}
+        </DragOverlay>
+        </DndContext>
       </div>
 
       <Modal
@@ -1293,37 +1272,50 @@ function CourseCard({
   draggable = false,
   ghost = false,
   isDragging = false,
-  onDragStart,
-  onDragEnd,
   onEdit,
 }: {
   course: StudyPlanCourse;
   draggable?: boolean;
   ghost?: boolean;
   isDragging?: boolean;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
   onEdit?: () => void;
 })
 {
+  const draggableId = draggable ? course.id : `static-${course.id}`;
+  const {
+    attributes,
+    isDragging: isDndDragging,
+    listeners,
+    setNodeRef,
+    transform,
+  } = useDraggable({
+    id: draggableId,
+    disabled: !draggable,
+    data: {
+      course,
+      assignedSemester: course.assignedSemester,
+    },
+  });
+  const style: CSSProperties = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        pointerEvents: isDndDragging ? "none" : "auto",
+      }
+    : {
+        pointerEvents: isDndDragging ? "none" : "auto",
+      };
+  const active = isDragging || isDndDragging;
+
   return (
     <article
-      draggable={draggable}
-      onDragStart={(event) => {
-        if (!draggable)
-        {
-          return;
-        }
-
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", course.id);
-        onDragStart?.();
-      }}
-      onDragEnd={() => onDragEnd?.()}
+      ref={setNodeRef}
+      style={style}
+      {...(draggable ? listeners : {})}
+      {...(draggable ? attributes : {})}
       className={`rounded-[0.85rem] border px-3 py-2.5 transition-all ${
-        draggable ? "cursor-grab active:cursor-grabbing select-none" : ""
+        draggable ? "cursor-grab active:cursor-grabbing select-none touch-manipulation" : ""
       } ${
-        isDragging
+        active
           ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] opacity-60 shadow-[0_12px_28px_rgba(15,23,42,0.12)]"
           : ghost
             ? "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] opacity-55"
@@ -1365,6 +1357,69 @@ function CourseCard({
           </button>
         ) : null}
       </div>
+    </article>
+  );
+}
+
+function CourseDragOverlay({
+  course,
+}: {
+  course: StudyPlanCourse;
+})
+{
+  return (
+    <article className="pointer-events-none rounded-[0.85rem] border-2 border-[var(--primary)] bg-[var(--surface-container-lowest)] px-3 py-2.5 opacity-95 shadow-[0_16px_32px_rgba(15,23,42,0.2)]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
+            {course.courseCode}
+          </p>
+          <p className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] leading-5 text-[var(--on-surface-variant)]">
+            {course.courseName}
+          </p>
+        </div>
+        <span className="shrink-0 text-[12px] font-semibold leading-5 text-[var(--primary)]">
+          {formatCredits(course.creditUnits)}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function DroppableDiv({
+  children,
+  className,
+  id,
+}: {
+  children: ReactNode | ((isOver: boolean) => ReactNode);
+  className: (isOver: boolean) => string;
+  id: string;
+})
+{
+  const { isOver, setNodeRef } = useDroppable({ id });
+
+  return (
+    <div ref={setNodeRef} className={className(isOver)}>
+      {typeof children === "function" ? children(isOver) : children}
+    </div>
+  );
+}
+
+function DroppableArticle({
+  children,
+  className,
+  id,
+}: {
+  children: ReactNode;
+  className: (isOver: boolean) => string;
+  id: string;
+})
+{
+  const { isOver, setNodeRef } = useDroppable({ id });
+
+  return (
+    <article ref={setNodeRef} className={className(isOver)}>
+      {children}
     </article>
   );
 }
