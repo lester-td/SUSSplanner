@@ -3,11 +3,14 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/layout/app-shell";
 import {
-  ArrowUpRightIcon,
   BookIcon,
   CalculatorIcon,
   CalendarWeekIcon,
+  CalendarIcon,
+  HomeIcon,
   LayersIcon,
+  SchoolIcon,
+  SettingsIcon,
 } from "@/components/planner/icons";
 import { getSemestersWithWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
@@ -53,14 +56,46 @@ const projectAreas = [
 ] as const;
 
 const portalLinks = [
-  "Student Portal",
-  "Canvas / LMS",
-  "eServices",
-  "Academic Calendar",
-  "Exam Timetable",
-  "Library",
-  "Student Support",
-  "Fees & Payments",
+  {
+    label: "Student Portal",
+    href: "#",
+    icon: HomeIcon,
+  },
+  {
+    label: "Canvas / LMS",
+    href: "#",
+    icon: BookIcon,
+  },
+  {
+    label: "eServices",
+    href: "#",
+    icon: SettingsIcon,
+  },
+  {
+    label: "Academic Calendar",
+    href: "#",
+    icon: CalendarIcon,
+  },
+  {
+    label: "Exam Timetable",
+    href: "#",
+    icon: CalendarWeekIcon,
+  },
+  {
+    label: "Library",
+    href: "#",
+    icon: BookIcon,
+  },
+  {
+    label: "Student Support",
+    href: "#",
+    icon: SchoolIcon,
+  },
+  {
+    label: "Fees & Payments",
+    href: "#",
+    icon: CalculatorIcon,
+  },
 ] as const;
 
 export default async function HomePage()
@@ -89,47 +124,45 @@ export default async function HomePage()
                 key={area.href}
                 prefetch
                 href={area.href}
-                className="group flex min-h-[13rem] flex-col rounded-[1.25rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--brand-divider)] hover:shadow-[var(--shadow-elev-2)]"
+                className="group flex min-h-[13rem] cursor-pointer flex-col rounded-[1.25rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:shadow-[var(--shadow-elev-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
               >
-                <div className={`flex h-11 w-11 items-center justify-center rounded-[1rem] ${area.tone}`}>
+                <div className={`flex h-11 w-11 items-center justify-center rounded-[1rem] ${area.tone} transition-transform group-hover:scale-105`}>
                   <Icon className="h-5 w-5" />
                 </div>
-                <h2 className="mt-4 text-[22px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)]">
+                <h2 className="mt-4 text-[22px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)] transition-colors group-hover:text-[var(--primary)]">
                   {area.title}
                 </h2>
                 <p className="mt-2 flex-1 text-[14px] leading-6 text-[var(--on-surface-variant)]">
                   {area.description}
                 </p>
-                <span className="mt-4 inline-flex items-center gap-2 text-[13px] font-bold text-[var(--primary)]">
-                  Open
-                  <ArrowUpRightIcon className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </span>
               </Link>
             );
           })}
         </section>
 
-        <section id="portal-links" className="rounded-[1.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] p-4 sm:p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="mt-2 text-[24px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)]">
-                Useful Links
-              </h2>
-            </div>
-          </div>
+        <section id="portal-links" className="px-0">
+          <h2 className="mt-2 text-[24px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)]">
+            Useful Links
+          </h2>
 
           <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {portalLinks.map((label) => (
-              <a
-                key={label}
-                href="#"
-                aria-label={`${label} placeholder link`}
-                className="group flex items-center justify-between gap-3 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 text-[14px] font-bold text-[var(--on-surface)] transition hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <span>{label}</span>
-                <ArrowUpRightIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </a>
-            ))}
+            {portalLinks.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  aria-label={`${item.label} placeholder link`}
+                  className="group flex items-center gap-3 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 text-[14px] font-bold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.8rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">{item.label}</span>
+                </a>
+              );
+            })}
           </div>
         </section>
       </main>
