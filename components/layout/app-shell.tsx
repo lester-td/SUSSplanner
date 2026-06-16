@@ -70,11 +70,11 @@ export function AppShell({
   return (
     <main className="flex min-h-screen flex-col bg-[var(--surface-container)] text-[var(--on-surface)]">
       {showHeader ? (
-        <header className="sticky top-0 z-40 border-b border-[var(--brand-divider)] bg-[var(--header-surface)] shadow-[0_4px_18px_rgba(15,23,42,0.08)] backdrop-blur">
+        <header className="sticky top-0 z-40 border-b border-[color:var(--header-divider)] bg-[var(--header-surface)] shadow-[0_4px_18px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="px-3 py-2.5 md:px-[16px] md:py-3">
             <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2.5 xl:gap-3">
-                <Link prefetch href="/" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--primary-container)] lg:inline sm:text-[24px] sm:leading-8">
+                <Link prefetch href="/" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--header-text)] lg:inline sm:text-[24px] sm:leading-8">
                   SUSS Planner
                 </Link>
 
@@ -90,8 +90,8 @@ export function AppShell({
                           href={item.href}
                           className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[999px] px-2.5 py-1.5 text-[12px] font-semibold leading-4 transition-colors sm:gap-2 sm:px-3 sm:py-2 ${
                             activeSection === item.id
-                              ? "bg-[var(--primary)] !text-on-primary hover:bg-[var(--primary-container)] hover:!text-on-primary"
-                              : "text-[var(--on-surface-variant)] hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)]"
+                              ? "bg-[var(--header-chip-active-bg)] !text-[var(--header-chip-active-text)] hover:bg-[var(--header-chip-active-bg)] hover:!text-[var(--header-chip-active-text)]"
+                              : "text-[var(--header-text-muted)] hover:bg-[var(--header-chip-bg)] hover:text-[var(--header-text)]"
                           }`}
                         >
                           <Icon className="h-4 w-4" />
@@ -104,7 +104,7 @@ export function AppShell({
               </div>
 
               <div className="shrink-0">
-                <div className="whitespace-nowrap px-1 py-1 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[14px] sm:leading-5">
+                <div className="whitespace-nowrap px-1 py-1 text-[11px] font-semibold leading-4 text-[var(--header-text-muted)] sm:text-[14px] sm:leading-5">
                   {currentWeekLabel}
                 </div>
               </div>

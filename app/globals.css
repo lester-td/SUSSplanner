@@ -8,7 +8,7 @@
 
 @layer base {
   :root {
-    --suss-blue: #001e60;
+    --suss-blue: #001E60;
     --suss-red: #da291c;
     --suss-blue-rgb: 0 30 96;
     --suss-red-rgb: 218 41 28;
@@ -25,7 +25,7 @@
     --outline: #687488;
     --outline-variant: #c3ccdc;
     --primary: var(--suss-blue);
-    --primary-container: #15357a;
+    --primary-container: #001E60;
     --primary-fixed: #e7edfb;
     --on-primary: #ffffff;
     --on-primary-container: #ffffff;
@@ -38,7 +38,13 @@
     --brand-divider: color-mix(in srgb, var(--suss-blue), #fff 84%);
     --brand-chip-bg: color-mix(in srgb, var(--suss-blue), #fff 90%);
     --today-column-bg: color-mix(in srgb, var(--suss-blue), #fff 94%);
-    --header-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 6%);
+    --header-surface: var(--suss-blue);
+    --header-text: #ffffff;
+    --header-text-muted: rgb(255 255 255 / 0.78);
+    --header-chip-bg: rgb(255 255 255 / 0.12);
+    --header-chip-active-bg: #ffffff;
+    --header-chip-active-text: var(--suss-blue);
+    --header-divider: rgb(255 255 255 / 0.14);
     --footer-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 4%);
     --primary-ring-soft: rgb(var(--suss-blue-rgb) / 0.22);
     --primary-ring-strong: rgb(var(--suss-blue-rgb) / 0.3);
