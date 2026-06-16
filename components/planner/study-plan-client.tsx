@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import {
+  AutoScrollActivator,
   DndContext,
   DragOverlay,
   PointerSensor,
@@ -915,6 +916,10 @@ export function StudyPlanClient({
         ) : null}
 
         <DndContext
+          autoScroll={{
+            activator: AutoScrollActivator.Pointer,
+            layoutShiftCompensation: false,
+          }}
           sensors={sensors}
           onDragStart={handleCourseDragStart}
           onDragEnd={handleCourseDragEnd}
@@ -1315,7 +1320,7 @@ function CourseCard({
       {...(draggable ? listeners : {})}
       {...(draggable ? attributes : {})}
       className={`rounded-[0.85rem] border px-3 py-2.5 transition-all ${
-        draggable ? "cursor-grab active:cursor-grabbing select-none touch-manipulation" : ""
+        draggable ? "cursor-grab active:cursor-grabbing select-none touch-none" : ""
       } ${
         active
           ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] opacity-50 shadow-[0_12px_28px_rgba(15,23,42,0.12)]"
