@@ -21,6 +21,17 @@ import type {
 } from "./types";
 
 export const COURSE_COLOR_PALETTE = [
+  "#F0BCC2",
+  "#F2CCA0",
+  "#E8D7B1",
+  "#C9DFB2",
+  "#C3DCEA",
+  "#D8C1E7",
+  "#E0C7AA",
+  "#C9DDCB",
+];
+
+const LEGACY_COURSE_COLOR_PALETTE = [
   "#F4D6D8",
   "#F7E0C3",
   "#F0E7D8",
@@ -30,6 +41,22 @@ export const COURSE_COLOR_PALETTE = [
   "#E0D8C8",
   "#D7E1D4",
 ];
+
+const LEGACY_TO_CURRENT_COURSE_COLOR = new Map(
+  LEGACY_COURSE_COLOR_PALETTE.map((legacyColor, index) => [legacyColor.toLowerCase(), COURSE_COLOR_PALETTE[index]] as const),
+);
+
+export function migrateCourseColor(color: string)
+{
+  return LEGACY_TO_CURRENT_COURSE_COLOR.get(color.toLowerCase()) ?? color;
+}
+
+export function migrateCourseColorMap(colors: Record<string, string>)
+{
+  return Object.fromEntries(
+    Object.entries(colors).map(([courseCode, color]) => [courseCode, migrateCourseColor(color)] as const),
+  );
+}
 
 export function getCourseColor(courseCode: string)
 {

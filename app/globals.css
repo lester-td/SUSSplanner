@@ -49,6 +49,7 @@
     --tertiary-soft: color-mix(in srgb, var(--suss-lime), #fff 84%);
     --brand-divider: color-mix(in srgb, var(--suss-grey), #fff 26%);
     --brand-chip-bg: color-mix(in srgb, var(--suss-light-blue), #fff 74%);
+    --rail-week-bg: color-mix(in srgb, var(--suss-grey) 30%, #fff 70%);
     --today-column-bg: color-mix(in srgb, var(--suss-light-blue), #fff 86%);
     --header-surface: var(--suss-blue);
     --header-text: #ffffff;
@@ -215,7 +216,7 @@
   background-color: var(--block-bg);
   border: 0 solid color-mix(in srgb, var(--block-border), #000 24%);
   border-bottom-width: 0.2rem;
-  border-radius: 0.32rem;
+  border-radius: 0.18rem;
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.16);
   cursor: default;
   transform-origin: center;

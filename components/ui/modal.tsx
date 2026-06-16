@@ -1,3 +1,4 @@
+import { XIcon } from "@/components/planner/icons";
 import type { ReactNode } from "react";
 
 export function Modal({
@@ -9,6 +10,7 @@ export function Modal({
   onClose,
   maxWidthClassName = "max-w-2xl",
   bodyClassName = "",
+  showCloseButton = false,
 }: {
   open: boolean;
   title: string;
@@ -18,6 +20,7 @@ export function Modal({
   onClose: () => void;
   maxWidthClassName?: string;
   bodyClassName?: string;
+  showCloseButton?: boolean;
 })
 {
   if (!open)
@@ -29,6 +32,17 @@ export function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 px-3 py-3">
       <button type="button" className="absolute inset-0" aria-label="Close modal" onClick={onClose} />
       <div className={`relative z-10 mx-auto flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-2xl ${maxWidthClassName}`}>
+        {showCloseButton ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-5 top-5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-[0.5rem] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
+            aria-label="Close modal"
+            title="Close"
+          >
+            <XIcon className="h-4 w-4" />
+          </button>
+        ) : null}
         <div className="shrink-0 px-5 pb-0 pt-5">
           <h2 className="text-[20px] font-semibold leading-7 text-[var(--on-surface)]">{title}</h2>
           {description ? (

@@ -1,4 +1,5 @@
 import { plannerStorageStateSchema } from "@/lib/validation/timetable";
+import { migrateCourseColorMap } from "./timetable-utils";
 import type { PlannerStorageState, SharedTimetableState } from "./types";
 
 export const TIMETABLE_STORAGE_KEY = "sussplanner.timetable.v1";
@@ -23,7 +24,11 @@ export function loadSavedTimetable()
 
   try
   {
-    return plannerStorageStateSchema.parse(JSON.parse(raw)) as PlannerStorageState;
+    const parsed = plannerStorageStateSchema.parse(JSON.parse(raw)) as PlannerStorageState;
+    return {
+      ...parsed,
+      courseColorsByCourseCode: migrateCourseColorMap(parsed.courseColorsByCourseCode ?? {}),
+    };
   }
   catch {
     return null;

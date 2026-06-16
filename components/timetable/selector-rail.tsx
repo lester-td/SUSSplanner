@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/planner/icons";
-import { IconButton } from "@/components/ui/actions";
 
 type SelectorRailItem = {
   id: string;
@@ -30,7 +30,70 @@ export function SelectorRail({
 })
 {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const dragStateRef = useRef<{
+    pointerId: number | null;
+    startX: number;
+    startScrollLeft: number;
+    hasDragged: boolean;
+    clickSuppressUntil: number;
+  }>({
+    pointerId: null,
+    startX: 0,
+    startScrollLeft: 0,
+    hasDragged: false,
+    clickSuppressUntil: 0,
+  });
   const selectedIndex = items.findIndex((item) => item.id === selectedId);
+
+  useEffect(() => {
+    function handleWindowPointerMove(event: PointerEvent)
+    {
+      const scroller = scrollerRef.current;
+      const dragState = dragStateRef.current;
+      if (!scroller || dragState.pointerId !== event.pointerId)
+      {
+        return;
+      }
+
+      const deltaX = event.clientX - dragState.startX;
+      if (!dragState.hasDragged && Math.abs(deltaX) < 8)
+      {
+        return;
+      }
+
+      dragState.hasDragged = true;
+      event.preventDefault();
+      scroller.scrollLeft = dragState.startScrollLeft - deltaX;
+    }
+
+    function finishPointerDrag(event: PointerEvent)
+    {
+      const dragState = dragStateRef.current;
+      if (dragState.pointerId !== event.pointerId)
+      {
+        return;
+      }
+
+      const wasDragging = dragState.hasDragged;
+      dragState.pointerId = null;
+      dragState.hasDragged = false;
+
+      if (wasDragging)
+      {
+        dragState.clickSuppressUntil = performance.now() + 90;
+      }
+    }
+
+    window.addEventListener("pointermove", handleWindowPointerMove, { passive: false });
+    window.addEventListener("pointerup", finishPointerDrag);
+    window.addEventListener("pointercancel", finishPointerDrag);
+
+    return () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", finishPointerDrag);
+      window.removeEventListener("pointercancel", finishPointerDrag);
+    };
+  }, []);
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -52,23 +115,51 @@ export function SelectorRail({
     });
   }, [items, selectedId]);
 
-  return (
-    <div
-      className={`relative flex items-center px-3 py-2 ${
-        variant === "semester" ? "border-b border-[var(--outline-variant)]/50" : ""
-      } ${subtle ? "bg-[var(--brand-chip-bg)]" : ""}`}
-    >
-      <IconButton
-        label="Previous"
-        onClick={onPrev}
-        className="absolute left-2 top-1/2 z-20 -translate-y-1/2 border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] shadow-sm"
-        disabled={selectedIndex <= 0}
-      >
-        <ChevronLeftIcon className="h-4 w-4" />
-      </IconButton>
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>)
+  {
+    if (event.button !== 0)
+    {
+      return;
+    }
 
-      <div ref={scrollerRef} className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <div className={`flex min-w-max items-center justify-center px-3 ${variant === "semester" ? "gap-6" : "gap-8"}`}>
+    const scroller = scrollerRef.current;
+    if (!scroller)
+    {
+      return;
+    }
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: scroller.scrollLeft,
+      hasDragged: false,
+      clickSuppressUntil: 0,
+    };
+  }
+
+  const railClassName = variant === "semester"
+    ? "border-b border-[var(--outline-variant)]/40 bg-[var(--surface-container-lowest)]"
+    : "border-t border-[var(--outline-variant)]/25 bg-[var(--rail-week-bg)]";
+
+  return (
+    <div className={`relative flex items-stretch overflow-hidden ${railClassName}`}>
+      <button
+        type="button"
+        aria-label="Previous"
+        onClick={onPrev}
+        disabled={selectedIndex <= 0}
+        className="flex h-full w-8 shrink-0 items-center justify-center rounded-none border-r border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <ChevronLeftIcon className="h-6 w-6" />
+      </button>
+
+      <div
+        ref={scrollerRef}
+        className="flex-1 cursor-grab overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden active:cursor-grabbing"
+        style={{ touchAction: "pan-y" }}
+        onPointerDown={handlePointerDown}
+      >
+        <div className={`flex min-w-max items-center justify-center px-3 ${variant === "semester" ? "gap-6 py-2.5" : "gap-8 py-2.5"}`}>
           {items.map((item) => {
             const active = item.id === selectedId;
             return (
@@ -79,7 +170,14 @@ export function SelectorRail({
                 className={`relative min-w-[6.5rem] px-1 text-center transition-opacity ${
                   active ? "text-[var(--primary)]" : "text-[var(--on-surface-variant)] opacity-40 hover:opacity-70"
                 }`}
-                onClick={() => onSelect(item.id)}
+                onClick={() => {
+                  if (performance.now() < dragStateRef.current.clickSuppressUntil)
+                  {
+                    return;
+                  }
+
+                  onSelect(item.id);
+                }}
               >
                 <div
                   className={
@@ -115,14 +213,15 @@ export function SelectorRail({
         </div>
       </div>
 
-      <IconButton
-        label="Next"
+      <button
+        type="button"
+        aria-label="Next"
         onClick={onNext}
-        className="absolute right-2 top-1/2 z-20 -translate-y-1/2 border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] shadow-sm"
         disabled={selectedIndex >= items.length - 1}
+        className="flex h-full w-8 shrink-0 items-center justify-center rounded-none border-l border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <ChevronRightIcon className="h-4 w-4" />
-      </IconButton>
+        <ChevronRightIcon className="h-6 w-6" />
+      </button>
     </div>
   );
 }

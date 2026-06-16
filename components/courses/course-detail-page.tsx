@@ -189,19 +189,21 @@ export function CourseDetailPage({
                     <CalendarWeekIcon className="h-4 w-4 text-[var(--primary)]" />
                     {displaySemesterLabel}
                   </span>
-                  <AddToStudyPlanButton course={course} />
-                  {course.synopsisUrl ? (
-                    <a
-                      href={course.synopsisUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="ml-auto inline-flex items-center gap-1 rounded-[0.4rem] border border-[var(--outline-variant)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                    >
-                      <BookIcon className="h-4 w-4" />
-                      View Details at SUSS Site
-                      <ArrowUpRightIcon className="h-4 w-4" />
-                    </a>
-                  ) : null}
+                  <div className="ml-auto flex flex-wrap items-center gap-2.5">
+                    <AddToStudyPlanButton course={course} appearance="outline" />
+                    {course.synopsisUrl ? (
+                      <a
+                        href={course.synopsisUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-[0.4rem] border border-[var(--outline-variant)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                      >
+                        <BookIcon className="h-4 w-4" />
+                        View Details at SUSS
+                        <ArrowUpRightIcon className="h-4 w-4" />
+                      </a>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
@@ -384,6 +386,7 @@ export function CourseDetailPage({
         title="Class Schedule"
         onClose={() => setScheduleGroup(null)}
         maxWidthClassName="max-w-2xl"
+        showCloseButton
       >
         {scheduleGroup ? (
           <ClassScheduleModalContent
@@ -391,7 +394,8 @@ export function CourseDetailPage({
             courseName={scheduleGroup.courseName}
             classGroupLabel={formatClassGroupLabel(scheduleGroup.groupCode)}
             events={scheduleGroup.events}
-            onClose={() => setScheduleGroup(null)}
+            selectedSemesterId={activeSemesterId ?? undefined}
+            showViewCourseButton={false}
           />
         ) : null}
       </Modal>

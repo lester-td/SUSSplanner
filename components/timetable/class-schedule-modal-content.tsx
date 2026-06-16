@@ -1,6 +1,8 @@
 "use client";
 
-import { XIcon } from "@/components/planner/icons";
+import Link from "next/link";
+
+import { ArrowUpRightIcon } from "@/components/planner/icons";
 import { formatEventDate, formatTimeRange } from "@/lib/timetable/date-utils";
 import type { ClassEventWithWeekRecord } from "@/lib/timetable/types";
 
@@ -34,15 +36,20 @@ export function ClassScheduleModalContent({
   courseName,
   classGroupLabel,
   events,
-  onClose,
+  selectedSemesterId,
+  showViewCourseButton = true,
 }: {
   courseCode: string;
   courseName: string | null;
   classGroupLabel: string;
   events: ClassEventWithWeekRecord[];
-  onClose: () => void;
+  selectedSemesterId?: number | null;
+  showViewCourseButton?: boolean;
 })
 {
+  const courseHref = selectedSemesterId !== null && selectedSemesterId !== undefined
+    ? `/courses/${courseCode}?semesterId=${selectedSemesterId}`
+    : `/courses/${courseCode}`;
   const classEvents = events
     .filter((event) => event.eventKind === "CLASS")
     .sort((left, right) => `${left.eventDate}${left.startTime}`.localeCompare(`${right.eventDate}${right.startTime}`));
@@ -52,34 +59,36 @@ export function ClassScheduleModalContent({
 
   return (
     <div className="relative space-y-4">
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute right-0 top-0 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.35rem] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
-        aria-label="Close modal"
-        title="Close"
-      >
-        <XIcon className="h-4 w-4" />
-      </button>
-      <div className="border-b border-[var(--outline-variant)] pb-3">
-        <div className="pr-9">
+      <div className="flex flex-col gap-3 border-b border-[var(--outline-variant)] pb-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span className="text-[24px] font-black leading-none tracking-[-0.04em] text-[var(--primary)]">{courseCode}</span>
             <span className="text-[22px] font-semibold leading-[1.08] tracking-[-0.02em] text-[var(--on-surface)]">{courseName ?? "Untitled course"}</span>
           </div>
-        </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <div className="border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Class Group</p>
-            <p className="mt-1 text-[16px] font-semibold leading-6 text-[var(--on-surface)]">{classGroupLabel}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Class Group</p>
+              <p className="mt-1 text-[16px] font-semibold leading-6 text-[var(--on-surface)]">{classGroupLabel}</p>
+            </div>
+            <div className="border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Sessions</p>
+              <p className="mt-1 text-[16px] font-semibold leading-6 text-[var(--on-surface)]">
+                {classEvents.length} {classEvents.length === 1 ? "session" : "sessions"}
+              </p>
+            </div>
           </div>
-          <div className="border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Sessions</p>
-            <p className="mt-1 text-[16px] font-semibold leading-6 text-[var(--on-surface)]">
-              {classEvents.length} {classEvents.length === 1 ? "session" : "sessions"}
-            </p>
-          </div>
         </div>
+        {showViewCourseButton ? (
+          <div className="shrink-0">
+            <Link
+              href={courseHref}
+              className="inline-flex items-center gap-1.5 rounded-[0.5rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-medium leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)] hover:text-on-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+            >
+              <ArrowUpRightIcon className="h-4 w-4" />
+              View Course
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       {classEvents.length === 0 ? (

@@ -848,8 +848,8 @@ export function PlannerClient({
     ? { label: "Exam Cal", icon: <CalendarIcon className="h-[18px] w-[18px]" />, onClick: () => setViewMode("exam") }
     : { label: "Timetable", icon: <GridIcon className="h-[18px] w-[18px]" />, onClick: () => setViewMode("class") };
   const nextOrientationToggle = orientation === "horizontal"
-    ? { label: "Vertical", icon: <RowsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("vertical") }
-    : { label: "Horizontal", icon: <ColumnsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("horizontal") };
+    ? { label: "Vertical", icon: <ColumnsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("vertical") }
+    : { label: "Horizontal", icon: <RowsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("horizontal") };
 
   return (
     <>
@@ -1235,13 +1235,13 @@ export function PlannerClient({
                   <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
                   <div className="mt-1 text-[18px] font-bold leading-6 text-[var(--primary)]">{totalCredits.toFixed(1)} CU</div>
                 </div>
-                <div className="relative w-[11.5rem] shrink-0">
+                <div className="relative w-[9.75rem] shrink-0">
                   <ListIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                   <select
                     value={sortMode}
                     aria-label="Order selected courses"
                     onChange={(event) => setSortMode(event.target.value as "code" | "exam" | "credit")}
-                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-8 py-1.5 text-center text-[11px] font-bold leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-8 py-1.5 text-center text-[14px] font-medium leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                   >
                     <option value="code">Order by Code</option>
                     <option value="exam">Order by Exam</option>
@@ -1259,6 +1259,7 @@ export function PlannerClient({
         title="Class Schedule"
         onClose={() => setScheduleCourse(null)}
         maxWidthClassName="max-w-2xl"
+        showCloseButton
       >
         {scheduleCourse ? (
           <ClassScheduleModalContent
@@ -1266,7 +1267,7 @@ export function PlannerClient({
             courseName={scheduleCourse.courseName}
             classGroupLabel={formatClassGroupLabel(scheduleCourse.groupCode)}
             events={scheduleCourse.events}
-            onClose={() => setScheduleCourse(null)}
+            selectedSemesterId={semesterId}
           />
         ) : null}
       </Modal>

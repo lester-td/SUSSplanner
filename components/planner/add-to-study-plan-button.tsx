@@ -21,10 +21,12 @@ type CatalogCourseLike = {
 export function AddToStudyPlanButton({
   course,
   compact = false,
+  appearance = "default",
   onAdded,
 }: {
   course: CatalogCourseLike;
   compact?: boolean;
+  appearance?: "default" | "outline";
   onAdded?: () => void;
 })
 {
@@ -47,6 +49,18 @@ export function AddToStudyPlanButton({
     };
   }, [courseCode]);
 
+  const buttonClassName = appearance === "outline"
+    ? `inline-flex items-center gap-1.5 rounded-[0.4rem] border px-2.5 py-1.5 text-[11px] font-semibold leading-4 transition-colors ${
+        added
+          ? "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
+          : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+      }`
+    : `inline-flex items-center gap-1.5 rounded-[0.55rem] border px-3 py-2 text-[12px] font-semibold leading-4 transition-colors ${
+        added
+          ? "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
+          : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface)] hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+      } ${compact ? "gap-1 px-2 py-0 text-[11px]" : ""}`;
+
   return (
     <button
       type="button"
@@ -57,11 +71,7 @@ export function AddToStudyPlanButton({
         setAdded(true);
         onAdded?.();
       }}
-      className={`inline-flex items-center gap-1.5 rounded-[0.55rem] border px-3 py-2 text-[12px] font-semibold leading-4 transition-colors ${
-        added
-          ? "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
-          : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface)] hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-      } ${compact ? "px-2.5 py-1.5 text-[11px]" : ""}`}
+      className={buttonClassName}
       aria-label={`Add ${courseCode} to planner`}
     >
       <PlusIcon className="h-4 w-4" />
