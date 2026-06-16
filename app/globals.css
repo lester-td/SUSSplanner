@@ -1,93 +1,101 @@
 @import "tailwindcss";
 
-:root {
-  --suss-blue: #001e60;
-  --suss-red: #da291c;
-  --suss-blue-rgb: 0 30 96;
-  --suss-red-rgb: 218 41 28;
-  --background: #f7f9fd;
-  --surface: #f7f9fd;
-  --surface-bright: #fcfdff;
-  --surface-dim: #d8deea;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #f3f6fb;
-  --surface-container: #ecf1f8;
-  --surface-container-high: #e5ecf6;
-  --surface-container-highest: #dde6f2;
-  --surface-variant: #dde6f2;
-  --outline: #687488;
-  --outline-variant: #c3ccdc;
-  --primary: var(--suss-blue);
-  --primary-container: #15357a;
-  --primary-fixed: #e7edfb;
-  --on-primary: #ffffff;
-  --on-primary-container: #ffffff;
-  --on-surface: #131a26;
-  --on-surface-variant: #42516a;
-  --error: var(--suss-red);
-  --error-container: #fdecea;
-  --accent: var(--suss-red);
-  --accent-soft: #fdebe8;
-  --brand-divider: color-mix(in srgb, var(--suss-blue), #fff 84%);
-  --brand-chip-bg: color-mix(in srgb, var(--suss-blue), #fff 90%);
-  --today-column-bg: color-mix(in srgb, var(--suss-blue), #fff 94%);
-  --header-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 6%);
-  --footer-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 4%);
-  --primary-ring-soft: rgb(var(--suss-blue-rgb) / 0.22);
-  --primary-ring-strong: rgb(var(--suss-blue-rgb) / 0.3);
-  --now-line: var(--suss-red);
-  --bg: var(--background);
-  --panel: var(--surface-container-lowest);
-  --panel-strong: var(--surface-container-low);
-  --ink: var(--on-surface);
-  --muted: var(--on-surface-variant);
-  --line: var(--outline-variant);
-  --brand: var(--primary);
-  --brand-soft: var(--primary-fixed);
-  --surface-high: var(--surface-container-high);
-  --surface-low: var(--surface-container-low);
-  --shadow-elev-1: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --shadow-elev-2: 0 8px 24px rgba(15, 23, 42, 0.1);
-  --shadow-elev-3: 0 14px 34px rgba(15, 23, 42, 0.14);
-  --font-sans: "Inter", sans-serif;
-  --font-display: "Inter", sans-serif;
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary: var(--on-primary);
 }
 
-* {
-  box-sizing: border-box;
-  font-family: var(--font-sans), sans-serif;
-}
+@layer base {
+  :root {
+    --suss-blue: #001e60;
+    --suss-red: #da291c;
+    --suss-blue-rgb: 0 30 96;
+    --suss-red-rgb: 218 41 28;
+    --background: #f7f9fd;
+    --surface: #f7f9fd;
+    --surface-bright: #fcfdff;
+    --surface-dim: #d8deea;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #f3f6fb;
+    --surface-container: #ecf1f8;
+    --surface-container-high: #e5ecf6;
+    --surface-container-highest: #dde6f2;
+    --surface-variant: #dde6f2;
+    --outline: #687488;
+    --outline-variant: #c3ccdc;
+    --primary: var(--suss-blue);
+    --primary-container: #15357a;
+    --primary-fixed: #e7edfb;
+    --on-primary: #ffffff;
+    --on-primary-container: #ffffff;
+    --on-surface: #131a26;
+    --on-surface-variant: #42516a;
+    --error: var(--suss-red);
+    --error-container: #fdecea;
+    --accent: var(--suss-red);
+    --accent-soft: #fdebe8;
+    --brand-divider: color-mix(in srgb, var(--suss-blue), #fff 84%);
+    --brand-chip-bg: color-mix(in srgb, var(--suss-blue), #fff 90%);
+    --today-column-bg: color-mix(in srgb, var(--suss-blue), #fff 94%);
+    --header-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 6%);
+    --footer-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-blue) 4%);
+    --primary-ring-soft: rgb(var(--suss-blue-rgb) / 0.22);
+    --primary-ring-strong: rgb(var(--suss-blue-rgb) / 0.3);
+    --now-line: var(--suss-red);
+    --bg: var(--background);
+    --panel: var(--surface-container-lowest);
+    --panel-strong: var(--surface-container-low);
+    --ink: var(--on-surface);
+    --muted: var(--on-surface-variant);
+    --line: var(--outline-variant);
+    --brand: var(--primary);
+    --brand-soft: var(--primary-fixed);
+    --surface-high: var(--surface-container-high);
+    --surface-low: var(--surface-container-low);
+    --shadow-elev-1: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --shadow-elev-2: 0 8px 24px rgba(15, 23, 42, 0.1);
+    --shadow-elev-3: 0 14px 34px rgba(15, 23, 42, 0.14);
+    --font-sans: "Inter", sans-serif;
+    --font-display: "Inter", sans-serif;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  * {
+    box-sizing: border-box;
+    font-family: var(--font-sans), sans-serif;
+  }
 
-body {
-  margin: 0;
-  min-height: 100dvh;
-  background:
-    radial-gradient(1200px 640px at 0% -12%, rgb(var(--suss-blue-rgb) / 0.09), transparent 56%),
-    radial-gradient(900px 500px at 100% 0%, rgb(var(--suss-red-rgb) / 0.06), transparent 52%),
-    var(--background);
-  color: var(--on-surface);
-  font-family: var(--font-sans), sans-serif;
-  line-height: 1.4;
-}
+  html {
+    scroll-behavior: smooth;
+  }
 
-a {
-  color: inherit;
-}
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background:
+      radial-gradient(1200px 640px at 0% -12%, rgb(var(--suss-blue-rgb) / 0.09), transparent 56%),
+      radial-gradient(900px 500px at 100% 0%, rgb(var(--suss-red-rgb) / 0.06), transparent 52%),
+      var(--background);
+    color: var(--on-surface);
+    font-family: var(--font-sans), sans-serif;
+    line-height: 1.4;
+  }
 
-button,
-input,
-select {
-  font: inherit;
-  font-family: inherit;
-  border-radius: 0.375rem;
-}
+  a {
+    color: inherit;
+  }
 
-::selection {
-  background: rgb(var(--suss-blue-rgb) / 0.2);
+  button,
+  input,
+  select {
+    font: inherit;
+    font-family: inherit;
+    border-radius: 0.375rem;
+  }
+
+  ::selection {
+    background: rgb(var(--suss-blue-rgb) / 0.2);
+  }
 }
 
 @keyframes timetable-pop {

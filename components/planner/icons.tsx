@@ -2,6 +2,7 @@ import type { IconType } from "react-icons";
 import {
   TbArrowUpRight,
   TbBook,
+  TbCalculator,
   TbCalendar,
   TbCalendarPlus,
   TbCalendarWeek,
@@ -13,6 +14,7 @@ import {
   TbDownload,
   TbEye,
   TbEyeOff,
+  TbHome,
   TbLayoutGrid,
   TbLayoutRows,
   TbLayersIntersect,
@@ -155,6 +157,16 @@ export function RefreshIcon({ className }: IconProps)
 export function BookIcon({ className }: IconProps)
 {
   return renderIcon(TbBook, className);
+}
+
+export function CalculatorIcon({ className }: IconProps)
+{
+  return renderIcon(TbCalculator, className);
+}
+
+export function HomeIcon({ className }: IconProps)
+{
+  return renderIcon(TbHome, className);
 }
 
 export function SettingsIcon({ className }: IconProps)

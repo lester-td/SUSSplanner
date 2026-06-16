@@ -25,7 +25,7 @@ export default async function CalculatorPage()
   );
 
   return (
-    <AppShell activeSection={null} currentWeekLabel={getCurrentWeekChip(semester, week)}>
+    <AppShell activeSection="calculator" currentWeekLabel={getCurrentWeekChip(semester, week)}>
       <GpaCalculatorClient />
     </AppShell>
   );

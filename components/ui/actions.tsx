@@ -23,7 +23,7 @@ export function ActionButton({
         stretch ? "w-full" : ""
       } ${
         variant === "primary"
-          ? "bg-[var(--primary)] text-[var(--on-primary)] hover:bg-[var(--primary-container)] hover:text-[var(--on-primary)]"
+          ? "bg-[var(--primary)] text-on-primary hover:bg-[var(--primary-container)] hover:text-on-primary"
           : "border border-[var(--brand-divider)] bg-[var(--surface-container)] text-[var(--on-surface)] hover:bg-[var(--surface-container-high)]"
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       onClick={onClick}

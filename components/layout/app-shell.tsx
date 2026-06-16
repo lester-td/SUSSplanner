@@ -3,13 +3,23 @@ import type { ReactNode } from "react";
 
 import {
   BookIcon,
+  CalculatorIcon,
   CalendarWeekIcon,
   CodeIcon,
+  HomeIcon,
   LayersIcon,
 } from "@/components/planner/icons";
 import type { PlannerSection } from "@/lib/timetable/types";
 
+type AppSection = "home" | PlannerSection | "calculator";
+
 const navItems = [
+  {
+    id: "home",
+    label: "Home",
+    href: "/",
+    icon: HomeIcon,
+  },
   {
     id: "planner",
     label: "Timetable",
@@ -28,8 +38,14 @@ const navItems = [
     href: "/planner",
     icon: LayersIcon,
   },
+  {
+    id: "calculator",
+    label: "Calculator",
+    href: "/calculator",
+    icon: CalculatorIcon,
+  },
 ] as const satisfies Array<{
-  id: PlannerSection;
+  id: AppSection;
   label: string;
   href: string;
   icon: (props: { className?: string }) => ReactNode;
@@ -40,7 +56,7 @@ export function AppShell({
   currentWeekLabel,
   children,
 }: {
-  activeSection: PlannerSection | null;
+  activeSection: AppSection | null;
   currentWeekLabel: string;
   children: ReactNode;
 })
@@ -51,11 +67,11 @@ export function AppShell({
         <div className="px-3 py-2.5 md:px-[16px] md:py-3">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2.5 xl:gap-3">
-              <Link prefetch href="/timetable" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--primary-container)] sm:inline sm:text-[24px] sm:leading-8">
+              <Link prefetch href="/" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--primary-container)] lg:inline sm:text-[24px] sm:leading-8">
                 SUSS Planner
               </Link>
 
-              <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <nav className="-mx-1 flex min-w-0 items-center gap-1 overflow-x-auto px-1 sm:gap-1.5 md:gap-2">
                 {navItems.map((item) => {
                   const Icon = item.icon;
 
@@ -64,14 +80,14 @@ export function AppShell({
                       key={item.id}
                       prefetch
                       href={item.href}
-                      className={`inline-flex items-center gap-1.5 rounded-[999px] px-2.5 py-1.5 text-[12px] font-semibold leading-4 transition-colors sm:gap-2 sm:px-3 sm:py-2 ${
+                      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[999px] px-2.5 py-1.5 text-[12px] font-semibold leading-4 transition-colors sm:gap-2 sm:px-3 sm:py-2 ${
                         activeSection === item.id
-                          ? "bg-[var(--primary)] !text-[var(--on-primary)] hover:bg-[var(--primary-container)] hover:!text-[var(--on-primary)]"
+                          ? "bg-[var(--primary)] !text-on-primary hover:bg-[var(--primary-container)] hover:!text-on-primary"
                           : "text-[var(--on-surface-variant)] hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)]"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
-                      <span className="hidden sm:inline">{item.label}</span>
+                      <span className="hidden md:inline">{item.label}</span>
                     </Link>
                   );
                 })}

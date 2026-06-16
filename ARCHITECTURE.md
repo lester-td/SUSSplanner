@@ -73,14 +73,23 @@ Rules and behaviors:
 
 ## Routing And Page Data Flow
 
-### `/` and `/timetable`
+### `/`
 
-- `app/page.tsx` re-exports `/timetable`.
+- `app/page.tsx` renders the home page with links to Timetable, Courses,
+  Planner, Calculator, and placeholder school portal shortcuts.
+
+### `/timetable`
+
 - `app/timetable/page.tsx` loads:
   - `getSemestersWithClassesAndWeeks()`
   - current semester/week context from date utilities
 - `PlannerClient` then performs client fetches to `/api/classes` using encoded share query state.
 - `app/planner/page.tsx` loads the semester planner UI via `StudyPlanClient`.
+
+### `/calculator`
+
+- `app/calculator/page.tsx` loads semester/week metadata for the shared shell.
+- `GpaCalculatorClient` manages browser-local GPA module state and calculations.
 
 ### `/courses`
 

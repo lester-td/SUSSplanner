@@ -153,7 +153,7 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 .
 ├── app/                         Next.js pages and API route handlers
 │   ├── api/                     JSON, export, and cache-revalidation routes
-│   ├── calculator/              Unlinked GPA-calculator page
+│   ├── calculator/              GPA-calculator page
 │   ├── courses/                 Course search and detail pages
 │   ├── planner/                 Multi-semester study-plan page
 │   ├── share/                   Read-only shared timetable page
@@ -420,18 +420,16 @@ class-group, semester, and optional week information.
 
 | Route | Rendering and behavior |
 |---|---|
-| `/` | Re-exports `/timetable`; force-dynamic. |
+| `/` | Static home page with links to Timetable, Courses, Planner, Calculator, and placeholder school portal shortcuts. |
 | `/timetable` | Server-loads semesters with classes/weeks, then `PlannerClient` restores local state and fetches timetable/course/class data interactively. |
-| `/planner` | Server-loads semester metadata, then `StudyPlanClient` manages a browser-local multi-semester course plan with drag-and-drop between semesters, bank, and trash, plus JSON backup/restore and A4 print/PDF view. |
-| `/calculator` | Force-dynamic, unlinked, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` manages browser-local current/cumulative GPA calculations and Pass/Fail strategy. |
+| `/planner` | Server-loads semester metadata, then `StudyPlanClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
+| `/calculator` | Force-dynamic, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` manages browser-local current/cumulative GPA calculations and Pass/Fail strategy. |
 | `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` performs debounced API search using filters. |
 | `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
 | `/share?sem=...&classes=...` | Validates and resolves the shared timetable on the server, then renders a read-only `ShareClient` with explicit import. Missing or malformed parameters get explanatory UI. |
 
-The shared `AppShell` provides navigation to Timetable, Courses, and Planner.
-`/share` is reached through a share URL. `/calculator` is intentionally not a
-navigation item and passes `activeSection={null}` so no existing navigation
-item appears active.
+The shared `AppShell` provides navigation to Home, Timetable, Courses, Planner,
+and Calculator. `/share` is reached through a share URL.
 
 ## API and Backend Routes
 
@@ -1195,9 +1193,8 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 - Configure `CACHE_REVALIDATE_SECRET` if maintainers need on-demand refreshes.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently
   optional and unused by runtime code.
-- `/`, `/timetable`, `/planner`, and `/calculator` are force-dynamic.
-- `/calculator` sets `robots.index` and `robots.follow` to `false` and is not
-  linked from the primary navigation.
+- `/timetable`, `/planner`, and `/calculator` are force-dynamic.
+- `/calculator` sets `robots.index` and `robots.follow` to `false`.
 - API route handlers require the Node.js runtime, not the Edge runtime.
 - Database connection limits are intentionally small in production (`max: 3`).
 - The scraper is designed to run on a maintainer's machine, not inside Vercel.
@@ -1229,8 +1226,7 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
   were not exported as JSON backups.
 - GPA-calculator state has no export, import, share, cloud backup, or formal
   Zod validation layer.
-- `/calculator` is intentionally unlinked and excluded from search-engine
-  indexing.
+- `/calculator` is excluded from search-engine indexing.
 - Calculator results depend on user-entered grades, prior GPA, prior
   GPA-counted CUs, and Pass/Fail selections; the app cannot verify them against
   official academic records or policy.
