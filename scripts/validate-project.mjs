@@ -89,13 +89,28 @@ function checkNpmVersion()
 
 function checkInstalledDependencies()
 {
-  const nextPackagePath = path.join(projectRoot, "node_modules", "next", "package.json");
-  const typescriptPackagePath = path.join(projectRoot, "node_modules", "typescript", "package.json");
+  const packageJsonPath = path.join(projectRoot, "package.json");
+
+  if (!fs.existsSync(packageJsonPath))
+  {
+    return;
+  }
+
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+  const declaredDependencies = {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies,
+  };
+
+  const missingDependencies = Object.keys(declaredDependencies).filter((dependencyName) => {
+    const dependencyPath = path.join(projectRoot, "node_modules", ...dependencyName.split("/"), "package.json");
+    return !fs.existsSync(dependencyPath);
+  });
 
   addCheck(
-    fs.existsSync(nextPackagePath) && fs.existsSync(typescriptPackagePath),
+    missingDependencies.length === 0,
     "Project dependencies are installed.",
-    "Dependencies are missing. Run `npm install` before building or starting the app."
+    `Dependencies are missing: ${missingDependencies.join(", ")}. Run \`npm install\` before building or starting the app.`
   );
 }
 

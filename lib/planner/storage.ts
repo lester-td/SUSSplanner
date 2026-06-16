@@ -154,7 +154,9 @@ export function loadStudyPlanState()
   {
     return normalizeStudyPlanState(JSON.parse(raw) as StudyPlanState);
   }
-  catch {
+  catch (error)
+  {
+    console.error("Failed to load saved study plan state.", error);
     return null;
   }
 }

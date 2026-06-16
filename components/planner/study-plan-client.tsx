@@ -290,6 +290,7 @@ export function StudyPlanClient({
       .catch((error: unknown) => {
         if ((error as { name?: string })?.name !== "AbortError")
         {
+          console.error("Failed to search planner courses.", error);
           setSearchResults([]);
         }
       })
@@ -437,7 +438,9 @@ export function StudyPlanClient({
       setImportedPlan(parseStudyPlanBackup(await file.text()));
       setImportedPlanFileName(file.name);
     }
-    catch {
+    catch (error)
+    {
+      console.error("Failed to import planner backup.", error);
       showNoticeMessage("Import failed: select a valid SUSSPlanner semester plan backup.");
     }
   }
