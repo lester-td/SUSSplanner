@@ -43,10 +43,10 @@ const projectAreas = [
     tone: "bg-[var(--primary)] text-on-primary",
   },
   {
-    title: "Calculator",
+    title: "Calculators",
     eyebrow: "GPA estimate",
     description: "Estimate your GPA based on your current grades and plan for the future by simulating different grade outcomes.",
-    href: "/calculator",
+    href: "/calculators",
     icon: CalculatorIcon,
     tone: "bg-[var(--primary)] text-on-primary",
   },

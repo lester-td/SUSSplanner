@@ -40,8 +40,8 @@ const navItems = [
   },
   {
     id: "calculator",
-    label: "Calculator",
-    href: "/calculator",
+    label: "Calculators",
+    href: "/calculators",
     icon: CalculatorIcon,
   },
 ] as const satisfies Array<{
