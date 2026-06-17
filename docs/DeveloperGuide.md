@@ -607,8 +607,9 @@ flowchart TD
     SelectionChange --> HasSelections
 ```
 
-Changing semester does not clear saved selections; identifiers that do not exist
-in the new semester are returned as `unresolvedSelections`.
+Changing semester loads the saved state for that semester, if one exists. Each
+semester keeps its own selected classes, hidden classes, colors, and week
+selection, so switching semesters does not leak timetable state between them.
 
 ### Study Plan Flow Diagram
 
@@ -791,6 +792,13 @@ Persisted fields:
 - `selectedWeekId`
 - `orientation`
 - `viewMode`
+- `semesterStates`, a record of per-semester planner slices with the same
+  fields as the active semester state
+
+The active semester state is mirrored at the top level for compatibility. Each
+semester keeps its own timetable selection, hidden block list, colors, and week
+selection. Switching semesters loads the matching slice; reset clears only the
+current semester slice.
 
 ```mermaid
 stateDiagram-v2
@@ -833,12 +841,16 @@ stateDiagram-v2
 
 Importing a shared timetable:
 
-- Replaces the locally saved semester and selected classes.
+- Replaces the saved state for the shared semester only.
 - Clears hidden classes.
 - Resets selected week to `all`.
 - Preserves existing course colors and orientation when available.
 - Preserves the existing stored view mode, although the shared preview itself
   initially uses class view.
+- Leaves other saved semesters untouched.
+
+Resetting the planner clears only the selected semester state. It does not
+touch other saved semesters.
 
 ### Study Plan State
 

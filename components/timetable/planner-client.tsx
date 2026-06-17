@@ -37,6 +37,7 @@ import {
 } from "@/lib/timetable/date-utils";
 import {
   loadSavedTimetable,
+  getSavedSemesterState,
   saveTimetableToLocalStorage,
 } from "@/lib/timetable/local-storage";
 import {
@@ -106,22 +107,72 @@ function buildPreviewEvents(classes: CourseClassRecord[]): TimetableEventRecord[
   });
 }
 
-function defaultStorageState(
+function createDefaultSemesterState(
+  semesterId: number,
+  currentSemesterId: number,
+  currentWeekId: number | null,
+): PlannerStorageState
+{
+  return {
+    semesterId,
+    selectedClasses: [],
+    hiddenClasses: [],
+    courseColorsByCourseCode: {},
+    selectedWeekId: currentWeekId && semesterId === currentSemesterId ? currentWeekId : "all",
+    orientation: "vertical",
+    viewMode: "class",
+  };
+}
+
+function createInitialSemesterState(
   semesters: SemesterOption[],
   currentSemesterId: number,
   currentWeekId: number | null,
 ): PlannerStorageState
 {
   const semesterId = currentSemesterId || semesters[0]?.semesterId || 0;
-  return {
-    semesterId,
-    selectedClasses: [],
-    hiddenClasses: [],
-    courseColorsByCourseCode: {},
-    selectedWeekId: currentWeekId && currentSemesterId === semesterId ? currentWeekId : "all",
-    orientation: "vertical",
-    viewMode: "class",
-  };
+  return createDefaultSemesterState(semesterId, currentSemesterId, currentWeekId);
+}
+
+function formatSemesterRailMonthYear(semester: SemesterOption)
+{
+  const startDate = semester.weeks[0]?.startDate;
+  if (!startDate)
+  {
+    return semester.semesterName;
+  }
+
+  const parsedDate = new Date(`${startDate}T00:00:00`);
+  if (Number.isNaN(parsedDate.getTime()))
+  {
+    return semester.semesterName;
+  }
+
+  return new Intl.DateTimeFormat("en-SG", {
+    month: "long",
+    year: "numeric",
+  }).format(parsedDate);
+}
+
+function formatAcademicYearShort(academicYear: string)
+{
+  const match = academicYear.trim().match(/^(\d{4})\s*\/\s*(\d{4})$/);
+  if (!match)
+  {
+    return academicYear.trim();
+  }
+
+  return `${match[1].slice(-2)}/${match[2].slice(-2)}`;
+}
+
+function formatSemesterRailTag(semesterNo: SemesterRecord["semesterNo"])
+{
+  if (semesterNo === 3)
+  {
+    return "Special";
+  }
+
+  return `Sem ${semesterNo}`;
 }
 
 function replaceSelectionForCourse(
@@ -310,14 +361,22 @@ export function PlannerClient({
 
   useEffect(() => {
     const saved = loadSavedTimetable();
-    const next = saved ?? defaultStorageState(semesters, currentSemesterId, currentWeekId);
-    setSemesterId(next.semesterId || currentSemesterId || semesters[0]?.semesterId || 0);
+    const savedSemesterExists = Boolean(saved && semesters.some((semester) => semester.semesterId === saved.semesterId));
+    const semesterIdToLoad = savedSemesterExists && saved
+      ? saved.semesterId
+      : currentSemesterId || semesters[0]?.semesterId || 0;
+    const next = savedSemesterExists && saved
+      ? saved
+      : getSavedSemesterState(saved, semesterIdToLoad)
+        ?? createInitialSemesterState(semesters, currentSemesterId, currentWeekId);
+
+    setSemesterId(semesterIdToLoad);
     setSelectedClasses(next.selectedClasses);
     setHiddenClasses(next.hiddenClasses);
     setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
     setSelectedWeekId(next.selectedWeekId);
-    setOrientation(next.orientation);
-    setViewMode(next.viewMode);
+    setOrientation(saved?.orientation ?? "vertical");
+    setViewMode(saved?.viewMode ?? "class");
     setReady(true);
   }, [currentSemesterId, currentWeekId, semesters]);
 
@@ -569,8 +628,8 @@ export function PlannerClient({
   const weekItems = buildWeekOptions(semesterWeeks);
   const semesterItems = semesters.map((semester) => ({
     id: String(semester.semesterId),
-    title: semester.semesterName,
-    subtitle: `AY${semester.academicYear}`,
+    title: formatSemesterRailMonthYear(semester),
+    subtitle: `AY ${formatAcademicYearShort(semester.academicYear)} • ${formatSemesterRailTag(semester.semesterNo)}`,
   }));
   const showCurrentTime = semesterId === currentSemesterId && (selectedWeekId === "all" || selectedWeekId === currentWeekId);
   const selectedWeekRecord = selectedWeekId === "all"
@@ -687,8 +746,25 @@ export function PlannerClient({
 
   function handleSemesterChange(nextSemesterId: number)
   {
+    saveTimetableToLocalStorage({
+      semesterId,
+      selectedClasses,
+      hiddenClasses,
+      courseColorsByCourseCode,
+      selectedWeekId,
+      orientation,
+      viewMode,
+    });
+
+    const saved = loadSavedTimetable();
+    const next = getSavedSemesterState(saved, nextSemesterId)
+      ?? createDefaultSemesterState(nextSemesterId, currentSemesterId, currentWeekId);
+
     setSemesterId(nextSemesterId);
-    setSelectedWeekId(nextSemesterId === currentSemesterId && currentWeekId ? currentWeekId : "all");
+    setSelectedClasses(next.selectedClasses);
+    setHiddenClasses(next.hiddenClasses);
+    setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
+    setSelectedWeekId(next.selectedWeekId);
     setSearchInput("");
     setSearchResults([]);
     setPlannerNotice("");
@@ -1275,7 +1351,7 @@ export function PlannerClient({
       <Modal
         open={confirmResetOpen}
         title="Reset planner"
-        description="You are about to clear the selected courses for the current timetable. Are you sure?"
+        description="You are about to clear the selected courses for this semester. Are you sure?"
         onClose={() => setConfirmResetOpen(false)}
         bodyClassName="py-4"
         footer={(

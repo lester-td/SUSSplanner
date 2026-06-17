@@ -148,7 +148,7 @@ export function SelectorRail({
         aria-label="Previous"
         onClick={onPrev}
         disabled={selectedIndex <= 0}
-        className="flex h-full w-8 shrink-0 items-center justify-center rounded-none border-r border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex w-8 shrink-0 self-stretch items-center justify-center rounded-none border-r border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <ChevronLeftIcon className="h-6 w-6" />
       </button>
@@ -184,10 +184,10 @@ export function SelectorRail({
                     variant === "semester"
                       ? active
                         ? "text-[18px] font-bold leading-6"
-                        : "text-[12px] font-semibold leading-4"
+                        : "text-[16px] font-semibold leading-5"
                       : active
-                        ? "text-[12px] font-bold leading-4"
-                        : "text-[12px] font-medium leading-4"
+                        ? "text-[13px] font-bold leading-4"
+                        : "text-[13px] font-medium leading-4"
                   }
                 >
                   {item.title}
@@ -197,11 +197,11 @@ export function SelectorRail({
                     className={
                       variant === "semester"
                         ? active
-                          ? "text-[11px] font-medium leading-[14px] text-[var(--on-surface-variant)]"
-                          : "text-[10px] uppercase tracking-[-0.04em]"
+                          ? "text-[13px] font-medium leading-4 text-[var(--on-surface-variant)]"
+                          : "text-[12px] font-medium leading-4 text-[var(--on-surface-variant)]"
                         : active
-                          ? "text-[10px] leading-3 text-[var(--on-surface-variant)]"
-                          : "text-[10px] leading-3"
+                          ? "text-[11px] leading-3 text-[var(--on-surface-variant)]"
+                          : "text-[11px] leading-3"
                     }
                   >
                     {item.subtitle}
@@ -218,7 +218,7 @@ export function SelectorRail({
         aria-label="Next"
         onClick={onNext}
         disabled={selectedIndex >= items.length - 1}
-        className="flex h-full w-8 shrink-0 items-center justify-center rounded-none border-l border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex w-8 shrink-0 self-stretch items-center justify-center rounded-none border-l border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <ChevronRightIcon className="h-6 w-6" />
       </button>

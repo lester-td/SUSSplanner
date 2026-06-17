@@ -296,7 +296,7 @@ export function ShareClient({
       <Modal
         open={importOpen}
         title="Import shared timetable"
-        description="Importing will replace your currently saved timetable. This cannot be undone."
+        description="Importing will replace the saved timetable for this semester. This cannot be undone."
         onClose={() => setImportOpen(false)}
         footer={(
           <>
