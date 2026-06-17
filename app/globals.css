@@ -75,13 +75,13 @@
     --shadow-elev-1: 0 2px 8px rgba(15, 23, 42, 0.06);
     --shadow-elev-2: 0 8px 24px rgba(15, 23, 42, 0.1);
     --shadow-elev-3: 0 14px 34px rgba(15, 23, 42, 0.14);
-    --font-sans: "Inter", sans-serif;
-    --font-display: "Inter", sans-serif;
+    --font-sans: var(--font-inter, "Inter"), sans-serif;
+    --font-display: var(--font-inter, "Inter"), sans-serif;
   }
 
   * {
     box-sizing: border-box;
-    font-family: var(--font-sans), sans-serif;
+    font-family: var(--font-sans);
   }
 
   html {
@@ -98,7 +98,7 @@
       radial-gradient(860px 520px at 0% 100%, rgb(var(--suss-lime-rgb) / 0.08), transparent 48%),
       var(--background);
     color: var(--on-surface);
-    font-family: var(--font-sans), sans-serif;
+    font-family: var(--font-sans);
     line-height: 1.4;
   }
 
