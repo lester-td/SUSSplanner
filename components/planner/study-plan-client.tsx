@@ -389,6 +389,16 @@ export function StudyPlanClient({
     }));
   }
 
+  function deleteCourseFromBank(course: StudyPlanCourse)
+  {
+    removeCourse(course.id);
+    if (editingCourseId === course.id)
+    {
+      setEditingCourseId(null);
+    }
+    showNoticeMessage(`${course.courseCode} deleted from planner.`);
+  }
+
   function resetPlan()
   {
     setPlan(defaultStudyPlanState());
@@ -1048,6 +1058,7 @@ export function StudyPlanClient({
                     isDragging={draggedCourseId === course.id}
                     draggable={course.assignedSemester === null}
                     onEdit={course.source === "manual" ? () => setEditingCourseId(course.id) : undefined}
+                    onDelete={showAllModules ? () => deleteCourseFromBank(course) : undefined}
                   />
                 ))}
               </div>
@@ -1357,12 +1368,14 @@ function CourseCard({
   ghost = false,
   isDragging = false,
   onEdit,
+  onDelete,
 }: {
   course: StudyPlanCourse;
   draggable?: boolean;
   ghost?: boolean;
   isDragging?: boolean;
   onEdit?: () => void;
+  onDelete?: () => void;
 })
 {
   const draggableId = draggable ? course.id : `static-${course.id}`;
@@ -1433,16 +1446,32 @@ function CourseCard({
           </p>
         </div>
 
-        {onEdit ? (
-          <button
-            type="button"
-            onClick={onEdit}
-            onPointerDown={(event) => event.stopPropagation()}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[0.5rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-            aria-label={`Edit ${course.courseCode}`}
-          >
-            <EditIcon className="h-3.5 w-3.5" />
-          </button>
+        {onEdit || onDelete ? (
+          <div className="flex shrink-0 items-center gap-1">
+            {onEdit ? (
+              <button
+                type="button"
+                onClick={onEdit}
+                onPointerDown={(event) => event.stopPropagation()}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-[0.5rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                aria-label={`Edit ${course.courseCode}`}
+              >
+                <EditIcon className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
+
+            {onDelete ? (
+              <button
+                type="button"
+                onClick={onDelete}
+                onPointerDown={(event) => event.stopPropagation()}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-[0.5rem] border border-red-500/30 text-red-400 transition-colors hover:border-red-400/70 hover:bg-red-500/10 hover:text-red-300"
+                aria-label={`Delete ${course.courseCode}`}
+              >
+                <TrashIcon className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </article>
