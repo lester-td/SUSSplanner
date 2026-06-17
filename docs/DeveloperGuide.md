@@ -422,7 +422,7 @@ class-group, semester, and optional week information.
 |---|---|
 | `/` | Re-exports `/timetable`; force-dynamic. |
 | `/timetable` | Server-loads semesters with classes/weeks, then `PlannerClient` restores local state and fetches timetable/course/class data interactively. |
-| `/planner` | Server-loads semester metadata, then `StudyPlanClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
+| `/planner` | Server-loads semester metadata, then `StudyPlanClient` manages a browser-local multi-semester course plan with drag-and-drop between semesters, bank, and trash, plus JSON backup/restore and A4 print/PDF view. |
 | `/calculator` | Force-dynamic, unlinked, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` manages browser-local current/cumulative GPA calculations and Pass/Fail strategy. |
 | `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` performs debounced API search using filters. |
 | `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
@@ -625,7 +625,10 @@ flowchart TD
     Manual["Enter manual course,<br/>credits, and semester span"]
     Bank["Add unassigned course to bank"]
     Arrange["Drag course to semester,<br/>bank, or trash"]
-    Normalize["Normalize semester span<br/>and assignment bounds"]
+    BankDrop["Drop on bank to unassign<br/>the course"]
+    SemesterDrop["Drop on semester to set<br/>its assigned semester"]
+    TrashDrop["Drop on trash to delete<br/>the course from the plan"]
+    Normalize["Normalize semester span,<br/>assignment bounds, and plan state"]
     Persist["Persist plan to localStorage"]
     Export["Export versioned JSON backup"]
     Import["Validate JSON backup and<br/>confirm replacement"]
@@ -643,7 +646,12 @@ flowchart TD
     Manual --> Bank
     Bank --> Normalize
     Ready --> Arrange
-    Arrange --> Normalize
+    Arrange --> BankDrop
+    Arrange --> SemesterDrop
+    Arrange --> TrashDrop
+    BankDrop --> Normalize
+    SemesterDrop --> Normalize
+    TrashDrop --> Normalize
     Normalize --> Persist
     Persist --> Ready
     Ready --> Export
@@ -657,6 +665,13 @@ The study plan also listens for browser `storage` events and the local
 `sussplanner:study-plan-updated` event used by course-page "Add to Planner"
 buttons. Those buttons write directly to the same local-storage plan; the next
 planner visit hydrates that saved plan.
+
+Planner drag-and-drop is implemented with `@dnd-kit/core`. Dropping a course on
+the semester bank clears its assignment, dropping it on a semester assigns the
+course to that semester, and dropping it on the trash deletes it. Invalid or
+empty drops are treated as no-ops. Planner search, backup import, and saved-plan
+load failures are logged to the browser console, while recoverable cases still
+surface a user notice.
 
 The planner header provides these data-protection and presentation actions:
 
