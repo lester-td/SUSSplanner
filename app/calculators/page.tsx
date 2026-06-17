@@ -28,20 +28,6 @@ export default async function CalculatorsPage()
   return (
     <AppShell activeSection="calculator" currentWeekLabel={getCurrentWeekChip(semester, week)}>
       <div className="space-y-8">
-        <section className="mx-auto w-full max-w-7xl px-3 pt-8 md:px-4">
-          <div className="max-w-3xl">
-            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[var(--primary)]">
-              Calculators
-            </p>
-            <h1 className="mt-2 text-[30px] font-bold leading-tight tracking-[-0.04em] text-[var(--on-surface)]">
-              GPA and OCAS calculators
-            </h1>
-            <p className="mt-2 text-[14px] leading-6 text-[var(--on-surface-variant)]">
-              Use the GPA calculator for cumulative planning, then estimate OCAS outcomes using a course&apos;s assessment strategy below.
-            </p>
-          </div>
-        </section>
-
         <GpaCalculatorClient />
         <OcasCalculatorClient />
       </div>

@@ -329,13 +329,7 @@ export function GpaCalculatorClient()
           <h1 className="text-[30px] font-semibold leading-10 tracking-[-0.03em] text-[var(--on-surface)]">
             GPA Calculator
           </h1>
-          <p className="mt-1 max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
-            Calculate your semester and cumulative GPA on the SUSS 5.0 grading scale.
-          </p>
         </div>
-        <p className="text-[12px] font-medium text-[var(--on-surface-variant)]">
-          Saved automatically on this device
-        </p>
       </div>
 
       <section className="mb-5 grid gap-3 sm:grid-cols-3">
@@ -348,7 +342,7 @@ export function GpaCalculatorClient()
         <GpaSummaryCard
           label="Cumulative GPA"
           value={formatGpa(cumulativeGpa)}
-          detail={`${(priorCredits + currentGpaCredits).toFixed(1)} GPA-counted CU`}
+          detail={`${(priorCredits + currentGpaCredits).toFixed(1)} CU included in GPA`}
         />
         <GpaSummaryCard
           label="Modules"

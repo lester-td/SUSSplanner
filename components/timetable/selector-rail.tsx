@@ -122,6 +122,11 @@ export function SelectorRail({
       return;
     }
 
+    if (event.pointerType === "touch")
+    {
+      return;
+    }
+
     const scroller = scrollerRef.current;
     if (!scroller)
     {
@@ -148,18 +153,18 @@ export function SelectorRail({
         aria-label="Previous"
         onClick={onPrev}
         disabled={selectedIndex <= 0}
-        className="flex w-8 shrink-0 self-stretch items-center justify-center rounded-none border-r border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex w-7 shrink-0 self-stretch items-center justify-center rounded-none border-r border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40 sm:w-8"
       >
-        <ChevronLeftIcon className="h-6 w-6" />
+        <ChevronLeftIcon className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
 
       <div
         ref={scrollerRef}
         className="flex-1 cursor-grab overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden active:cursor-grabbing"
-        style={{ touchAction: "pan-y" }}
+        style={{ touchAction: "auto" }}
         onPointerDown={handlePointerDown}
       >
-        <div className={`flex min-w-max items-center justify-center px-3 ${variant === "semester" ? "gap-6 py-2.5" : "gap-8 py-2.5"}`}>
+        <div className={`flex min-w-max items-center justify-center px-2.5 py-2 sm:px-3 sm:py-2.5 ${variant === "semester" ? "gap-4 sm:gap-6" : "gap-6 sm:gap-8"}`}>
           {items.map((item) => {
             const active = item.id === selectedId;
             return (
@@ -167,7 +172,7 @@ export function SelectorRail({
                 key={item.id}
                 type="button"
                 data-rail-item={item.id}
-                className={`relative min-w-[6.5rem] px-1 text-center transition-opacity ${
+                className={`relative min-w-[6rem] px-1 text-center transition-opacity sm:min-w-[6.5rem] ${
                   active ? "text-[var(--primary)]" : "text-[var(--on-surface-variant)] opacity-40 hover:opacity-70"
                 }`}
                 onClick={() => {
@@ -183,11 +188,11 @@ export function SelectorRail({
                   className={
                     variant === "semester"
                       ? active
-                        ? "text-[18px] font-bold leading-6"
-                        : "text-[16px] font-semibold leading-5"
+                        ? "text-[16px] font-bold leading-5 sm:text-[18px] sm:leading-6"
+                        : "text-[15px] font-semibold leading-[1.15] sm:text-[16px] sm:leading-5"
                       : active
-                        ? "text-[13px] font-bold leading-4"
-                        : "text-[13px] font-medium leading-4"
+                        ? "text-[12px] font-bold leading-4 sm:text-[13px]"
+                        : "text-[12px] font-medium leading-4 sm:text-[13px]"
                   }
                 >
                   {item.title}
@@ -197,11 +202,11 @@ export function SelectorRail({
                     className={
                       variant === "semester"
                         ? active
-                          ? "text-[13px] font-medium leading-4 text-[var(--on-surface-variant)]"
-                          : "text-[12px] font-medium leading-4 text-[var(--on-surface-variant)]"
+                          ? "text-[12px] font-medium leading-4 text-[var(--on-surface-variant)] sm:text-[13px]"
+                          : "text-[11px] font-medium leading-4 text-[var(--on-surface-variant)] sm:text-[12px]"
                         : active
-                          ? "text-[11px] leading-3 text-[var(--on-surface-variant)]"
-                          : "text-[11px] leading-3"
+                          ? "text-[10px] leading-3 text-[var(--on-surface-variant)] sm:text-[11px]"
+                          : "text-[10px] leading-3 sm:text-[11px]"
                     }
                   >
                     {item.subtitle}
@@ -218,9 +223,9 @@ export function SelectorRail({
         aria-label="Next"
         onClick={onNext}
         disabled={selectedIndex >= items.length - 1}
-        className="flex w-8 shrink-0 self-stretch items-center justify-center rounded-none border-l border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex w-7 shrink-0 self-stretch items-center justify-center rounded-none border-l border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-0 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] active:bg-[var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-40 sm:w-8"
       >
-        <ChevronRightIcon className="h-6 w-6" />
+        <ChevronRightIcon className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
     </div>
   );

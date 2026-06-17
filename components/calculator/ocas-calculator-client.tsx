@@ -27,6 +27,21 @@ type CourseDetailResponse = {
 };
 
 type ScheduleType = "daytime" | "evening";
+type ScoreInputMode = "percentage" | "raw";
+
+type AssessmentScoreInput = {
+  mode: ScoreInputMode;
+  percentage: string;
+  rawScore: string;
+  rawMax: string;
+};
+
+const EMPTY_SCORE_INPUT: AssessmentScoreInput = {
+  mode: "percentage",
+  percentage: "",
+  rawScore: "",
+  rawMax: "",
+};
 
 const GRADE_BANDS: Array<{ grade: string; minimum: number }> = [
   { grade: "A+", minimum: 85 },
@@ -82,7 +97,7 @@ function getEstimatedGrade(score: number | null)
   return GRADE_BANDS.find((band) => score >= band.minimum)?.grade ?? "F";
 }
 
-function parseScore(input?: string)
+function parseNumericInput(input?: string)
 {
   if (input === undefined || input.trim() === "")
   {
@@ -94,8 +109,43 @@ function parseScore(input?: string)
   {
     return null;
   }
+  return value;
+}
+
+function parsePercentageScore(input?: string)
+{
+  const value = parseNumericInput(input);
+  if (value === null)
+  {
+    return null;
+  }
 
   return Math.min(100, Math.max(0, value));
+}
+
+function parseRawScore(rawScore?: string, rawMax?: string)
+{
+  const scoreValue = parseNumericInput(rawScore);
+  const maxValue = parseNumericInput(rawMax);
+
+  if (scoreValue === null || maxValue === null || maxValue <= 0)
+  {
+    return null;
+  }
+
+  return Math.min(100, Math.max(0, (scoreValue / maxValue) * 100));
+}
+
+function parseAssessmentScore(input?: AssessmentScoreInput)
+{
+  if (!input)
+  {
+    return null;
+  }
+
+  return input.mode === "percentage"
+    ? parsePercentageScore(input.percentage)
+    : parseRawScore(input.rawScore, input.rawMax);
 }
 
 export function OcasCalculatorClient()
@@ -106,7 +156,7 @@ export function OcasCalculatorClient()
   const [selectedCourse, setSelectedCourse] = useState<CourseSearchResult | null>(null);
   const [courseDetail, setCourseDetail] = useState<CourseDetailResponse | null>(null);
   const [selectedScheduleType, setSelectedScheduleType] = useState<ScheduleType | null>(null);
-  const [scoreInputs, setScoreInputs] = useState<Record<number, string>>({});
+  const [scoreInputs, setScoreInputs] = useState<Record<number, AssessmentScoreInput>>({});
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -280,7 +330,7 @@ export function OcasCalculatorClient()
 
   const completedWeight = useMemo(
     () => visibleAssessments.reduce(
-      (total, component) => (parseScore(scoreInputs[component.componentId]) === null ? total : total + component.weightPercentage),
+      (total, component) => (parseAssessmentScore(scoreInputs[component.componentId]) === null ? total : total + component.weightPercentage),
       0,
     ),
     [scoreInputs, visibleAssessments],
@@ -292,36 +342,61 @@ export function OcasCalculatorClient()
       return null;
     }
 
-    if (!visibleAssessments.every((component) => parseScore(scoreInputs[component.componentId]) !== null))
+    if (!visibleAssessments.every((component) => parseAssessmentScore(scoreInputs[component.componentId]) !== null))
     {
       return null;
     }
 
     return visibleAssessments.reduce((total, component) => {
-      const score = parseScore(scoreInputs[component.componentId]) ?? 0;
+      const score = parseAssessmentScore(scoreInputs[component.componentId]) ?? 0;
       return total + (score * component.weightPercentage);
     }, 0) / totalWeight;
   }, [scoreInputs, totalWeight, visibleAssessments]);
 
   const estimatedGrade = useMemo(() => getEstimatedGrade(estimatedScore), [estimatedScore]);
 
-  const ocasWeight = useMemo(
-    () => visibleAssessments
-      .filter((component) => component.componentGroup === "OCAS")
-      .reduce((total, component) => total + component.weightPercentage, 0),
-    [visibleAssessments],
-  );
-  const oesWeight = useMemo(
-    () => visibleAssessments
-      .filter((component) => component.componentGroup === "OES")
-      .reduce((total, component) => total + component.weightPercentage, 0),
-    [visibleAssessments],
-  );
-
   const groupedAssessments = useMemo(() => ({
     OCAS: visibleAssessments.filter((component) => component.componentGroup === "OCAS"),
     OES: visibleAssessments.filter((component) => component.componentGroup === "OES"),
   }), [visibleAssessments]);
+  const ocasAssessments = groupedAssessments.OCAS;
+  const oesAssessments = groupedAssessments.OES;
+  const ocasWeight = useMemo(
+    () => ocasAssessments.reduce((total, component) => total + component.weightPercentage, 0),
+    [ocasAssessments],
+  );
+  const oesWeight = useMemo(
+    () => oesAssessments.reduce((total, component) => total + component.weightPercentage, 0),
+    [oesAssessments],
+  );
+  const estimatedOcasScore = useMemo(() => {
+    if (ocasAssessments.length === 0 || ocasWeight <= 0)
+    {
+      return null;
+    }
+
+    if (!ocasAssessments.every((component) => parseAssessmentScore(scoreInputs[component.componentId]) !== null))
+    {
+      return null;
+    }
+
+    return ocasAssessments.reduce((total, component) => {
+      const score = parseAssessmentScore(scoreInputs[component.componentId]) ?? 0;
+      return total + (score * component.weightPercentage);
+    }, 0) / ocasWeight;
+  }, [ocasAssessments, ocasWeight, scoreInputs]);
+  const examEligibilityWarning = oesAssessments.length > 0 && estimatedOcasScore !== null && estimatedOcasScore < 40;
+
+  function setAssessmentScoreInput(
+    componentId: number,
+    updater: (current: AssessmentScoreInput) => AssessmentScoreInput,
+  )
+  {
+    setScoreInputs((current) => ({
+      ...current,
+      [componentId]: updater(current[componentId] ?? EMPTY_SCORE_INPUT),
+    }));
+  }
 
   return (
     <section className="mx-auto w-full max-w-7xl px-3 pb-8 md:px-4">
@@ -330,13 +405,7 @@ export function OcasCalculatorClient()
           <h2 className="text-[28px] font-semibold leading-9 tracking-[-0.03em] text-[var(--on-surface)]">
             OCAS Calculator
           </h2>
-          <p className="mt-1 max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
-            Select a course, load its assessment strategy, and enter projected marks to estimate the overall result for OCAS and examinable components.
-          </p>
         </div>
-        <p className="text-[12px] font-medium text-[var(--on-surface-variant)]">
-          Estimate only, not official grading
-        </p>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -470,7 +539,7 @@ export function OcasCalculatorClient()
                 <h3 className="text-[15px] font-bold text-[var(--on-surface)]">Assessment strategy</h3>
                 <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">
                   {selectedCourse
-                    ? "Enter projected marks for each OCAS and examinable component."
+                    ? "Enter projected marks as percentages or raw scores."
                     : "Search for a course to load its assessment breakdown."}
                 </p>
               </div>
@@ -529,6 +598,14 @@ export function OcasCalculatorClient()
                   </div>
                 ) : null}
 
+                {examEligibilityWarning ? (
+                  <div className="px-4 py-4">
+                    <div className="rounded-[0.75rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2 text-[12px] font-medium leading-5 text-[var(--error)]">
+                      The exam cannot be taken until OCAS reaches at least 40%.
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="grid gap-0 lg:grid-cols-2">
                   {(["OCAS", "OES"] as const).map((group) => {
                     const items = groupedAssessments[group];
@@ -550,42 +627,117 @@ export function OcasCalculatorClient()
                         </div>
 
                         <div className="divide-y divide-[var(--brand-divider)]">
-                          {items.map((component) => (
-                            <div key={component.componentId} className="px-4 py-4">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="truncate text-[14px] font-bold text-[var(--on-surface)]">
-                                    {component.componentName}
-                                  </p>
-                                  <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">
-                                    {component.assessmentMode ?? "Assessment"} • Weight {component.weightPercentage.toFixed(1)}%
-                                  </p>
-                                </div>
-                                <span className="rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[12px] font-semibold text-[var(--primary)]">
-                                  {component.weightPercentage.toFixed(1)}%
-                                </span>
-                              </div>
+                          {items.map((component) => {
+                            const currentInput = scoreInputs[component.componentId] ?? EMPTY_SCORE_INPUT;
+                            const isPercentageMode = currentInput.mode === "percentage";
 
-                              <div className="mt-3 grid grid-cols-[minmax(0,1fr)_4.5rem] gap-2 sm:grid-cols-[minmax(0,1fr)_5rem]">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  step="0.1"
-                                  value={scoreInputs[component.componentId] ?? ""}
-                                  onChange={(event) => setScoreInputs((current) => ({
-                                    ...current,
-                                    [component.componentId]: event.target.value,
-                                  }))}
-                                  placeholder="Enter expected score"
-                                  className="h-10 min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                                />
-                                <div className="flex h-10 items-center justify-center rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[12px] font-semibold text-[var(--on-surface-variant)]">
-                                  %
+                            return (
+                              <div key={component.componentId} className="px-4 py-4">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-[14px] font-bold text-[var(--on-surface)]">
+                                      {component.componentName}
+                                    </p>
+                                    <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">
+                                      {component.assessmentMode ?? "Assessment"} • Weight {component.weightPercentage.toFixed(1)}%
+                                    </p>
+                                  </div>
+                                  <span className="rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[12px] font-semibold text-[var(--primary)]">
+                                    {component.weightPercentage.toFixed(1)}%
+                                  </span>
+                                </div>
+
+                                <div className="mt-3 space-y-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
+                                      {isPercentageMode ? "Percentage score" : "Raw score"}
+                                    </p>
+                                    <div className="inline-flex rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-0.5 text-[11px] font-semibold leading-4">
+                                      <button
+                                        type="button"
+                                        onClick={() => setAssessmentScoreInput(component.componentId, (current) => ({
+                                          ...current,
+                                          mode: "percentage",
+                                        }))}
+                                        className={`rounded-full px-2.5 py-1 transition-colors ${
+                                          isPercentageMode
+                                            ? "bg-[var(--primary)] text-on-primary"
+                                            : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
+                                        }`}
+                                      >
+                                        Percent
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setAssessmentScoreInput(component.componentId, (current) => ({
+                                          ...current,
+                                          mode: "raw",
+                                        }))}
+                                        className={`rounded-full px-2.5 py-1 transition-colors ${
+                                          isPercentageMode
+                                            ? "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
+                                            : "bg-[var(--primary)] text-on-primary"
+                                        }`}
+                                      >
+                                        Score
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {isPercentageMode ? (
+                                    <div className="grid grid-cols-[minmax(0,1fr)_4.5rem] gap-2 sm:grid-cols-[minmax(0,1fr)_5rem]">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="0.1"
+                                        value={currentInput.percentage}
+                                        onChange={(event) => setAssessmentScoreInput(component.componentId, (current) => ({
+                                          ...current,
+                                          mode: "percentage",
+                                          percentage: event.target.value,
+                                        }))}
+                                        placeholder="Enter percentage"
+                                        className="h-10 min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                      />
+                                      <div className="flex h-10 items-center justify-center rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[12px] font-semibold text-[var(--on-surface-variant)]">
+                                        %
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.1"
+                                        value={currentInput.rawScore}
+                                        onChange={(event) => setAssessmentScoreInput(component.componentId, (current) => ({
+                                          ...current,
+                                          mode: "raw",
+                                          rawScore: event.target.value,
+                                        }))}
+                                        placeholder="Score"
+                                        className="h-10 min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                      />
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.1"
+                                        value={currentInput.rawMax}
+                                        onChange={(event) => setAssessmentScoreInput(component.componentId, (current) => ({
+                                          ...current,
+                                          mode: "raw",
+                                          rawMax: event.target.value,
+                                        }))}
+                                        placeholder="Out of"
+                                        className="h-10 min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </section>
                     );
@@ -607,7 +759,7 @@ export function OcasCalculatorClient()
           <section className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
             <h3 className="text-[15px] font-bold text-[var(--on-surface)]">Simulation summary</h3>
             <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-              Fill in the marks you expect to get for each assessment component.
+              Fill in the marks you expect to get for each assessment component as percentages or raw scores.
             </p>
 
             <div className="mt-4 grid gap-3">
@@ -621,7 +773,6 @@ export function OcasCalculatorClient()
               <SummaryCard
                 label="Likely grade"
                 value={estimatedGrade}
-                detail="Estimate only, not official grading"
               />
               <SummaryCard
                 label="Completed weight"
@@ -652,7 +803,7 @@ function SummaryCard({
 }: {
   label: string;
   value: string;
-  detail: string;
+  detail?: string;
 })
 {
   return (
@@ -661,7 +812,7 @@ function SummaryCard({
       <p className="mt-1 text-[24px] font-bold leading-8 tracking-[-0.03em] text-[var(--on-surface)]">
         {value}
       </p>
-      <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">{detail}</p>
+      {detail ? <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">{detail}</p> : null}
     </article>
   );
 }

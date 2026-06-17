@@ -486,10 +486,10 @@ export function TimetableCanvas({
     .map((label, index) => ({ label, dayOfWeek: index + 1 }))
     .filter((day) => day.dayOfWeek <= 5 || hasSaturdayClasses);
   const rangeMinutes = Math.max(30, visibleEndMinutes - START_MINUTES);
-  const verticalSlotSize = isMobile ? 36 : 30;
+  const verticalSlotSize = isMobile ? 34 : 30;
   const daySize = 84;
   const contentHeight = (rangeMinutes / 30) * verticalSlotSize;
-  const horizontalMinWidthPx = (rangeMinutes / 30) * 58;
+  const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 56 : 58);
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
   const dayLaneCounts = dayBlocksByIndex.map((dayBlocks) => dayBlocks.reduce((maxLaneCount, block) => {
@@ -519,7 +519,9 @@ export function TimetableCanvas({
   const todayVisibleIndex = visibleDays.findIndex((day) => day.dayOfWeek === todayIndex);
   const showNowLine = showCurrentTime && todayVisibleIndex >= 0;
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const verticalHeaderHeightPx = showAllWeeks ? 32 : 36;
+  const verticalHeaderHeightPx = isMobile
+    ? (showAllWeeks ? 30 : 34)
+    : (showAllWeeks ? 32 : 36);
 
   if (isHorizontal)
   {

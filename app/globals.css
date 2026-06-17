@@ -176,6 +176,28 @@
   --timetable-grid-date-size: 11px;
 }
 
+@media (max-width: 767px) {
+  .timetable-grid {
+    --timetable-grid-label-size: 12px;
+    --timetable-grid-date-size: 10px;
+  }
+
+  .timetable-cell.is-mobile {
+    font-size: 0.66rem;
+    line-height: 0.82rem;
+  }
+
+  .timetable-cell.is-mobile .timetable-cell__module {
+    font-size: 0.74rem;
+    line-height: 0.88rem;
+  }
+
+  .timetable-cell.is-mobile .timetable-cell__time {
+    font-size: 0.66rem;
+    line-height: 0.82rem;
+  }
+}
+
 .timetable-grid__time-label {
   font-size: var(--timetable-grid-label-size);
   font-weight: 700;
