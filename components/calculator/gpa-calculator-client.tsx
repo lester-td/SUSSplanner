@@ -136,19 +136,14 @@ export function GpaCalculatorClient()
           priorGpa?: number;
           priorCredits?: number;
         };
-        setModules(Array.isArray(parsed.modules)
-          ? parsed.modules.map((module) => ({
-              ...module,
-              isPassFail: module.isPassFail ?? false,
-            }))
-          : []);
+        setModules(Array.isArray(parsed.modules) ? parsed.modules : []);
         setPriorGpa(clampNumber(Number(parsed.priorGpa), 0, 5));
         setPriorCredits(Math.max(0, Number(parsed.priorCredits) || 0));
       }
     }
     catch
     {
-      // Ignore stale or malformed local data and start with a clean calculator.
+      // Ignore malformed local data and start with a clean calculator.
     }
     finally
     {

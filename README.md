@@ -67,7 +67,7 @@ npm run validate:setup  # Validate first-run setup
 | `/courses` | Search and filter the course catalog |
 | `/courses/[courseCode]` | View course, assessment, and class details |
 | `/planner` | Build a browser-local multi-semester study plan |
-| `/calculator` | Estimate current and cumulative GPA |
+| `/calculators` | Estimate GPA and OCAS outcomes |
 | `/share?sem=...&classes=...` | Preview and optionally import a shared timetable |
 
 ### Environment

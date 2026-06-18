@@ -420,16 +420,16 @@ class-group, semester, and optional week information.
 
 | Route | Rendering and behavior |
 |---|---|
-| `/` | Static home page with links to Timetable, Courses, Planner, Calculator, and placeholder school portal shortcuts. |
+| `/` | Static home page with links to Timetable, Courses, Planner, Calculators, and placeholder school portal shortcuts. |
 | `/timetable` | Server-loads semesters with classes/weeks, then `PlannerClient` restores local state and fetches timetable/course/class data interactively. |
 | `/planner` | Server-loads semester metadata, then `StudyPlanClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
-| `/calculator` | Force-dynamic, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` manages browser-local current/cumulative GPA calculations and Pass/Fail strategy. |
+| `/calculators` | Force-dynamic, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` and `OcasCalculatorClient` manage browser-local GPA calculation and OCAS assessment simulation. |
 | `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` performs debounced API search using filters. |
 | `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
 | `/share?sem=...&classes=...` | Validates and resolves the shared timetable on the server, then renders a read-only `ShareClient` with explicit import. Missing or malformed parameters get explanatory UI. |
 
 The shared `AppShell` provides navigation to Home, Timetable, Courses, Planner,
-and Calculator. `/share` is reached through a share URL.
+and Calculators. `/share` is reached through a share URL.
 
 ## API and Backend Routes
 
@@ -437,7 +437,7 @@ All route handlers explicitly use the Node.js runtime.
 
 | Method and route | Inputs | Response / purpose |
 |---|---|---|
-| `GET /api/courses/search` | `q`; repeatable `semesterIds`/`semesterId`; repeatable `scheduleTypes`/`scheduleType`; presence flags `postgraduateOnly`, `availableAsGspOnly`, `writtenExamOnly`, `ecaOnly`; legacy `postgraduate=postgraduate`; repeatable `schools`/`school`; repeatable `courseLevels`/`courseLevel`; `limit` (1-100, default 25) | `{ courses: CourseSearchResult[] }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
+| `GET /api/courses/search` | `q`; repeatable `semesterIds`; repeatable `scheduleTypes`; presence flags `postgraduateOnly`, `availableAsGspOnly`, `writtenExamOnly`, `ecaOnly`; repeatable `schools`; repeatable `courseLevels`; `limit` (1-100, default 25) | `{ courses: CourseSearchResult[] }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
 | `GET /api/calculator/courses` | `q` | `{ courses: { courseCode, courseName, creditUnits }[] }`; searches the complete course catalog by code or name without joining classes or filtering by semester presentation. Returns up to 8 ranked results. |
 | `GET /api/courses/[courseCode]` | Optional `semesterId`, optional `scheduleType` | `{ course, classes, assessmentComponents }`; returns `404` when the course is missing. |
 | `GET /api/classes` | Mode A: `courseCode` plus optional `semesterId`/`sem` and `scheduleType` | `{ classes: CourseClassRecord[] }`; class groups and their events. |
@@ -692,7 +692,7 @@ The planner header provides these data-protection and presentation actions:
 
 ```mermaid
 flowchart TD
-    Open["Open direct /calculator route"]
+    Open["Open direct /calculators route"]
     Restore{"Saved calculator JSON<br/>in localStorage?"}
     Empty["Use empty modules and zero prior record"]
     Ready["Render Current GPA, Cumulative GPA,<br/>module count, and CU summaries"]
@@ -910,10 +910,9 @@ Persisted JSON fields:
 
 The calculator is implemented directly in
 `components/calculator/gpa-calculator-client.tsx`; it does not currently have a
-separate type, validation, or storage module. Hydration catches malformed JSON,
-starts clean when parsing fails, and defaults a missing legacy `isPassFail`
-field to `false`. Every subsequent module/prior-record change is written back
-to `localStorage`.
+separate type, validation, or storage module. Hydration catches malformed JSON
+and starts clean when parsing fails. Every subsequent module/prior-record
+change is written back to `localStorage`.
 
 Grade and GPV are bidirectionally synchronized through the fixed SUSS scale.
 Both `A+` and `A` map to `5.0`; selecting GPV `5.0` uses `A` as the canonical
@@ -1205,8 +1204,8 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 - Configure `CACHE_REVALIDATE_SECRET` if maintainers need on-demand refreshes.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently
   optional and unused by runtime code.
-- `/timetable`, `/planner`, and `/calculator` are force-dynamic.
-- `/calculator` sets `robots.index` and `robots.follow` to `false`.
+- `/timetable`, `/planner`, and `/calculators` are force-dynamic.
+- `/calculators` sets `robots.index` and `robots.follow` to `false`.
 - API route handlers require the Node.js runtime, not the Edge runtime.
 - Database connection limits are intentionally small in production (`max: 3`).
 - The scraper is designed to run on a maintainer's machine, not inside Vercel.
@@ -1224,7 +1223,7 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 | Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. `drizzle/` is not currently the schema source of truth. |
 | Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered DB reads behind route handlers. |
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
-| Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, legacy `isPassFail` hydration, and local-storage compatibility aligned. |
+| Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, and local-storage format aligned. |
 | Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/db/queries.ts`; do not accidentally add semester/class filters. |
 | Change study-plan backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, import compatibility behavior, and this guide. Preserve support for existing versions or reject them with a clear notice. |
 | Change study-plan print output | Update `lib/export/study-plan-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
@@ -1238,7 +1237,7 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
   were not exported as JSON backups.
 - GPA-calculator state has no export, import, share, cloud backup, or formal
   Zod validation layer.
-- `/calculator` is excluded from search-engine indexing.
+- `/calculators` is excluded from search-engine indexing.
 - Calculator results depend on user-entered grades, prior GPA, prior
   GPA-counted CUs, and Pass/Fail selections; the app cannot verify them against
   official academic records or policy.

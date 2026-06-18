@@ -1,5 +1,4 @@
 import { plannerSemesterStateSchema, plannerStorageStateSchema } from "@/lib/validation/timetable";
-import { migrateCourseColorMap } from "./timetable-utils";
 import type { PlannerSemesterState, PlannerStorageState, SharedTimetableState } from "./types";
 
 export const TIMETABLE_STORAGE_KEY = "sussplanner.timetable.v1";
@@ -11,12 +10,7 @@ function canUseLocalStorage()
 
 function normalizeSemesterState(state: PlannerSemesterState)
 {
-  const parsed = plannerSemesterStateSchema.parse(state);
-
-  return {
-    ...parsed,
-    courseColorsByCourseCode: migrateCourseColorMap(parsed.courseColorsByCourseCode ?? {}),
-  };
+  return plannerSemesterStateSchema.parse(state);
 }
 
 function appendSemesterState(
@@ -104,24 +98,7 @@ export function getSavedSemesterState(state: PlannerStorageState | null, semeste
     return null;
   }
 
-  const matching = state.semesterStates?.[String(semesterId)];
-  if (matching)
-  {
-    return matching;
-  }
-
-  if (state.semesterId === semesterId)
-  {
-    return {
-      semesterId: state.semesterId,
-      selectedClasses: state.selectedClasses,
-      hiddenClasses: state.hiddenClasses,
-      courseColorsByCourseCode: state.courseColorsByCourseCode,
-      selectedWeekId: state.selectedWeekId,
-    } satisfies PlannerSemesterState;
-  }
-
-  return null;
+  return state.semesterStates?.[String(semesterId)] ?? null;
 }
 
 export function loadSavedTimetable()

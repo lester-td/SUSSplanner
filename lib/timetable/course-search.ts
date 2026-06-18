@@ -63,31 +63,18 @@ function normalizeScheduleTypes(values: string[])
 export function parseCourseSearchFilters(input: SearchInput): CourseSearchFilters
 {
   const q = (readFirst(input, "q") ?? "").trim().slice(0, 120);
-  const legacyPostgraduate = readFirst(input, "postgraduate");
   const limitValue = parsePositiveInt(readFirst(input, "limit") ?? "");
 
   return {
     q,
-    semesterIds: unique([
-      ...readAll(input, "semesterIds"),
-      ...readAll(input, "semesterId"),
-    ].map(parsePositiveInt).filter((value): value is number => value !== null)),
-    scheduleTypes: normalizeScheduleTypes([
-      ...readAll(input, "scheduleTypes"),
-      ...readAll(input, "scheduleType"),
-    ]),
-    postgraduateOnly: readAll(input, "postgraduateOnly").length > 0 || legacyPostgraduate === "postgraduate",
+    semesterIds: unique(readAll(input, "semesterIds").map(parsePositiveInt).filter((value): value is number => value !== null)),
+    scheduleTypes: normalizeScheduleTypes(readAll(input, "scheduleTypes")),
+    postgraduateOnly: readAll(input, "postgraduateOnly").length > 0,
     availableAsGspOnly: readAll(input, "availableAsGspOnly").length > 0,
     writtenExamOnly: readAll(input, "writtenExamOnly").length > 0,
     ecaOnly: readAll(input, "ecaOnly").length > 0,
-    schoolNames: normalizeTextList([
-      ...readAll(input, "schools"),
-      ...readAll(input, "school"),
-    ]),
-    courseLevels: normalizeTextList([
-      ...readAll(input, "courseLevels"),
-      ...readAll(input, "courseLevel"),
-    ]),
+    schoolNames: normalizeTextList(readAll(input, "schools")),
+    courseLevels: normalizeTextList(readAll(input, "courseLevels")),
     limit: Math.min(MAX_LIMIT, Math.max(1, limitValue ?? DEFAULT_LIMIT)),
   };
 }

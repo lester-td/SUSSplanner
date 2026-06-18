@@ -353,12 +353,12 @@ be undone.
 
 ## Calculating GPA
 
-### Open the GPA Calculator
+### Open the Calculators Page
 
 1. Open SUSSPlanner.
-2. Select **Calculator** in the navigation.
+2. Select **Calculators** in the navigation.
 
-For local development, open `http://localhost:3000/calculator`.
+For local development, open `http://localhost:3000/calculators`.
 
 ### Add Current-Semester Modules
 
@@ -616,7 +616,7 @@ SUSSPlanner keeps one multi-semester study plan at a time. To compare options:
 
 ### Compare Pass/Fail Strategies
 
-1. Open `/calculator`.
+1. Open `/calculators`.
 2. Add your current-semester modules and expected grades.
 3. Enter your prior cumulative GPA and GPA-counted CUs.
 4. Toggle **Pass/Fail** for different modules.
@@ -728,10 +728,9 @@ You can add it as a custom course in **Planner**. It cannot be added to
 **Timetable** because it has no class schedule. You can also add a custom
 module directly in **GPA Calculator**.
 
-### Why is the GPA Calculator not in the navigation?
+### Where are the calculators?
 
-The calculator is currently available through the direct `/calculator` route.
-It has not yet been added to the main navigation.
+The calculators are available through **Calculators** in the navigation and the direct `/calculators` route.
 
 ### Do Pass/Fail modules count towards the calculator GPA?
 

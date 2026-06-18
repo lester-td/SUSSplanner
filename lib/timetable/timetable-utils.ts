@@ -31,33 +31,6 @@ export const COURSE_COLOR_PALETTE = [
   "#C9DDCB",
 ];
 
-const LEGACY_COURSE_COLOR_PALETTE = [
-  "#F4D6D8",
-  "#F7E0C3",
-  "#F0E7D8",
-  "#D9E7C8",
-  "#D7E6F0",
-  "#E1D7EC",
-  "#E0D8C8",
-  "#D7E1D4",
-];
-
-const LEGACY_TO_CURRENT_COURSE_COLOR = new Map(
-  LEGACY_COURSE_COLOR_PALETTE.map((legacyColor, index) => [legacyColor.toLowerCase(), COURSE_COLOR_PALETTE[index]] as const),
-);
-
-export function migrateCourseColor(color: string)
-{
-  return LEGACY_TO_CURRENT_COURSE_COLOR.get(color.toLowerCase()) ?? color;
-}
-
-export function migrateCourseColorMap(colors: Record<string, string>)
-{
-  return Object.fromEntries(
-    Object.entries(colors).map(([courseCode, color]) => [courseCode, migrateCourseColor(color)] as const),
-  );
-}
-
 export function getCourseColor(courseCode: string)
 {
   let hash = 0;
