@@ -214,7 +214,7 @@ type TimetableLaneLayout = {
   laneCount: number;
 };
 
-function getDarkToneFromHex(hexColor: string)
+function getContrastingTextColorFromHex(hexColor: string)
 {
   const normalized = hexColor.trim().replace(/^#/, "");
   if (!/^[0-9a-fA-F]{6}$/.test(normalized))
@@ -232,6 +232,7 @@ function getDarkToneFromHex(hexColor: string)
     Math.round(blue * 0.18),
   ];
   const deepNeutral: [number, number, number] = [17, 24, 39];
+  const white: [number, number, number] = [255, 255, 255];
 
   const toLinear = (channel: number) => {
     const s = channel / 255;
@@ -249,13 +250,16 @@ function getDarkToneFromHex(hexColor: string)
   };
 
   const background: [number, number, number] = [red, green, blue];
-  const hueContrast = contrastRatio(huePreservingDark, background);
-  const neutralContrast = contrastRatio(deepNeutral, background);
-  const selected = neutralContrast > hueContrast ? deepNeutral : huePreservingDark;
+  const candidates = [huePreservingDark, deepNeutral, white];
+  const selected = candidates.reduce((best, candidate) => (
+    contrastRatio(candidate, background) > contrastRatio(best, background) ? candidate : best
+  ), deepNeutral);
 
   if (contrastRatio(selected, background) < 4.5)
   {
-    return "#0b0f17";
+    return contrastRatio(white, background) > contrastRatio(deepNeutral, background)
+      ? "#ffffff"
+      : "#0b0f17";
   }
 
   return `rgb(${selected[0]} ${selected[1]} ${selected[2]})`;
@@ -482,10 +486,10 @@ export function TimetableCanvas({
     .map((label, index) => ({ label, dayOfWeek: index + 1 }))
     .filter((day) => day.dayOfWeek <= 5 || hasSaturdayClasses);
   const rangeMinutes = Math.max(30, visibleEndMinutes - START_MINUTES);
-  const verticalSlotSize = isMobile ? 36 : 30;
+  const verticalSlotSize = isMobile ? 34 : 30;
   const daySize = 84;
   const contentHeight = (rangeMinutes / 30) * verticalSlotSize;
-  const horizontalMinWidthPx = (rangeMinutes / 30) * 58;
+  const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 56 : 58);
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
   const dayLaneCounts = dayBlocksByIndex.map((dayBlocks) => dayBlocks.reduce((maxLaneCount, block) => {
@@ -515,7 +519,9 @@ export function TimetableCanvas({
   const todayVisibleIndex = visibleDays.findIndex((day) => day.dayOfWeek === todayIndex);
   const showNowLine = showCurrentTime && todayVisibleIndex >= 0;
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const verticalHeaderHeightPx = showAllWeeks ? 32 : 36;
+  const verticalHeaderHeightPx = isMobile
+    ? (showAllWeeks ? 30 : 34)
+    : (showAllWeeks ? 32 : 36);
 
   if (isHorizontal)
   {
@@ -825,7 +831,7 @@ function TimetableBlockButton({
         ...style,
         ["--block-bg" as string]: color,
         ["--block-border" as string]: color,
-        ["--block-text" as string]: getDarkToneFromHex(color),
+        ["--block-text" as string]: getContrastingTextColorFromHex(color),
         opacity: dimmed ? 0.5 : undefined,
       }}
       onClick={onClick}

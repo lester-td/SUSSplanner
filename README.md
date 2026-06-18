@@ -62,10 +62,12 @@ npm run validate:setup  # Validate first-run setup
 
 | Route | Purpose |
 |---|---|
-| `/` and `/timetable` | Interactive timetable planner |
+| `/` | Home page with links to app areas and school portal placeholders |
+| `/timetable` | Interactive timetable planner |
 | `/courses` | Search and filter the course catalog |
 | `/courses/[courseCode]` | View course, assessment, and class details |
 | `/planner` | Build a browser-local multi-semester study plan |
+| `/calculators` | Estimate GPA and OCAS outcomes |
 | `/share?sem=...&classes=...` | Preview and optionally import a shared timetable |
 
 ### Environment

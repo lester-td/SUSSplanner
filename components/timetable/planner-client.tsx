@@ -37,6 +37,7 @@ import {
 } from "@/lib/timetable/date-utils";
 import {
   loadSavedTimetable,
+  getSavedSemesterState,
   saveTimetableToLocalStorage,
 } from "@/lib/timetable/local-storage";
 import {
@@ -106,22 +107,72 @@ function buildPreviewEvents(classes: CourseClassRecord[]): TimetableEventRecord[
   });
 }
 
-function defaultStorageState(
+function createDefaultSemesterState(
+  semesterId: number,
+  currentSemesterId: number,
+  currentWeekId: number | null,
+): PlannerStorageState
+{
+  return {
+    semesterId,
+    selectedClasses: [],
+    hiddenClasses: [],
+    courseColorsByCourseCode: {},
+    selectedWeekId: currentWeekId && semesterId === currentSemesterId ? currentWeekId : "all",
+    orientation: "vertical",
+    viewMode: "class",
+  };
+}
+
+function createInitialSemesterState(
   semesters: SemesterOption[],
   currentSemesterId: number,
   currentWeekId: number | null,
 ): PlannerStorageState
 {
   const semesterId = currentSemesterId || semesters[0]?.semesterId || 0;
-  return {
-    semesterId,
-    selectedClasses: [],
-    hiddenClasses: [],
-    courseColorsByCourseCode: {},
-    selectedWeekId: currentWeekId && currentSemesterId === semesterId ? currentWeekId : "all",
-    orientation: "vertical",
-    viewMode: "class",
-  };
+  return createDefaultSemesterState(semesterId, currentSemesterId, currentWeekId);
+}
+
+function formatSemesterRailMonthYear(semester: SemesterOption)
+{
+  const startDate = semester.weeks[0]?.startDate;
+  if (!startDate)
+  {
+    return semester.semesterName;
+  }
+
+  const parsedDate = new Date(`${startDate}T00:00:00`);
+  if (Number.isNaN(parsedDate.getTime()))
+  {
+    return semester.semesterName;
+  }
+
+  return new Intl.DateTimeFormat("en-SG", {
+    month: "long",
+    year: "numeric",
+  }).format(parsedDate);
+}
+
+function formatAcademicYearShort(academicYear: string)
+{
+  const match = academicYear.trim().match(/^(\d{4})\s*\/\s*(\d{4})$/);
+  if (!match)
+  {
+    return academicYear.trim();
+  }
+
+  return `${match[1].slice(-2)}/${match[2].slice(-2)}`;
+}
+
+function formatSemesterRailTag(semesterNo: SemesterRecord["semesterNo"])
+{
+  if (semesterNo === 3)
+  {
+    return "Special";
+  }
+
+  return `Sem ${semesterNo}`;
 }
 
 function replaceSelectionForCourse(
@@ -310,14 +361,22 @@ export function PlannerClient({
 
   useEffect(() => {
     const saved = loadSavedTimetable();
-    const next = saved ?? defaultStorageState(semesters, currentSemesterId, currentWeekId);
-    setSemesterId(next.semesterId || currentSemesterId || semesters[0]?.semesterId || 0);
+    const savedSemesterExists = Boolean(saved && semesters.some((semester) => semester.semesterId === saved.semesterId));
+    const semesterIdToLoad = savedSemesterExists && saved
+      ? saved.semesterId
+      : currentSemesterId || semesters[0]?.semesterId || 0;
+    const next = savedSemesterExists && saved
+      ? saved
+      : getSavedSemesterState(saved, semesterIdToLoad)
+        ?? createInitialSemesterState(semesters, currentSemesterId, currentWeekId);
+
+    setSemesterId(semesterIdToLoad);
     setSelectedClasses(next.selectedClasses);
     setHiddenClasses(next.hiddenClasses);
     setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
     setSelectedWeekId(next.selectedWeekId);
-    setOrientation(next.orientation);
-    setViewMode(next.viewMode);
+    setOrientation(saved?.orientation ?? "vertical");
+    setViewMode(saved?.viewMode ?? "class");
     setReady(true);
   }, [currentSemesterId, currentWeekId, semesters]);
 
@@ -569,8 +628,8 @@ export function PlannerClient({
   const weekItems = buildWeekOptions(semesterWeeks);
   const semesterItems = semesters.map((semester) => ({
     id: String(semester.semesterId),
-    title: semester.semesterName,
-    subtitle: `AY${semester.academicYear}`,
+    title: formatSemesterRailMonthYear(semester),
+    subtitle: `AY ${formatAcademicYearShort(semester.academicYear)} • ${formatSemesterRailTag(semester.semesterNo)}`,
   }));
   const showCurrentTime = semesterId === currentSemesterId && (selectedWeekId === "all" || selectedWeekId === currentWeekId);
   const selectedWeekRecord = selectedWeekId === "all"
@@ -687,8 +746,25 @@ export function PlannerClient({
 
   function handleSemesterChange(nextSemesterId: number)
   {
+    saveTimetableToLocalStorage({
+      semesterId,
+      selectedClasses,
+      hiddenClasses,
+      courseColorsByCourseCode,
+      selectedWeekId,
+      orientation,
+      viewMode,
+    });
+
+    const saved = loadSavedTimetable();
+    const next = getSavedSemesterState(saved, nextSemesterId)
+      ?? createDefaultSemesterState(nextSemesterId, currentSemesterId, currentWeekId);
+
     setSemesterId(nextSemesterId);
-    setSelectedWeekId(nextSemesterId === currentSemesterId && currentWeekId ? currentWeekId : "all");
+    setSelectedClasses(next.selectedClasses);
+    setHiddenClasses(next.hiddenClasses);
+    setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
+    setSelectedWeekId(next.selectedWeekId);
     setSearchInput("");
     setSearchResults([]);
     setPlannerNotice("");
@@ -848,8 +924,8 @@ export function PlannerClient({
     ? { label: "Exam Cal", icon: <CalendarIcon className="h-[18px] w-[18px]" />, onClick: () => setViewMode("exam") }
     : { label: "Timetable", icon: <GridIcon className="h-[18px] w-[18px]" />, onClick: () => setViewMode("class") };
   const nextOrientationToggle = orientation === "horizontal"
-    ? { label: "Vertical", icon: <RowsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("vertical") }
-    : { label: "Horizontal", icon: <ColumnsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("horizontal") };
+    ? { label: "Vertical", icon: <ColumnsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("vertical") }
+    : { label: "Horizontal", icon: <RowsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("horizontal") };
 
   return (
     <>
@@ -901,21 +977,21 @@ export function PlannerClient({
             />
           </div>
 
-          <div className="bg-[var(--surface-container-lowest)] px-3 pt-2.5">
+          <div className="bg-[var(--surface-container-lowest)] px-2.5 pt-2 sm:px-3 sm:pt-2.5">
             {plannerNotice ? (
-              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[12px] font-medium leading-4 text-[var(--primary)]">
+              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--primary)] sm:text-[12px]">
                 {plannerNotice}
               </div>
             ) : null}
             {timetableData.unresolvedSelections.length > 0 ? (
-              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-1.5 text-[12px] font-medium leading-4 text-[var(--error)]">
+              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--error)] sm:text-[12px]">
                 Some shared or saved class identifiers no longer match the database for this semester.
               </div>
             ) : null}
             {timetableData.clashes.length > 0 ? (
-              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2.5">
-                <p className="text-[12px] font-semibold leading-4 text-[var(--error)]">Detected timetable clashes</p>
-                <div className="mt-2 space-y-2 text-[11px] leading-[14px] text-[var(--on-surface)]">
+              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-2 sm:px-3 sm:py-2.5">
+                <p className="text-[11px] font-semibold leading-4 text-[var(--error)] sm:text-[12px]">Detected timetable clashes</p>
+                <div className="mt-1.5 space-y-1.5 text-[10px] leading-[13px] text-[var(--on-surface)] sm:mt-2 sm:space-y-2 sm:text-[11px] sm:leading-[14px]">
                   {timetableData.clashes.slice(0, 4).map((clash) => (
                     <div key={clash.clashKey}>
                       <div className="font-semibold">{formatEventDate(clash.eventDate)} · {formatTimeRange(clash.startTime, clash.endTime)}</div>
@@ -929,7 +1005,7 @@ export function PlannerClient({
             ) : null}
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-1 pb-1">
+          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-1 pb-0.5 sm:pb-1">
             <div className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
               {viewMode === "class" ? (
                 <TimetableCanvas
@@ -993,14 +1069,14 @@ export function PlannerClient({
         </section>
 
         <aside className={`flex min-h-0 w-full flex-col border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] ${orientation === "horizontal" ? "md:w-full md:border-l-0 md:border-t" : "md:w-[30%] md:border-l md:border-t-0"}`}>
-          <div className="flex h-14 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-3">
+          <div className="flex h-12 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-2.5 sm:h-14 sm:px-3">
             <div>
-              <h3 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">My Courses</h3>
-              <p className="text-[11px] leading-[14px] text-[var(--on-surface-variant)]">{selectedSemester ? getCurrentWeekChip(selectedSemester, semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null) : ""}</p>
+              <h3 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)] sm:text-[18px] sm:leading-6">My Courses</h3>
+              <p className="text-[10px] leading-[13px] text-[var(--on-surface-variant)] sm:text-[11px] sm:leading-[14px]">{selectedSemester ? getCurrentWeekChip(selectedSemester, semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null) : ""}</p>
             </div>
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)]">FT</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[10px]">FT</span>
                 <button
                   type="button"
                   role="switch"
@@ -1015,19 +1091,19 @@ export function PlannerClient({
                     }`}
                   />
                 </button>
-                <span className="text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)]">PT</span>
+                <span className="text-[9px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[10px]">PT</span>
               </div>
-              <span className="rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-2 py-0.5 text-[11px] font-medium leading-[14px] text-[var(--primary)]">
+              <span className="rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-1.5 py-0.5 text-[10px] font-medium leading-[13px] text-[var(--primary)] sm:px-2 sm:text-[11px] sm:leading-[14px]">
                 {selectedCards.length} Selected
               </span>
             </div>
           </div>
 
-          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 py-1.5">
+          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 py-1.5 sm:px-3">
             <label className="relative z-40 block">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
               <input
-                className="elev-1 w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-2 pl-10 pr-4 text-[14px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                className="elev-1 w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-1.5 pl-10 pr-4 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:py-2 sm:text-[14px]"
                 placeholder="Search courses"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
@@ -1039,7 +1115,7 @@ export function PlannerClient({
                     <button
                       key={record.courseCode}
                       type="button"
-                      className="flex w-full items-start rounded-[0.5rem] px-2.5 py-1.5 text-left transition-colors hover:bg-[var(--surface-container-high)]"
+                      className="flex w-full items-start rounded-[0.5rem] px-2.5 py-1 text-left transition-colors hover:bg-[var(--surface-container-high)] sm:py-1.5"
                       onClick={() => handleSearchResultClick(record)}
                     >
                       <span className="min-w-0 flex-1">
@@ -1057,11 +1133,11 @@ export function PlannerClient({
                   ))}
 
                   {searchLoading ? (
-                    <div className="px-3 py-2 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">Searching…</div>
+                    <div className="px-2.5 py-1.5 text-[10px] leading-[13px] text-[var(--on-surface-variant)] sm:px-3 sm:py-2 sm:text-[11px] sm:leading-[14px]">Searching…</div>
                   ) : null}
 
                   {!searchLoading && searchResults.length === 0 ? (
-                    <div className="rounded-[0.5rem] border border-dashed border-[var(--outline-variant)] px-4 py-3 text-center text-[11px] font-medium leading-4 text-[var(--on-surface-variant)]">
+                    <div className="rounded-[0.5rem] border border-dashed border-[var(--outline-variant)] px-3 py-2.5 text-center text-[10px] font-medium leading-4 text-[var(--on-surface-variant)] sm:px-4 sm:py-3 sm:text-[11px]">
                       No matching courses
                     </div>
                   ) : null}
@@ -1070,9 +1146,9 @@ export function PlannerClient({
             </label>
           </div>
 
-          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1.5">
-            <div className="space-y-1.5">
-              <div className="grid grid-cols-3 gap-1.5">
+          <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3">
+            <div className="space-y-1">
+              <div className="grid grid-cols-3 gap-1">
                 <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share" onClick={handleShare} stretch />
                 <div className="relative" data-download-popover-root>
                   <ActionButton
@@ -1098,7 +1174,7 @@ export function PlannerClient({
                 </div>
                 <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} stretch />
               </div>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-1">
                 <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} stretch />
                 <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} stretch />
               </div>
@@ -1114,13 +1190,13 @@ export function PlannerClient({
             </div>
 
             {shareMessage ? (
-              <div className="mt-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--primary)]">
+              <div className="mt-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[10px] font-semibold leading-4 text-[var(--primary)] sm:text-[11px]">
                 {shareMessage}
               </div>
             ) : null}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-3 pb-3">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface-container-lowest)] px-2.5 pb-2.5 sm:px-3 sm:pb-3">
             <div className={orientation === "horizontal" ? "space-y-2 md:grid md:auto-rows-fr md:grid-cols-2 md:items-stretch md:gap-2 md:space-y-0 lg:grid-cols-3 xl:grid-cols-4" : "space-y-2"}>
               {selectedCards.map((record) => {
                 const isHidden = hiddenClasses.includes(record.shareKey);
@@ -1128,7 +1204,7 @@ export function PlannerClient({
                 return (
                   <article
                     key={record.shareKey}
-                    className={`elev-1 group relative rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 transition-[box-shadow] hover:shadow-md ${
+                    className={`elev-1 group relative rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-1.5 transition-[box-shadow] hover:shadow-md sm:px-2.5 sm:py-2 ${
                       colorPickerCourseCode === record.courseCode ? "overflow-visible" : "overflow-hidden"
                     } ${
                       orientation === "horizontal" ? "md:h-full" : ""
@@ -1138,15 +1214,15 @@ export function PlannerClient({
 
                     <div className="pl-1.5 pr-12">
                       <div className="min-w-0">
-                          <div className="flex items-start gap-2">
-                            <div className="relative mt-0.5 z-30" data-color-popover-root>
-                              <button
-                                type="button"
-                                aria-label={`Change ${record.courseCode} color`}
-                                className="h-4 w-4 shrink-0 cursor-pointer rounded-[4px] border border-black/10 transition-opacity hover:opacity-80"
-                                style={{ backgroundColor: recordColor }}
-                                onClick={() => setColorPickerCourseCode((current) => current === record.courseCode ? null : record.courseCode)}
-                              />
+                        <div className="flex items-start gap-2">
+                          <div className="relative z-30 mt-0.5" data-color-popover-root>
+                            <button
+                              type="button"
+                              aria-label={`Change ${record.courseCode} color`}
+                              className="h-4 w-4 shrink-0 cursor-pointer rounded-[4px] border border-black/10 transition-opacity hover:opacity-80"
+                              style={{ backgroundColor: recordColor }}
+                              onClick={() => setColorPickerCourseCode((current) => current === record.courseCode ? null : record.courseCode)}
+                            />
                             {colorPickerCourseCode === record.courseCode ? (
                               <div className="absolute left-0 top-7 z-20 min-w-[7.25rem] rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2 shadow-md">
                                 <div
@@ -1173,55 +1249,55 @@ export function PlannerClient({
                                 </div>
                               </div>
                             ) : null}
-                            </div>
-                            <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-                              <Link
-                                href={`/courses/${record.courseCode}`}
-                                className="inline min-w-0 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
-                              >
-                                <span className="text-[15px] font-extrabold leading-5">{record.courseCode}</span>{" "}
-                                <span className="text-[15px] font-normal leading-5">
-                                  {record.courseName ?? "Untitled course"}
-                                </span>
-                              </Link>
-                            </div>
                           </div>
-                          <div className="mt-1 space-y-1 text-[13px] font-medium leading-5 text-[var(--on-surface-variant)]">
-                            <div className="flex min-w-0 items-center gap-1.5">
-                              <ListIcon className="h-4 w-4 shrink-0" />
-                              <span className="shrink-0 font-semibold text-[var(--on-surface)]">Group:</span>
-                              <span className="truncate">{formatClassGroupLabel(record.groupCode)}</span>
-                            </div>
-                            <div className="flex min-w-0 items-center gap-1.5">
-                              <CalendarIcon className="h-4 w-4 shrink-0" />
-                              {record.examDateLabel === "No Exam" || record.examDateLabel === "ECA" ? (
-                                <span className="truncate font-bold text-[var(--on-surface)]">{record.examDateLabel}</span>
-                              ) : (
-                                <>
-                                  <span className="shrink-0 font-semibold text-[var(--on-surface)]">Exam:</span>
-                                  <span className="truncate">{record.examDateLabel}{record.examTimeLabel ? `, ${record.examTimeLabel}` : ""}</span>
-                                </>
-                              )}
-                            </div>
-                            <div className="flex min-w-0 items-center gap-1.5">
-                              <SchoolIcon className="h-4 w-4 shrink-0" />
-                              <span className="shrink-0 font-semibold text-[var(--on-surface)]">Credit Units:</span>
-                              <span>{record.creditUnits?.toFixed(1) ?? "0.0"}</span>
-                            </div>
+                          <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
+                            <Link
+                              href={`/courses/${record.courseCode}`}
+                              className="inline min-w-0 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                            >
+                              <span className="text-[14px] font-extrabold leading-5 sm:text-[15px]">{record.courseCode}</span>{" "}
+                              <span className="text-[14px] font-normal leading-5 sm:text-[15px]">
+                                {record.courseName ?? "Untitled course"}
+                              </span>
+                            </Link>
                           </div>
                         </div>
-
-                      <div className="absolute right-1.5 top-1.5 flex flex-col items-center gap-0.5">
-                        <IconButton label="View class schedule" onClick={() => setScheduleCourse(record)} className="h-8 w-8">
-                          <CalendarIcon className="h-5 w-5" />
-                        </IconButton>
-                        <IconButton label={isHidden ? "Show course" : "Hide course"} onClick={() => toggleHidden(record.shareKey)} className="h-8 w-8">
-                          {isHidden ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-                        </IconButton>
-                        <IconButton label="Remove course" onClick={() => removeClass(record.shareKey)} danger className="h-8 w-8">
-                          <TrashIcon className="h-5 w-5" />
-                        </IconButton>
+                        <div className="mt-1 space-y-1 text-[12px] font-medium leading-4 text-[var(--on-surface-variant)] sm:text-[13px] sm:leading-5">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <ListIcon className="h-4 w-4 shrink-0" />
+                            <span className="shrink-0 font-semibold text-[var(--on-surface)]">Group:</span>
+                            <span className="truncate">{formatClassGroupLabel(record.groupCode)}</span>
+                          </div>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <CalendarIcon className="h-4 w-4 shrink-0" />
+                            {record.examDateLabel === "No Exam" || record.examDateLabel === "ECA" ? (
+                              <span className="truncate font-bold text-[var(--on-surface)]">{record.examDateLabel}</span>
+                            ) : (
+                              <>
+                                <span className="shrink-0 font-semibold text-[var(--on-surface)]">Exam:</span>
+                                <span className="truncate">{record.examDateLabel}{record.examTimeLabel ? `, ${record.examTimeLabel}` : ""}</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <SchoolIcon className="h-4 w-4 shrink-0" />
+                            <span className="shrink-0 font-semibold text-[var(--on-surface)]">Credit Units:</span>
+                            <span>{record.creditUnits?.toFixed(1) ?? "0.0"}</span>
+                          </div>
+                        </div>
                       </div>
+
+                    <div className="absolute right-1.5 top-1.5 flex flex-col items-center gap-0.5">
+                      <IconButton label="View class schedule" onClick={() => setScheduleCourse(record)} className="!h-7 !w-7 sm:!h-8 sm:!w-8">
+                        <CalendarIcon className="!h-4 !w-4 sm:!h-5 sm:!w-5" />
+                      </IconButton>
+                      <IconButton label={isHidden ? "Show course" : "Hide course"} onClick={() => toggleHidden(record.shareKey)} className="!h-7 !w-7 sm:!h-8 sm:!w-8">
+                        {isHidden ? <EyeOffIcon className="!h-4 !w-4 sm:!h-5 sm:!w-5" /> : <EyeIcon className="!h-4 !w-4 sm:!h-5 sm:!w-5" />}
+                      </IconButton>
+                      <IconButton label="Remove course" onClick={() => removeClass(record.shareKey)} danger className="!h-7 !w-7 sm:!h-8 sm:!w-8">
+                        <TrashIcon className="!h-4 !w-4 sm:!h-5 sm:!w-5" />
+                      </IconButton>
+                    </div>
                     </div>
                   </article>
                 );
@@ -1231,17 +1307,17 @@ export function PlannerClient({
 
             <div className={`border-t border-[var(--brand-divider)] pt-3 ${orientation === "horizontal" ? "mt-2.5" : "mt-2"}`}>
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 text-left text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
+                <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
                   <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
-                  <div className="mt-1 text-[18px] font-bold leading-6 text-[var(--primary)]">{totalCredits.toFixed(1)} CU</div>
+                  <div className="mt-1 text-[16px] font-bold leading-6 text-[var(--primary)] sm:text-[18px]">{totalCredits.toFixed(1)} CU</div>
                 </div>
-                <div className="relative w-[11.5rem] shrink-0">
+                <div className="relative w-[8.75rem] shrink-0 sm:w-[9.75rem]">
                   <ListIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                   <select
                     value={sortMode}
                     aria-label="Order selected courses"
                     onChange={(event) => setSortMode(event.target.value as "code" | "exam" | "credit")}
-                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-8 py-1.5 text-center text-[11px] font-bold leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-7 py-1 text-center text-[13px] font-medium leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:px-8 sm:py-1.5 sm:text-[14px]"
                   >
                     <option value="code">Order by Code</option>
                     <option value="exam">Order by Exam</option>
@@ -1259,6 +1335,7 @@ export function PlannerClient({
         title="Class Schedule"
         onClose={() => setScheduleCourse(null)}
         maxWidthClassName="max-w-2xl"
+        showCloseButton
       >
         {scheduleCourse ? (
           <ClassScheduleModalContent
@@ -1266,7 +1343,7 @@ export function PlannerClient({
             courseName={scheduleCourse.courseName}
             classGroupLabel={formatClassGroupLabel(scheduleCourse.groupCode)}
             events={scheduleCourse.events}
-            onClose={() => setScheduleCourse(null)}
+            selectedSemesterId={semesterId}
           />
         ) : null}
       </Modal>
@@ -1274,7 +1351,7 @@ export function PlannerClient({
       <Modal
         open={confirmResetOpen}
         title="Reset planner"
-        description="You are about to clear the selected courses for the current timetable. Are you sure?"
+        description="You are about to clear the selected courses for this semester. Are you sure?"
         onClose={() => setConfirmResetOpen(false)}
         bodyClassName="py-4"
         footer={(

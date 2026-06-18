@@ -21,14 +21,14 @@ import type {
 } from "./types";
 
 export const COURSE_COLOR_PALETTE = [
-  "#e694a4",
-  "#e3a995",
-  "#f7cda4",
-  "#d4cb84",
-  "#9acdbb",
-  "#b576b1",
-  "#c0b6cc",
-  "#cfb09f",
+  "#F0BCC2",
+  "#F2CCA0",
+  "#E8D7B1",
+  "#C9DFB2",
+  "#C3DCEA",
+  "#D8C1E7",
+  "#E0C7AA",
+  "#C9DDCB",
 ];
 
 export function getCourseColor(courseCode: string)

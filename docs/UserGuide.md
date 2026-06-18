@@ -65,12 +65,11 @@ your current browser.
 1. Open the SUSSPlanner link provided by your school community or the project
    maintainers.
 2. Use the navigation at the top of the page:
+   - **Home** for a start page with app links and school portal shortcuts.
    - **Timetable** for your semester schedule.
    - **Courses** for course search and details.
    - **Planner** for your multi-semester study plan.
-
-The GPA Calculator is currently not shown in the top navigation. Open it
-directly by adding `/calculator` to the SUSSPlanner website address.
+   - **Calculator** for GPA estimates.
 
 No installation is required.
 
@@ -157,7 +156,7 @@ Use **GPA Calculator** to estimate your current-semester GPA, combine it with
 your prior academic record, and compare which current modules to mark
 Pass/Fail.
 
-1. Open `/calculator` directly.
+1. Open **Calculator**.
 2. Search the full course catalog or switch **Add a Module** to Custom mode.
 3. Add current-semester modules.
 4. Check each module's credits, Grade, and GPV.
@@ -354,14 +353,12 @@ be undone.
 
 ## Calculating GPA
 
-### Open the GPA Calculator
-
-The calculator does not currently have a navigation button.
+### Open the Calculators Page
 
 1. Open SUSSPlanner.
-2. Add `/calculator` to the website address.
+2. Select **Calculators** in the navigation.
 
-For local development, open `http://localhost:3000/calculator`.
+For local development, open `http://localhost:3000/calculators`.
 
 ### Add Current-Semester Modules
 
@@ -619,7 +616,7 @@ SUSSPlanner keeps one multi-semester study plan at a time. To compare options:
 
 ### Compare Pass/Fail Strategies
 
-1. Open `/calculator`.
+1. Open `/calculators`.
 2. Add your current-semester modules and expected grades.
 3. Enter your prior cumulative GPA and GPA-counted CUs.
 4. Toggle **Pass/Fail** for different modules.
@@ -731,10 +728,9 @@ You can add it as a custom course in **Planner**. It cannot be added to
 **Timetable** because it has no class schedule. You can also add a custom
 module directly in **GPA Calculator**.
 
-### Why is the GPA Calculator not in the navigation?
+### Where are the calculators?
 
-The calculator is currently available through the direct `/calculator` route.
-It has not yet been added to the main navigation.
+The calculators are available through **Calculators** in the navigation and the direct `/calculators` route.
 
 ### Do Pass/Fail modules count towards the calculator GPA?
 
@@ -808,8 +804,6 @@ information available in SUSSPlanner.
 - SUSSPlanner has no accounts, online syncing, or recovery without an exported
   JSON backup.
 - Your plans are saved only in your current browser.
-- The GPA Calculator is available only through the direct `/calculator` route
-  and is not shown in the top navigation.
 - Calculator entries are browser-local and cannot currently be exported,
   imported, shared, or recovered after browser data is cleared.
 - GPA and Pass/Fail results are planning estimates. Confirm official GPA and

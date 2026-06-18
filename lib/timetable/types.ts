@@ -18,12 +18,16 @@ export type SharedTimetableState = {
   selectedClasses: SharedClassIdentifier[];
 };
 
-export type PlannerStorageState = SharedTimetableState & {
+export type PlannerSemesterState = SharedTimetableState & {
   hiddenClasses: string[];
   courseColorsByCourseCode: Record<string, string>;
   selectedWeekId: number | "all";
+};
+
+export type PlannerStorageState = PlannerSemesterState & {
   orientation: TimetableOrientation;
   viewMode: PlannerViewMode;
+  semesterStates?: Record<string, PlannerSemesterState>;
 };
 
 export type SemesterRecord = {

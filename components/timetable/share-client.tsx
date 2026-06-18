@@ -79,8 +79,8 @@ export function ShareClient({
     ? { label: "Exam Cal", icon: <CalendarIcon className="h-4 w-4" />, onClick: () => setViewMode("exam") }
     : { label: "Timetable", icon: <GridIcon className="h-4 w-4" />, onClick: () => setViewMode("class") };
   const nextOrientationToggle = orientation === "horizontal"
-    ? { label: "Vertical", icon: <RowsIcon className="h-4 w-4" />, onClick: () => setOrientation("vertical") }
-    : { label: "Horizontal", icon: <ColumnsIcon className="h-4 w-4" />, onClick: () => setOrientation("horizontal") };
+    ? { label: "Vertical", icon: <ColumnsIcon className="h-4 w-4" />, onClick: () => setOrientation("vertical") }
+    : { label: "Horizontal", icon: <RowsIcon className="h-4 w-4" />, onClick: () => setOrientation("horizontal") };
 
   function buildShareQuery()
   {
@@ -296,7 +296,7 @@ export function ShareClient({
       <Modal
         open={importOpen}
         title="Import shared timetable"
-        description="Importing will replace your currently saved timetable. This cannot be undone."
+        description="Importing will replace the saved timetable for this semester. This cannot be undone."
         onClose={() => setImportOpen(false)}
         footer={(
           <>

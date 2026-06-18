@@ -102,7 +102,7 @@ export function openStudyPlanPrintView(state: StudyPlanState)
         border: 0;
         border-radius: 8px;
         padding: 10px 16px;
-        background: #001e60;
+        background: #001E60;
         color: white;
         font-size: 13px;
         font-weight: 700;
@@ -118,10 +118,10 @@ export function openStudyPlanPrintView(state: StudyPlanState)
       }
       header {
         padding-bottom: 14px;
-        border-bottom: 3px solid #001e60;
+        border-bottom: 3px solid #001E60;
       }
       h1, h2, p { margin: 0; }
-      h1 { color: #001e60; font-size: 25px; }
+      h1 { color: #001E60; font-size: 25px; }
       .subtitle { margin-top: 4px; color: #42516a; font-size: 12px; }
       .summary {
         display: grid;
@@ -158,7 +158,7 @@ export function openStudyPlanPrintView(state: StudyPlanState)
         justify-content: space-between;
         padding: 8px 10px;
         background: #e7edfb;
-        color: #001e60;
+        color: #001E60;
       }
       .section-heading h2 { font-size: 14px; }
       .section-heading span { font-size: 11px; font-weight: 700; }

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 
 import {
   BookIcon,
+  CalendarIcon,
   LayersIcon,
   ListIcon,
   RefreshIcon,
@@ -314,8 +315,8 @@ export function CourseSearchPage({
                 const semesterIndicators = buildSemesterIndicators(course);
 
                 return (
-                <article key={course.courseCode} className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-2.5">
+                <article key={course.courseCode} className="relative px-4 py-3">
+                  <div className="pr-28 sm:pr-32">
                     <h2 className="min-w-0 flex-1 text-[18px] font-bold leading-7 tracking-[-0.02em]">
                       <Link
                         href={`/courses/${course.courseCode}`}
@@ -325,15 +326,20 @@ export function CourseSearchPage({
                         <span>{renderHighlightedText(course.courseName, filters.q, "Untitled course")}</span>
                       </Link>
                     </h2>
-                    {semesterIndicators.length > 0 ? (
-                      <span className="shrink-0 text-right text-[13px] font-semibold leading-6 text-[var(--on-surface-variant)]">
-                        {semesterIndicators.join(" \u2022 ")}
-                      </span>
-                    ) : null}
                   </div>
 
-                  <div className="mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                  <div className="absolute right-4 top-3">
+                    <AddToStudyPlanButton course={course} compact />
+                  </div>
+
+                  <div className="mt-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                      {semesterIndicators.length > 0 ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <CalendarIcon className="h-4 w-4 shrink-0" />
+                          <span>{semesterIndicators.join(" \u00b7 ")}</span>
+                        </span>
+                      ) : null}
                       <span className="inline-flex items-center gap-1.5">
                         <SchoolIcon className="h-4 w-4 shrink-0" />
                         {renderHighlightedText(course.schoolName, filters.q, "School unavailable")}
@@ -351,11 +357,9 @@ export function CourseSearchPage({
                         {course.isPostgraduate ? "Postgraduate" : "Undergraduate"}
                       </span>
                     </div>
-
-                    <AddToStudyPlanButton course={course} />
                   </div>
 
-                  <p className="mt-2 text-[13px] leading-5 text-[var(--on-surface-variant)]">
+                  <p className="mt-1.5 text-[13px] leading-5 text-[var(--on-surface-variant)]">
                     {renderHighlightedText(
                       truncateWords(course.courseSynopsis, SYNOPSIS_WORD_LIMIT),
                       filters.q,

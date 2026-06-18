@@ -136,19 +136,14 @@ export function GpaCalculatorClient()
           priorGpa?: number;
           priorCredits?: number;
         };
-        setModules(Array.isArray(parsed.modules)
-          ? parsed.modules.map((module) => ({
-              ...module,
-              isPassFail: module.isPassFail ?? false,
-            }))
-          : []);
+        setModules(Array.isArray(parsed.modules) ? parsed.modules : []);
         setPriorGpa(clampNumber(Number(parsed.priorGpa), 0, 5));
         setPriorCredits(Math.max(0, Number(parsed.priorCredits) || 0));
       }
     }
     catch
     {
-      // Ignore stale or malformed local data and start with a clean calculator.
+      // Ignore malformed local data and start with a clean calculator.
     }
     finally
     {
@@ -329,13 +324,7 @@ export function GpaCalculatorClient()
           <h1 className="text-[30px] font-semibold leading-10 tracking-[-0.03em] text-[var(--on-surface)]">
             GPA Calculator
           </h1>
-          <p className="mt-1 max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
-            Calculate your semester and cumulative GPA on the SUSS 5.0 grading scale.
-          </p>
         </div>
-        <p className="text-[12px] font-medium text-[var(--on-surface-variant)]">
-          Saved automatically on this device
-        </p>
       </div>
 
       <section className="mb-5 grid gap-3 sm:grid-cols-3">
@@ -348,7 +337,7 @@ export function GpaCalculatorClient()
         <GpaSummaryCard
           label="Cumulative GPA"
           value={formatGpa(cumulativeGpa)}
-          detail={`${(priorCredits + currentGpaCredits).toFixed(1)} GPA-counted CU`}
+          detail={`${(priorCredits + currentGpaCredits).toFixed(1)} CU included in GPA`}
         />
         <GpaSummaryCard
           label="Modules"
@@ -390,13 +379,13 @@ export function GpaCalculatorClient()
                   />
                   <span
                     aria-hidden="true"
-                    className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomModule ? "text-[var(--on-primary)]" : "text-[var(--on-surface-variant)]"}`}
+                    className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomModule ? "text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                   >
                     Search
                   </span>
                   <span
                     aria-hidden="true"
-                    className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomModule ? "text-[var(--on-primary)]" : "text-[var(--on-surface-variant)]"}`}
+                    className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomModule ? "text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                   >
                     Custom
                   </span>
@@ -436,7 +425,7 @@ export function GpaCalculatorClient()
                     />
                     <button
                       type="submit"
-                      className="inline-flex h-full items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)] sm:px-4"
+                      className="inline-flex h-full items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)] sm:px-4"
                     >
                       <PlusIcon className="h-4 w-4" />
                       <span className="hidden sm:inline">Add Module</span>
@@ -646,13 +635,13 @@ export function GpaCalculatorClient()
               <button
                 type="button"
                 aria-label="Previously completed credit units information"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[13px] font-extrabold italic leading-none text-[var(--primary)] ring-1 ring-inset ring-[var(--brand-divider)] transition-all hover:bg-[var(--primary)] hover:text-[var(--on-primary)] hover:shadow-[var(--shadow-elev-1)] focus:bg-[var(--primary)] focus:text-[var(--on-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring-soft)]"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[13px] font-extrabold italic leading-none text-[var(--primary)] ring-1 ring-inset ring-[var(--brand-divider)] transition-all hover:bg-[var(--primary)] hover:text-on-primary hover:shadow-[var(--shadow-elev-1)] focus:bg-[var(--primary)] focus:text-on-primary focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring-soft)]"
               >
                 i
               </button>
               <div
                 role="tooltip"
-                className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-64 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-[var(--on-primary)] shadow-[var(--shadow-elev-2)] group-hover:block group-focus-within:block"
+                className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-64 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-on-primary shadow-[var(--shadow-elev-2)] group-hover:block group-focus-within:block"
               >
                 <span className="mb-0.5 block font-bold">Calculating completed CUs</span>
                 Exclude credit units from pass/fail modules.
@@ -752,7 +741,7 @@ function GpaSummaryCard({
   return (
     <article className={`rounded-[0.9rem] border p-4 elev-1 ${
       emphasized
-        ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]"
+        ? "border-[var(--primary)] bg-[var(--primary)] text-on-primary"
         : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface)]"
     }`}>
       <p className={`text-[12px] font-bold uppercase tracking-[0.06em] ${

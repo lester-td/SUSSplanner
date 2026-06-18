@@ -1,3 +1,2 @@
-export const dynamic = "force-dynamic";
-
-export { default } from "./timetable/page";
+export { metadata } from "./home";
+export { default } from "./home";

@@ -719,13 +719,13 @@ export function StudyPlanClient({
                 />
                 <span
                   aria-hidden="true"
-                  className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomCourse ? "text-[var(--on-primary)]" : "text-[var(--on-surface-variant)]"}`}
+                  className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomCourse ? "text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                 >
                   Search
                 </span>
                 <span
                   aria-hidden="true"
-                  className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomCourse ? "text-[var(--on-primary)]" : "text-[var(--on-surface-variant)]"}`}
+                  className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomCourse ? "text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                 >
                   Custom
                 </span>
@@ -783,7 +783,7 @@ export function StudyPlanClient({
                 <button
                   type="button"
                   onClick={addManualCourse}
-                  className="inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-4 py-2.5 text-[13px] font-semibold leading-5 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-4 py-2.5 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
                 >
                   <PlusIcon className="h-4 w-4" />
                   Add Custom Module
@@ -867,7 +867,7 @@ export function StudyPlanClient({
                   <button
                     type="button"
                     onClick={openPlanPdf}
-                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-primary)] shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
+                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-on-primary shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
                   >
                     <DownloadIcon className="h-3.5 w-3.5" />
                     Download PDF
@@ -1222,7 +1222,7 @@ export function StudyPlanClient({
             <button
               type="button"
               onClick={confirmPlanImport}
-              className="rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)]"
+              className="rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
             >
               Replace Current Plan
             </button>
@@ -1285,7 +1285,7 @@ export function StudyPlanClient({
             <button
               type="button"
               onClick={saveEditedCustomCourse}
-              className="rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-primary)] transition-colors hover:bg-[var(--primary-container)]"
+              className="rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
             >
               Save Changes
             </button>
