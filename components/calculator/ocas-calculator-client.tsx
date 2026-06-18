@@ -57,6 +57,20 @@ const GRADE_BANDS: Array<{ grade: string; minimum: number }> = [
   { grade: "F", minimum: 0 },
 ];
 
+const GRADE_POINT_VALUES: Record<string, number> = {
+  "A+": 5,
+  A: 5,
+  "A-": 4.5,
+  "B+": 4,
+  B: 3.5,
+  "B-": 3,
+  "C+": 2.5,
+  C: 2,
+  "D+": 1.5,
+  D: 1,
+  F: 0,
+};
+
 function useDebouncedValue(value: string, delayMs: number)
 {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -95,6 +109,16 @@ function getEstimatedGrade(score: number | null)
   }
 
   return GRADE_BANDS.find((band) => score >= band.minimum)?.grade ?? "F";
+}
+
+function getEstimatedGradePointValue(grade: string)
+{
+  return GRADE_POINT_VALUES[grade] ?? null;
+}
+
+function formatGradePointValue(value: number | null)
+{
+  return value === null ? "—" : value.toFixed(1);
 }
 
 function parseNumericInput(input?: string)
@@ -757,38 +781,47 @@ export function OcasCalculatorClient()
 
         <aside className="space-y-4">
           <section className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
-            <h3 className="text-[15px] font-bold text-[var(--on-surface)]">Simulation summary</h3>
-            <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-              Fill in the marks you expect to get for each assessment component as percentages or raw scores.
-            </p>
+            <div className="space-y-4">
+              <div className="grid gap-0 divide-y divide-[var(--brand-divider)] sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+                <div className="pb-4 sm:pr-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
+                    Projected score
+                  </p>
+                  <p className="mt-1 text-[32px] font-bold leading-10 tracking-[-0.04em] text-[var(--on-surface)]">
+                    {formatPercent(estimatedScore)}
+                  </p>
+                </div>
+                <div className="pt-4 sm:pl-4 sm:pt-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
+                    Likely grade
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[var(--on-surface)]">
+                    <span className="text-[32px] font-bold leading-10 tracking-[-0.04em]">
+                      {estimatedGrade}
+                    </span>
+                    <span className="text-[16px] font-semibold leading-6 tracking-[-0.01em] text-[var(--on-surface-variant)]">
+                      GPV {formatGradePointValue(getEstimatedGradePointValue(estimatedGrade))}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-            <div className="mt-4 grid gap-3">
-              <SummaryCard
-                label="Projected score"
-                value={formatPercent(estimatedScore)}
-                detail={estimatedScore === null
-                  ? "Complete every assessment to calculate"
-                  : "Weighted average across all listed components"}
-              />
-              <SummaryCard
-                label="Likely grade"
-                value={estimatedGrade}
-              />
-              <SummaryCard
-                label="Completed weight"
-                value={formatPercent(totalWeight <= 0 ? null : (completedWeight / totalWeight) * 100)}
-                detail={selectedCourse
-                  ? `${completedWeight.toFixed(1)}% of ${totalWeight.toFixed(1)}% entered`
-                  : "Select a course first"}
-              />
+              <p className="text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                This is only your likely grade and may be subject to moderation.
+              </p>
+
+              <div className="border-t border-[var(--brand-divider)] pt-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
+                  Completed weight
+                </p>
+                <p className="mt-1 text-[24px] font-bold leading-8 tracking-[-0.03em] text-[var(--on-surface)]">
+                  {formatCompletedWeight(completedWeight)}
+                  <span className="ml-1 text-[14px] font-normal leading-6 tracking-normal text-[var(--on-surface-variant)]">
+                    out of 100%
+                  </span>
+                </p>
+              </div>
             </div>
-          </section>
-
-          <section className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-4">
-            <h3 className="text-[13px] font-bold text-[var(--on-surface)]">How it works</h3>
-            <p className="mt-2 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-              OCAS components are treated as coursework. Examinable components are included in the same weighted projection, so the final score reflects the course&apos;s assessment strategy.
-            </p>
           </section>
         </aside>
       </div>
@@ -796,23 +829,7 @@ export function OcasCalculatorClient()
   );
 }
 
-function SummaryCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail?: string;
-})
+function formatCompletedWeight(value: number)
 {
-  return (
-    <article className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3">
-      <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">{label}</p>
-      <p className="mt-1 text-[24px] font-bold leading-8 tracking-[-0.03em] text-[var(--on-surface)]">
-        {value}
-      </p>
-      {detail ? <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">{detail}</p> : null}
-    </article>
-  );
+  return `${Number(value.toFixed(1)).toString()}%`;
 }
