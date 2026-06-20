@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import { PlusIcon } from "@/components/planner/icons";
 import {
-  STUDY_PLAN_UPDATED_EVENT,
-  announceStudyPlanUpdated,
-  loadStudyPlanState,
-  saveStudyPlanState,
-  upsertCatalogCourseInStudyPlan,
+  SEMESTER_PLANNER_UPDATED_EVENT,
+  announceSemesterPlannerUpdated,
+  loadSemesterPlannerState,
+  saveSemesterPlannerState,
+  upsertCatalogCourseInSemesterPlanner,
 } from "@/lib/planner/storage";
 
 type CatalogCourseLike = {
@@ -18,7 +18,7 @@ type CatalogCourseLike = {
   creditUnits: number | null;
 };
 
-export function AddToStudyPlanButton({
+export function AddToSemesterPlannerButton({
   course,
   compact = false,
   appearance = "default",
@@ -35,17 +35,17 @@ export function AddToStudyPlanButton({
 
   useEffect(() => {
     const syncAddedState = () => {
-      const current = loadStudyPlanState();
+      const current = loadSemesterPlannerState();
       setAdded(current?.courses.some((item) => item.courseCode === courseCode) ?? false);
     };
 
     syncAddedState();
     window.addEventListener("storage", syncAddedState);
-    window.addEventListener(STUDY_PLAN_UPDATED_EVENT, syncAddedState);
+    window.addEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncAddedState);
 
     return () => {
       window.removeEventListener("storage", syncAddedState);
-      window.removeEventListener(STUDY_PLAN_UPDATED_EVENT, syncAddedState);
+      window.removeEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncAddedState);
     };
   }, [courseCode]);
 
@@ -65,9 +65,9 @@ export function AddToStudyPlanButton({
     <button
       type="button"
       onClick={() => {
-        const next = upsertCatalogCourseInStudyPlan(loadStudyPlanState(), course);
-        saveStudyPlanState(next);
-        announceStudyPlanUpdated();
+        const next = upsertCatalogCourseInSemesterPlanner(loadSemesterPlannerState(), course);
+        saveSemesterPlannerState(next);
+        announceSemesterPlannerUpdated();
         setAdded(true);
         onAdded?.();
       }}

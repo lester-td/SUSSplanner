@@ -1,6 +1,6 @@
-export type StudyPlanCourseSource = "catalog" | "manual";
+export type SemesterPlannerCourseSource = "catalog" | "manual";
 
-export type StudyPlanCourse = {
+export type SemesterPlannerCourse = {
   id: string;
   courseCode: string;
   courseName: string;
@@ -8,11 +8,11 @@ export type StudyPlanCourse = {
   creditUnits: number;
   semesterSpan: number;
   assignedSemester: number | null;
-  source: StudyPlanCourseSource;
+  source: SemesterPlannerCourseSource;
 };
 
-export type StudyPlanState = {
+export type SemesterPlannerState = {
   totalCreditsGoal: number;
   numSemesters: number;
-  courses: StudyPlanCourse[];
+  courses: SemesterPlannerCourse[];
 };

@@ -1,4 +1,4 @@
-import type { StudyPlanCourse } from "@/lib/planner/types";
+import type { SemesterPlannerCourse } from "@/lib/planner/types";
 import type { CourseSearchResult } from "@/lib/timetable/types";
 
 export function formatCredits(value: number)
@@ -25,7 +25,7 @@ export function formatOfferedSemesters(course: CourseSearchResult)
   return labels.length > 0 ? labels.join(" • ") : "Semester offering unavailable";
 }
 
-export function sortCourses(courses: StudyPlanCourse[])
+export function sortCourses(courses: SemesterPlannerCourse[])
 {
   return [...courses].sort((left, right) => left.courseCode.localeCompare(right.courseCode));
 }

@@ -32,43 +32,43 @@ import {
   DroppableArticle,
   SEMESTER_DROP_ID_PREFIX,
   getCourseDropTarget,
-} from "@/components/planner/study-plan/drag-drop";
+} from "@/components/planner/semester-planner/drag-drop";
 import {
   buildSemesterOptions,
   formatCreditCount,
   formatCredits,
   formatOfferedSemesters,
   sortCourses,
-} from "@/components/planner/study-plan/formatting";
-import { StudyPlanPanel } from "@/components/planner/study-plan/panel";
+} from "@/components/planner/semester-planner/formatting";
+import { SemesterPlannerPanel } from "@/components/planner/semester-planner/panel";
 import { Modal } from "@/components/ui/modal";
-import { openStudyPlanPrintView } from "@/lib/export/study-plan-print";
+import { openSemesterPlannerPrintView } from "@/lib/export/semester-planner-print";
 import {
-  STUDY_PLAN_UPDATED_EVENT,
-  createCatalogStudyPlanCourse,
-  createManualStudyPlanCourse,
-  defaultStudyPlanState,
-  loadStudyPlanState,
-  normalizeStudyPlanState,
-  parseStudyPlanBackup,
-  saveStudyPlanState,
-  serializeStudyPlanBackup,
+  SEMESTER_PLANNER_UPDATED_EVENT,
+  createCatalogSemesterPlannerCourse,
+  createManualSemesterPlannerCourse,
+  defaultSemesterPlannerState,
+  loadSemesterPlannerState,
+  normalizeSemesterPlannerState,
+  parseSemesterPlannerBackup,
+  saveSemesterPlannerState,
+  serializeSemesterPlannerBackup,
 } from "@/lib/planner/storage";
-import type { StudyPlanCourse, StudyPlanState } from "@/lib/planner/types";
+import type { SemesterPlannerCourse, SemesterPlannerState } from "@/lib/planner/types";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
 type SearchResponse = {
   courses: CourseSearchResult[];
 };
 
-export function StudyPlanClient({
+export function SemesterPlannerClient({
   semesters,
 }: {
   semesters: SemesterRecord[];
 })
 {
   const [ready, setReady] = useState(false);
-  const [plan, setPlan] = useState<StudyPlanState>(defaultStudyPlanState());
+  const [plan, setPlan] = useState<SemesterPlannerState>(defaultSemesterPlannerState());
   const [isCustomCourse, setIsCustomCourse] = useState(false);
   const [showAllModules, setShowAllModules] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,7 +84,7 @@ export function StudyPlanClient({
   const [editingSemesterSpan, setEditingSemesterSpan] = useState("1");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [backupMenuOpen, setBackupMenuOpen] = useState(false);
-  const [importedPlan, setImportedPlan] = useState<StudyPlanState | null>(null);
+  const [importedPlan, setImportedPlan] = useState<SemesterPlannerState | null>(null);
   const [importedPlanFileName, setImportedPlanFileName] = useState("");
   const [notice, setNotice] = useState("");
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
@@ -106,7 +106,7 @@ export function StudyPlanClient({
   );
 
   useEffect(() => {
-    setPlan(loadStudyPlanState() ?? defaultStudyPlanState());
+    setPlan(loadSemesterPlannerState() ?? defaultSemesterPlannerState());
     setReady(true);
   }, []);
 
@@ -116,12 +116,12 @@ export function StudyPlanClient({
       return;
     }
 
-    saveStudyPlanState(plan);
+    saveSemesterPlannerState(plan);
   }, [plan, ready]);
 
   useEffect(() => {
     const syncPlanState = () => {
-      const saved = loadStudyPlanState();
+      const saved = loadSemesterPlannerState();
       if (saved)
       {
         setPlan(saved);
@@ -129,11 +129,11 @@ export function StudyPlanClient({
     };
 
     window.addEventListener("storage", syncPlanState);
-    window.addEventListener(STUDY_PLAN_UPDATED_EVENT, syncPlanState);
+    window.addEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncPlanState);
 
     return () => {
       window.removeEventListener("storage", syncPlanState);
-      window.removeEventListener(STUDY_PLAN_UPDATED_EVENT, syncPlanState);
+      window.removeEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncPlanState);
     };
   }, []);
 
@@ -282,9 +282,9 @@ export function StudyPlanClient({
     noticeTimeoutRef.current = window.setTimeout(() => setNotice(""), 2800);
   }
 
-  function updatePlan(updater: (current: StudyPlanState) => StudyPlanState)
+  function updatePlan(updater: (current: SemesterPlannerState) => SemesterPlannerState)
   {
-    setPlan((current) => normalizeStudyPlanState(updater(current)));
+    setPlan((current) => normalizeSemesterPlannerState(updater(current)));
   }
 
   function removeCourse(courseId: string)
@@ -295,7 +295,7 @@ export function StudyPlanClient({
     }));
   }
 
-  function deleteCourseFromBank(course: StudyPlanCourse)
+  function deleteCourseFromBank(course: SemesterPlannerCourse)
   {
     removeCourse(course.id);
     if (editingCourseId === course.id)
@@ -307,14 +307,14 @@ export function StudyPlanClient({
 
   function resetPlan()
   {
-    setPlan(defaultStudyPlanState());
+    setPlan(defaultSemesterPlannerState());
     showNoticeMessage("Planner reset.");
   }
 
   function exportPlan()
   {
     const date = new Date().toISOString().slice(0, 10);
-    const blob = new Blob([serializeStudyPlanBackup(plan)], { type: "application/json" });
+    const blob = new Blob([serializeSemesterPlannerBackup(plan)], { type: "application/json" });
     const url = window.URL.createObjectURL(blob);
     const anchor = document.createElement("a");
 
@@ -330,7 +330,7 @@ export function StudyPlanClient({
 
   function openPlanPdf()
   {
-    if (!openStudyPlanPrintView(plan))
+    if (!openSemesterPlannerPrintView(plan))
     {
       showNoticeMessage("Unable to open PDF view. Allow pop-ups and try again.");
     }
@@ -351,7 +351,7 @@ export function StudyPlanClient({
 
     try
     {
-      setImportedPlan(parseStudyPlanBackup(await file.text()));
+      setImportedPlan(parseSemesterPlannerBackup(await file.text()));
       setImportedPlanFileName(file.name);
     }
     catch (error)
@@ -477,7 +477,7 @@ export function StudyPlanClient({
       return;
     }
 
-    const nextCourse = createManualStudyPlanCourse({
+    const nextCourse = createManualSemesterPlannerCourse({
       courseCode: customLabel.toUpperCase(),
       courseName: customLabel,
       creditUnits,
@@ -588,7 +588,7 @@ export function StudyPlanClient({
       return;
     }
 
-    const catalogCourse = createCatalogStudyPlanCourse(course);
+    const catalogCourse = createCatalogSemesterPlannerCourse(course);
     updatePlan((current) => ({
       ...current,
       courses: [...current.courses, catalogCourse],
@@ -640,9 +640,9 @@ export function StudyPlanClient({
 
             {!isCustomCourse ? (
               <div className="mt-3">
-                <label className="sr-only" htmlFor="study-plan-offered-in">Offered In</label>
+                <label className="sr-only" htmlFor="semester-planner-offered-in">Offered In</label>
                 <select
-                  id="study-plan-offered-in"
+                  id="semester-planner-offered-in"
                   value={searchSemesterId === "all" ? "" : String(searchSemesterId)}
                   onChange={(event) => setSearchSemesterId(event.target.value ? Number.parseInt(event.target.value, 10) : "all")}
                   className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
@@ -920,7 +920,7 @@ export function StudyPlanClient({
           onDragEnd={handleCourseDragEnd}
         >
         <section className="grid gap-4 xl:grid-cols-[21rem_minmax(0,1fr)]">
-          <StudyPlanPanel
+          <SemesterPlannerPanel
             bankCourses={bankCourses}
             draggedCourseId={draggedCourseId}
             showAllModules={showAllModules}

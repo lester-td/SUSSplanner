@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
-  AddToStudyPlanButton,
-} from "@/components/planner/add-to-study-plan-button";
+  AddToSemesterPlannerButton,
+} from "@/components/planner/add-to-semester-planner-button";
 import {
   ArrowUpRightIcon,
   BookIcon,
@@ -190,7 +190,7 @@ export function CourseDetailPage({
                     {displaySemesterLabel}
                   </span>
                   <div className="ml-auto flex flex-wrap items-center gap-2.5">
-                    <AddToStudyPlanButton course={course} appearance="outline" />
+                    <AddToSemesterPlannerButton course={course} appearance="outline" />
                     {course.synopsisUrl ? (
                       <a
                         href={course.synopsisUrl}

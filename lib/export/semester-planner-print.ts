@@ -1,5 +1,5 @@
-import { normalizeStudyPlanState } from "@/lib/planner/storage";
-import type { StudyPlanCourse, StudyPlanState } from "@/lib/planner/types";
+import { normalizeSemesterPlannerState } from "@/lib/planner/storage";
+import type { SemesterPlannerCourse, SemesterPlannerState } from "@/lib/planner/types";
 
 function escapeHtml(value: string)
 {
@@ -16,7 +16,7 @@ function formatCredits(value: number)
   return `${Number(value.toFixed(1)).toString()} CU`;
 }
 
-function courseRow(course: StudyPlanCourse)
+function courseRow(course: SemesterPlannerCourse)
 {
   const schoolName = course.schoolName
     ? `<span class="course-school">${escapeHtml(course.schoolName)}</span>`
@@ -40,7 +40,7 @@ function courseRow(course: StudyPlanCourse)
   `;
 }
 
-function semesterSection(courses: StudyPlanCourse[], semesterIndex: number)
+function semesterSection(courses: SemesterPlannerCourse[], semesterIndex: number)
 {
   const semesterCourses = courses
     .filter((course) => course.assignedSemester === semesterIndex)
@@ -60,9 +60,9 @@ function semesterSection(courses: StudyPlanCourse[], semesterIndex: number)
   `;
 }
 
-export function openStudyPlanPrintView(state: StudyPlanState)
+export function openSemesterPlannerPrintView(state: SemesterPlannerState)
 {
-  const plan = normalizeStudyPlanState(state);
+  const plan = normalizeSemesterPlannerState(state);
   const assignedCourses = plan.courses.filter((course) => course.assignedSemester !== null);
   const unassignedCourses = plan.courses
     .filter((course) => course.assignedSemester === null)

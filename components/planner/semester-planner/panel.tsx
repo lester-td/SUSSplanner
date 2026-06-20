@@ -6,10 +6,10 @@ import {
   CourseCard,
   DroppableDiv,
   TRASH_DROP_ID,
-} from "@/components/planner/study-plan/drag-drop";
-import type { StudyPlanCourse } from "@/lib/planner/types";
+} from "@/components/planner/semester-planner/drag-drop";
+import type { SemesterPlannerCourse } from "@/lib/planner/types";
 
-export function StudyPlanPanel({
+export function SemesterPlannerPanel({
   bankCourses,
   draggedCourseId,
   onDeleteCourse,
@@ -17,9 +17,9 @@ export function StudyPlanPanel({
   onToggleShowAllModules,
   showAllModules,
 }: {
-  bankCourses: StudyPlanCourse[];
+  bankCourses: SemesterPlannerCourse[];
   draggedCourseId: string | null;
-  onDeleteCourse: (course: StudyPlanCourse) => void;
+  onDeleteCourse: (course: SemesterPlannerCourse) => void;
   onEditCourse: (courseId: string) => void;
   onToggleShowAllModules: () => void;
   showAllModules: boolean;

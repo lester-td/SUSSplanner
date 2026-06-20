@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "SUSS Planner",
-  description: "Academic planning hub for SUSS timetables, courses, study plans, and GPA estimates.",
+  description: "Academic planning hub for SUSS timetables, courses, semester planners, and GPA estimates.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>)

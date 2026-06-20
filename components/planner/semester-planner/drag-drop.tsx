@@ -5,8 +5,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 import { EditIcon, TrashIcon } from "@/components/planner/icons";
-import { formatCredits } from "@/components/planner/study-plan/formatting";
-import type { StudyPlanCourse } from "@/lib/planner/types";
+import { formatCredits } from "@/components/planner/semester-planner/formatting";
+import type { SemesterPlannerCourse } from "@/lib/planner/types";
 
 type DragTranslate = {
   x: number;
@@ -129,7 +129,7 @@ export function CourseCard({
   onEdit,
   onDelete,
 }: {
-  course: StudyPlanCourse;
+  course: SemesterPlannerCourse;
   draggable?: boolean;
   ghost?: boolean;
   isDragging?: boolean;
@@ -240,7 +240,7 @@ export function CourseCard({
 export function CourseDragOverlay({
   course,
 }: {
-  course: StudyPlanCourse;
+  course: SemesterPlannerCourse;
 })
 {
   return (

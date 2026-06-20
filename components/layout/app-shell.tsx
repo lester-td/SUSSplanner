@@ -33,7 +33,7 @@ const navItems = [
     icon: BookIcon,
   },
   {
-    id: "study-plan",
+    id: "semester-planner",
     label: "Planner",
     href: "/planner",
     icon: LayersIcon,

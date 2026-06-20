@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const studyPlanCourseSchema = z.object({
+export const semesterPlannerCourseSchema = z.object({
   id: z.string().trim().min(1).max(120),
   courseCode: z.string().trim().toUpperCase().min(1).max(40),
   courseName: z.string().trim().min(1).max(255),
@@ -11,15 +11,15 @@ export const studyPlanCourseSchema = z.object({
   source: z.enum(["catalog", "manual"]),
 });
 
-export const studyPlanStateSchema = z.object({
+export const semesterPlannerStateSchema = z.object({
   totalCreditsGoal: z.number().min(0).max(400),
   numSemesters: z.number().int().min(1).max(20),
-  courses: z.array(studyPlanCourseSchema).max(300),
+  courses: z.array(semesterPlannerCourseSchema).max(300),
 });
 
-export const studyPlanBackupSchema = z.object({
-  format: z.literal("sussplanner-study-plan"),
+export const semesterPlannerBackupSchema = z.object({
+  format: z.literal("sussplanner-semester-planner"),
   version: z.literal(1),
   exportedAt: z.string().trim().min(1),
-  plan: studyPlanStateSchema,
+  plan: semesterPlannerStateSchema,
 });
