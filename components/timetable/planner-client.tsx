@@ -382,16 +382,6 @@ export function PlannerClient({
   }, [currentSemesterId, currentWeekId, semesters]);
 
   useEffect(() => {
-    if (
-      selectedWeekId !== "all"
-      && !semesterWeeks.some((week) => week.weekId === selectedWeekId && week.weekType === "TEACHING")
-    )
-    {
-      setSelectedWeekId("all");
-    }
-  }, [selectedWeekId, semesterWeeks]);
-
-  useEffect(() => {
     if (!ready)
     {
       return;
@@ -500,9 +490,7 @@ export function PlannerClient({
       .then((payload) => {
         setTimetableData(payload.timetable);
         setSelectedWeekId((current) => (
-          current === "all" || payload.timetable.semesterWeeks.some(
-            (week) => week.weekId === current && week.weekType === "TEACHING",
-          )
+          current === "all" || payload.timetable.semesterWeeks.some((week) => week.weekId === current)
             ? current
             : "all"
         ));
