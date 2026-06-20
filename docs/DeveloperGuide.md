@@ -162,7 +162,8 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 │   ├── calculator/              GPA calculator client UI and browser-local state
 │   ├── courses/                 Course search/detail client components
 │   ├── layout/                  Shared application shell and navigation
-│   ├── planner/                 Semester-planner UI and shared icons
+│   ├── planner/                 Semester planner UI, add button, and shared icons
+│   │   └── semester-planner/    Client, panel, drag/drop, and formatting helpers
 │   ├── timetable/               Timetable, exam, selection, and share UI
 │   └── ui/                      Reusable actions and modal
 ├── lib/
@@ -665,8 +666,21 @@ The semester planner also listens for browser `storage` events and the local
 buttons. Those buttons write directly to the same local-storage plan; the next
 planner visit hydrates that saved plan.
 
+The UI is split across `components/planner/semester-planner/`:
+
+- `client.tsx` owns state, search, import/export handlers, modals, and semester
+  rendering.
+- `panel.tsx` renders the Module Bank and trash drop zone.
+- `drag-drop.tsx` owns `@dnd-kit/core` drag/drop cards, droppables, overlay
+  rendering, drop-target IDs, and drop-target parsing.
+- `formatting.ts` contains feature-local display helpers such as CU formatting,
+  semester option generation, offered-semester labels, and course sorting.
+
+Course pages use `components/planner/add-to-semester-planner-button.tsx` to add
+catalog courses directly into the same browser-local semester planner state.
+
 Planner drag-and-drop is implemented with `@dnd-kit/core`. Dropping a course on
-the semester bank clears its assignment, dropping it on a semester assigns the
+the Module Bank clears its assignment, dropping it on a semester assigns the
 course to that semester, and dropping it on the trash deletes it. Invalid or
 empty drops are treated as no-ops. Planner search, backup import, and saved-plan
 load failures are logged to the browser console, while recoverable cases still
@@ -1225,7 +1239,7 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
 | Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, and local-storage format aligned. |
 | Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/db/queries.ts`; do not accidentally add semester/class filters. |
-| Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, import compatibility behavior, and this guide. Preserve support for existing versions or reject them with a clear notice. |
+| Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, and this guide. Preserve support for existing public versions or reject them with a clear notice. |
 | Change semester-planner print output | Update `lib/export/semester-planner-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
 | Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and optionally revalidate caches afterward. |
 
