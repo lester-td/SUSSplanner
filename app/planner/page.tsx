@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { StudyPlanClient } from "@/components/planner/study-plan-client";
+import { StudyPlanClient } from "@/components/planner/study-plan/client";
 import { getSemesters, getSemestersWithWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
 
