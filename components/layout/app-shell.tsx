@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -74,8 +75,17 @@ export function AppShell({
           <div className="px-3 py-2.5 md:px-[16px] md:py-3">
             <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2.5 xl:gap-3">
-                <Link prefetch href="/" className="hidden shrink-0 text-[18px] font-extrabold leading-6 tracking-[-0.02em] text-[var(--header-text)] lg:inline sm:text-[24px] sm:leading-8">
-                  SUSS Planner
+                <Link prefetch href="/" aria-label="SUSS Planner home" className="hidden shrink-0 lg:inline-flex">
+                  <span className="relative block h-7 w-[190px] sm:h-8 sm:w-[220px]">
+                    <Image
+                      src="/suss_planner_full_white.png"
+                      alt="SUSS Planner"
+                      fill
+                      priority
+                      sizes="(min-width: 640px) 220px, 190px"
+                      className="object-contain"
+                    />
+                  </span>
                 </Link>
 
                 {showNav ? (
