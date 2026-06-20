@@ -358,6 +358,7 @@ export function PlannerClient({
 
   const selectedSemester = semesters.find((semester) => semester.semesterId === semesterId) ?? semesters[0] ?? null;
   const semesterWeeks = selectedSemester?.weeks ?? [];
+  const selectableWeeks = semesterWeeks.filter((week) => week.weekType === "TEACHING");
 
   useEffect(() => {
     const saved = loadSavedTimetable();
@@ -379,6 +380,16 @@ export function PlannerClient({
     setViewMode(saved?.viewMode ?? "class");
     setReady(true);
   }, [currentSemesterId, currentWeekId, semesters]);
+
+  useEffect(() => {
+    if (
+      selectedWeekId !== "all"
+      && !semesterWeeks.some((week) => week.weekId === selectedWeekId && week.weekType === "TEACHING")
+    )
+    {
+      setSelectedWeekId("all");
+    }
+  }, [selectedWeekId, semesterWeeks]);
 
   useEffect(() => {
     if (!ready)
@@ -489,7 +500,9 @@ export function PlannerClient({
       .then((payload) => {
         setTimetableData(payload.timetable);
         setSelectedWeekId((current) => (
-          current === "all" || payload.timetable.semesterWeeks.some((week) => week.weekId === current)
+          current === "all" || payload.timetable.semesterWeeks.some(
+            (week) => week.weekId === current && week.weekType === "TEACHING",
+          )
             ? current
             : "all"
         ));
@@ -625,7 +638,7 @@ export function PlannerClient({
   const visibleEndMinutes = getLatestEndMinutes(displayedBlocks);
   const timeSlots = buildTimeSlots(visibleEndMinutes);
   const totalCredits = selectedCards.reduce((sum, card) => sum + (card.creditUnits ?? 0), 0);
-  const weekItems = buildWeekOptions(semesterWeeks);
+  const weekItems = buildWeekOptions(selectableWeeks);
   const semesterItems = semesters.map((semester) => ({
     id: String(semester.semesterId),
     title: formatSemesterRailMonthYear(semester),
@@ -957,7 +970,7 @@ export function PlannerClient({
               selectedId={String(selectedWeekId)}
               onSelect={(id) => setSelectedWeekId(id === "all" ? "all" : Number(id))}
               onPrev={() => {
-                const values: Array<number | "all"> = ["all", ...semesterWeeks.map((week) => week.weekId)];
+                const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
                 const index = values.findIndex((value) => value === selectedWeekId);
                 if (index > 0)
                 {
@@ -965,7 +978,7 @@ export function PlannerClient({
                 }
               }}
               onNext={() => {
-                const values: Array<number | "all"> = ["all", ...semesterWeeks.map((week) => week.weekId)];
+                const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
                 const index = values.findIndex((value) => value === selectedWeekId);
                 if (index >= 0 && index < values.length - 1)
                 {

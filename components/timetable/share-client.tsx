@@ -73,7 +73,8 @@ export function ShareClient({
   const examCards = useMemo(() => buildExamCards(visibleEvents), [visibleEvents]);
   const visibleEndMinutes = getLatestEndMinutes(blocks);
   const timeSlots = buildTimeSlots(visibleEndMinutes);
-  const weekItems = buildWeekOptions(timetable.semesterWeeks);
+  const selectableWeeks = timetable.semesterWeeks.filter((week) => week.weekType === "TEACHING");
+  const weekItems = buildWeekOptions(selectableWeeks);
 
   const nextViewToggle = viewMode === "class"
     ? { label: "Exam Cal", icon: <CalendarIcon className="h-4 w-4" />, onClick: () => setViewMode("exam") }
@@ -148,7 +149,7 @@ export function ShareClient({
               selectedId={String(selectedWeekId)}
               onSelect={(id) => setSelectedWeekId(id === "all" ? "all" : Number(id))}
               onPrev={() => {
-                const values: Array<number | "all"> = ["all", ...timetable.semesterWeeks.map((week) => week.weekId)];
+                const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
                 const index = values.findIndex((value) => value === selectedWeekId);
                 if (index > 0)
                 {
@@ -156,7 +157,7 @@ export function ShareClient({
                 }
               }}
               onNext={() => {
-                const values: Array<number | "all"> = ["all", ...timetable.semesterWeeks.map((week) => week.weekId)];
+                const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
                 const index = values.findIndex((value) => value === selectedWeekId);
                 if (index >= 0 && index < values.length - 1)
                 {
