@@ -11,7 +11,7 @@ maintaining academic data.
 - Supports read-only shared links with optional one-click import into local state
 - Exports selected timetable data as PDF, ICS, or PNG
 - Stores planner state in browser `localStorage` (no user auth required)
-- Supports course search, course details, and multi-semester study planning
+- Supports course search, course details, and multi-semester course planning
 
 ## At a Glance
 
@@ -66,7 +66,7 @@ npm run validate:setup  # Validate first-run setup
 | `/timetable` | Interactive timetable planner |
 | `/courses` | Search and filter the course catalog |
 | `/courses/[courseCode]` | View course, assessment, and class details |
-| `/planner` | Build a browser-local multi-semester study plan |
+| `/planner` | Build a browser-local multi-semester course plan |
 | `/calculators` | Estimate GPA and OCAS outcomes |
 | `/share?sem=...&classes=...` | Preview and optionally import a shared timetable |
 
@@ -79,9 +79,9 @@ unused by runtime application code. Never commit real credentials.
 
 ### Important Architecture Notes
 
-- Normal users do not sign in. Timetable and study-plan state is stored in
+- Normal users do not sign in. Timetable and semester planner state is stored in
   browser `localStorage`; clearing browser storage loses that state unless the
-  study plan was exported as a JSON backup.
+  semester planner was exported as a JSON backup.
 - Shared timetable links are read-only until the recipient explicitly imports
   them.
 - The application reads academic data but does not update academic tables.
@@ -103,7 +103,7 @@ generation, import order, validation, and troubleshooting.
 ## Documentation
 
 - [User Guide](./docs/UserGuide.md): student-facing instructions for
-  timetables, sharing, course search, exports, and study planning
+  timetables, sharing, course search, exports, and semester planning
 - [Developer Guide](./docs/DeveloperGuide.md): architecture, setup, routes,
   state models, diagrams, deployment, and development workflows
 - [Scraper Guide](./scraper/README.md): academic-data maintenance and import

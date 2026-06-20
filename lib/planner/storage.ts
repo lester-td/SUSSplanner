@@ -1,11 +1,11 @@
 import type { CourseRecord, CourseSearchResult } from "@/lib/timetable/types";
-import { studyPlanBackupSchema, studyPlanStateSchema } from "@/lib/validation/planner";
-import type { StudyPlanCourse, StudyPlanState } from "./types";
+import { semesterPlannerBackupSchema, semesterPlannerStateSchema } from "@/lib/validation/planner";
+import type { SemesterPlannerCourse, SemesterPlannerState } from "./types";
 
-export const STUDY_PLAN_STORAGE_KEY = "sussplanner.study-plan.v1";
-export const STUDY_PLAN_UPDATED_EVENT = "sussplanner:study-plan-updated";
-export const STUDY_PLAN_BACKUP_FORMAT = "sussplanner-study-plan";
-export const STUDY_PLAN_BACKUP_VERSION = 1;
+export const SEMESTER_PLANNER_STORAGE_KEY = "sussplanner.semester-planner.v1";
+export const SEMESTER_PLANNER_UPDATED_EVENT = "sussplanner:semester-planner-updated";
+export const SEMESTER_PLANNER_BACKUP_FORMAT = "sussplanner-semester-planner";
+export const SEMESTER_PLANNER_BACKUP_VERSION = 1;
 
 const DEFAULT_TOTAL_CREDITS = 130;
 const DEFAULT_SEMESTERS = 8;
@@ -46,9 +46,9 @@ export function inferCatalogSemesterSpan(courseCode: string)
   return 1;
 }
 
-export function createCatalogStudyPlanCourse(
+export function createCatalogSemesterPlannerCourse(
   course: Pick<CourseSearchResult | CourseRecord, "courseCode" | "courseName" | "creditUnits" | "schoolName">,
-): StudyPlanCourse
+): SemesterPlannerCourse
 {
   return {
     id: buildCatalogCourseId(course.courseCode),
@@ -62,12 +62,12 @@ export function createCatalogStudyPlanCourse(
   };
 }
 
-export function createManualStudyPlanCourse(input: {
+export function createManualSemesterPlannerCourse(input: {
   courseCode: string;
   courseName: string;
   creditUnits: number;
   semesterSpan: number;
-}): StudyPlanCourse
+}): SemesterPlannerCourse
 {
   const normalizedCode = normalizeCourseCode(input.courseCode);
 
@@ -83,7 +83,7 @@ export function createManualStudyPlanCourse(input: {
   };
 }
 
-export function defaultStudyPlanState(): StudyPlanState
+export function defaultSemesterPlannerState(): SemesterPlannerState
 {
   return {
     totalCreditsGoal: DEFAULT_TOTAL_CREDITS,
@@ -92,9 +92,9 @@ export function defaultStudyPlanState(): StudyPlanState
   };
 }
 
-export function normalizeStudyPlanState(state: StudyPlanState): StudyPlanState
+export function normalizeSemesterPlannerState(state: SemesterPlannerState): SemesterPlannerState
 {
-  const parsed = studyPlanStateSchema.parse(state);
+  const parsed = semesterPlannerStateSchema.parse(state);
   const numSemesters = Math.max(1, parsed.numSemesters);
 
   return {
@@ -121,30 +121,30 @@ export function normalizeStudyPlanState(state: StudyPlanState): StudyPlanState
   };
 }
 
-export function serializeStudyPlanBackup(state: StudyPlanState, exportedAt = new Date())
+export function serializeSemesterPlannerBackup(state: SemesterPlannerState, exportedAt = new Date())
 {
   return JSON.stringify({
-    format: STUDY_PLAN_BACKUP_FORMAT,
-    version: STUDY_PLAN_BACKUP_VERSION,
+    format: SEMESTER_PLANNER_BACKUP_FORMAT,
+    version: SEMESTER_PLANNER_BACKUP_VERSION,
     exportedAt: exportedAt.toISOString(),
-    plan: normalizeStudyPlanState(state),
+    plan: normalizeSemesterPlannerState(state),
   }, null, 2);
 }
 
-export function parseStudyPlanBackup(raw: string)
+export function parseSemesterPlannerBackup(raw: string)
 {
-  const backup = studyPlanBackupSchema.parse(JSON.parse(raw) as unknown);
-  return normalizeStudyPlanState(backup.plan);
+  const backup = semesterPlannerBackupSchema.parse(JSON.parse(raw) as unknown);
+  return normalizeSemesterPlannerState(backup.plan);
 }
 
-export function loadStudyPlanState()
+export function loadSemesterPlannerState()
 {
   if (!canUseLocalStorage())
   {
     return null;
   }
 
-  const raw = window.localStorage.getItem(STUDY_PLAN_STORAGE_KEY);
+  const raw = window.localStorage.getItem(SEMESTER_PLANNER_STORAGE_KEY);
   if (!raw)
   {
     return null;
@@ -152,48 +152,48 @@ export function loadStudyPlanState()
 
   try
   {
-    return normalizeStudyPlanState(JSON.parse(raw) as StudyPlanState);
+    return normalizeSemesterPlannerState(JSON.parse(raw) as SemesterPlannerState);
   }
   catch (error)
   {
-    console.error("Failed to load saved study plan state.", error);
+    console.error("Failed to load saved semester planner state.", error);
     return null;
   }
 }
 
-export function saveStudyPlanState(state: StudyPlanState)
+export function saveSemesterPlannerState(state: SemesterPlannerState)
 {
   if (!canUseLocalStorage())
   {
     return;
   }
 
-  const normalized = normalizeStudyPlanState(state);
-  window.localStorage.setItem(STUDY_PLAN_STORAGE_KEY, JSON.stringify(normalized));
+  const normalized = normalizeSemesterPlannerState(state);
+  window.localStorage.setItem(SEMESTER_PLANNER_STORAGE_KEY, JSON.stringify(normalized));
 }
 
-export function announceStudyPlanUpdated()
+export function announceSemesterPlannerUpdated()
 {
   if (typeof window === "undefined")
   {
     return;
   }
 
-  window.dispatchEvent(new CustomEvent(STUDY_PLAN_UPDATED_EVENT));
+  window.dispatchEvent(new CustomEvent(SEMESTER_PLANNER_UPDATED_EVENT));
 }
 
-export function upsertCatalogCourseInStudyPlan(
-  state: StudyPlanState | null,
+export function upsertCatalogCourseInSemesterPlanner(
+  state: SemesterPlannerState | null,
   course: Pick<CourseSearchResult | CourseRecord, "courseCode" | "courseName" | "creditUnits" | "schoolName">,
 )
 {
-  const nextState = state ?? defaultStudyPlanState();
-  const normalized = createCatalogStudyPlanCourse(course);
+  const nextState = state ?? defaultSemesterPlannerState();
+  const normalized = createCatalogSemesterPlannerCourse(course);
   const existing = nextState.courses.find((item) => item.courseCode === normalized.courseCode);
 
   if (existing)
   {
-    return normalizeStudyPlanState({
+    return normalizeSemesterPlannerState({
       ...nextState,
       courses: nextState.courses.map((item) => item.courseCode === normalized.courseCode
         ? {
@@ -207,7 +207,7 @@ export function upsertCatalogCourseInStudyPlan(
     });
   }
 
-  return normalizeStudyPlanState({
+  return normalizeSemesterPlannerState({
     ...nextState,
     courses: [...nextState.courses, normalized],
   });

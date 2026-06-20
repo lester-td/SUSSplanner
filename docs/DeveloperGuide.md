@@ -14,14 +14,14 @@ anonymous-user capabilities:
    switch between class and exam views, and export the result.
 2. Search the course catalog and inspect course details, class schedules, and
    assessment components.
-3. Build a multi-semester study plan using catalog courses or manually entered
+3. Build a multi-semester course plan using catalog courses or manually entered
    courses, export/import a restorable JSON backup, and open an A4 print view
    for saving as PDF.
 4. Calculate current and cumulative GPA from catalog or custom modules and
    compare current-semester Pass/Fail strategies.
 
-Normal users do not have accounts. Timetable, study-plan, and GPA-calculator
-state are stored in browser `localStorage`. Study plans can additionally be
+Normal users do not have accounts. Timetable, semester planner, and GPA-calculator
+state are stored in browser `localStorage`. Semester planners can additionally be
 backed up to and restored from a local JSON file, or opened as an A4 print view
 for saving as PDF. A timetable can be shared through a semantic URL that
 contains a semester ID and selected class identifiers. The shared page remains
@@ -46,9 +46,9 @@ flowchart LR
     User["Anonymous student"]
     Maintainer["Maintainer / data operator"]
     Browser["Browser<br/>React client components"]
-    LocalStorage["Browser localStorage<br/>timetable + study plan + GPA calculator"]
-    StudyPlanBackup["Study-plan JSON backup<br/>local file"]
-    StudyPlanPrint["A4 study-plan print view<br/>Blob URL in new tab"]
+    LocalStorage["Browser localStorage<br/>timetable + semester planner + GPA calculator"]
+    SemesterPlannerBackup["Semester-planner JSON backup<br/>local file"]
+    SemesterPlannerPrint["A4 semester-planner print view<br/>Blob URL in new tab"]
     ShareURL["Share URL<br/>sem + semantic class identifiers"]
     NextPages["Next.js App Router pages<br/>server components"]
     API["Next.js route handlers<br/>Node.js runtime"]
@@ -63,9 +63,9 @@ flowchart LR
     User --> Browser
     Browser --> LocalStorage
     LocalStorage --> Browser
-    Browser --> StudyPlanBackup
-    StudyPlanBackup --> Browser
-    Browser --> StudyPlanPrint
+    Browser --> SemesterPlannerBackup
+    SemesterPlannerBackup --> Browser
+    Browser --> SemesterPlannerPrint
     Browser --> NextPages
     Browser --> ShareURL
     ShareURL --> NextPages
@@ -88,7 +88,7 @@ flowchart LR
 
 | Boundary | Responsibilities | Key files |
 |---|---|---|
-| Browser | Interactive timetable, course search UI, study planner, GPA calculator, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 study-plan print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/study-plan-print.ts` |
+| Browser | Interactive timetable, course search UI, semester planner, GPA calculator, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 semester-planner print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/semester-planner-print.ts` |
 | Next.js server | Server-rendered pages, validation, API route handlers, server-side ICS/PDF endpoints | `app/`, `lib/validation/`, `lib/export/ics.ts`, `lib/export/pdf.ts` |
 | Data access layer | Centralized Drizzle queries, timetable assembly, clash detection, cached lookups | `lib/db/queries.ts`, `lib/db/index.ts`, `lib/timetable/clash-detection.ts` |
 | Postgres | Source of truth for academic catalog, semester, class, event, and assessment data | `scraper/schema.sql`, mirrored by `lib/db/schema.ts` |
@@ -123,7 +123,7 @@ flowchart LR
 | Validation | Zod 4 |
 | Server PDF generation | `pdf-lib` |
 | Browser image/PDF export | `html-to-image` and `pdf-lib` |
-| Study-plan backup and print export | Browser `Blob`/object URLs, native print dialog, and Zod validation |
+| Semester-planner backup and print export | Browser `Blob`/object URLs, native print dialog, and Zod validation |
 | Icons | `react-icons` |
 | Hosting configuration | Vercel, Singapore region (`sin1`) |
 
@@ -155,20 +155,21 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 │   ├── api/                     JSON, export, and cache-revalidation routes
 │   ├── calculator/              GPA-calculator page
 │   ├── courses/                 Course search and detail pages
-│   ├── planner/                 Multi-semester study-plan page
+│   ├── planner/                 Multi-semester semester planner page
 │   ├── share/                   Read-only shared timetable page
 │   └── timetable/               Interactive timetable page
 ├── components/
 │   ├── calculator/              GPA calculator client UI and browser-local state
 │   ├── courses/                 Course search/detail client components
 │   ├── layout/                  Shared application shell and navigation
-│   ├── planner/                 Study-plan UI and shared icons
+│   ├── planner/                 Semester planner UI, add button, and shared icons
+│   │   └── semester-planner/    Client, panel, drag/drop, and formatting helpers
 │   ├── timetable/               Timetable, exam, selection, and share UI
 │   └── ui/                      Reusable actions and modal
 ├── lib/
 │   ├── db/                      Drizzle client, schema mirror, and queries
-│   ├── export/                  ICS, server PDF, browser PNG/PDF, and study-plan print helpers
-│   ├── planner/                 Study-plan types and local persistence
+│   ├── export/                  ICS, server PDF, browser PNG/PDF, and semester-planner print helpers
+│   ├── planner/                 Semester-planner types and local persistence
 │   ├── timetable/               Domain types, URL encoding, storage, utilities
 │   └── validation/              Zod schemas
 ├── drizzle/                     Intentionally empty migration-output directory
@@ -422,7 +423,7 @@ class-group, semester, and optional week information.
 |---|---|
 | `/` | Static home page with links to Timetable, Courses, Planner, Calculators, and placeholder school portal shortcuts. |
 | `/timetable` | Server-loads semesters with classes/weeks, then `PlannerClient` restores local state and fetches timetable/course/class data interactively. |
-| `/planner` | Server-loads semester metadata, then `StudyPlanClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
+| `/planner` | Server-loads semester metadata, then `SemesterPlannerClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
 | `/calculators` | Force-dynamic, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` and `OcasCalculatorClient` manage browser-local GPA calculation and OCAS assessment simulation. |
 | `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` performs debounced API search using filters. |
 | `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
@@ -450,8 +451,8 @@ All route handlers explicitly use the Node.js runtime.
 PNG export is intentionally browser-side so it can preserve the rendered
 timetable view; there is no `/api/export/png` route.
 
-Study-plan JSON backup/import and the A4 print view are also browser-only.
-There are no study-plan export/import/print API routes, and study-plan data is
+Semester-planner JSON backup/import and the A4 print view are also browser-only.
+There are no semester planner export/import/print API routes, and semester planner data is
 not sent to the server during these flows.
 
 GPA calculations are browser-side. The calculator search API is the only
@@ -490,7 +491,7 @@ Zod validation in `lib/validation/timetable.ts` enforces:
 
 There is no user authentication or account model in the web application.
 Anonymous users can access all pages and all read/export API routes. Their
-timetable, study-plan, and GPA-calculator data remains in their browser.
+timetable, semester planner, and GPA-calculator data remains in their browser.
 
 ### Maintainer Controls
 
@@ -521,10 +522,10 @@ flowchart LR
         Resolve["Choose or switch class group"]
         Clash["Inspect timetable clashes"]
         Search["Search and inspect courses"]
-        Study["Build multi-semester study plan"]
+        Study["Build multi-semester course plan"]
         GPA["Calculate GPA and compare Pass/Fail strategy"]
-        Backup["Export or import study-plan JSON backup"]
-        Print["Open A4 study-plan print/PDF view"]
+        Backup["Export or import semester-planner JSON backup"]
+        Print["Open A4 semester-planner print/PDF view"]
         Share["Create shared timetable URL"]
         Preview["Preview and explicitly import shared timetable"]
         Export["Export PNG, PDF, or ICS"]
@@ -611,12 +612,12 @@ Changing semester loads the saved state for that semester, if one exists. Each
 semester keeps its own selected classes, hidden classes, colors, and week
 selection, so switching semesters does not leak timetable state between them.
 
-### Study Plan Flow Diagram
+### Semester Planner Flow Diagram
 
 ```mermaid
 flowchart TD
     Open["Open /planner"]
-    Restore{"Valid study plan<br/>in localStorage?"}
+    Restore{"Valid semester planner<br/>in localStorage?"}
     Default["Use default goal: 130 CU,<br/>8 semesters, empty course bank"]
     Ready["Render course bank, semesters,<br/>and assigned-credit progress"]
     Add{"Add course"}
@@ -660,13 +661,26 @@ flowchart TD
     Print --> PrintTab
 ```
 
-The study plan also listens for browser `storage` events and the local
-`sussplanner:study-plan-updated` event used by course-page "Add to Planner"
+The semester planner also listens for browser `storage` events and the local
+`sussplanner:semester-planner-updated` event used by course-page "Add to Planner"
 buttons. Those buttons write directly to the same local-storage plan; the next
 planner visit hydrates that saved plan.
 
+The UI is split across `components/planner/semester-planner/`:
+
+- `client.tsx` owns state, search, import/export handlers, modals, and semester
+  rendering.
+- `panel.tsx` renders the Module Bank and trash drop zone.
+- `drag-drop.tsx` owns `@dnd-kit/core` drag/drop cards, droppables, overlay
+  rendering, drop-target IDs, and drop-target parsing.
+- `formatting.ts` contains feature-local display helpers such as CU formatting,
+  semester option generation, offered-semester labels, and course sorting.
+
+Course pages use `components/planner/add-to-semester-planner-button.tsx` to add
+catalog courses directly into the same browser-local semester planner state.
+
 Planner drag-and-drop is implemented with `@dnd-kit/core`. Dropping a course on
-the semester bank clears its assignment, dropping it on a semester assigns the
+the Module Bank clears its assignment, dropping it on a semester assigns the
 course to that semester, and dropping it on the trash deletes it. Invalid or
 empty drops are treated as no-ops. Planner search, backup import, and saved-plan
 load failures are logged to the browser console, while recoverable cases still
@@ -682,7 +696,7 @@ The planner header provides these data-protection and presentation actions:
 - **Import** reads a local JSON file, rejects files larger than 1 MB, parses and
   validates the backup, and shows a module/semester summary before the user
   confirms replacement of the current plan.
-- **Download PDF** uses the same normalized `StudyPlanState` as JSON export to
+- **Download PDF** uses the same normalized `SemesterPlannerState` as JSON export to
   create an escaped A4 HTML document. It opens the document through a temporary
   Blob URL in a new tab, where the user selects **Print / Save as PDF**.
 - **Reset Planner** still requires confirmation and replaces the plan with the
@@ -852,9 +866,9 @@ Importing a shared timetable:
 Resetting the planner clears only the selected semester state. It does not
 touch other saved semesters.
 
-### Study Plan State
+### Semester Planner State
 
-Storage key: `sussplanner.study-plan.v1`
+Storage key: `sussplanner.semester-planner.v1`
 
 Persisted fields:
 
@@ -892,7 +906,7 @@ stateDiagram-v2
     Ready --> DefaultPlan: confirm reset
 ```
 
-Study-plan normalization limits plans to 1-20 semesters and 300 courses.
+Semester-planner normalization limits plans to 1-20 semesters and 300 courses.
 Catalog courses normally span one semester; `NIE301`, `NIE351`, and course codes
 ending in `499` are inferred to span two semesters.
 
@@ -944,13 +958,13 @@ that input.
 `Clear all` opens the shared `Modal` confirmation and removes only current
 modules. It preserves `priorGpa` and `priorCredits`.
 
-### Study Plan Backup Contract
+### Semester Planner Backup Contract
 
-Study plans can be exported and restored through this versioned JSON envelope:
+Semester planners can be exported and restored through this versioned JSON envelope:
 
 ```json
 {
-  "format": "sussplanner-study-plan",
+  "format": "sussplanner-semester-planner",
   "version": 1,
   "exportedAt": "2026-06-12T12:00:00.000Z",
   "plan": {
@@ -965,7 +979,7 @@ The backup format and parser live in `lib/planner/storage.ts`; the envelope and
 plan schemas live in `lib/validation/planner.ts`. Import protection includes:
 
 - A 1 MB file-size limit before reading the selected file.
-- Required `sussplanner-study-plan` format identifier and supported version
+- Required `sussplanner-semester-planner` format identifier and supported version
   literal.
 - Zod validation of every course and top-level plan field.
 - Limits of 1-20 semesters, at most 300 courses, bounded strings/numbers, and
@@ -976,10 +990,10 @@ plan schemas live in `lib/validation/planner.ts`. Import protection includes:
 
 Invalid or unsupported files show a notice and do not modify the current plan.
 
-### Study Plan Print/PDF View
+### Semester Planner Print/PDF View
 
-`lib/export/study-plan-print.ts` consumes the same normalized
-`StudyPlanState` used by JSON export. It creates a browser-only HTML document
+`lib/export/semester-planner-print.ts` consumes the same normalized
+`SemesterPlannerState` used by JSON export. It creates a browser-only HTML document
 with:
 
 - A4 `@page` print sizing and print-specific removal of preview chrome.
@@ -995,40 +1009,40 @@ the planner shows a notice asking the user to allow pop-ups.
 
 ## Key Sequence Diagrams
 
-### Export, Import, or Print a Study Plan
+### Export, Import, or Print a Semester Planner
 
 ```mermaid
 sequenceDiagram
     actor Student
-    participant UI as StudyPlanClient
+    participant UI as SemesterPlannerClient
     participant Storage as lib/planner/storage.ts
     participant Validation as lib/validation/planner.ts
-    participant Print as lib/export/study-plan-print.ts
+    participant Print as lib/export/semester-planner-print.ts
     participant Browser as Browser file / print APIs
 
     alt Export JSON backup
         Student->>UI: Select Backup Plan, then Export
-        UI->>Storage: serializeStudyPlanBackup(plan)
+        UI->>Storage: serializeSemesterPlannerBackup(plan)
         Storage->>Validation: Validate and normalize plan
         Storage-->>UI: Versioned JSON string
         UI->>Browser: Download JSON Blob
     else Import JSON backup
         Student->>UI: Select Backup Plan, then Import and local JSON file
         UI->>UI: Reject file if larger than 1 MB
-        UI->>Storage: parseStudyPlanBackup(file text)
+        UI->>Storage: parseSemesterPlannerBackup(file text)
         Storage->>Validation: Validate envelope and plan
         Validation-->>Storage: Valid parsed backup
-        Storage-->>UI: Normalized StudyPlanState
+        Storage-->>UI: Normalized SemesterPlannerState
         UI-->>Student: Show replacement confirmation and summary
         Student->>UI: Confirm replacement
         UI->>Browser: Persist replacement to localStorage
     else Open PDF print view
         Student->>UI: Select Download PDF
-        UI->>Print: openStudyPlanPrintView(plan)
-        Print->>Storage: normalizeStudyPlanState(plan)
+        UI->>Print: openSemesterPlannerPrintView(plan)
+        Print->>Storage: normalizeSemesterPlannerState(plan)
         Storage->>Validation: Validate plan
         Validation-->>Storage: Valid parsed plan
-        Storage-->>Print: Normalized StudyPlanState
+        Storage-->>Print: Normalized SemesterPlannerState
         Print->>Print: Escape strings and build A4 HTML
         Print->>Browser: Open temporary HTML Blob URL in new tab
         Student->>Browser: Print / Save as PDF
@@ -1225,14 +1239,14 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
 | Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, and local-storage format aligned. |
 | Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/db/queries.ts`; do not accidentally add semester/class filters. |
-| Change study-plan backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, import compatibility behavior, and this guide. Preserve support for existing versions or reject them with a clear notice. |
-| Change study-plan print output | Update `lib/export/study-plan-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
+| Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, and this guide. Preserve support for existing public versions or reject them with a clear notice. |
+| Change semester-planner print output | Update `lib/export/semester-planner-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
 | Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and optionally revalidate caches afterward. |
 
 ## Known Limitations
 
 - There is no user account, cloud synchronization, or server-side backup of
-  timetable, study-plan, or GPA-calculator state.
+  timetable, semester planner, or GPA-calculator state.
 - Clearing browser storage or changing browsers loses locally saved plans that
   were not exported as JSON backups.
 - GPA-calculator state has no export, import, share, cloud backup, or formal
@@ -1243,7 +1257,7 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
   official academic records or policy.
 - Only timetable semester/selections are shareable. The multi-semester study
   plan can be imported/exported as JSON but cannot be shared through a URL.
-- Study-plan PDF output depends on the browser print dialog and may require
+- Semester-planner PDF output depends on the browser print dialog and may require
   users to allow the new print-view tab.
 - Share links are limited to 50 class identifiers and depend on those semantic
   identifiers continuing to exist in the selected semester.
@@ -1258,7 +1272,7 @@ provided paths. If no valid tags are supplied, it invalidates all known tags.
   because extraction can be incomplete or malformed.
 - No in-app admin interface exists.
 - The server PDF endpoint produces a timetable event-list PDF, while the
-  timetable UI creates a PDF from a browser screenshot. The study-plan PDF
+  timetable UI creates a PDF from a browser screenshot. The semester-planner PDF
   action instead opens an A4 HTML print view for the browser to save as PDF.
 - `getCurrentSemesterContext` falls back to the first returned semester/week
   when today's date is outside all configured semester-week ranges.

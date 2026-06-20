@@ -8,8 +8,8 @@
 - [Planning Courses](#planning-courses)
   - [Search for Courses](#search-for-courses)
   - [View Course Information](#view-course-information)
-  - [Add Courses to Your Study Plan](#add-courses-to-your-study-plan)
-  - [Organise Your Study Plan](#organise-your-study-plan)
+  - [Add Courses to Your Semester Planner](#add-courses-to-your-semester-planner)
+  - [Organise Your Semester Planner](#organise-your-semester-planner)
 - [Calculating GPA](#calculating-gpa)
   - [Add Current-Semester Modules](#add-current-semester-modules)
   - [Enter Grades and Credit Units](#enter-grades-and-credit-units)
@@ -48,7 +48,7 @@ You do not need an account or sign-in.
 
 ### Before You Start
 
-SUSSPlanner saves your timetable, study plan, and GPA Calculator entries in
+SUSSPlanner saves your timetable, semester planner, and GPA Calculator entries in
 your current browser.
 
 - Your plans do not automatically appear on another device or browser.
@@ -68,7 +68,7 @@ your current browser.
    - **Home** for a start page with app links and school portal shortcuts.
    - **Timetable** for your semester schedule.
    - **Courses** for course search and details.
-   - **Planner** for your multi-semester study plan.
+   - **Planner** for your multi-semester course plan.
    - **Calculator** for GPA estimates.
 
 No installation is required.
@@ -95,13 +95,13 @@ manually.
 ### Course Search
 
 Use **Courses** when you want to explore courses before adding them to your
-study plan or timetable.
+semester planner or timetable.
 
 1. Open **Courses**.
 2. Enter a course code, title, or description.
 3. Use **Search Settings** to narrow the results.
 4. Select a course title to view its details.
-5. Select **Add to Planner** if you want to include it in your study plan.
+5. Select **Add to Planner** if you want to include it in your semester planner.
 
 The search filters include:
 
@@ -131,7 +131,7 @@ Use **Planner** to map out courses and credit units across your degree.
 A new plan starts with 130 target credit units and 8 semesters. You can plan
 between 1 and 20 semesters.
 
-[Screenshot: Degree Study Plan]
+[Screenshot: Degree Semester Planner]
 
 ### Timetable Builder
 
@@ -204,7 +204,7 @@ There are four places where you can search:
 | Where | Best Used For |
 |---|---|
 | **Courses** | Exploring the full course catalog and viewing details. |
-| **Planner** | Adding courses to your long-term study plan. |
+| **Planner** | Adding courses to your long-term semester planner. |
 | **GPA Calculator** | Adding any catalog module to a current/cumulative GPA estimate. |
 | **Timetable** | Adding courses offered in the selected semester. |
 
@@ -254,7 +254,7 @@ semester, SUSSPlanner displays a message instead of adding it.
 
 Some courses may not have information for every section.
 
-### Add Courses to Your Study Plan
+### Add Courses to Your Semester Planner
 
 #### Add a Listed Course
 
@@ -297,7 +297,7 @@ The course and its classes are removed from the timetable.
 
 This cannot be undone.
 
-### Organise Your Study Plan
+### Organise Your Semester Planner
 
 1. Add courses to the **Module Bank**.
 2. Drag each course into the semester when you plan to take it.
@@ -314,7 +314,7 @@ Available** to show only courses that have not been assigned.
 Courses that span more than one semester are shown as continuing in later
 semesters.
 
-### Back Up or Restore Your Study Plan
+### Back Up or Restore Your Semester Planner
 
 To download a restorable backup:
 
@@ -333,7 +333,7 @@ To restore a backup:
 Importing replaces the current plan. Invalid, unsupported, or oversized backup
 files are rejected without changing it.
 
-### Download Your Study Plan as a PDF
+### Download Your Semester Planner as a PDF
 
 1. Open **Planner**.
 2. Select **Download PDF**.
@@ -341,7 +341,7 @@ files are rejected without changing it.
 
 Allow the new tab if your browser blocks it.
 
-### Reset Your Study Plan
+### Reset Your Semester Planner
 
 1. Open **Planner**.
 2. Select **Reset Planner**.
@@ -606,7 +606,7 @@ Your degree plan is saved in your current browser.
 
 ### Compare Different Plans
 
-SUSSPlanner keeps one multi-semester study plan at a time. To compare options:
+SUSSPlanner keeps one multi-semester course plan at a time. To compare options:
 
 1. Take a screenshot of your current Planner arrangement before changing it.
 2. Rearrange courses and compare semester credit-unit totals.
@@ -676,7 +676,7 @@ No. SUSSPlanner does not require an account or sign-in.
 
 ### Where are my plans saved?
 
-Your timetable, study plan, and GPA Calculator entries are saved in your
+Your timetable, semester planner, and GPA Calculator entries are saved in your
 current browser.
 
 ### Will my plans appear on another device?
@@ -689,7 +689,7 @@ Only if you exported a JSON backup before clearing the browser data. Open
 **Planner**, select **Backup Plan**, then select **Import** to restore it.
 SUSSPlanner does not provide online or account-based recovery.
 
-### Can I share my multi-semester study plan?
+### Can I share my multi-semester course plan?
 
 No. Only semester timetables can currently be shared.
 
@@ -808,8 +808,8 @@ information available in SUSSPlanner.
   imported, shared, or recovered after browser data is cleared.
 - GPA and Pass/Fail results are planning estimates. Confirm official GPA and
   Pass/Fail rules with SUSS before making academic decisions.
-- The Planner keeps one study plan at a time.
-- Multi-semester study plans can be imported/exported as JSON and downloaded
+- The Planner keeps one semester planner at a time.
+- Multi-semester semester planners can be imported/exported as JSON and downloaded
   through the PDF print view, but they cannot be shared through a URL.
 - Shared timetable links do not include hidden courses, custom colours,
   selected week, layout, or view.

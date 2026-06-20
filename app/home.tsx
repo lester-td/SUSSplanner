@@ -17,7 +17,7 @@ import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/d
 
 export const metadata: Metadata = {
   title: "Home | SUSS Planner",
-  description: "Start page for SUSS timetable, course, study-plan, GPA, and school portal shortcuts.",
+  description: "Start page for SUSS timetable, course, semester-planner, GPA, and school portal shortcuts.",
 };
 
 const projectAreas = [

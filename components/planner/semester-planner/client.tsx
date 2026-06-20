@@ -1,15 +1,13 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   AutoScrollActivator,
   DndContext,
   DragOverlay,
   PointerSensor,
   TouchSensor,
-  useDraggable,
-  useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -19,9 +17,7 @@ import {
   BookIcon,
   CalendarWeekIcon,
   DownloadIcon,
-  EditIcon,
   EditCalendarIcon,
-  LayersIcon,
   ListIcon,
   PlusIcon,
   RefreshIcon,
@@ -30,139 +26,49 @@ import {
   TrashIcon,
   UploadIcon,
 } from "@/components/planner/icons";
-import { Modal } from "@/components/ui/modal";
-import { openStudyPlanPrintView } from "@/lib/export/study-plan-print";
 import {
-  STUDY_PLAN_UPDATED_EVENT,
-  createCatalogStudyPlanCourse,
-  createManualStudyPlanCourse,
-  defaultStudyPlanState,
-  loadStudyPlanState,
-  normalizeStudyPlanState,
-  parseStudyPlanBackup,
-  saveStudyPlanState,
-  serializeStudyPlanBackup,
+  CourseCard,
+  CourseDragOverlay,
+  DroppableArticle,
+  SEMESTER_DROP_ID_PREFIX,
+  getCourseDropTarget,
+} from "@/components/planner/semester-planner/drag-drop";
+import {
+  buildSemesterOptions,
+  formatCreditCount,
+  formatCredits,
+  formatOfferedSemesters,
+  sortCourses,
+} from "@/components/planner/semester-planner/formatting";
+import { SemesterPlannerPanel } from "@/components/planner/semester-planner/panel";
+import { Modal } from "@/components/ui/modal";
+import { openSemesterPlannerPrintView } from "@/lib/export/semester-planner-print";
+import {
+  SEMESTER_PLANNER_UPDATED_EVENT,
+  createCatalogSemesterPlannerCourse,
+  createManualSemesterPlannerCourse,
+  defaultSemesterPlannerState,
+  loadSemesterPlannerState,
+  normalizeSemesterPlannerState,
+  parseSemesterPlannerBackup,
+  saveSemesterPlannerState,
+  serializeSemesterPlannerBackup,
 } from "@/lib/planner/storage";
-import type { StudyPlanCourse, StudyPlanState } from "@/lib/planner/types";
+import type { SemesterPlannerCourse, SemesterPlannerState } from "@/lib/planner/types";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
 type SearchResponse = {
   courses: CourseSearchResult[];
 };
 
-type DragTranslate = {
-  x: number;
-  y: number;
-};
-
-const GHOST_CATCHUP_RATE = 0.09;
-
-function formatCredits(value: number)
-{
-  return `${Number(value.toFixed(1)).toString()} CU`;
-}
-
-function formatCreditCount(value: number)
-{
-  return `${Number(value.toFixed(1)).toString()} Credit Units`;
-}
-
-function buildSemesterOptions(numSemesters: number)
-{
-  return Array.from({ length: numSemesters }, (_, index) => index);
-}
-
-function formatOfferedSemesters(course: CourseSearchResult)
-{
-  const labels = course.offeredSemesters
-    .slice(0, 3)
-    .map((semester) => semester.semesterName.replace(/^Semester\s+/i, "Sem "));
-
-  return labels.length > 0 ? labels.join(" • ") : "Semester offering unavailable";
-}
-
-function sortCourses(courses: StudyPlanCourse[])
-{
-  return [...courses].sort((left, right) => left.courseCode.localeCompare(right.courseCode));
-}
-
-function useCatchingGhostTransform(transform: DragTranslate | null, active: boolean)
-{
-  const [ghostTransform, setGhostTransform] = useState<DragTranslate | null>(null);
-  const activeRef = useRef(active);
-  const frameRef = useRef<number | null>(null);
-  const currentRef = useRef<DragTranslate>({ x: 0, y: 0 });
-  const targetRef = useRef<DragTranslate>({ x: 0, y: 0 });
-  const hasGhostRef = useRef(false);
-
-  activeRef.current = active;
-
-  useEffect(() => {
-    if (!active || !transform)
-    {
-      if (frameRef.current !== null)
-      {
-        window.cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
-
-      currentRef.current = { x: 0, y: 0 };
-      targetRef.current = { x: 0, y: 0 };
-      hasGhostRef.current = false;
-      setGhostTransform(null);
-      return;
-    }
-
-    targetRef.current = { x: transform.x, y: transform.y };
-
-    if (!hasGhostRef.current)
-    {
-      hasGhostRef.current = true;
-      setGhostTransform({ ...currentRef.current });
-    }
-
-    if (frameRef.current !== null)
-    {
-      return;
-    }
-
-    const animate = () => {
-      const current = currentRef.current;
-      const target = targetRef.current;
-      const next = {
-        x: current.x + ((target.x - current.x) * GHOST_CATCHUP_RATE),
-        y: current.y + ((target.y - current.y) * GHOST_CATCHUP_RATE),
-      };
-
-      currentRef.current = next;
-      setGhostTransform(next);
-
-      frameRef.current = activeRef.current
-        ? window.requestAnimationFrame(animate)
-        : null;
-    };
-
-    frameRef.current = window.requestAnimationFrame(animate);
-  }, [active, transform]);
-
-  useEffect(() => () => {
-    if (frameRef.current !== null)
-    {
-      window.cancelAnimationFrame(frameRef.current);
-    }
-  }, []);
-
-  return ghostTransform;
-}
-
-export function StudyPlanClient({
+export function SemesterPlannerClient({
   semesters,
 }: {
   semesters: SemesterRecord[];
 })
 {
   const [ready, setReady] = useState(false);
-  const [plan, setPlan] = useState<StudyPlanState>(defaultStudyPlanState());
+  const [plan, setPlan] = useState<SemesterPlannerState>(defaultSemesterPlannerState());
   const [isCustomCourse, setIsCustomCourse] = useState(false);
   const [showAllModules, setShowAllModules] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -178,7 +84,7 @@ export function StudyPlanClient({
   const [editingSemesterSpan, setEditingSemesterSpan] = useState("1");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [backupMenuOpen, setBackupMenuOpen] = useState(false);
-  const [importedPlan, setImportedPlan] = useState<StudyPlanState | null>(null);
+  const [importedPlan, setImportedPlan] = useState<SemesterPlannerState | null>(null);
   const [importedPlanFileName, setImportedPlanFileName] = useState("");
   const [notice, setNotice] = useState("");
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
@@ -200,7 +106,7 @@ export function StudyPlanClient({
   );
 
   useEffect(() => {
-    setPlan(loadStudyPlanState() ?? defaultStudyPlanState());
+    setPlan(loadSemesterPlannerState() ?? defaultSemesterPlannerState());
     setReady(true);
   }, []);
 
@@ -210,12 +116,12 @@ export function StudyPlanClient({
       return;
     }
 
-    saveStudyPlanState(plan);
+    saveSemesterPlannerState(plan);
   }, [plan, ready]);
 
   useEffect(() => {
     const syncPlanState = () => {
-      const saved = loadStudyPlanState();
+      const saved = loadSemesterPlannerState();
       if (saved)
       {
         setPlan(saved);
@@ -223,11 +129,11 @@ export function StudyPlanClient({
     };
 
     window.addEventListener("storage", syncPlanState);
-    window.addEventListener(STUDY_PLAN_UPDATED_EVENT, syncPlanState);
+    window.addEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncPlanState);
 
     return () => {
       window.removeEventListener("storage", syncPlanState);
-      window.removeEventListener(STUDY_PLAN_UPDATED_EVENT, syncPlanState);
+      window.removeEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncPlanState);
     };
   }, []);
 
@@ -376,9 +282,9 @@ export function StudyPlanClient({
     noticeTimeoutRef.current = window.setTimeout(() => setNotice(""), 2800);
   }
 
-  function updatePlan(updater: (current: StudyPlanState) => StudyPlanState)
+  function updatePlan(updater: (current: SemesterPlannerState) => SemesterPlannerState)
   {
-    setPlan((current) => normalizeStudyPlanState(updater(current)));
+    setPlan((current) => normalizeSemesterPlannerState(updater(current)));
   }
 
   function removeCourse(courseId: string)
@@ -389,7 +295,7 @@ export function StudyPlanClient({
     }));
   }
 
-  function deleteCourseFromBank(course: StudyPlanCourse)
+  function deleteCourseFromBank(course: SemesterPlannerCourse)
   {
     removeCourse(course.id);
     if (editingCourseId === course.id)
@@ -401,14 +307,14 @@ export function StudyPlanClient({
 
   function resetPlan()
   {
-    setPlan(defaultStudyPlanState());
+    setPlan(defaultSemesterPlannerState());
     showNoticeMessage("Planner reset.");
   }
 
   function exportPlan()
   {
     const date = new Date().toISOString().slice(0, 10);
-    const blob = new Blob([serializeStudyPlanBackup(plan)], { type: "application/json" });
+    const blob = new Blob([serializeSemesterPlannerBackup(plan)], { type: "application/json" });
     const url = window.URL.createObjectURL(blob);
     const anchor = document.createElement("a");
 
@@ -424,7 +330,7 @@ export function StudyPlanClient({
 
   function openPlanPdf()
   {
-    if (!openStudyPlanPrintView(plan))
+    if (!openSemesterPlannerPrintView(plan))
     {
       showNoticeMessage("Unable to open PDF view. Allow pop-ups and try again.");
     }
@@ -445,7 +351,7 @@ export function StudyPlanClient({
 
     try
     {
-      setImportedPlan(parseStudyPlanBackup(await file.text()));
+      setImportedPlan(parseSemesterPlannerBackup(await file.text()));
       setImportedPlanFileName(file.name);
     }
     catch (error)
@@ -571,7 +477,7 @@ export function StudyPlanClient({
       return;
     }
 
-    const nextCourse = createManualStudyPlanCourse({
+    const nextCourse = createManualSemesterPlannerCourse({
       courseCode: customLabel.toUpperCase(),
       courseName: customLabel,
       creditUnits,
@@ -641,22 +547,22 @@ export function StudyPlanClient({
   function handleCourseDragEnd(event: DragEndEvent)
   {
     const courseId = String(event.active.id);
-    const overId = event.over ? String(event.over.id) : null;
+    const dropTarget = getCourseDropTarget(event.over ? String(event.over.id) : null);
 
     setDraggedCourseId(null);
 
-    if (!overId)
+    if (!dropTarget)
     {
       return;
     }
 
-    if (overId === "course-bank")
+    if (dropTarget.type === "bank")
     {
       moveCourseToSemester(courseId, null);
       return;
     }
 
-    if (overId === "trash-zone")
+    if (dropTarget.type === "trash")
     {
       const course = plan.courses.find((item) => item.id === courseId);
       removeCourse(courseId);
@@ -668,9 +574,9 @@ export function StudyPlanClient({
       return;
     }
 
-    if (overId.startsWith("semester-"))
+    if (dropTarget.type === "semester")
     {
-      moveCourseToSemester(courseId, Number.parseInt(overId.slice("semester-".length), 10));
+      moveCourseToSemester(courseId, dropTarget.semesterIndex);
     }
   }
 
@@ -682,7 +588,7 @@ export function StudyPlanClient({
       return;
     }
 
-    const catalogCourse = createCatalogStudyPlanCourse(course);
+    const catalogCourse = createCatalogSemesterPlannerCourse(course);
     updatePlan((current) => ({
       ...current,
       courses: [...current.courses, catalogCourse],
@@ -734,9 +640,9 @@ export function StudyPlanClient({
 
             {!isCustomCourse ? (
               <div className="mt-3">
-                <label className="sr-only" htmlFor="study-plan-offered-in">Offered In</label>
+                <label className="sr-only" htmlFor="semester-planner-offered-in">Offered In</label>
                 <select
-                  id="study-plan-offered-in"
+                  id="semester-planner-offered-in"
                   value={searchSemesterId === "all" ? "" : String(searchSemesterId)}
                   onChange={(event) => setSearchSemesterId(event.target.value ? Number.parseInt(event.target.value, 10) : "all")}
                   className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
@@ -1014,81 +920,14 @@ export function StudyPlanClient({
           onDragEnd={handleCourseDragEnd}
         >
         <section className="grid gap-4 xl:grid-cols-[21rem_minmax(0,1fr)]">
-          <aside className={`space-y-4 lg:sticky lg:top-[90px] lg:max-h-[calc(100vh-110px)] lg:self-start lg:pr-1 ${
-            draggedCourseId ? "lg:overflow-visible" : "lg:overflow-y-auto"
-          }`}>
-            <DroppableDiv
-              id="course-bank"
-              className={(isOver) => `rounded-[1rem] border px-4 py-4 transition-all ${
-                isOver
-                  ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
-                  : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Module Bank</h2>
-                  {showAllModules || draggedCourseId ? (
-                    <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                      {showAllModules ? "(Edit Mode)" : "Drop here to send a module back to the bank."}
-                    </p>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAllModules((current) => !current)}
-                  className="inline-flex min-w-[8.75rem] shrink-0 justify-center self-start rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[12px] font-semibold leading-5 whitespace-nowrap text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:text-[var(--primary)]"
-                >
-                  {showAllModules ? "Show Available" : "Show All"}
-                </button>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {bankCourses.length === 0 ? (
-                  <p className="rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                    {showAllModules ? "No modules added yet." : "All courses have been assigned."}
-                  </p>
-                ) : null}
-
-                {bankCourses.map((course) => (
-                  <CourseCard
-                    key={course.id}
-                    course={course}
-                    ghost={showAllModules && course.assignedSemester !== null}
-                    isDragging={draggedCourseId === course.id}
-                    draggable={course.assignedSemester === null}
-                    onEdit={course.source === "manual" ? () => setEditingCourseId(course.id) : undefined}
-                    onDelete={showAllModules ? () => deleteCourseFromBank(course) : undefined}
-                  />
-                ))}
-              </div>
-            </DroppableDiv>
-
-            <DroppableDiv
-              id="trash-zone"
-              className={(isOver) => `rounded-[1rem] border-2 border-dashed px-4 py-5 text-center transition-all ${
-                isOver
-                  ? "scale-[1.03] border-red-500 bg-red-500/10 text-red-400 shadow-[0_12px_30px_rgba(239,68,68,0.15)]"
-                  : draggedCourseId
-                    ? "border-red-400 bg-red-500/6 text-red-300"
-                    : "border-red-500/60 bg-transparent text-red-300/90"
-              }`}
-            >
-              {(isOver) => (
-                <>
-                  <div className="flex items-center justify-center gap-2">
-                    <TrashIcon className={`h-5 w-5 transition-transform ${isOver ? "scale-110" : ""}`} />
-                    <span className="text-[15px] font-semibold leading-6">
-                      {isOver ? "Release to delete course" : "Drag here to delete course"}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-[12px] leading-5 opacity-80">
-                    This action cannot be undone.
-                  </p>
-                </>
-              )}
-            </DroppableDiv>
-          </aside>
+          <SemesterPlannerPanel
+            bankCourses={bankCourses}
+            draggedCourseId={draggedCourseId}
+            showAllModules={showAllModules}
+            onDeleteCourse={deleteCourseFromBank}
+            onEditCourse={setEditingCourseId}
+            onToggleShowAllModules={() => setShowAllModules((current) => !current)}
+          />
 
           <section className="space-y-4">
             <div className="space-y-3">
@@ -1104,7 +943,7 @@ export function StudyPlanClient({
                 return (
                   <DroppableArticle
                     key={semesterIndex}
-                    id={`semester-${semesterIndex}`}
+                    id={`${SEMESTER_DROP_ID_PREFIX}${semesterIndex}`}
                     className={(isOver) => `rounded-[1rem] border px-4 py-4 transition-all ${
                       isOver
                         ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
@@ -1359,184 +1198,5 @@ function SummaryStat({
       </div>
       <p className="mt-2 text-[18px] font-semibold leading-6 text-[var(--on-surface)]">{value}</p>
     </div>
-  );
-}
-
-function CourseCard({
-  course,
-  draggable = false,
-  ghost = false,
-  isDragging = false,
-  onEdit,
-  onDelete,
-}: {
-  course: StudyPlanCourse;
-  draggable?: boolean;
-  ghost?: boolean;
-  isDragging?: boolean;
-  onEdit?: () => void;
-  onDelete?: () => void;
-})
-{
-  const draggableId = draggable ? course.id : `static-${course.id}`;
-  const {
-    attributes,
-    isDragging: isDndDragging,
-    listeners,
-    setNodeRef,
-    transform,
-  } = useDraggable({
-    id: draggableId,
-    disabled: !draggable,
-    data: {
-      course,
-      assignedSemester: course.assignedSemester,
-    },
-  });
-  const active = isDragging || isDndDragging;
-  const catchingTransform = useCatchingGhostTransform(transform, active);
-  const displayedTransform = catchingTransform ?? transform;
-  const activeTransform = active ? " rotate(1deg) scale(1.05)" : "";
-  const style: CSSProperties = {
-    pointerEvents: isDndDragging ? "none" : "auto",
-    transform: displayedTransform
-      ? `translate3d(${displayedTransform.x}px, ${displayedTransform.y}px, 0)${activeTransform}`
-      : active
-        ? activeTransform.trim()
-        : undefined,
-    transformOrigin: "center",
-  };
-
-  return (
-    <article
-      ref={setNodeRef}
-      style={style}
-      {...(draggable ? listeners : {})}
-      {...(draggable ? attributes : {})}
-      className={`rounded-[0.85rem] border px-3 py-2.5 ${active ? "transition-colors duration-200" : "transition-all duration-200"} ${
-        draggable ? "cursor-grab active:cursor-grabbing select-none touch-none" : ""
-      } ${
-        active
-          ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] opacity-50 shadow-[0_12px_28px_rgba(15,23,42,0.12)]"
-          : ghost
-            ? "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] opacity-55"
-            : "border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] hover:border-[var(--outline-variant)]"
-      }`}
-    >
-      <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="truncate text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
-                {course.courseCode}
-              </p>
-              {course.semesterSpan > 1 ? (
-                <span className="shrink-0 rounded-[999px] border border-[var(--outline-variant)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
-                  {course.semesterSpan} sem
-                </span>
-              ) : null}
-            </div>
-            <span className="shrink-0 text-[12px] font-semibold leading-5 text-[var(--primary)]">
-              {formatCredits(course.creditUnits)}
-            </span>
-          </div>
-          <p className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] leading-5 text-[var(--on-surface-variant)]">
-            {course.courseName}
-            {ghost ? " (assigned)" : ""}
-          </p>
-        </div>
-
-        {onEdit || onDelete ? (
-          <div className="flex shrink-0 items-center gap-1">
-            {onEdit ? (
-              <button
-                type="button"
-                onClick={onEdit}
-                onPointerDown={(event) => event.stopPropagation()}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-[0.5rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                aria-label={`Edit ${course.courseCode}`}
-              >
-                <EditIcon className="h-3.5 w-3.5" />
-              </button>
-            ) : null}
-
-            {onDelete ? (
-              <button
-                type="button"
-                onClick={onDelete}
-                onPointerDown={(event) => event.stopPropagation()}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-[0.5rem] border border-red-500/30 text-red-400 transition-colors hover:border-red-400/70 hover:bg-red-500/10 hover:text-red-300"
-                aria-label={`Delete ${course.courseCode}`}
-              >
-                <TrashIcon className="h-3.5 w-3.5" />
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    </article>
-  );
-}
-
-function CourseDragOverlay({
-  course,
-}: {
-  course: StudyPlanCourse;
-})
-{
-  return (
-    <article className="pointer-events-none rounded-[0.85rem] border-2 border-[var(--primary)] bg-[var(--surface-container-lowest)] px-3 py-2.5 opacity-95 shadow-[0_16px_32px_rgba(15,23,42,0.2)]">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
-            {course.courseCode}
-          </p>
-          <p className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] leading-5 text-[var(--on-surface-variant)]">
-            {course.courseName}
-          </p>
-        </div>
-        <span className="shrink-0 text-[12px] font-semibold leading-5 text-[var(--primary)]">
-          {formatCredits(course.creditUnits)}
-        </span>
-      </div>
-    </article>
-  );
-}
-
-function DroppableDiv({
-  children,
-  className,
-  id,
-}: {
-  children: ReactNode | ((isOver: boolean) => ReactNode);
-  className: (isOver: boolean) => string;
-  id: string;
-})
-{
-  const { isOver, setNodeRef } = useDroppable({ id });
-
-  return (
-    <div ref={setNodeRef} className={className(isOver)}>
-      {typeof children === "function" ? children(isOver) : children}
-    </div>
-  );
-}
-
-function DroppableArticle({
-  children,
-  className,
-  id,
-}: {
-  children: ReactNode;
-  className: (isOver: boolean) => string;
-  id: string;
-})
-{
-  const { isOver, setNodeRef } = useDroppable({ id });
-
-  return (
-    <article ref={setNodeRef} className={className(isOver)}>
-      {children}
-    </article>
   );
 }

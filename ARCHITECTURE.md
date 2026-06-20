@@ -84,7 +84,7 @@ Rules and behaviors:
   - `getSemestersWithClassesAndWeeks()`
   - current semester/week context from date utilities
 - `PlannerClient` then performs client fetches to `/api/classes` using encoded share query state.
-- `app/planner/page.tsx` loads the semester planner UI via `StudyPlanClient`.
+- `app/planner/page.tsx` loads the semester planner UI via `SemesterPlannerClient`.
 
 ### `/calculator`
 

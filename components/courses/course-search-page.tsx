@@ -14,7 +14,7 @@ import {
   SearchIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
-import { AddToStudyPlanButton } from "@/components/planner/add-to-study-plan-button";
+import { AddToSemesterPlannerButton } from "@/components/planner/add-to-semester-planner-button";
 import {
   buildCourseSearchParams,
   extractCourseLevelNumber,
@@ -329,7 +329,7 @@ export function CourseSearchPage({
                   </div>
 
                   <div className="absolute right-4 top-3">
-                    <AddToStudyPlanButton course={course} compact />
+                    <AddToSemesterPlannerButton course={course} compact />
                   </div>
 
                   <div className="mt-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
