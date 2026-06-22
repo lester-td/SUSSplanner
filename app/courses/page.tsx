@@ -6,7 +6,7 @@ import {
   getSemestersWithWeeks,
 } from "@/lib/db/queries";
 import { parseCourseSearchFilters } from "@/lib/timetable/course-search";
-import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
+import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export default async function CoursesPage({
   searchParams,
@@ -21,7 +21,7 @@ export default async function CoursesPage({
     searchParams,
   ]);
 
-  const { semester, week, isVacation } = getCurrentSemesterContext(
+  const currentSemesterContext = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
@@ -31,7 +31,7 @@ export default async function CoursesPage({
   return (
     <AppShell
       activeSection="courses"
-      currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)}
+      currentSemesterContext={currentSemesterContext}
     >
       <CourseSearchPage
         semesters={allSemesters}

@@ -4,7 +4,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { GpaCalculatorClient } from "@/components/calculator/gpa-calculator-client";
 import { OcasCalculatorClient } from "@/components/calculator/ocas-calculator-client";
 import { getSemestersWithWeeks } from "@/lib/db/queries";
-import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
+import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +20,13 @@ export const metadata: Metadata = {
 export default async function CalculatorsPage()
 {
   const semesterTree = await getSemestersWithWeeks();
-  const { semester, week, isVacation } = getCurrentSemesterContext(
+  const currentSemesterContext = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
 
   return (
-    <AppShell activeSection="calculator" currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)}>
+    <AppShell activeSection="calculator" currentSemesterContext={currentSemesterContext}>
       <div className="space-y-8">
         <GpaCalculatorClient />
         <OcasCalculatorClient />

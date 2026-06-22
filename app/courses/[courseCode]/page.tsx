@@ -9,7 +9,7 @@ import {
   getCourseOfferedSemesters,
   getSemestersWithWeeks,
 } from "@/lib/db/queries";
-import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
+import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 import { optionalSemesterIdSchema } from "@/lib/validation/timetable";
 
 export default async function CourseDetailRoute({
@@ -26,7 +26,7 @@ export default async function CourseDetailRoute({
     getSemestersWithWeeks(),
   ]);
 
-  const { semester, week, isVacation } = getCurrentSemesterContext(
+  const currentSemesterContext = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
@@ -48,7 +48,7 @@ export default async function CourseDetailRoute({
   ]);
 
   return (
-    <AppShell activeSection="courses" currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)}>
+    <AppShell activeSection="courses" currentSemesterContext={currentSemesterContext}>
       <CourseDetailPage
         course={course}
         offeredSemesters={offeredSemesters}
