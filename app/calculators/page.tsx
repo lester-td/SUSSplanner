@@ -27,9 +27,11 @@ export default async function CalculatorsPage()
 
   return (
     <AppShell activeSection="calculator" currentSemesterContext={currentSemesterContext}>
-      <div className="space-y-8">
-        <GpaCalculatorClient />
-        <OcasCalculatorClient />
+      <div className="px-3 md:px-[16px]">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+          <GpaCalculatorClient />
+          <OcasCalculatorClient />
+        </div>
       </div>
     </AppShell>
   );
