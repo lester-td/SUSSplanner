@@ -94,7 +94,6 @@ export function ExamCalendar({
   };
 
   const dayFormatter = new Intl.DateTimeFormat("en-SG", { day: "numeric", month: "short" });
-  const rangeFormatter = new Intl.DateTimeFormat("en-SG", { day: "numeric", month: "short", year: "numeric" });
 
   if (cards.length === 0)
   {
@@ -141,13 +140,6 @@ export function ExamCalendar({
     <div className="space-y-3">
       {windows.map((window) => (
         <section key={`${toDateKey(window.start)}-${toDateKey(window.end)}`} className="elev-1 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
-          <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
-            <h4 className="text-[clamp(11px,2.4vw,15px)] font-semibold leading-[1.35] text-[var(--on-surface)]">Exam Calendar</h4>
-            <span className="text-[clamp(11px,2.2vw,15px)] font-medium leading-[1.35] text-[var(--on-surface-variant)]">
-              {rangeFormatter.format(window.start)} - {rangeFormatter.format(window.end)}
-            </span>
-          </div>
-
           <div className="pb-0.5">
             <div className="w-full">
               <div className="grid grid-cols-6 gap-0.5">
@@ -211,6 +203,26 @@ export function ExamCalendar({
           </div>
         </section>
       ))}
+    </div>
+  );
+}
+
+export function ExamCalendarOverviewRail({
+  subtitle,
+}: {
+  subtitle: string;
+})
+{
+  return (
+    <div className="border-t border-[var(--outline-variant)]/25 bg-[var(--rail-week-bg)] px-2.5 py-1.5 text-center sm:px-3 sm:py-2">
+      <div className="flex min-w-0 flex-col items-center justify-center gap-0">
+        <div className="text-[11px] font-bold leading-4 text-[var(--primary)] sm:text-[12px]">
+          Exam Calendar
+        </div>
+        <div className="whitespace-nowrap text-[9px] leading-3 text-[var(--on-surface-variant)] sm:text-[10px] sm:leading-[13px]">
+          {subtitle}
+        </div>
+      </div>
     </div>
   );
 }
