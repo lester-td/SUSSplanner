@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS semesters (
 CREATE TABLE IF NOT EXISTS semester_weeks (
     week_id           BIGSERIAL PRIMARY KEY,
     semester_id       BIGINT NOT NULL REFERENCES semesters(semester_id) ON DELETE CASCADE,
-    week_no           SMALLINT NOT NULL CHECK (week_no > 0),
+    week_no           SMALLINT NOT NULL CHECK (week_no >= 0),
     week_type         VARCHAR(20) NOT NULL CHECK (week_type IN ('TEACHING', 'STUDY', 'EXAM')),
     label             VARCHAR(50) NOT NULL,
     start_date        DATE NOT NULL,
