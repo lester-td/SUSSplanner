@@ -8,13 +8,13 @@ export const dynamic = "force-dynamic";
 export default async function TimetablePage()
 {
   const semesters = await getSemestersWithClassesAndWeeks();
-  const { semester, week } = getCurrentSemesterContext(
+  const { semester, week, isVacation } = getCurrentSemesterContext(
     semesters.map(({ weeks, ...semesterData }) => semesterData),
     semesters.flatMap((item) => item.weeks),
   );
 
   return (
-    <AppShell activeSection="planner" currentWeekLabel={getCurrentWeekChip(semester, week)}>
+    <AppShell activeSection="planner" currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)}>
       <PlannerClient
         semesters={semesters}
         currentSemesterId={semester?.semesterId ?? semesters[0]?.semesterId ?? 0}

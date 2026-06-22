@@ -26,7 +26,7 @@ export default async function CourseDetailRoute({
     getSemestersWithWeeks(),
   ]);
 
-  const { semester, week } = getCurrentSemesterContext(
+  const { semester, week, isVacation } = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
@@ -48,7 +48,7 @@ export default async function CourseDetailRoute({
   ]);
 
   return (
-    <AppShell activeSection="courses" currentWeekLabel={getCurrentWeekChip(semester, week)}>
+    <AppShell activeSection="courses" currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)}>
       <CourseDetailPage
         course={course}
         offeredSemesters={offeredSemesters}

@@ -101,13 +101,13 @@ const portalLinks = [
 export default async function HomePage()
 {
   const semesterTree = await getSemestersWithWeeks();
-  const { semester, week } = getCurrentSemesterContext(
+  const { semester, week, isVacation } = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
 
   return (
-    <AppShell activeSection="home" currentWeekLabel={getCurrentWeekChip(semester, week)} showFooter={true} showNav={false}>
+    <AppShell activeSection="home" currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)} showFooter={true} showNav={false}>
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
         <section className="max-w-4xl">
           <p className="text-[24px] font-bold leading-[1.15] tracking-[-0.045em] text-[var(--on-surface)] sm:text-[32px] lg:text-[40px]">

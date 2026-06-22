@@ -21,7 +21,7 @@ export default async function CoursesPage({
     searchParams,
   ]);
 
-  const { semester, week } = getCurrentSemesterContext(
+  const { semester, week, isVacation } = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
@@ -31,7 +31,7 @@ export default async function CoursesPage({
   return (
     <AppShell
       activeSection="courses"
-      currentWeekLabel={getCurrentWeekChip(semester, week)}
+      currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)}
     >
       <CourseSearchPage
         semesters={allSemesters}

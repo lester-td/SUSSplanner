@@ -20,13 +20,13 @@ export const metadata: Metadata = {
 export default async function CalculatorsPage()
 {
   const semesterTree = await getSemestersWithWeeks();
-  const { semester, week } = getCurrentSemesterContext(
+  const { semester, week, isVacation } = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
 
   return (
-    <AppShell activeSection="calculator" currentWeekLabel={getCurrentWeekChip(semester, week)}>
+    <AppShell activeSection="calculator" currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)}>
       <div className="space-y-8">
         <GpaCalculatorClient />
         <OcasCalculatorClient />

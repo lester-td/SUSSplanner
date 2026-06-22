@@ -12,13 +12,13 @@ export default async function PlannerPage()
     getSemestersWithWeeks(),
   ]);
 
-  const { semester, week } = getCurrentSemesterContext(
+  const { semester, week, isVacation } = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
 
   return (
-    <AppShell activeSection="semester-planner" currentWeekLabel={getCurrentWeekChip(semester, week)}>
+    <AppShell activeSection="semester-planner" currentWeekLabel={getCurrentWeekChip(semester, week, isVacation)}>
       <SemesterPlannerClient semesters={allSemesters} />
     </AppShell>
   );
