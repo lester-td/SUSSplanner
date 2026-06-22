@@ -17,6 +17,7 @@
     }
   ],
   "weeks": [
+    { "academicYear": "2025/2026", "semesterNo": 2, "weekNo": 0, "weekType": "TEACHING", "label": "Week 0", "startDate": "2026-01-05", "endDate": "2026-01-11" },
     { "academicYear": "2025/2026", "semesterNo": 2, "weekNo": 1, "weekType": "TEACHING", "label": "Week 1", "startDate": "2026-01-12", "endDate": "2026-01-18" },
     { "academicYear": "2025/2026", "semesterNo": 2, "weekNo": 2, "weekType": "TEACHING", "label": "Week 2", "startDate": "2026-01-19", "endDate": "2026-01-25" },
     { "academicYear": "2025/2026", "semesterNo": 2, "weekNo": 3, "weekType": "TEACHING", "label": "Week 3", "startDate": "2026-01-26", "endDate": "2026-02-01" },
@@ -33,6 +34,7 @@
     { "academicYear": "2025/2026", "semesterNo": 2, "weekNo": 14, "weekType": "EXAM", "label": "Exam Week 1", "startDate": "2026-04-13", "endDate": "2026-04-18" },
     { "academicYear": "2025/2026", "semesterNo": 2, "weekNo": 15, "weekType": "EXAM", "label": "Exam Week 2", "startDate": "2026-04-20", "endDate": "2026-04-25" },
 
+    { "academicYear": "2025/2026", "semesterNo": 3, "weekNo": 0, "weekType": "TEACHING", "label": "Week 0", "startDate": "2026-04-27", "endDate": "2026-05-03" },
     { "academicYear": "2025/2026", "semesterNo": 3, "weekNo": 1, "weekType": "TEACHING", "label": "Week 1", "startDate": "2026-05-04", "endDate": "2026-05-10" },
     { "academicYear": "2025/2026", "semesterNo": 3, "weekNo": 2, "weekType": "TEACHING", "label": "Week 2", "startDate": "2026-05-11", "endDate": "2026-05-17" },
     { "academicYear": "2025/2026", "semesterNo": 3, "weekNo": 3, "weekType": "TEACHING", "label": "Week 3", "startDate": "2026-05-18", "endDate": "2026-05-24" },
@@ -41,6 +43,7 @@
     { "academicYear": "2025/2026", "semesterNo": 3, "weekNo": 6, "weekType": "TEACHING", "label": "Week 6", "startDate": "2026-06-08", "endDate": "2026-06-13" },
     { "academicYear": "2025/2026", "semesterNo": 3, "weekNo": 7, "weekType": "EXAM", "label": "Exam Week", "startDate": "2026-06-15", "endDate": "2026-06-20" },
 
+    { "academicYear": "2026/2027", "semesterNo": 1, "weekNo": 0, "weekType": "TEACHING", "label": "Week 0", "startDate": "2026-08-03", "endDate": "2026-08-09" },
     { "academicYear": "2026/2027", "semesterNo": 1, "weekNo": 1, "weekType": "TEACHING", "label": "Week 1", "startDate": "2026-08-10", "endDate": "2026-08-16" },
     { "academicYear": "2026/2027", "semesterNo": 1, "weekNo": 2, "weekType": "TEACHING", "label": "Week 2", "startDate": "2026-08-17", "endDate": "2026-08-23" },
     { "academicYear": "2026/2027", "semesterNo": 1, "weekNo": 3, "weekType": "TEACHING", "label": "Week 3", "startDate": "2026-08-24", "endDate": "2026-08-30" },
