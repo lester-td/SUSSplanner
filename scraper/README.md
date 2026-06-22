@@ -263,6 +263,7 @@ The app uses continuous week numbers.
 Example for January regular semester:
 
 ```text
+Week 0    = TEACHING, shown when selected classes have pre-term events
 Week 1-12 = TEACHING
 Week 13   = STUDY
 Week 14   = EXAM, Exam Week 1
@@ -272,6 +273,7 @@ Week 15   = EXAM, Exam Week 2
 Example for May special semester:
 
 ```text
+Week 0   = TEACHING, shown when selected classes have pre-term events
 Week 1-6 = TEACHING
 Week 7   = EXAM
 ```
