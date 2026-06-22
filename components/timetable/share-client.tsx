@@ -17,16 +17,15 @@ import {
 } from "@/components/planner/icons";
 import { ActionButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
-import { ExamCalendar } from "@/components/timetable/exam-calendar";
+import { ExamCalendar, ExamCalendarOverviewRail } from "@/components/timetable/exam-calendar";
 import { SelectorRail } from "@/components/timetable/selector-rail";
+import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { exportPngDataUrlToPdf } from "@/lib/export/pdf-client";
 import { exportElementToPng, renderElementToPngDataUrl } from "@/lib/export/png";
 import {
   buildTimeSlots,
   formatClassGroupLabel,
-  formatEventDate,
-  formatTimeRange,
 } from "@/lib/timetable/date-utils";
 import {
   importSharedTimetableToLocalStorage,
@@ -35,9 +34,11 @@ import {
 import { encodeShareUrlState } from "@/lib/timetable/share-url";
 import {
   buildExamCards,
+  buildSelectableWeeks,
   buildSelectedCourseCards,
   buildTimetableBlocks,
   buildWeekOptions,
+  formatExamCalendarOverviewSubtitle,
   getLatestEndMinutes,
 } from "@/lib/timetable/timetable-utils";
 import type {
@@ -71,9 +72,10 @@ export function ShareClient({
   const visibleEvents = timetable.events;
   const blocks = useMemo(() => buildTimetableBlocks(visibleEvents, selectedWeekId), [selectedWeekId, visibleEvents]);
   const examCards = useMemo(() => buildExamCards(visibleEvents), [visibleEvents]);
+  const examOverviewSubtitle = formatExamCalendarOverviewSubtitle(timetable.semesterWeeks) ?? "No exam period loaded";
   const visibleEndMinutes = getLatestEndMinutes(blocks);
   const timeSlots = buildTimeSlots(visibleEndMinutes);
-  const selectableWeeks = timetable.semesterWeeks.filter((week) => week.weekType === "TEACHING");
+  const selectableWeeks = buildSelectableWeeks(timetable.semesterWeeks, timetable.events);
   const weekItems = buildWeekOptions(selectableWeeks);
 
   const nextViewToggle = viewMode === "class"
@@ -144,51 +146,47 @@ export function ShareClient({
       <div ref={exportCaptureRef} className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
           <div className="elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
-            <SelectorRail
-              items={weekItems}
-              selectedId={String(selectedWeekId)}
-              onSelect={(id) => setSelectedWeekId(id === "all" ? "all" : Number(id))}
-              onPrev={() => {
-                const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
-                const index = values.findIndex((value) => value === selectedWeekId);
-                if (index > 0)
-                {
-                  setSelectedWeekId(values[index - 1]);
-                }
-              }}
-              onNext={() => {
-                const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
-                const index = values.findIndex((value) => value === selectedWeekId);
-                if (index >= 0 && index < values.length - 1)
-                {
-                  setSelectedWeekId(values[index + 1]);
-                }
-              }}
-              variant="week"
-              subtle
-            />
+            {viewMode === "exam" ? (
+              <ExamCalendarOverviewRail subtitle={examOverviewSubtitle} />
+            ) : (
+              <SelectorRail
+                items={weekItems}
+                selectedId={String(selectedWeekId)}
+                onSelect={(id) => setSelectedWeekId(id === "all" ? "all" : Number(id))}
+                onPrev={() => {
+                  const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
+                  const index = values.findIndex((value) => value === selectedWeekId);
+                  if (index > 0)
+                  {
+                    setSelectedWeekId(values[index - 1]);
+                  }
+                }}
+                onNext={() => {
+                  const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
+                  const index = values.findIndex((value) => value === selectedWeekId);
+                  if (index >= 0 && index < values.length - 1)
+                  {
+                    setSelectedWeekId(values[index + 1]);
+                  }
+                }}
+                variant="week"
+                subtle
+              />
+            )}
           </div>
 
-          <div className="bg-[var(--surface-container-lowest)] px-3 pt-2.5">
-            {timetable.unresolvedSelections.length > 0 ? (
-              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-1.5 text-[12px] font-medium leading-4 text-[var(--error)]">
+          {timetable.unresolvedSelections.length > 0 ? (
+            <div className="bg-[var(--surface-container-lowest)] px-3 pt-2.5">
+              <div className="rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-1.5 text-[12px] font-medium leading-4 text-[var(--error)]">
                 Some class identifiers in this shared link no longer match the current database.
               </div>
-            ) : null}
-            {timetable.clashes.length > 0 ? (
-              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2.5">
-                <p className="text-[12px] font-semibold leading-4 text-[var(--error)]">Detected timetable clashes</p>
-                <div className="mt-2 space-y-2 text-[11px] leading-[14px] text-[var(--on-surface)]">
-                  {timetable.clashes.slice(0, 4).map((clash) => (
-                    <div key={clash.clashKey}>
-                      <div className="font-semibold">{formatEventDate(clash.eventDate)} · {formatTimeRange(clash.startTime, clash.endTime)}</div>
-                      <div className="text-[var(--on-surface-variant)]">{clash.events.map((event) => `${event.courseCode} ${formatClassGroupLabel(event.groupCode)}`).join(" · ")}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
+
+          <TimetableAlerts
+            events={timetable.events}
+            clashes={timetable.clashes}
+          />
 
           <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-3 pb-3 pt-1">
             <div className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>

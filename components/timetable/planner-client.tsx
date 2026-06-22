@@ -23,16 +23,15 @@ import {
 import { ActionButton, IconButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
 import { ClassScheduleModalContent } from "@/components/timetable/class-schedule-modal-content";
-import { ExamCalendar } from "@/components/timetable/exam-calendar";
+import { ExamCalendar, ExamCalendarOverviewRail } from "@/components/timetable/exam-calendar";
 import { SelectorRail } from "@/components/timetable/selector-rail";
+import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { exportPngDataUrlToPdf } from "@/lib/export/pdf-client";
 import { exportElementToPng, renderElementToPngDataUrl } from "@/lib/export/png";
 import {
   buildTimeSlots,
   formatClassGroupLabel,
-  formatEventDate,
-  formatTimeRange,
   getCurrentWeekChip,
 } from "@/lib/timetable/date-utils";
 import {
@@ -46,10 +45,12 @@ import {
 } from "@/lib/timetable/share-url";
 import {
   buildExamCards,
+  buildSelectableWeeks,
   buildSelectedCourseCards,
   buildTimetableBlocks,
   buildWeekOptions,
   COURSE_COLOR_PALETTE,
+  formatExamCalendarOverviewSubtitle,
   getCourseColor,
   getLatestEndMinutes,
 } from "@/lib/timetable/timetable-utils";
@@ -111,14 +112,23 @@ function createDefaultSemesterState(
   semesterId: number,
   currentSemesterId: number,
   currentWeekId: number | null,
+  semesterWeeks: SemesterWeekRecord[],
 ): PlannerStorageState
 {
+  const currentWeek = semesterWeeks.find((week) => week.weekId === currentWeekId) ?? null;
+  const selectedWeekId = semesterId === currentSemesterId
+    && currentWeek?.weekType === "TEACHING"
+    && currentWeek.weekNo >= 1
+    && currentWeek.weekNo <= 12
+    ? currentWeek.weekId
+    : "all";
+
   return {
     semesterId,
     selectedClasses: [],
     hiddenClasses: [],
     courseColorsByCourseCode: {},
-    selectedWeekId: currentWeekId && semesterId === currentSemesterId ? currentWeekId : "all",
+    selectedWeekId,
     orientation: "vertical",
     viewMode: "class",
   };
@@ -131,27 +141,13 @@ function createInitialSemesterState(
 ): PlannerStorageState
 {
   const semesterId = currentSemesterId || semesters[0]?.semesterId || 0;
-  return createDefaultSemesterState(semesterId, currentSemesterId, currentWeekId);
+  const semesterWeeks = semesters.find((semester) => semester.semesterId === semesterId)?.weeks ?? [];
+  return createDefaultSemesterState(semesterId, currentSemesterId, currentWeekId, semesterWeeks);
 }
 
 function formatSemesterRailMonthYear(semester: SemesterOption)
 {
-  const startDate = semester.weeks[0]?.startDate;
-  if (!startDate)
-  {
-    return semester.semesterName;
-  }
-
-  const parsedDate = new Date(`${startDate}T00:00:00`);
-  if (Number.isNaN(parsedDate.getTime()))
-  {
-    return semester.semesterName;
-  }
-
-  return new Intl.DateTimeFormat("en-SG", {
-    month: "long",
-    year: "numeric",
-  }).format(parsedDate);
+  return semester.semesterName;
 }
 
 function formatAcademicYearShort(academicYear: string)
@@ -358,7 +354,7 @@ export function PlannerClient({
 
   const selectedSemester = semesters.find((semester) => semester.semesterId === semesterId) ?? semesters[0] ?? null;
   const semesterWeeks = selectedSemester?.weeks ?? [];
-  const selectableWeeks = semesterWeeks.filter((week) => week.weekType === "TEACHING");
+  const selectableWeeks = buildSelectableWeeks(semesterWeeks, timetableData.events);
 
   useEffect(() => {
     const saved = loadSavedTimetable();
@@ -623,6 +619,7 @@ export function PlannerClient({
     () => buildExamCards(visibleEvents).filter((card) => !hiddenClasses.includes(card.shareKey)),
     [hiddenClasses, visibleEvents],
   );
+  const examOverviewSubtitle = formatExamCalendarOverviewSubtitle(timetableData.semesterWeeks) ?? "No exam period loaded";
   const visibleEndMinutes = getLatestEndMinutes(displayedBlocks);
   const timeSlots = buildTimeSlots(visibleEndMinutes);
   const totalCredits = selectedCards.reduce((sum, card) => sum + (card.creditUnits ?? 0), 0);
@@ -759,7 +756,12 @@ export function PlannerClient({
 
     const saved = loadSavedTimetable();
     const next = getSavedSemesterState(saved, nextSemesterId)
-      ?? createDefaultSemesterState(nextSemesterId, currentSemesterId, currentWeekId);
+      ?? createDefaultSemesterState(
+        nextSemesterId,
+        currentSemesterId,
+        currentWeekId,
+        semesters.find((semester) => semester.semesterId === nextSemesterId)?.weeks ?? [],
+      );
 
     setSemesterId(nextSemesterId);
     setSelectedClasses(next.selectedClasses);
@@ -953,58 +955,54 @@ export function PlannerClient({
               }}
               variant="semester"
             />
-            <SelectorRail
-              items={weekItems}
-              selectedId={String(selectedWeekId)}
-              onSelect={(id) => setSelectedWeekId(id === "all" ? "all" : Number(id))}
-              onPrev={() => {
-                const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
-                const index = values.findIndex((value) => value === selectedWeekId);
-                if (index > 0)
-                {
-                  setSelectedWeekId(values[index - 1]);
-                }
-              }}
-              onNext={() => {
-                const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
-                const index = values.findIndex((value) => value === selectedWeekId);
-                if (index >= 0 && index < values.length - 1)
-                {
-                  setSelectedWeekId(values[index + 1]);
-                }
-              }}
-              variant="week"
-              subtle
-            />
+            {viewMode === "exam" ? (
+              <ExamCalendarOverviewRail subtitle={examOverviewSubtitle} />
+            ) : (
+              <SelectorRail
+                items={weekItems}
+                selectedId={String(selectedWeekId)}
+                onSelect={(id) => setSelectedWeekId(id === "all" ? "all" : Number(id))}
+                onPrev={() => {
+                  const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
+                  const index = values.findIndex((value) => value === selectedWeekId);
+                  if (index > 0)
+                  {
+                    setSelectedWeekId(values[index - 1]);
+                  }
+                }}
+                onNext={() => {
+                  const values: Array<number | "all"> = ["all", ...selectableWeeks.map((week) => week.weekId)];
+                  const index = values.findIndex((value) => value === selectedWeekId);
+                  if (index >= 0 && index < values.length - 1)
+                  {
+                    setSelectedWeekId(values[index + 1]);
+                  }
+                }}
+                variant="week"
+                subtle
+              />
+            )}
           </div>
 
-          <div className="bg-[var(--surface-container-lowest)] px-2.5 pt-2 sm:px-3 sm:pt-2.5">
-            {plannerNotice ? (
-              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--primary)] sm:text-[12px]">
-                {plannerNotice}
-              </div>
-            ) : null}
-            {timetableData.unresolvedSelections.length > 0 ? (
-              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--error)] sm:text-[12px]">
-                Some shared or saved class identifiers no longer match the database for this semester.
-              </div>
-            ) : null}
-            {timetableData.clashes.length > 0 ? (
-              <div className="mb-2.5 rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-2 sm:px-3 sm:py-2.5">
-                <p className="text-[11px] font-semibold leading-4 text-[var(--error)] sm:text-[12px]">Detected timetable clashes</p>
-                <div className="mt-1.5 space-y-1.5 text-[10px] leading-[13px] text-[var(--on-surface)] sm:mt-2 sm:space-y-2 sm:text-[11px] sm:leading-[14px]">
-                  {timetableData.clashes.slice(0, 4).map((clash) => (
-                    <div key={clash.clashKey}>
-                      <div className="font-semibold">{formatEventDate(clash.eventDate)} · {formatTimeRange(clash.startTime, clash.endTime)}</div>
-                      <div className="text-[var(--on-surface-variant)]">
-                        {clash.events.map((event) => `${event.courseCode} ${formatClassGroupLabel(event.groupCode)}`).join(" · ")}
-                      </div>
-                    </div>
-                  ))}
+          {plannerNotice || timetableData.unresolvedSelections.length > 0 ? (
+            <div className="space-y-2 bg-[var(--surface-container-lowest)] px-2.5 pt-2 sm:px-3 sm:pt-2.5">
+              {plannerNotice ? (
+                <div className="rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--primary)] sm:text-[12px]">
+                  {plannerNotice}
                 </div>
-              </div>
-            ) : null}
-          </div>
+              ) : null}
+              {timetableData.unresolvedSelections.length > 0 ? (
+                <div className="rounded-[0.5rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--error)] sm:text-[12px]">
+                  Some shared or saved class identifiers no longer match the database for this semester.
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <TimetableAlerts
+            events={timetableData.events}
+            clashes={timetableData.clashes}
+          />
 
           <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-1 pb-0.5 sm:pb-1">
             <div className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
