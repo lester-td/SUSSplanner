@@ -5,6 +5,7 @@ import {
   buildWeekLabel,
   DEFAULT_END_MINUTES,
   formatDateRange,
+  formatDateRangeWithYear,
   formatEventDate,
   getVisibleEndMinutes,
   stripSeconds,
@@ -47,47 +48,60 @@ function unique<T>(values: T[])
   return [...new Set(values)];
 }
 
+function formatWeekNumberSummary(weekNumbers: number[])
+{
+  if (weekNumbers.length === 0)
+  {
+    return null;
+  }
+
+  const sortedWeeks = [...weekNumbers].sort((left, right) => left - right);
+  const coversAllTeachingWeeks = sortedWeeks.length === 12 && sortedWeeks.every((week, index) => week === index + 1);
+
+  if (coversAllTeachingWeeks)
+  {
+    return "1-12";
+  }
+
+  const rangeLabels: string[] = [];
+  let start = sortedWeeks[0];
+  let previous = sortedWeeks[0];
+
+  for (const current of sortedWeeks.slice(1))
+  {
+    if (current === previous + 1)
+    {
+      previous = current;
+      continue;
+    }
+
+    rangeLabels.push(start === previous ? String(start) : `${start}-${previous}`);
+    start = current;
+    previous = current;
+  }
+
+  rangeLabels.push(start === previous ? String(start) : `${start}-${previous}`);
+
+  return rangeLabels.join(", ");
+}
+
 function formatWeekSummary(events: ClassEventWithWeekRecord[])
 {
   const teachingWeekNumbers = unique(
     events
-      .filter((event) => event.weekType === "TEACHING" && event.weekNo !== null)
+      .filter((event) => event.weekType === "TEACHING" && event.weekNo !== null && event.weekNo >= 0 && event.weekNo <= 12)
       .map((event) => event.weekNo as number),
   );
-
-  if (teachingWeekNumbers.length > 0)
-  {
-    const sortedWeeks = [...teachingWeekNumbers].sort((left, right) => left - right);
-    const coversAllTeachingWeeks = sortedWeeks.length === 12 && sortedWeeks.every((week, index) => week === index + 1);
-
-    if (coversAllTeachingWeeks)
-    {
-      return "1-12";
-    }
-
-    const rangeLabels: string[] = [];
-    let start = sortedWeeks[0];
-    let previous = sortedWeeks[0];
-
-    for (const current of sortedWeeks.slice(1))
-    {
-      if (current === previous + 1)
-      {
-        previous = current;
-        continue;
-      }
-
-      rangeLabels.push(start === previous ? String(start) : `${start}-${previous}`);
-      start = current;
-      previous = current;
-    }
-
-    rangeLabels.push(start === previous ? String(start) : `${start}-${previous}`);
-
-    return rangeLabels.join(", ");
-  }
-
-  const labels = unique(events.map((event) => event.weekLabel ?? formatEventDate(event.eventDate)).filter(Boolean));
+  const teachingWeekSummary = formatWeekNumberSummary(teachingWeekNumbers);
+  const exceptionalLabels = unique(
+    events
+      .filter((event) => !(event.weekType === "TEACHING" && event.weekNo !== null && event.weekNo >= 0 && event.weekNo <= 12))
+      .map((event) => event.weekLabel ?? formatEventDate(event.eventDate))
+      .filter(Boolean),
+  );
+  const labels = teachingWeekSummary
+    ? [teachingWeekSummary, ...exceptionalLabels]
+    : exceptionalLabels;
 
   if (labels.length === 0)
   {
@@ -96,10 +110,10 @@ function formatWeekSummary(events: ClassEventWithWeekRecord[])
 
   if (labels.length <= 3)
   {
-    return labels.join(", ");
+    return labels.join(" + ");
   }
 
-  return `${labels.slice(0, 3).join(", ")} +${labels.length - 3}`;
+  return `${labels.slice(0, 3).join(" + ")} +${labels.length - 3}`;
 }
 
 export function getCourseColorMap(selections: TimetableSelectionRecord[])
@@ -128,7 +142,7 @@ export function buildTimetableBlocks(
 
   if (selectedWeekId !== "all")
   {
-    return events
+    return classEvents
       .filter((event) => event.weekId === selectedWeekId)
       .map((event) => ({
         id: `${event.eventId}`,
@@ -226,6 +240,20 @@ export function buildExamCards(events: TimetableEventRecord[])
     .sort((left, right) => `${left.eventDate}${left.startTime}`.localeCompare(`${right.eventDate}${right.startTime}`));
 }
 
+export function formatExamCalendarOverviewSubtitle(semesterWeeks: SemesterWeekRecord[])
+{
+  const examWeeks = semesterWeeks
+    .filter((week) => week.weekType === "EXAM")
+    .sort((left, right) => left.startDate.localeCompare(right.startDate));
+
+  if (examWeeks.length === 0)
+  {
+    return null;
+  }
+
+  return formatDateRangeWithYear(examWeeks[0].startDate, examWeeks[examWeeks.length - 1].endDate);
+}
+
 export function buildSelectedCourseCards(data: TimetableData)
 {
   const colorMap = getCourseColorMap(data.selections);
@@ -253,6 +281,44 @@ export function buildWeekOptions(semesterWeeks: SemesterWeekRecord[])
       subtitle: formatDateRange(week.startDate, week.endDate),
     })),
   ];
+}
+
+export function buildSelectableWeeks(
+  semesterWeeks: SemesterWeekRecord[],
+  events: TimetableEventRecord[],
+)
+{
+  const classWeekIds = new Set(
+    events
+      .filter((event) => event.eventKind === "CLASS" && event.weekId !== null)
+      .map((event) => event.weekId as number),
+  );
+  const weekZero = semesterWeeks
+    .filter((week) => week.weekNo === 0 && classWeekIds.has(week.weekId))
+    .sort((left, right) => left.startDate.localeCompare(right.startDate));
+  const standardWeeks = semesterWeeks
+    .filter((week) => week.weekType === "TEACHING" && week.weekNo >= 1 && week.weekNo <= 12)
+    .sort((left, right) => left.weekNo - right.weekNo);
+  const studyWeeks = semesterWeeks
+    .filter((week) => week.weekType === "STUDY" && classWeekIds.has(week.weekId))
+    .sort((left, right) => left.startDate.localeCompare(right.startDate));
+
+  return [...weekZero, ...standardWeeks, ...studyWeeks];
+}
+
+export function getExceptionalClassEvents(events: TimetableEventRecord[])
+{
+  const sortedClasses = events
+    .filter((event) => event.eventKind === "CLASS")
+    .sort((left, right) => (
+      `${left.eventDate}${left.startTime}${left.courseCode}`
+        .localeCompare(`${right.eventDate}${right.startTime}${right.courseCode}`)
+    ));
+
+  return {
+    weekZeroClasses: sortedClasses.filter((event) => event.weekNo === 0),
+    studyWeekClasses: sortedClasses.filter((event) => event.weekType === "STUDY"),
+  };
 }
 
 export function getLatestEndMinutes(blocks: TimetableBlock[])
