@@ -9,11 +9,12 @@ import {
   CodeIcon,
   HomeIcon,
   LayersIcon,
+  SettingsIcon,
 } from "@/components/planner/icons";
 import { getCurrentWeekChip, type CurrentSemesterContext } from "@/lib/timetable/date-utils";
 import type { PlannerSection } from "@/lib/timetable/types";
 
-type AppSection = "home" | PlannerSection | "calculator";
+type AppSection = "home" | PlannerSection | "calculator" | "settings";
 
 const navItems = [
   {
@@ -45,6 +46,12 @@ const navItems = [
     label: "Calculators",
     href: "/calculators",
     icon: CalculatorIcon,
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    href: "/settings",
+    icon: SettingsIcon,
   },
 ] as const satisfies Array<{
   id: AppSection;

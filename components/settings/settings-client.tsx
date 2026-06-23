@@ -12,57 +12,17 @@ import {
   SunIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
-import { COURSE_COLOR_PALETTE } from "@/lib/timetable/timetable-utils";
-
-type ColorSchemePreference = "system" | "light" | "dark";
-type TimetableOrientation = "horizontal" | "vertical";
-
-type SettingsState = {
-  colorScheme: ColorSchemePreference;
-  themeId: string;
-  timetableOrientation: TimetableOrientation;
-  showCourseTitles: boolean;
-  registrationReminders: boolean;
-};
-
-type ThemeOption = {
-  id: string;
-  name: string;
-  colors: readonly string[];
-};
-
-const STORAGE_KEY = "sussplanner:settings";
-
-const DEFAULT_SETTINGS: SettingsState = {
-  colorScheme: "system",
-  themeId: "current-timetable",
-  timetableOrientation: "horizontal",
-  showCourseTitles: true,
-  registrationReminders: true,
-};
-
-const THEME_OPTIONS: ThemeOption[] = [
-  {
-    id: "current-timetable",
-    name: "Current Timetable",
-    colors: COURSE_COLOR_PALETTE,
-  },
-  {
-    id: "suss-brand",
-    name: "SUSS Brand",
-    colors: ["#001E60", "#DA291C", "#9ADBE8", "#D0DF00", "#7B87B8", "#F08A81", "#D6D2C4", "#B8E9F1"],
-  },
-  {
-    id: "focus",
-    name: "Focus",
-    colors: ["#172554", "#1D4ED8", "#2563EB", "#0891B2", "#475569", "#64748B", "#94A3B8", "#CBD5E1"],
-  },
-  {
-    id: "bright",
-    name: "Bright",
-    colors: ["#164E63", "#0D9488", "#84CC16", "#FACC15", "#F97316", "#E11D48", "#9333EA", "#2563EB"],
-  },
-];
+import {
+  APP_SETTINGS_STORAGE_KEY,
+  APP_THEME_OPTIONS,
+  DEFAULT_APP_SETTINGS,
+  announceAppSettingsUpdated,
+  getThemeOption,
+  readAppSettings,
+  saveAppSettings,
+  type SettingsState,
+  type ThemeOption,
+} from "@/lib/settings/app-settings";
 
 const PREVIEW_BLOCKS = [
   {
@@ -152,27 +112,6 @@ function getPreviewTextColor(hexColor: string)
   const blue = Number.parseInt(normalized.slice(4, 6), 16);
 
   return `rgb(${Math.round(red * 0.18)} ${Math.round(green * 0.18)} ${Math.round(blue * 0.18)})`;
-}
-
-function readSettings()
-{
-  try
-  {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored)
-    {
-      return DEFAULT_SETTINGS;
-    }
-
-    return {
-      ...DEFAULT_SETTINGS,
-      ...JSON.parse(stored),
-    } as SettingsState;
-  }
-  catch
-  {
-    return DEFAULT_SETTINGS;
-  }
 }
 
 function Section({
@@ -267,7 +206,7 @@ function ThemePicker({
 {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {THEME_OPTIONS.map((theme) => {
+      {APP_THEME_OPTIONS.map((theme) => {
         const selected = theme.id === selectedThemeId;
 
         return (
@@ -371,12 +310,12 @@ function TimetablePreview({
 
 export function SettingsClient()
 {
-  const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setSettings(readSettings());
+    setSettings(readAppSettings());
     setReady(true);
   }, []);
 
@@ -386,11 +325,12 @@ export function SettingsClient()
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    saveAppSettings(settings);
+    announceAppSettingsUpdated();
   }, [ready, settings]);
 
   const selectedTheme = useMemo(
-    () => THEME_OPTIONS.find((theme) => theme.id === settings.themeId) ?? THEME_OPTIONS[0],
+    () => getThemeOption(settings.themeId),
     [settings.themeId],
   );
 
@@ -404,7 +344,7 @@ export function SettingsClient()
 
   function resetSettings()
   {
-    setSettings(DEFAULT_SETTINGS);
+    setSettings(DEFAULT_APP_SETTINGS);
     setResetConfirmOpen(false);
   }
 
@@ -422,7 +362,7 @@ export function SettingsClient()
           <p className="mt-2 max-w-3xl text-[15px] leading-7 text-[var(--on-surface-variant)]">
             Customise how SUSS Planner looks and behaves on this browser. These controls are saved locally under{" "}
             <code className="rounded bg-[var(--surface-container-low)] px-1.5 py-0.5 text-[12px] font-bold">
-              {STORAGE_KEY}
+              {APP_SETTINGS_STORAGE_KEY}
             </code>{" "}
             on this device.
           </p>
@@ -526,11 +466,11 @@ export function SettingsClient()
         </div>
         <div className="flex items-start gap-2">
           <ColumnsIcon className="mt-0.5 h-4 w-4 text-[var(--primary)]" />
-          <span>Names match future global settings wiring.</span>
+          <span>Timetable defaults apply across this browser.</span>
         </div>
         <div className="flex items-start gap-2">
           <RowsIcon className="mt-0.5 h-4 w-4 text-[var(--primary)]" />
-          <span>The main navigation is unchanged.</span>
+          <span>Existing saved timetables keep their current layout.</span>
         </div>
       </div>
 

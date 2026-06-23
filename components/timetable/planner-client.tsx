@@ -30,6 +30,14 @@ import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { exportPngDataUrlToPdf } from "@/lib/export/pdf-client";
 import { exportElementToPng, renderElementToPngDataUrl } from "@/lib/export/png";
 import {
+  APP_SETTINGS_STORAGE_KEY,
+  APP_SETTINGS_UPDATED_EVENT,
+  DEFAULT_APP_SETTINGS,
+  getSettingsThemePalette,
+  readAppSettings,
+  type SettingsState,
+} from "@/lib/settings/app-settings";
+import {
   buildTimeSlots,
   formatClassGroupLabel,
   getCurrentWeekChip,
@@ -49,7 +57,6 @@ import {
   buildSelectedCourseCards,
   buildTimetableBlocks,
   buildWeekOptions,
-  COURSE_COLOR_PALETTE,
   formatExamCalendarOverviewSubtitle,
   getCourseColor,
   getLatestEndMinutes,
@@ -113,6 +120,7 @@ function createDefaultSemesterState(
   currentSemesterId: number,
   currentWeekId: number | null,
   semesterWeeks: SemesterWeekRecord[],
+  defaultOrientation: TimetableOrientation,
 ): PlannerStorageState
 {
   const currentWeek = semesterWeeks.find((week) => week.weekId === currentWeekId) ?? null;
@@ -129,20 +137,9 @@ function createDefaultSemesterState(
     hiddenClasses: [],
     courseColorsByCourseCode: {},
     selectedWeekId,
-    orientation: "vertical",
+    orientation: defaultOrientation,
     viewMode: "class",
   };
-}
-
-function createInitialSemesterState(
-  semesters: SemesterOption[],
-  currentSemesterId: number,
-  currentWeekId: number | null,
-): PlannerStorageState
-{
-  const semesterId = currentSemesterId || semesters[0]?.semesterId || 0;
-  const semesterWeeks = semesters.find((semester) => semester.semesterId === semesterId)?.weeks ?? [];
-  return createDefaultSemesterState(semesterId, currentSemesterId, currentWeekId, semesterWeeks);
 }
 
 function formatSemesterRailMonthYear(semester: SemesterOption)
@@ -306,6 +303,28 @@ function sortSelectedCards(
   });
 }
 
+function buildThemedCourseColorMap(
+  cards: ReturnType<typeof buildSelectedCourseCards>,
+  palette: readonly string[],
+)
+{
+  const colorMap = new Map<string, string>();
+  let colorIndex = 0;
+
+  for (const card of cards)
+  {
+    if (colorMap.has(card.courseCode))
+    {
+      continue;
+    }
+
+    colorMap.set(card.courseCode, palette[colorIndex % palette.length] ?? card.color);
+    colorIndex += 1;
+  }
+
+  return colorMap;
+}
+
 export function PlannerClient({
   semesters,
   currentSemesterId,
@@ -317,8 +336,9 @@ export function PlannerClient({
 })
 {
   const [ready, setReady] = useState(false);
+  const [appSettings, setAppSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
   const [semesterId, setSemesterId] = useState<number>(currentSemesterId);
-  const [orientation, setOrientation] = useState<TimetableOrientation>("vertical");
+  const [orientation, setOrientation] = useState<TimetableOrientation>(DEFAULT_APP_SETTINGS.timetableOrientation);
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [sortMode, setSortMode] = useState<"code" | "exam" | "credit">("code");
   const [searchInput, setSearchInput] = useState("");
@@ -357,6 +377,7 @@ export function PlannerClient({
   const selectableWeeks = buildSelectableWeeks(semesterWeeks, timetableData.events);
 
   useEffect(() => {
+    const settings = readAppSettings();
     const saved = loadSavedTimetable();
     const savedSemesterExists = Boolean(saved && semesters.some((semester) => semester.semesterId === saved.semesterId));
     const semesterIdToLoad = savedSemesterExists && saved
@@ -365,17 +386,42 @@ export function PlannerClient({
     const next = savedSemesterExists && saved
       ? saved
       : getSavedSemesterState(saved, semesterIdToLoad)
-        ?? createInitialSemesterState(semesters, currentSemesterId, currentWeekId);
+        ?? createDefaultSemesterState(
+          semesterIdToLoad,
+          currentSemesterId,
+          currentWeekId,
+          semesters.find((semester) => semester.semesterId === semesterIdToLoad)?.weeks ?? [],
+          settings.timetableOrientation,
+        );
 
+    setAppSettings(settings);
     setSemesterId(semesterIdToLoad);
     setSelectedClasses(next.selectedClasses);
     setHiddenClasses(next.hiddenClasses);
     setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
     setSelectedWeekId(next.selectedWeekId);
-    setOrientation(saved?.orientation ?? "vertical");
+    setOrientation(saved?.orientation ?? settings.timetableOrientation);
     setViewMode(saved?.viewMode ?? "class");
     setReady(true);
   }, [currentSemesterId, currentWeekId, semesters]);
+
+  useEffect(() => {
+    const refreshSettings = () => setAppSettings(readAppSettings());
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === APP_SETTINGS_STORAGE_KEY)
+      {
+        refreshSettings();
+      }
+    };
+
+    window.addEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!ready)
@@ -556,13 +602,24 @@ export function PlannerClient({
     () => sortSelectedCards(buildSelectedCourseCards(timetableData), sortMode),
     [sortMode, timetableData],
   );
+  const themePalette = useMemo(() => getSettingsThemePalette(appSettings), [appSettings]);
+  const defaultColorByCourseCode = useMemo(
+    () => buildThemedCourseColorMap(selectedCards, themePalette),
+    [selectedCards, themePalette],
+  );
   const colorByShareKey = useMemo(
-    () => new Map(selectedCards.map((card) => [card.shareKey, courseColorsByCourseCode[card.courseCode] ?? card.color])),
-    [courseColorsByCourseCode, selectedCards],
+    () => new Map(selectedCards.map((card) => [
+      card.shareKey,
+      courseColorsByCourseCode[card.courseCode] ?? defaultColorByCourseCode.get(card.courseCode) ?? card.color,
+    ])),
+    [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards],
   );
   const colorByCourseCode = useMemo(
-    () => new Map(selectedCards.map((card) => [card.courseCode, courseColorsByCourseCode[card.courseCode] ?? card.color])),
-    [courseColorsByCourseCode, selectedCards],
+    () => new Map(selectedCards.map((card) => [
+      card.courseCode,
+      courseColorsByCourseCode[card.courseCode] ?? defaultColorByCourseCode.get(card.courseCode) ?? card.color,
+    ])),
+    [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards],
   );
   const selectedShareKeyByCourseCode = useMemo(
     () => new Map(selectedClasses.map((selection) => [selection.courseCode, buildSharedClassIdentifier(selection)])),
@@ -586,9 +643,14 @@ export function PlannerClient({
         groupCodeType: group.groupCodeType,
         groupCode: group.groupCode,
       };
-      return [buildSharedClassIdentifier(identifier), colorByCourseCode.get(group.courseCode) ?? getCourseColor(group.courseCode)] as const;
+      return [
+        buildSharedClassIdentifier(identifier),
+        colorByCourseCode.get(group.courseCode)
+          ?? defaultColorByCourseCode.get(group.courseCode)
+          ?? getCourseColor(group.courseCode),
+      ] as const;
     }))
-  ), [classPickerClasses, colorByCourseCode]);
+  ), [classPickerClasses, colorByCourseCode, defaultColorByCourseCode]);
   const displayedBlocks = useMemo(() => {
     if (!classPickerCourse)
     {
@@ -712,30 +774,6 @@ export function PlannerClient({
 
   function addClassSelection(selection: SharedClassIdentifier)
   {
-    setCourseColorsByCourseCode((current) => {
-      if (current[selection.courseCode])
-      {
-        return current;
-      }
-
-      const usedColors = new Set<string>();
-      for (const card of selectedCards)
-      {
-        if (card.courseCode === selection.courseCode)
-        {
-          continue;
-        }
-        usedColors.add(current[card.courseCode] ?? card.color);
-      }
-
-      const nextColor = COURSE_COLOR_PALETTE.find((color) => !usedColors.has(color))
-        ?? COURSE_COLOR_PALETTE[usedColors.size % COURSE_COLOR_PALETTE.length];
-
-      return {
-        ...current,
-        [selection.courseCode]: nextColor,
-      };
-    });
     setSelectedClasses((current) => replaceSelectionForCourse(current, selection));
     setHiddenClasses((current) => current.filter((value) => !value.startsWith(`${selection.courseCode}:`)));
     closeClassPicker();
@@ -763,6 +801,7 @@ export function PlannerClient({
         currentSemesterId,
         currentWeekId,
         semesters.find((semester) => semester.semesterId === nextSemesterId)?.weeks ?? [],
+        appSettings.timetableOrientation,
       );
 
     setSemesterId(nextSemesterId);
@@ -1061,6 +1100,7 @@ export function PlannerClient({
                     });
                   }}
                   showCurrentTime={showCurrentTime}
+                  showCourseNames={appSettings.showCourseTitles}
                 />
               ) : (
                 <ExamCalendar cards={examCards} colorByShareKey={colorByShareKey} />
@@ -1231,7 +1271,7 @@ export function PlannerClient({
                                   className="pointer-events-none absolute -top-[7px] left-[5px] h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
                                 />
                                 <div className="grid grid-cols-4 gap-1.5">
-                                  {COURSE_COLOR_PALETTE.map((color) => (
+                                  {themePalette.map((color) => (
                                     <button
                                       key={color}
                                       type="button"

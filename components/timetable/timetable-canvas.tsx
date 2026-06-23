@@ -453,6 +453,7 @@ export function TimetableCanvas({
   suppressActiveOutline,
   onBlockClick,
   showCurrentTime,
+  showCourseNames = true,
 }: {
   blocks: TimetableBlock[];
   blockColorByKey: Map<string, string>;
@@ -469,6 +470,7 @@ export function TimetableCanvas({
   suppressActiveOutline: boolean;
   onBlockClick: (block: TimetableBlock) => void;
   showCurrentTime: boolean;
+  showCourseNames?: boolean;
 })
 {
   const [isMobile, setIsMobile] = useState(false);
@@ -628,7 +630,7 @@ export function TimetableCanvas({
                       }}
                       onClick={() => onBlockClick(block)}
                       showAllWeeks={showAllWeeks}
-                      showCourseName
+                      showCourseName={showCourseNames}
                       hideTime={isMobile}
                       isMobileView={isMobile}
                     />
@@ -765,7 +767,7 @@ export function TimetableCanvas({
                     }}
                     onClick={() => onBlockClick(block)}
                     showAllWeeks={showAllWeeks}
-                    showCourseName={false}
+                    showCourseName={showCourseNames}
                     hideTime={isMobile}
                     isMobileView={isMobile}
                   />

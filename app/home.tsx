@@ -72,6 +72,11 @@ const portalLinks = [
     icon: SettingsIcon,
   },
   {
+    label: "SUSS Planner Settings",
+    href: "/settings",
+    icon: SettingsIcon,
+  },
+  {
     label: "Academic Calendar",
     href: "#",
     icon: CalendarIcon,
@@ -149,18 +154,38 @@ export default async function HomePage()
             <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {portalLinks.map((item) => {
                 const Icon = item.icon;
+                const content = (
+                  <>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.8rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">{item.label}</span>
+                  </>
+                );
+                const className = "group flex items-center gap-3 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 text-[14px] font-bold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]";
+
+                if (item.href.startsWith("/"))
+                {
+                  return (
+                    <Link
+                      key={item.label}
+                      prefetch
+                      href={item.href}
+                      className={className}
+                    >
+                      {content}
+                    </Link>
+                  );
+                }
 
                 return (
                   <a
                     key={item.label}
                     href={item.href}
                     aria-label={`${item.label} placeholder link`}
-                    className="group flex items-center gap-3 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 text-[14px] font-bold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                    className={className}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.8rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0 flex-1">{item.label}</span>
+                    {content}
                   </a>
                 );
               })}
