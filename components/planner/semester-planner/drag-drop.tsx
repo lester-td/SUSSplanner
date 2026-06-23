@@ -172,7 +172,7 @@ export function CourseCard({
       style={style}
       {...(draggable ? listeners : {})}
       {...(draggable ? attributes : {})}
-      className={`rounded-[0.85rem] border px-3 py-2.5 ${active ? "transition-colors duration-200" : "transition-all duration-200"} ${
+      className={`planner-course-card rounded-[0.85rem] border px-3 py-2.5 ${active ? "planner-course-card--active transition-colors duration-200" : "transition-all duration-200"} ${
         draggable ? "cursor-grab active:cursor-grabbing select-none touch-none" : ""
       } ${
         active
@@ -244,7 +244,7 @@ export function CourseDragOverlay({
 })
 {
   return (
-    <article className="pointer-events-none rounded-[0.85rem] border-2 border-[var(--primary)] bg-[var(--surface-container-lowest)] px-3 py-2.5 opacity-95 shadow-[0_16px_32px_rgba(15,23,42,0.2)]">
+    <article className="planner-course-card planner-course-card--overlay pointer-events-none rounded-[0.85rem] border-2 border-[var(--primary)] bg-[var(--surface-container-lowest)] px-3 py-2.5 opacity-95 shadow-[0_16px_32px_rgba(15,23,42,0.2)]">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-[13px] font-semibold leading-5 text-[var(--on-surface)]">

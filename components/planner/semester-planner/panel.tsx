@@ -31,9 +31,9 @@ export function SemesterPlannerPanel({
     }`}>
       <DroppableDiv
         id={COURSE_BANK_DROP_ID}
-        className={(isOver) => `rounded-[1rem] border px-4 py-4 transition-all ${
+        className={(isOver) => `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
           isOver
-            ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
+            ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
             : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
         }`}
       >
@@ -49,7 +49,7 @@ export function SemesterPlannerPanel({
           <button
             type="button"
             onClick={onToggleShowAllModules}
-            className="inline-flex min-w-[8.75rem] shrink-0 justify-center self-start rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[12px] font-semibold leading-5 whitespace-nowrap text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:text-[var(--primary)]"
+            className="planner-secondary-action inline-flex min-w-[8.75rem] shrink-0 justify-center self-start rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[12px] font-semibold leading-5 whitespace-nowrap text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:text-[var(--primary)]"
           >
             {showAllModules ? "Show Available" : "Show All"}
           </button>
@@ -57,7 +57,7 @@ export function SemesterPlannerPanel({
 
         <div className="mt-4 space-y-2">
           {bankCourses.length === 0 ? (
-            <p className="rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+            <p className="planner-empty-state rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)]">
               {showAllModules ? "No modules added yet." : "All courses have been assigned."}
             </p>
           ) : null}

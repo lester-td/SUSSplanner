@@ -597,10 +597,10 @@ export function SemesterPlannerClient({
   }
 
   return (
-    <div className="px-3 pb-6 pt-8 md:px-[16px]">
+    <div className="planner-page px-3 pb-6 pt-8 md:px-[16px]">
       <div className="mx-auto max-w-7xl space-y-4">
         <section className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+          <div className="planner-control-card rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 {isCustomCourse ? (
@@ -609,29 +609,29 @@ export function SemesterPlannerClient({
                 <SearchIcon className="h-7 w-7 text-[var(--primary)]" />
                 )}
                 <div>
-                <h2 className="text-[28px] font-medium leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Add a Course</h2>
+                  <h2 className="text-[28px] font-medium leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Add a Course</h2>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCustomCourse((current) => !current)}
-                className="relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
+                className="planner-segmented-control relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
                 aria-pressed={isCustomCourse}
                 aria-label={`Add course mode: ${isCustomCourse ? "Custom" : "Search"}. Click to toggle.`}
               >
                 <span
                   aria-hidden="true"
-                  className={`absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomCourse ? "translate-x-full" : "translate-x-0"}`}
+                  className={`planner-segmented-control__thumb absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomCourse ? "translate-x-full" : "translate-x-0"}`}
                 />
                 <span
                   aria-hidden="true"
-                  className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomCourse ? "text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                  className={`planner-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomCourse ? "planner-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                 >
                   Search
                 </span>
                 <span
                   aria-hidden="true"
-                  className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomCourse ? "text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                  className={`planner-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomCourse ? "planner-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                 >
                   Custom
                 </span>
@@ -689,7 +689,7 @@ export function SemesterPlannerClient({
                 <button
                   type="button"
                   onClick={addManualCourse}
-                  className="inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-4 py-2.5 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
+                  className="planner-primary-action inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-4 py-2.5 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
                 >
                   <PlusIcon className="h-4 w-4" />
                   Add Custom Module
@@ -756,7 +756,7 @@ export function SemesterPlannerClient({
             )}
           </div>
 
-          <div className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+          <div className="planner-control-card rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -773,7 +773,7 @@ export function SemesterPlannerClient({
                   <button
                     type="button"
                     onClick={openPlanPdf}
-                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-on-primary shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
+                    className="planner-primary-action inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-on-primary shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
                   >
                     <DownloadIcon className="h-3.5 w-3.5" />
                     Download PDF
@@ -876,16 +876,16 @@ export function SemesterPlannerClient({
               </label>
             </div>
 
-            <div className="mt-4 rounded-[0.85rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3">
+            <div className="planner-progress-card mt-4 rounded-[0.85rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-[12px] font-semibold text-[var(--on-surface)]">Credits Allocated</span>
                 <span className={`text-[12px] font-semibold ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
                   {formatCredits(assignedCredits)} / {formatCredits(plan.totalCreditsGoal)}
                 </span>
               </div>
-              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+              <div className="planner-progress-track mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
                 <div
-                  className={`h-full rounded-full transition-all ${isOverTargetCredits ? "bg-[var(--error)]" : "bg-[var(--primary)]"}`}
+                  className={`planner-progress-fill h-full rounded-full transition-all ${isOverTargetCredits ? "planner-progress-fill--error bg-[var(--error)]" : "bg-[var(--primary)]"}`}
                   style={{ width: `${creditProgressBarPercent}%` }}
                 />
               </div>
@@ -905,7 +905,7 @@ export function SemesterPlannerClient({
         </section>
 
         {notice ? (
-          <div className="rounded-[0.85rem] border border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] px-4 py-3 text-[13px] font-medium leading-5 text-[var(--primary)]">
+          <div className="planner-notice rounded-[0.85rem] border border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] px-4 py-3 text-[13px] font-medium leading-5 text-[var(--primary)]">
             {notice}
           </div>
         ) : null}
@@ -944,9 +944,9 @@ export function SemesterPlannerClient({
                   <DroppableArticle
                     key={semesterIndex}
                     id={`${SEMESTER_DROP_ID_PREFIX}${semesterIndex}`}
-                    className={(isOver) => `rounded-[1rem] border px-4 py-4 transition-all ${
+                    className={(isOver) => `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
                       isOver
-                        ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
+                        ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
                         : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
                     }`}
                   >
@@ -987,7 +987,7 @@ export function SemesterPlannerClient({
 
                     <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                       {startingCourses.length === 0 ? (
-                        <p className="rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-5 text-[12px] leading-5 text-[var(--on-surface-variant)] sm:col-span-2 xl:col-span-3">
+                        <p className="planner-empty-state rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-5 text-[12px] leading-5 text-[var(--on-surface-variant)] sm:col-span-2 xl:col-span-3">
                           {draggedCourseId ? "Drop module here." : "Move modules here from the planner bank."}
                         </p>
                       ) : null}
@@ -1006,7 +1006,7 @@ export function SemesterPlannerClient({
                 );
               })}
 
-              <article className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-4">
+              <article className="planner-drop-zone rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-4">
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface-variant)]">
                     New Semester
@@ -1017,7 +1017,7 @@ export function SemesterPlannerClient({
                   <button
                     type="button"
                     onClick={addSemester}
-                    className="flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-5 text-[12px] font-semibold leading-5 text-[var(--primary)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)]"
+                    className="planner-empty-state flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-5 text-[12px] font-semibold leading-5 text-[var(--primary)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)]"
                   >
                     <PlusIcon className="h-4 w-4" />
                     <span>Add Semester</span>
@@ -1061,7 +1061,7 @@ export function SemesterPlannerClient({
             <button
               type="button"
               onClick={confirmPlanImport}
-              className="rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
+              className="planner-primary-action rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
             >
               Replace Current Plan
             </button>
@@ -1124,7 +1124,7 @@ export function SemesterPlannerClient({
             <button
               type="button"
               onClick={saveEditedCustomCourse}
-              className="rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
+              className="planner-primary-action rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
             >
               Save Changes
             </button>
@@ -1191,7 +1191,7 @@ function SummaryStat({
 })
 {
   return (
-    <div className="rounded-[0.85rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-3 py-3">
+    <div className="planner-summary-stat rounded-[0.85rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-3 py-3">
       <div className="flex items-center gap-2 text-[var(--primary)]">
         {icon}
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">{label}</span>

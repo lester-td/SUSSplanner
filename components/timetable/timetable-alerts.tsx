@@ -74,7 +74,7 @@ function ClassList({ events }: { events: TimetableEventRecord[] })
   return (
     <ul className="flex flex-wrap gap-1.5">
       {events.map((event) => (
-        <li key={event.eventId} className="w-fit max-w-full rounded-[0.35rem] border border-[var(--outline-variant)] bg-white px-2 py-1 shadow-sm">
+        <li key={event.eventId} className="timetable-alert-chip w-fit max-w-full rounded-[0.35rem] border border-[var(--outline-variant)] bg-white px-2 py-1 shadow-sm">
           <p className="text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
             {event.courseCode} {formatClassGroupLabel(event.groupCode)}
           </p>
@@ -174,7 +174,7 @@ function ClassClashBadges({ clashes }: { clashes: TimetableClash[] })
       {participants.map((event) => (
         <span
           key={event.shareKey}
-          className="rounded-full border border-[var(--outline-variant)] bg-white px-2 py-1 text-[11px] font-semibold leading-none text-[var(--on-surface)] shadow-sm"
+          className="timetable-alert-chip rounded-full border border-[var(--outline-variant)] bg-white px-2 py-1 text-[11px] font-semibold leading-none text-[var(--on-surface)] shadow-sm"
         >
           {formatClashEventLabel(event, false)}
         </span>
@@ -186,7 +186,7 @@ function ClassClashBadges({ clashes }: { clashes: TimetableClash[] })
 function ExamClashTile({ clash }: { clash: TimetableClash })
 {
   return (
-    <article className="rounded-[0.4rem] border border-[var(--outline-variant)] bg-white px-2 py-1.5 shadow-sm">
+    <article className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-white px-2 py-1.5 shadow-sm">
       <p className="text-[10px] font-semibold leading-[13px] text-[var(--on-surface)] sm:text-[11px] sm:leading-[14px]">
         {formatEventDate(clash.eventDate)} · {formatTimeRange(clash.startTime, clash.endTime)}
       </p>
@@ -379,8 +379,8 @@ export function TimetableAlerts({
   }
 
   return (
-    <div className="border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 sm:px-3 sm:py-2.5">
-      <div className="elev-1 grid overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] divide-y divide-[var(--outline-variant)] md:grid-flow-col md:auto-cols-fr md:divide-x md:divide-y-0">
+    <div className="timetable-alerts-shell border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 sm:px-3 sm:py-2.5">
+      <div className="timetable-alerts-card elev-1 grid overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] divide-y divide-[var(--outline-variant)] md:grid-flow-col md:auto-cols-fr md:divide-x md:divide-y-0">
         {hasClassClashes ? (
           <section className="min-w-0 bg-[var(--error-container)] px-2.5 py-2 sm:px-3 sm:py-2.5">
             <div className="flex items-start justify-between gap-3">

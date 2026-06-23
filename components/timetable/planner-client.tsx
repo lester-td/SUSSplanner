@@ -973,9 +973,9 @@ export function PlannerClient({
 
   return (
     <>
-      <div ref={exportCaptureRef} className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
+      <div ref={exportCaptureRef} className={`timetable-page flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
-          <div className="elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+          <div className="timetable-toolbar elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
               items={semesterItems}
               selectedId={String(semesterId)}
@@ -1026,9 +1026,9 @@ export function PlannerClient({
           </div>
 
           {plannerNotice || timetableData.unresolvedSelections.length > 0 ? (
-            <div className="space-y-2 bg-[var(--surface-container-lowest)] px-2.5 pt-2 sm:px-3 sm:pt-2.5">
+            <div className="timetable-notice-stack space-y-2 bg-[var(--surface-container-lowest)] px-2.5 pt-2 sm:px-3 sm:pt-2.5">
               {plannerNotice ? (
-                <div className="rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--primary)] sm:text-[12px]">
+                <div className="timetable-notice rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--primary)] sm:text-[12px]">
                   {plannerNotice}
                 </div>
               ) : null}
@@ -1045,7 +1045,7 @@ export function PlannerClient({
             clashes={timetableData.clashes}
           />
 
-          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-1 pb-0.5 sm:pb-1">
+          <div className="timetable-canvas-shell flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-1 pb-0.5 sm:pb-1">
             <div className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
               {viewMode === "class" ? (
                 <TimetableCanvas
@@ -1109,7 +1109,7 @@ export function PlannerClient({
           </div>
         </section>
 
-        <aside className={`flex min-h-0 w-full flex-col border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] ${orientation === "horizontal" ? "md:w-full md:border-l-0 md:border-t" : "md:w-[30%] md:border-l md:border-t-0"}`}>
+        <aside className={`timetable-side-panel flex min-h-0 w-full flex-col border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] ${orientation === "horizontal" ? "md:w-full md:border-l-0 md:border-t" : "md:w-[30%] md:border-l md:border-t-0"}`}>
           <div className="flex h-12 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-2.5 sm:h-14 sm:px-3">
             <div>
               <h3 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)] sm:text-[18px] sm:leading-6">My Courses</h3>
@@ -1134,7 +1134,7 @@ export function PlannerClient({
                 </button>
                 <span className="text-[9px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[10px]">PT</span>
               </div>
-              <span className="rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-1.5 py-0.5 text-[10px] font-medium leading-[13px] text-[var(--primary)] sm:px-2 sm:text-[11px] sm:leading-[14px]">
+              <span className="timetable-chip rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-1.5 py-0.5 text-[10px] font-medium leading-[13px] text-[var(--primary)] sm:px-2 sm:text-[11px] sm:leading-[14px]">
                 {selectedCards.length} Selected
               </span>
             </div>
@@ -1231,7 +1231,7 @@ export function PlannerClient({
             </div>
 
             {shareMessage ? (
-              <div className="mt-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[10px] font-semibold leading-4 text-[var(--primary)] sm:text-[11px]">
+              <div className="timetable-notice mt-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[10px] font-semibold leading-4 text-[var(--primary)] sm:text-[11px]">
                 {shareMessage}
               </div>
             ) : null}
@@ -1245,7 +1245,7 @@ export function PlannerClient({
                 return (
                   <article
                     key={record.shareKey}
-                    className={`elev-1 group relative rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-1.5 transition-[box-shadow] hover:shadow-md sm:px-2.5 sm:py-2 ${
+                    className={`timetable-selected-card elev-1 group relative rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-1.5 transition-[box-shadow] hover:shadow-md sm:px-2.5 sm:py-2 ${
                       colorPickerCourseCode === record.courseCode ? "overflow-visible" : "overflow-hidden"
                     } ${
                       orientation === "horizontal" ? "md:h-full" : ""

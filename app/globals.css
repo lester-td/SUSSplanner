@@ -80,45 +80,45 @@
   }
 
   :root[data-color-scheme="dark"] {
-    --background: #07111f;
-    --surface: #07111f;
-    --surface-bright: #172237;
-    --surface-dim: #050b14;
-    --surface-container-lowest: #0b1423;
-    --surface-container-low: #101b2d;
-    --surface-container: #152238;
-    --surface-container-high: #1d2b44;
-    --surface-container-highest: #263752;
-    --surface-variant: #314259;
-    --outline: #9ca8ba;
-    --outline-variant: #35465f;
+    --background: #0B1220;
+    --surface: #0B1220;
+    --surface-bright: #1b2538;
+    --surface-dim: #080e19;
+    --surface-container-lowest: #121A2B;
+    --surface-container-low: #151f32;
+    --surface-container: #0B1220;
+    --surface-container-high: #1b2538;
+    --surface-container-highest: #243047;
+    --surface-variant: #2b3649;
+    --outline: #7F8A9C;
+    --outline-variant: rgba(255, 255, 255, 0.08);
     --primary: #9adbe8;
-    --primary-container: #123e66;
-    --primary-fixed: #12324f;
+    --primary-container: #2A6F8F;
+    --primary-fixed: #173247;
     --on-primary: #06111f;
-    --on-primary-container: #e8f8fb;
-    --on-surface: #eef3fb;
-    --on-surface-variant: #bfcbda;
+    --on-primary-container: #F3F4F6;
+    --on-surface: #F3F4F6;
+    --on-surface-variant: #B6BEC9;
     --error: #ffb4ab;
     --error-container: #4f1712;
     --accent: #ffb4ab;
     --accent-soft: #451815;
     --secondary: #9adbe8;
-    --secondary-soft: #13394a;
+    --secondary-soft: #173247;
     --tertiary: #d0df00;
     --tertiary-soft: #3a410b;
-    --brand-divider: #263752;
-    --brand-chip-bg: #173d55;
-    --rail-week-bg: #101b2d;
-    --today-column-bg: #102d43;
-    --header-surface: #07111f;
-    --header-text: #eef3fb;
-    --header-text-muted: rgb(238 243 251 / 0.74);
-    --header-chip-bg: rgb(255 255 255 / 0.1);
-    --header-chip-active-bg: #9adbe8;
-    --header-chip-active-text: #06111f;
-    --header-divider: rgb(255 255 255 / 0.12);
-    --footer-surface: #0b1423;
+    --brand-divider: rgba(255, 255, 255, 0.08);
+    --brand-chip-bg: #173247;
+    --rail-week-bg: #101827;
+    --today-column-bg: #13293c;
+    --header-surface: #0B1220;
+    --header-text: #F3F4F6;
+    --header-text-muted: #B6BEC9;
+    --header-chip-bg: rgb(255 255 255 / 0.08);
+    --header-chip-active-bg: #2A6F8F;
+    --header-chip-active-text: #F3F4F6;
+    --header-divider: rgba(255, 255, 255, 0.08);
+    --footer-surface: #121A2B;
     --primary-ring-soft: rgb(var(--suss-light-blue-rgb) / 0.26);
     --primary-ring-strong: rgb(var(--suss-light-blue-rgb) / 0.38);
     --now-line: #ffb4ab;
@@ -126,15 +126,15 @@
     --panel: var(--surface-container-lowest);
     --panel-strong: var(--surface-container-low);
     --ink: var(--on-surface);
-    --muted: var(--on-surface-variant);
+    --muted: #7F8A9C;
     --line: var(--outline-variant);
     --brand: var(--primary);
     --brand-soft: var(--primary-fixed);
     --surface-high: var(--surface-container-high);
     --surface-low: var(--surface-container-low);
-    --shadow-elev-1: 0 2px 8px rgba(0, 0, 0, 0.26);
-    --shadow-elev-2: 0 8px 24px rgba(0, 0, 0, 0.34);
-    --shadow-elev-3: 0 14px 34px rgba(0, 0, 0, 0.42);
+    --shadow-elev-1: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-elev-2: 0 10px 24px rgba(0, 0, 0, 0.34);
+    --shadow-elev-3: 0 16px 34px rgba(0, 0, 0, 0.42);
   }
 
   * {
@@ -201,6 +201,249 @@
 
 .elev-3 {
   box-shadow: var(--shadow-elev-3);
+}
+
+:root[data-color-scheme="dark"] body,
+:root[data-color-scheme="dark"] .app-content-surface {
+  background: var(--background);
+}
+
+:root[data-color-scheme="dark"] .gpa-summary-card {
+  padding: 1.25rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-color-scheme="dark"] .gpa-summary-card--emphasized {
+  border-color: var(--outline-variant);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+}
+
+:root[data-color-scheme="dark"] .gpa-summary-card--emphasized .gpa-summary-card__meta {
+  color: var(--on-surface-variant);
+}
+
+:root[data-color-scheme="dark"] .dark-neutral-accent-card {
+  border-left-color: var(--outline-variant);
+}
+
+:root[data-color-scheme="dark"] .app-navbar {
+  border-color: var(--header-divider);
+  background: rgba(18, 26, 43, 0.96);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-color-scheme="dark"] .app-nav-link {
+  color: #B6BEC9;
+}
+
+:root[data-color-scheme="dark"] .app-nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #F3F4F6;
+}
+
+:root[data-color-scheme="dark"] .app-nav-link--active {
+  background: #2A6F8F;
+  color: #F3F4F6 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-color-scheme="dark"] .app-navbar-context {
+  color: #B6BEC9;
+}
+
+:root[data-color-scheme="dark"] .app-action-button--primary,
+:root[data-color-scheme="dark"] .calculator-primary-action {
+  background: #2A6F8F;
+  color: #F3F4F6;
+  box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .app-action-button--primary:hover,
+:root[data-color-scheme="dark"] .calculator-primary-action:hover {
+  background: #347FA3;
+  color: #F3F4F6;
+}
+
+:root[data-color-scheme="dark"] .app-action-button--ghost {
+  border-color: var(--brand-divider);
+  background: #151F32;
+  color: #F3F4F6;
+}
+
+:root[data-color-scheme="dark"] .app-action-button--ghost:hover {
+  background: #1B2538;
+  color: #9ADBE8;
+}
+
+:root[data-color-scheme="dark"] .home-feature-card,
+:root[data-color-scheme="dark"] .home-shortcut-card,
+:root[data-color-scheme="dark"] .calculator-panel,
+:root[data-color-scheme="dark"] .timetable-toolbar,
+:root[data-color-scheme="dark"] .timetable-side-panel,
+:root[data-color-scheme="dark"] .timetable-selected-card {
+  border-color: var(--brand-divider);
+  background: var(--surface-container-lowest);
+  box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .home-feature-card:hover,
+:root[data-color-scheme="dark"] .home-shortcut-card:hover,
+:root[data-color-scheme="dark"] .timetable-selected-card:hover {
+  border-color: rgba(154, 219, 232, 0.28);
+  background: #151F32;
+  box-shadow: var(--shadow-elev-2);
+}
+
+:root[data-color-scheme="dark"] .home-feature-icon,
+:root[data-color-scheme="dark"] .home-shortcut-icon,
+:root[data-color-scheme="dark"] .calculator-chip,
+:root[data-color-scheme="dark"] .timetable-chip {
+  background: #173247;
+  color: #9ADBE8;
+}
+
+:root[data-color-scheme="dark"] .calculator-panel {
+  padding: 1.25rem;
+}
+
+:root[data-color-scheme="dark"] .calculator-segmented-control {
+  border-color: var(--outline-variant);
+  background: #101827;
+}
+
+:root[data-color-scheme="dark"] .calculator-segmented-control__thumb {
+  background: #2A6F8F;
+}
+
+:root[data-color-scheme="dark"] .calculator-segmented-label--active {
+  color: #F3F4F6;
+}
+
+:root[data-color-scheme="dark"] .calculator-primary-popover {
+  border-color: var(--brand-divider);
+  background: #13283A;
+  color: #F3F4F6;
+}
+
+:root[data-color-scheme="dark"] .planner-control-card,
+:root[data-color-scheme="dark"] .planner-drop-zone {
+  border-color: var(--brand-divider);
+  background: var(--surface-container-lowest);
+  box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .planner-control-card {
+  padding: 1.5rem;
+}
+
+:root[data-color-scheme="dark"] .planner-drop-zone--active {
+  border-color: #2A6F8F;
+  background: #13283A;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-color-scheme="dark"] .planner-course-card,
+:root[data-color-scheme="dark"] .planner-summary-stat,
+:root[data-color-scheme="dark"] .planner-progress-card {
+  border-color: var(--brand-divider);
+  background: #151F32;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-color-scheme="dark"] .planner-course-card--active,
+:root[data-color-scheme="dark"] .planner-course-card--overlay {
+  border-color: #2A6F8F;
+  background: #173247;
+  opacity: 0.9;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-color-scheme="dark"] .planner-empty-state {
+  border-color: var(--outline-variant);
+  background: #101827;
+}
+
+:root[data-color-scheme="dark"] .planner-notice {
+  border-color: var(--brand-divider);
+  background: #13283A;
+  color: #B6E6F0;
+  box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .planner-primary-action,
+:root[data-color-scheme="dark"] .planner-segmented-control__thumb,
+:root[data-color-scheme="dark"] .planner-progress-fill {
+  background: #2A6F8F;
+}
+
+:root[data-color-scheme="dark"] .planner-progress-fill--error {
+  background: var(--error);
+}
+
+:root[data-color-scheme="dark"] .planner-primary-action {
+  color: #F3F4F6;
+  box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .planner-primary-action:hover {
+  background: #347FA3;
+}
+
+:root[data-color-scheme="dark"] .planner-secondary-action {
+  border-color: var(--outline-variant);
+  background: #151F32;
+}
+
+:root[data-color-scheme="dark"] .planner-progress-track {
+  background: #0F1726;
+}
+
+:root[data-color-scheme="dark"] .planner-segmented-label--active {
+  color: #F3F4F6;
+}
+
+:root[data-color-scheme="dark"] .timetable-page,
+:root[data-color-scheme="dark"] .timetable-canvas-shell,
+:root[data-color-scheme="dark"] .timetable-notice-stack,
+:root[data-color-scheme="dark"] .timetable-alerts-shell {
+  background: var(--background);
+}
+
+:root[data-color-scheme="dark"] .timetable-toolbar,
+:root[data-color-scheme="dark"] .timetable-side-panel {
+  border-color: var(--brand-divider);
+}
+
+:root[data-color-scheme="dark"] .timetable-side-panel > div {
+  background: var(--surface-container-lowest);
+}
+
+:root[data-color-scheme="dark"] .timetable-notice,
+:root[data-color-scheme="dark"] .timetable-alerts-card {
+  border-color: var(--brand-divider);
+  background: #13283A;
+  color: #B6E6F0;
+  box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .timetable-alert-chip {
+  border-color: var(--brand-divider);
+  background: #151F32;
+  color: #F3F4F6;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-color-scheme="dark"] .timetable-grid {
+  background: #121A2B;
+}
+
+:root[data-color-scheme="dark"] .timetable-grid__day-date {
+  color: #7F8A9C;
+}
+
+:root[data-color-scheme="dark"] .timetable-cell {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.24);
 }
 
 @keyframes pulse {

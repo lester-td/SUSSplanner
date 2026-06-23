@@ -23,8 +23,8 @@ export function ActionButton({
         stretch ? "w-full" : ""
       } ${
         variant === "primary"
-          ? "bg-[var(--primary)] text-on-primary hover:bg-[var(--primary-container)] hover:text-on-primary"
-          : "border border-[var(--brand-divider)] bg-[var(--surface-container)] text-[var(--on-surface)] hover:bg-[var(--surface-container-high)]"
+          ? "app-action-button app-action-button--primary bg-[var(--primary)] text-on-primary hover:bg-[var(--primary-container)] hover:text-on-primary"
+          : "app-action-button app-action-button--ghost border border-[var(--brand-divider)] bg-[var(--surface-container)] text-[var(--on-surface)] hover:bg-[var(--surface-container-high)]"
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       onClick={onClick}
       disabled={disabled}
