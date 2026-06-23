@@ -312,15 +312,15 @@ function ClashDetailsModal({
     >
       <div className="space-y-6">
         <ClashScheduleSection
-          title="Class Clashes"
-          clashes={classClashes}
-          isExam={false}
-        />
-
-        <ClashScheduleSection
           title="Exam Clashes"
           clashes={examClashes}
           isExam={true}
+        />
+
+        <ClashScheduleSection
+          title="Class Clashes"
+          clashes={classClashes}
+          isExam={false}
         />
       </div>
     </Modal>
