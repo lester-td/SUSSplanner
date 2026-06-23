@@ -11,22 +11,18 @@ import {
   SettingsIcon,
   SunIcon,
 } from "@/components/planner/icons";
+import { Modal } from "@/components/ui/modal";
 import { COURSE_COLOR_PALETTE } from "@/lib/timetable/timetable-utils";
 
 type ColorSchemePreference = "system" | "light" | "dark";
 type TimetableOrientation = "horizontal" | "vertical";
-type PrerequisiteTreeDirection = "left" | "right";
 
 type SettingsState = {
   colorScheme: ColorSchemePreference;
   themeId: string;
   timetableOrientation: TimetableOrientation;
   showCourseTitles: boolean;
-  prerequisiteTreeDirection: PrerequisiteTreeDirection;
   registrationReminders: boolean;
-  registrationStudentType: "Undergraduate" | "Graduate";
-  allowAnonymousAnalytics: boolean;
-  betaFeatures: boolean;
 };
 
 type ThemeOption = {
@@ -42,11 +38,7 @@ const DEFAULT_SETTINGS: SettingsState = {
   themeId: "current-timetable",
   timetableOrientation: "horizontal",
   showCourseTitles: true,
-  prerequisiteTreeDirection: "right",
   registrationReminders: true,
-  registrationStudentType: "Undergraduate",
-  allowAnonymousAnalytics: true,
-  betaFeatures: false,
 };
 
 const THEME_OPTIONS: ThemeOption[] = [
@@ -265,46 +257,6 @@ function SegmentedControl<T extends string>({
   );
 }
 
-function SwitchControl({
-  checked,
-  onChange,
-  labels = ["On", "Off"],
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  labels?: [string, string];
-})
-{
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`inline-flex min-w-[8.5rem] items-center justify-between gap-2 rounded-md border px-1.5 py-1.5 text-[13px] font-bold transition ${
-        checked
-          ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]"
-          : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)]"
-      }`}
-    >
-      <span className={`rounded px-2 py-1 ${checked ? "bg-white/16" : "bg-[var(--surface-container-high)]"}`}>
-        {checked ? labels[0] : labels[1]}
-      </span>
-      <span
-        className={`h-5 w-10 rounded-full p-0.5 transition ${
-          checked ? "bg-white/28" : "bg-[var(--outline-variant)]"
-        }`}
-      >
-        <span
-          className={`block h-4 w-4 rounded-full bg-white shadow transition ${
-            checked ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </span>
-    </button>
-  );
-}
-
 function ThemePicker({
   selectedThemeId,
   onSelectTheme,
@@ -420,6 +372,7 @@ function TimetablePreview({
 export function SettingsClient()
 {
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -452,6 +405,7 @@ export function SettingsClient()
   function resetSettings()
   {
     setSettings(DEFAULT_SETTINGS);
+    setResetConfirmOpen(false);
   }
 
   return (
@@ -470,14 +424,14 @@ export function SettingsClient()
             <code className="rounded bg-[var(--surface-container-low)] px-1.5 py-0.5 text-[12px] font-bold">
               {STORAGE_KEY}
             </code>{" "}
-            for now.
+            on this device.
           </p>
         </div>
 
         <button
           type="button"
           className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-2 text-[13px] font-bold text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)]"
-          onClick={resetSettings}
+          onClick={() => setResetConfirmOpen(true)}
         >
           <RefreshIcon className="h-4 w-4" />
           Reset
@@ -488,7 +442,7 @@ export function SettingsClient()
         <Section id="appearance" title="Appearance">
           <SettingRow
             title="Night mode"
-            description="Choose whether the settings surface follows the system, stays light, or stays dark when this is wired into the app shell."
+            description="Choose whether SUSS Planner follows your system appearance, stays light, or stays dark."
           >
             <SegmentedControl
               label="Night mode"
@@ -518,7 +472,7 @@ export function SettingsClient()
         <Section id="timetable" title="Timetable">
           <SettingRow
             title="Timetable orientation"
-            description="Prepare the default timetable layout preference for desktop and print exports."
+            description="Choose the default timetable layout for desktop and print exports."
           >
             <SegmentedControl
               label="Timetable orientation"
@@ -535,83 +489,31 @@ export function SettingsClient()
             title="Course titles"
             description="Show course titles inside timetable blocks when there is enough space."
           >
-            <SwitchControl
-              checked={settings.showCourseTitles}
-              labels={["Show", "Hide"]}
-              onChange={(showCourseTitles) => updateSettings({ showCourseTitles })}
-            />
-          </SettingRow>
-
-          <SettingRow
-            title="Prerequisite tree direction"
-            description={`Course prerequisites appear to the ${settings.prerequisiteTreeDirection} of the selected course in the planned course tree.`}
-          >
             <SegmentedControl
-              label="Prerequisite tree direction"
-              value={settings.prerequisiteTreeDirection}
+              label="Course titles"
+              value={settings.showCourseTitles ? "show" : "hide"}
               options={[
-                { value: "left", label: "Left" },
-                { value: "right", label: "Right" },
+                { value: "show", label: "Show" },
+                { value: "hide", label: "Hide" },
               ]}
-              onChange={(prerequisiteTreeDirection) => updateSettings({ prerequisiteTreeDirection })}
+              onChange={(value) => updateSettings({ showCourseTitles: value === "show" })}
             />
           </SettingRow>
         </Section>
 
-        <Section id="reminders" title="Registration Reminders">
+        <Section id="reminders" title="Course Registration Reminders">
           <SettingRow
             title="Reminder notifications"
-            description="Prepare a global preference for showing registration window reminders in the app."
+            description="You can get a reminder about when eCR / add-drop periods start with a small notification."
           >
-            <SwitchControl
-              checked={settings.registrationReminders}
-              onChange={(registrationReminders) => updateSettings({ registrationReminders })}
-            />
-          </SettingRow>
-
-          {settings.registrationReminders ? (
-            <SettingRow
-              title="Student type"
-              description="Choose which registration schedule should be used once reminders are connected."
-            >
-              <select
-                className="min-w-[13rem] rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-bold text-[var(--on-surface)]"
-                value={settings.registrationStudentType}
-                onChange={(event) =>
-                  updateSettings({
-                    registrationStudentType: event.target.value as SettingsState["registrationStudentType"],
-                  })
-                }
-              >
-                <option>Undergraduate</option>
-                <option>Graduate</option>
-              </select>
-            </SettingRow>
-          ) : null}
-        </Section>
-
-        <Section id="privacy" title="Privacy">
-          <SettingRow
-            title="Anonymous analytics"
-            description="Prepare an opt-in switch for aggregate product usage data. This page does not send analytics."
-          >
-            <SwitchControl
-              checked={settings.allowAnonymousAnalytics}
-              labels={["Allow", "Opt out"]}
-              onChange={(allowAnonymousAnalytics) => updateSettings({ allowAnonymousAnalytics })}
-            />
-          </SettingRow>
-        </Section>
-
-        <Section id="beta" title="Beta Features">
-          <SettingRow
-            title="SUSS Planner beta"
-            description="Mark this browser as open to testing new planner features once a beta channel exists."
-          >
-            <SwitchControl
-              checked={settings.betaFeatures}
-              labels={["Enabled", "Disabled"]}
-              onChange={(betaFeatures) => updateSettings({ betaFeatures })}
+            <SegmentedControl
+              label="Reminder notifications"
+              value={settings.registrationReminders ? "on" : "off"}
+              options={[
+                { value: "on", label: "On" },
+                { value: "off", label: "Off" },
+              ]}
+              onChange={(value) => updateSettings({ registrationReminders: value === "on" })}
             />
           </SettingRow>
         </Section>
@@ -633,6 +535,36 @@ export function SettingsClient()
       </div>
 
       <span className="sr-only">Current color scheme preference: {settings.colorScheme}</span>
+
+      <Modal
+        open={resetConfirmOpen}
+        title="Reset Settings?"
+        description="This will restore every setting on this page to its default value."
+        onClose={() => setResetConfirmOpen(false)}
+        maxWidthClassName="max-w-md"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(false)}
+              className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={resetSettings}
+              className="rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
+            >
+              Reset Settings
+            </button>
+          </>
+        )}
+      >
+        <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
+          You can&apos;t undo this reset. Your saved preferences on this device will be replaced with the defaults.
+        </p>
+      </Modal>
     </main>
   );
 }
