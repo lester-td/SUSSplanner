@@ -79,6 +79,64 @@
     --font-display: var(--font-inter, "Inter"), sans-serif;
   }
 
+  :root[data-color-scheme="dark"] {
+    --background: #07111f;
+    --surface: #07111f;
+    --surface-bright: #172237;
+    --surface-dim: #050b14;
+    --surface-container-lowest: #0b1423;
+    --surface-container-low: #101b2d;
+    --surface-container: #152238;
+    --surface-container-high: #1d2b44;
+    --surface-container-highest: #263752;
+    --surface-variant: #314259;
+    --outline: #9ca8ba;
+    --outline-variant: #35465f;
+    --primary: #9adbe8;
+    --primary-container: #123e66;
+    --primary-fixed: #12324f;
+    --on-primary: #06111f;
+    --on-primary-container: #e8f8fb;
+    --on-surface: #eef3fb;
+    --on-surface-variant: #bfcbda;
+    --error: #ffb4ab;
+    --error-container: #4f1712;
+    --accent: #ffb4ab;
+    --accent-soft: #451815;
+    --secondary: #9adbe8;
+    --secondary-soft: #13394a;
+    --tertiary: #d0df00;
+    --tertiary-soft: #3a410b;
+    --brand-divider: #263752;
+    --brand-chip-bg: #173d55;
+    --rail-week-bg: #101b2d;
+    --today-column-bg: #102d43;
+    --header-surface: #07111f;
+    --header-text: #eef3fb;
+    --header-text-muted: rgb(238 243 251 / 0.74);
+    --header-chip-bg: rgb(255 255 255 / 0.1);
+    --header-chip-active-bg: #9adbe8;
+    --header-chip-active-text: #06111f;
+    --header-divider: rgb(255 255 255 / 0.12);
+    --footer-surface: #0b1423;
+    --primary-ring-soft: rgb(var(--suss-light-blue-rgb) / 0.26);
+    --primary-ring-strong: rgb(var(--suss-light-blue-rgb) / 0.38);
+    --now-line: #ffb4ab;
+    --bg: var(--background);
+    --panel: var(--surface-container-lowest);
+    --panel-strong: var(--surface-container-low);
+    --ink: var(--on-surface);
+    --muted: var(--on-surface-variant);
+    --line: var(--outline-variant);
+    --brand: var(--primary);
+    --brand-soft: var(--primary-fixed);
+    --surface-high: var(--surface-container-high);
+    --surface-low: var(--surface-container-low);
+    --shadow-elev-1: 0 2px 8px rgba(0, 0, 0, 0.26);
+    --shadow-elev-2: 0 8px 24px rgba(0, 0, 0, 0.34);
+    --shadow-elev-3: 0 14px 34px rgba(0, 0, 0, 0.42);
+  }
+
   * {
     box-sizing: border-box;
     font-family: var(--font-sans);
