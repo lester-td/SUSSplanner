@@ -4,10 +4,10 @@ export type CourseSearchFilters = {
   q: string;
   semesterIds: number[];
   scheduleTypes: ScheduleType[];
+  undergraduateOnly: boolean;
   postgraduateOnly: boolean;
   availableAsGspOnly: boolean;
-  writtenExamOnly: boolean;
-  ecaOnly: boolean;
+  assessmentModes: string[];
   schoolNames: string[];
   courseLevels: string[];
   limit: number;
@@ -69,10 +69,10 @@ export function parseCourseSearchFilters(input: SearchInput): CourseSearchFilter
     q,
     semesterIds: unique(readAll(input, "semesterIds").map(parsePositiveInt).filter((value): value is number => value !== null)),
     scheduleTypes: normalizeScheduleTypes(readAll(input, "scheduleTypes")),
+    undergraduateOnly: readAll(input, "undergraduateOnly").length > 0,
     postgraduateOnly: readAll(input, "postgraduateOnly").length > 0,
     availableAsGspOnly: readAll(input, "availableAsGspOnly").length > 0,
-    writtenExamOnly: readAll(input, "writtenExamOnly").length > 0,
-    ecaOnly: readAll(input, "ecaOnly").length > 0,
+    assessmentModes: normalizeTextList(readAll(input, "assessmentModes")),
     schoolNames: normalizeTextList(readAll(input, "schools")),
     courseLevels: normalizeTextList(readAll(input, "courseLevels")),
     limit: Math.min(MAX_LIMIT, Math.max(1, limitValue ?? DEFAULT_LIMIT)),
@@ -98,6 +98,11 @@ export function buildCourseSearchParams(filters: Partial<CourseSearchFilters>)
     params.append("scheduleTypes", scheduleType);
   }
 
+  if (filters.undergraduateOnly)
+  {
+    params.set("undergraduateOnly", "1");
+  }
+
   if (filters.postgraduateOnly)
   {
     params.set("postgraduateOnly", "1");
@@ -108,14 +113,9 @@ export function buildCourseSearchParams(filters: Partial<CourseSearchFilters>)
     params.set("availableAsGspOnly", "1");
   }
 
-  if (filters.writtenExamOnly)
+  for (const assessmentMode of filters.assessmentModes ?? [])
   {
-    params.set("writtenExamOnly", "1");
-  }
-
-  if (filters.ecaOnly)
-  {
-    params.set("ecaOnly", "1");
+    params.append("assessmentModes", assessmentMode);
   }
 
   for (const schoolName of filters.schoolNames ?? [])

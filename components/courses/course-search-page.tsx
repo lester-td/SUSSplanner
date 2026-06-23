@@ -187,6 +187,16 @@ function buildLevelOptions(courseLevels: string[])
   }));
 }
 
+const ASSESSMENT_MODE_OPTIONS = [
+  "TMA",
+  "GBA",
+  "Quiz",
+  "ECA",
+  "Written Exam",
+  "Proctored Online Exam",
+  "Online Exam",
+] as const;
+
 export function CourseSearchPage({
   semesters,
   schools,
@@ -215,14 +225,14 @@ export function CourseSearchPage({
     limit: 40,
   }).toString(), [
     deferredQuery,
+    filters.assessmentModes.join("|"),
     filters.availableAsGspOnly,
     filters.courseLevels.join("|"),
-    filters.ecaOnly,
+    filters.undergraduateOnly,
     filters.postgraduateOnly,
     filters.scheduleTypes.join("|"),
     filters.schoolNames.join("|"),
     filters.semesterIds.join("|"),
-    filters.writtenExamOnly,
   ]);
 
   useEffect(() => {
@@ -270,10 +280,10 @@ export function CourseSearchPage({
       ...current,
       semesterIds: [],
       scheduleTypes: [],
+      undergraduateOnly: false,
       postgraduateOnly: false,
       availableAsGspOnly: false,
-      writtenExamOnly: false,
-      ecaOnly: false,
+      assessmentModes: [],
       schoolNames: [],
       courseLevels: [],
     }));
@@ -423,7 +433,7 @@ export function CourseSearchPage({
                 />
               </FilterGroup>
 
-              <FilterGroup title="Level of Course" contentClassName="grid grid-cols-3 gap-y-px">
+              <FilterGroup title="Course Level" contentClassName="grid grid-cols-3 gap-y-px">
                 {levelOptions.map((levelOption) => (
                   <div key={levelOption.value}>
                     <CheckboxRow
@@ -438,7 +448,15 @@ export function CourseSearchPage({
                 ))}
               </FilterGroup>
 
-              <section className="space-y-px py-2">
+              <FilterGroup title="Course Type">
+                <CheckboxRow
+                  label="Undergraduate Courses"
+                  checked={filters.undergraduateOnly}
+                  onChange={() => setFilters((current) => ({
+                    ...current,
+                    undergraduateOnly: !current.undergraduateOnly,
+                  }))}
+                />
                 <CheckboxRow
                   label="Postgraduate Courses"
                   checked={filters.postgraduateOnly}
@@ -455,25 +473,22 @@ export function CourseSearchPage({
                     availableAsGspOnly: !current.availableAsGspOnly,
                   }))}
                 />
-              </section>
+              </FilterGroup>
 
               <FilterGroup title="Assessments">
-                <CheckboxRow
-                  label="Written exam"
-                  checked={filters.writtenExamOnly}
-                  onChange={() => setFilters((current) => ({
-                    ...current,
-                    writtenExamOnly: !current.writtenExamOnly,
-                  }))}
-                />
-                <CheckboxRow
-                  label="ECA"
-                  checked={filters.ecaOnly}
-                  onChange={() => setFilters((current) => ({
-                    ...current,
-                    ecaOnly: !current.ecaOnly,
-                  }))}
-                />
+                <div className="max-h-80 space-y-px overflow-y-auto pr-1">
+                  {ASSESSMENT_MODE_OPTIONS.map((assessmentMode) => (
+                    <CheckboxRow
+                      key={assessmentMode}
+                      label={assessmentMode}
+                      checked={filters.assessmentModes.includes(assessmentMode)}
+                      onChange={() => setFilters((current) => ({
+                        ...current,
+                        assessmentModes: toggleInList(current.assessmentModes, assessmentMode),
+                      }))}
+                    />
+                  ))}
+                </div>
               </FilterGroup>
 
               <FilterGroup
