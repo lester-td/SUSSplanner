@@ -8,6 +8,7 @@ import {
   exists,
   ilike,
   inArray,
+  isNull,
   or,
   sql,
 } from "drizzle-orm";
@@ -339,16 +340,17 @@ export async function searchCourses({
   q,
   semesterIds,
   scheduleTypes,
+  undergraduateOnly,
   postgraduateOnly,
   availableAsGspOnly,
-  writtenExamOnly,
-  ecaOnly,
+  assessmentModes,
   schoolNames,
   courseLevels,
   limit,
 }: CourseSearchFilters)
 {
   const searchTerm = q.trim();
+  const selectedAssessmentModes = unique(assessmentModes.map((value) => value.trim()).filter(Boolean));
   const predicates = [];
   const classFilterPredicates = [eq(classes.courseCode, courses.courseCode)];
   const hasClassFilters = semesterIds.length > 0 || scheduleTypes.length > 0 || availableAsGspOnly;
@@ -380,23 +382,14 @@ export async function searchCourses({
     predicates.push(inArray(courses.courseLevel, courseLevels));
   }
 
-  if (writtenExamOnly)
+  if (undergraduateOnly !== postgraduateOnly)
   {
-    predicates.push(exists(
-      db
-        .select({ one: sql<number>`1` })
-        .from(assessmentComponents)
-        .where(and(
-          eq(assessmentComponents.courseCode, courses.courseCode),
-          or(
-            ilike(assessmentComponents.componentName, "%written%"),
-            ilike(assessmentComponents.assessmentMode, "%written%"),
-          ),
-        )),
-    ));
+    predicates.push(undergraduateOnly
+      ? or(eq(courses.isPostgraduate, false), isNull(courses.isPostgraduate))
+      : eq(courses.isPostgraduate, true));
   }
 
-  if (ecaOnly)
+  if (selectedAssessmentModes.length > 0)
   {
     predicates.push(exists(
       db
@@ -404,10 +397,7 @@ export async function searchCourses({
         .from(assessmentComponents)
         .where(and(
           eq(assessmentComponents.courseCode, courses.courseCode),
-          or(
-            ilike(assessmentComponents.componentName, "%eca%"),
-            ilike(assessmentComponents.assessmentMode, "%eca%"),
-          ),
+          inArray(assessmentComponents.assessmentMode, selectedAssessmentModes),
         )),
     ));
   }
@@ -722,10 +712,10 @@ export async function getCoursesWithAvailableClasses(
     q: "",
     semesterIds: [semesterId],
     scheduleTypes: scheduleType ? [scheduleType] : [],
+    undergraduateOnly: false,
     postgraduateOnly: false,
     availableAsGspOnly: false,
-    writtenExamOnly: false,
-    ecaOnly: false,
+    assessmentModes: [],
     schoolNames: [],
     courseLevels: [],
     limit: 200,
@@ -734,17 +724,18 @@ export async function getCoursesWithAvailableClasses(
 
 const getCourseSearchFacetsCached = unstable_cache(
   async () => {
-    const schoolRows = await db
-      .selectDistinct({ schoolName: courses.schoolName })
-      .from(courses)
-      .where(sql`${courses.schoolName} is not null`)
-      .orderBy(asc(courses.schoolName));
-
-    const levelRows = await db
-      .selectDistinct({ courseLevel: courses.courseLevel })
-      .from(courses)
-      .where(sql`${courses.courseLevel} is not null`)
-      .orderBy(asc(courses.courseLevel));
+    const [schoolRows, levelRows] = await Promise.all([
+      db
+        .selectDistinct({ schoolName: courses.schoolName })
+        .from(courses)
+        .where(sql`${courses.schoolName} is not null`)
+        .orderBy(asc(courses.schoolName)),
+      db
+        .selectDistinct({ courseLevel: courses.courseLevel })
+        .from(courses)
+        .where(sql`${courses.courseLevel} is not null`)
+        .orderBy(asc(courses.courseLevel)),
+    ]);
 
     return {
       schools: schoolRows.map((row) => row.schoolName).filter(Boolean) as string[],

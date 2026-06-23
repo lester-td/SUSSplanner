@@ -438,7 +438,7 @@ All route handlers explicitly use the Node.js runtime.
 
 | Method and route | Inputs | Response / purpose |
 |---|---|---|
-| `GET /api/courses/search` | `q`; repeatable `semesterIds`; repeatable `scheduleTypes`; presence flags `postgraduateOnly`, `availableAsGspOnly`, `writtenExamOnly`, `ecaOnly`; repeatable `schools`; repeatable `courseLevels`; `limit` (1-100, default 25) | `{ courses: CourseSearchResult[] }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
+| `GET /api/courses/search` | `q`; repeatable `semesterIds`; repeatable `scheduleTypes`; presence flags `undergraduateOnly`, `postgraduateOnly`, `availableAsGspOnly`; repeatable `assessmentModes` (`TMA`, `GBA`, `Quiz`, `ECA`, `Written Exam`, `Proctored Online Exam`, `Online Exam`); repeatable `schools`; repeatable `courseLevels`; `limit` (1-100, default 25) | `{ courses: CourseSearchResult[] }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
 | `GET /api/calculator/courses` | `q` | `{ courses: { courseCode, courseName, creditUnits }[] }`; searches the complete course catalog by code or name without joining classes or filtering by semester presentation. Returns up to 8 ranked results. |
 | `GET /api/courses/[courseCode]` | Optional `semesterId`, optional `scheduleType` | `{ course, classes, assessmentComponents }`; returns `404` when the course is missing. |
 | `GET /api/classes` | Mode A: `courseCode` plus optional `semesterId`/`sem` and `scheduleType` | `{ classes: CourseClassRecord[] }`; class groups and their events. |

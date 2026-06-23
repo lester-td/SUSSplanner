@@ -107,10 +107,9 @@ The search filters include:
 
 - **Offered In**
 - **Schedule**: Daytime or Evening
-- **Level of Course**
-- **Postgraduate Courses**
-- **Available as GSP/UNE**
-- **Assessments**: Written exam or ECA
+- **Course Level**
+- **Course Type**: Undergraduate Courses, Postgraduate Courses, and Available as GSP/UNE
+- **Assessments**: TMA, GBA, Quiz, ECA, Written Exam, Proctored Online Exam, and Online Exam
 - **School**
 
 Select **Reset all** to clear all filters.
