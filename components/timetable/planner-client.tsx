@@ -629,7 +629,9 @@ export function PlannerClient({
     title: formatSemesterRailMonthYear(semester),
     subtitle: `AY ${formatAcademicYearShort(semester.academicYear)} • ${formatSemesterRailTag(semester.semesterNo)}`,
   }));
-  const showCurrentTime = semesterId === currentSemesterId && (selectedWeekId === "all" || selectedWeekId === currentWeekId);
+  const showCurrentTime = semesterId === currentSemesterId
+    && currentWeekId !== null
+    && (selectedWeekId === "all" || selectedWeekId === currentWeekId);
   const selectedWeekRecord = selectedWeekId === "all"
     ? null
     : semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null;
