@@ -423,7 +423,7 @@ export function OcasCalculatorClient()
   }
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-3 pb-8 md:px-4">
+    <section className="w-full pb-8">
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h2 className="text-[28px] font-semibold leading-9 tracking-[-0.03em] text-[var(--on-surface)]">

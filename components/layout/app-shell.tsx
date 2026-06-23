@@ -10,6 +10,7 @@ import {
   HomeIcon,
   LayersIcon,
 } from "@/components/planner/icons";
+import { getCurrentWeekChip, type CurrentSemesterContext } from "@/lib/timetable/date-utils";
 import type { PlannerSection } from "@/lib/timetable/types";
 
 type AppSection = "home" | PlannerSection | "calculator";
@@ -54,20 +55,26 @@ const navItems = [
 
 export function AppShell({
   activeSection,
-  currentWeekLabel,
+  currentSemesterContext,
   children,
   showHeader = true,
   showNav = true,
   showFooter = true,
 }: {
   activeSection: AppSection | null;
-  currentWeekLabel: string;
+  currentSemesterContext?: CurrentSemesterContext | null;
   children: ReactNode;
   showHeader?: boolean;
   showNav?: boolean;
   showFooter?: boolean;
 })
 {
+  const currentWeekLabel = getCurrentWeekChip(
+    currentSemesterContext?.semester ?? null,
+    currentSemesterContext?.week ?? null,
+    currentSemesterContext?.isVacation ?? false,
+  );
+
   return (
     <main className="flex min-h-screen flex-col bg-[var(--surface-container)] text-[var(--on-surface)]">
       {showHeader ? (

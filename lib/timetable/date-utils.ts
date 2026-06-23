@@ -37,6 +37,25 @@ export function formatDateRange(startDate: string, endDate: string)
     : `${startDay} ${startMonth} to ${endDay} ${endMonth}`;
 }
 
+export function formatDateRangeWithYear(startDate: string, endDate: string)
+{
+  const formatter = new Intl.DateTimeFormat("en-SG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  return `${formatter.format(start)} to ${formatter.format(end)}`;
+}
+
+export type CurrentSemesterContext = {
+  semester: SemesterRecord | null;
+  week: SemesterWeekRecord | null;
+  isVacation: boolean;
+};
+
 export function formatEventDate(date: string)
 {
   return formatDate(date, {
@@ -118,7 +137,7 @@ export function getCurrentSemesterContext(
   semesters: SemesterRecord[],
   semesterWeeks: SemesterWeekRecord[],
   now = new Date(),
-)
+): CurrentSemesterContext
 {
   const today = now.toISOString().slice(0, 10);
   const matchingWeek = semesterWeeks.find(
@@ -130,24 +149,66 @@ export function getCurrentSemesterContext(
     const semester = semesters.find((item) => item.semesterId === matchingWeek.semesterId) ?? null;
     if (semester)
     {
-      return { semester, week: matchingWeek };
+      return { semester, week: matchingWeek, isVacation: false };
     }
+  }
+
+  const semesterBoundaries = semesters.flatMap((semester) => {
+    const weeks = semesterWeeks
+      .filter((week) => week.semesterId === semester.semesterId)
+      .sort((left, right) => left.startDate.localeCompare(right.startDate));
+
+    if (weeks.length === 0)
+    {
+      return [];
+    }
+
+    return [{
+      semester,
+      startDate: weeks[0].startDate,
+      endDate: weeks[weeks.length - 1].endDate,
+    }];
+  });
+
+  const pastSemesters = semesterBoundaries
+    .filter((item) => item.endDate < today)
+    .sort((left, right) => left.endDate.localeCompare(right.endDate));
+
+  if (pastSemesters.length > 0)
+  {
+    return { semester: pastSemesters[pastSemesters.length - 1].semester, week: null, isVacation: true };
+  }
+
+  const futureSemesters = semesterBoundaries
+    .filter((item) => item.startDate > today)
+    .sort((left, right) => left.startDate.localeCompare(right.startDate));
+
+  if (futureSemesters.length > 0)
+  {
+    return { semester: futureSemesters[0].semester, week: null, isVacation: true };
   }
 
   return {
     semester: semesters[0] ?? null,
-    week: semesterWeeks.find((week) => week.semesterId === semesters[0]?.semesterId) ?? null,
+    week: null,
+    isVacation: true,
   };
 }
 
 export function getCurrentWeekChip(
   semester: SemesterRecord | null,
   week: SemesterWeekRecord | null,
+  isVacation = false,
 )
 {
   if (!semester)
   {
     return "No semester loaded";
+  }
+
+  if (isVacation)
+  {
+    return `AY${semester.academicYear}, Semester Vacation`;
   }
 
   if (!week)

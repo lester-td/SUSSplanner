@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { ShareClient } from "@/components/timetable/share-client";
 import { getSemestersWithWeeks, getTimetableDataFromClassIdentifiers } from "@/lib/db/queries";
-import { getCurrentSemesterContext, getCurrentWeekChip } from "@/lib/timetable/date-utils";
+import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
 
 export default async function SharePage({
@@ -17,7 +17,7 @@ export default async function SharePage({
     searchParams,
   ]);
 
-  const { semester, week } = getCurrentSemesterContext(
+  const currentSemesterContext = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
@@ -30,7 +30,7 @@ export default async function SharePage({
   if (!hasShareParams)
   {
     return (
-      <AppShell activeSection="share" currentWeekLabel={getCurrentWeekChip(semester, week)}>
+      <AppShell activeSection="share" currentSemesterContext={currentSemesterContext}>
         <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
           <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
             <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.01em] text-[var(--on-surface)]">Shared timetable</h1>
@@ -53,7 +53,7 @@ export default async function SharePage({
   }
   catch {
     return (
-      <AppShell activeSection="share" currentWeekLabel={getCurrentWeekChip(semester, week)}>
+      <AppShell activeSection="share" currentSemesterContext={currentSemesterContext}>
         <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
           <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
             <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.01em] text-[var(--on-surface)]">Invalid shared link</h1>
@@ -72,7 +72,7 @@ export default async function SharePage({
   const timetable = await getTimetableDataFromClassIdentifiers(decodedState.selectedClasses, decodedState.semesterId);
 
   return (
-    <AppShell activeSection="share" currentWeekLabel={getCurrentWeekChip(timetable.semester ?? semester, week)}>
+    <AppShell activeSection="share" currentSemesterContext={currentSemesterContext}>
       <ShareClient sharedState={decodedState} timetable={timetable} />
     </AppShell>
   );
