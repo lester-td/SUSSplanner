@@ -446,7 +446,7 @@ All route handlers explicitly use the Node.js runtime.
 | `GET /api/classes/counts` | Required `semesterId`, comma-separated `courseCodes` | `{ counts }`; used to show whether selected courses have alternative class groups. |
 | `GET /api/export/ics` | Required `sem`; optional `classes` list | Downloadable `text/calendar` attachment containing all resolved events in `Asia/Singapore` timezone. |
 | `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable `application/pdf` event-list attachment with clash summary. The current timetable/share UI instead creates its PDF from a browser-rendered PNG. |
-| `POST /api/cache/revalidate` | Secret header; JSON `{ tags?: string[], paths?: string[] }` | Revalidates known cache tags and optional paths. Defaults to all known tags when valid tags are absent. |
+| `POST /api/cache/revalidate` | Secret header; JSON `{ tags?: string[], paths?: string[] }` | Revalidates known cache tags and optional paths. Defaults to all known tags when `tags` is omitted; malformed JSON bodies or empty/invalid `tags` arrays return `400`. |
 
 PNG export is intentionally browser-side so it can preserve the rendered
 timetable view; there is no `/api/export/png` route.
@@ -1182,8 +1182,9 @@ curl -X POST https://<deployment>/api/cache/revalidate \
   -d '{"tags":["semesters","semester-weeks","classes","courses","assessments"],"paths":["/","/timetable","/planner","/courses"]}'
 ```
 
-Use an empty JSON body (`{}`) to revalidate all known tags, or provide only the
-`tags` and optional `paths` that should be invalidated.
+Use an empty JSON object (`{}`), which omits `tags`, to revalidate all known
+tags, or provide only the `tags` and optional `paths` that should be
+invalidated.
 
 Valid tags are:
 
@@ -1208,8 +1209,9 @@ The application uses two cache layers visible in the repository:
 | Classes, class counts, course detail | `s-maxage=3600, stale-while-revalidate=86400` |
 
 The cache-revalidation route can invalidate both known data tags and explicitly
-provided paths. If no valid tags are supplied, it invalidates all known tags.
-`GET /api/calculator/courses` does not currently set shared-cache headers.
+provided paths. If `tags` is omitted, it invalidates all known tags. Malformed
+JSON bodies or empty/invalid `tags` arrays return `400`. `GET /api/calculator/courses`
+does not currently set shared-cache headers.
 
 ## Deployment Notes
 

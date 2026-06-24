@@ -17,6 +17,13 @@ export const CACHE_TAG_GROUPS = {
     CACHE_TAGS.semesters,
     CACHE_TAGS.semesterWeeks,
   ],
+  timetableData: [
+    CACHE_TAGS.classes,
+    CACHE_TAGS.courses,
+    CACHE_TAGS.semesters,
+    CACHE_TAGS.semesterWeeks,
+    CACHE_TAGS.assessments,
+  ],
   classCounts: [
     CACHE_TAGS.classes,
   ],

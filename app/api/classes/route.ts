@@ -43,7 +43,7 @@ export async function GET(request: NextRequest)
   return NextResponse.json(
     { timetable },
     {
-      headers: getCacheHeaders(CLASS_RESPONSE_CACHE_CONTROL, CACHE_TAG_GROUPS.classData),
+      headers: getCacheHeaders(CLASS_RESPONSE_CACHE_CONTROL, CACHE_TAG_GROUPS.timetableData),
     },
   );
 }
