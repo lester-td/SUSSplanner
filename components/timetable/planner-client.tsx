@@ -325,6 +325,37 @@ function buildThemedCourseColorMap(
   return colorMap;
 }
 
+const THEME_COLOR_PREFERENCE_PREFIX = "theme-color:";
+
+function buildThemeColorPreference(colorIndex: number)
+{
+  return `${THEME_COLOR_PREFERENCE_PREFIX}${colorIndex}`;
+}
+
+function resolveThemeColorPreference(
+  colorPreference: string | undefined,
+  palette: readonly string[],
+)
+{
+  if (!colorPreference)
+  {
+    return null;
+  }
+
+  if (!colorPreference.startsWith(THEME_COLOR_PREFERENCE_PREFIX))
+  {
+    return null;
+  }
+
+  const colorIndex = Number.parseInt(colorPreference.slice(THEME_COLOR_PREFERENCE_PREFIX.length), 10);
+  if (!Number.isFinite(colorIndex) || colorIndex < 0)
+  {
+    return null;
+  }
+
+  return palette[colorIndex % palette.length] ?? null;
+}
+
 export function PlannerClient({
   semesters,
   currentSemesterId,
@@ -610,16 +641,20 @@ export function PlannerClient({
   const colorByShareKey = useMemo(
     () => new Map(selectedCards.map((card) => [
       card.shareKey,
-      courseColorsByCourseCode[card.courseCode] ?? defaultColorByCourseCode.get(card.courseCode) ?? card.color,
+      resolveThemeColorPreference(courseColorsByCourseCode[card.courseCode], themePalette)
+        ?? defaultColorByCourseCode.get(card.courseCode)
+        ?? card.color,
     ])),
-    [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards],
+    [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards, themePalette],
   );
   const colorByCourseCode = useMemo(
     () => new Map(selectedCards.map((card) => [
       card.courseCode,
-      courseColorsByCourseCode[card.courseCode] ?? defaultColorByCourseCode.get(card.courseCode) ?? card.color,
+      resolveThemeColorPreference(courseColorsByCourseCode[card.courseCode], themePalette)
+        ?? defaultColorByCourseCode.get(card.courseCode)
+        ?? card.color,
     ])),
-    [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards],
+    [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards, themePalette],
   );
   const selectedShareKeyByCourseCode = useMemo(
     () => new Map(selectedClasses.map((selection) => [selection.courseCode, buildSharedClassIdentifier(selection)])),
@@ -1271,7 +1306,7 @@ export function PlannerClient({
                                   className="pointer-events-none absolute -top-[7px] left-[5px] h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
                                 />
                                 <div className="grid grid-cols-4 gap-1.5">
-                                  {themePalette.map((color) => (
+                                  {themePalette.map((color, colorIndex) => (
                                     <button
                                       key={color}
                                       type="button"
@@ -1281,7 +1316,7 @@ export function PlannerClient({
                                       onClick={() => {
                                         setCourseColorsByCourseCode((current) => ({
                                           ...current,
-                                          [record.courseCode]: color,
+                                          [record.courseCode]: buildThemeColorPreference(colorIndex),
                                         }));
                                         setColorPickerCourseCode(null);
                                       }}

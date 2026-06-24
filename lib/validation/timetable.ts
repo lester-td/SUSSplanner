@@ -41,9 +41,11 @@ export const sharedTimetableStateSchema = z.object({
   selectedClasses: z.array(sharedClassIdentifierSchema).max(50),
 });
 
+export const courseColorPreferenceSchema = z.string().regex(/^theme-color:\d+$/);
+
 export const plannerSemesterStateSchema = sharedTimetableStateSchema.extend({
   hiddenClasses: z.array(z.string()).max(50),
-  courseColorsByCourseCode: z.record(courseCodeSchema, z.string().regex(/^#[0-9A-Fa-f]{6}$/)).default({}),
+  courseColorsByCourseCode: z.record(courseCodeSchema, courseColorPreferenceSchema).default({}),
   selectedWeekId: z.union([z.literal("all"), semesterIdSchema]),
 });
 
