@@ -52,13 +52,16 @@ function mergeResults(results: ScheduleParseResult[]): ScheduleParseResult {
 
 async function extractPdfTableToCsv(pdfPath: string, csvPath: string): Promise<void> {
   try {
-    await execFileAsync("python3", ["tools/pdf_table_to_csv.py", pdfPath, "-o", csvPath], {
+    const { stderr } = await execFileAsync("python3", ["tools/pdf_table_to_csv.py", pdfPath, "-o", csvPath], {
       cwd: process.cwd(),
       maxBuffer: 1024 * 1024 * 20
     });
+    if (stderr.trim().length > 0) {
+      console.warn(stderr.trim());
+    }
   } catch (error) {
     throw new Error(
-      `Failed to extract tables from ${pdfPath}. Make sure Python and pdfplumber are installed. Run: pip install pdfplumber\n` +
+      `Failed to extract tables from ${pdfPath}. Make sure Python dependencies are installed. Run: pip install -r requirements.txt\n` +
         String((error as Error).message)
     );
   }

@@ -23,7 +23,7 @@ This scraper/import workflow uses:
 | Language | TypeScript | Main scraper code, parsers, and SQL generation |
 | Package manager | npm | Installs dependencies and runs scripts |
 | TS runner | tsx | Runs TypeScript CLI scripts without a manual build step |
-| PDF extraction | Python 3 + pdfplumber | Extracts tables/text from schedule PDFs and course synopsis PDFs |
+| PDF extraction | Python 3 + pdfplumber + pypdf + fontTools | Extracts tables/text from schedule PDFs and course synopsis PDFs, including embedded-font repair for Tamil PDFs |
 | Database | Supabase Postgres | Stores courses, semesters, timetable events, and assessment data |
 | DB import tool | psql | Imports generated SQL files into Supabase reliably |
 | Frontend hosting | Vercel | Hosts the deployed web app; scraping is done locally, not inside Vercel |
@@ -76,7 +76,7 @@ cd ~/Git/SUSSplanner/scraper
 npm install
 ```
 
-Python is needed because the scraper uses `pdfplumber` for PDF table/text extraction.
+Python is needed because the scraper uses `pdfplumber` for PDF table/text extraction, plus `pypdf` and `fontTools` to repair embedded-font PDFs when Unicode maps are missing.
 
 Recommended:
 

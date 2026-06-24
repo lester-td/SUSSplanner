@@ -39,10 +39,13 @@ async function extractPdfWithPdfplumber(pdfPath: string, textPath: string, jsonP
   await fs.mkdir(path.dirname(textPath), { recursive: true });
   await fs.mkdir(path.dirname(jsonPath), { recursive: true });
 
-  await execFileAsync("python3", ["tools/course_pdf_to_text.py", pdfPath, "-o", textPath, "--json", jsonPath], {
+  const { stderr } = await execFileAsync("python3", ["tools/course_pdf_to_text.py", pdfPath, "-o", textPath, "--json", jsonPath], {
     cwd: process.cwd(),
     maxBuffer: 1024 * 1024 * 20
   });
+  if (stderr.trim().length > 0) {
+    console.warn(stderr.trim());
+  }
 
   return fs.readFile(textPath, "utf8");
 }

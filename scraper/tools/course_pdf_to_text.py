@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import sys
 from pathlib import Path
 import pdfplumber
+from pdfplumber import utils
+
+from pdf_unicode_repair import (
+    build_pdf_page_font_maps,
+    font_priority_from_chars,
+    has_cid_tokens,
+    repair_chars,
+    repair_cid_tokens,
+)
 
 
 def clean_cell(value: object) -> str:
@@ -14,17 +24,25 @@ def clean_cell(value: object) -> str:
 def extract_course_pdf(pdf_path: Path) -> dict:
     pages: list[dict] = []
     combined_parts: list[str] = []
+    warnings: list[str] = []
+    page_font_maps = build_pdf_page_font_maps(pdf_path)
 
     with pdfplumber.open(pdf_path) as pdf:
         for index, page in enumerate(pdf.pages, start=1):
-            text = page.extract_text(x_tolerance=1, y_tolerance=3) or ""
+            fonts_for_page = page_font_maps[index - 1] if index - 1 < len(page_font_maps) else {}
+            cid_font_priority = font_priority_from_chars(page.chars)
+            cid_maps = [fonts_for_page[font_name] for font_name in cid_font_priority if font_name in fonts_for_page]
+
+            repaired_chars, _ = repair_chars(page.chars, fonts_for_page)
+            text = utils.extract_text(repaired_chars) or ""
+            text = repair_cid_tokens(text, cid_maps)
             tables = page.extract_tables() or []
 
             table_rows: list[list[str]] = []
             table_text_lines: list[str] = []
             for table in tables:
                 for row in table:
-                    cleaned = [clean_cell(cell) for cell in row]
+                    cleaned = [clean_cell(repair_cid_tokens(clean_cell(cell), cid_maps)) for cell in row]
                     if any(cleaned):
                         table_rows.append(cleaned)
                         table_text_lines.append(" | ".join(cleaned))
@@ -39,7 +57,13 @@ def extract_course_pdf(pdf_path: Path) -> dict:
             combined_parts.append("\n".join(page_text_parts))
             pages.append({"page": index, "text": text, "tables": table_rows})
 
-    return {"source": str(pdf_path), "text": "\n".join(combined_parts), "pages": pages}
+            if has_cid_tokens(text) or any(has_cid_tokens(cell) for row in table_rows for cell in row):
+                warnings.append(
+                    f"Page {index}: unresolved CID glyphs remain after font repair; "
+                    "this PDF may need OCR for complete Tamil text recovery."
+                )
+
+    return {"source": str(pdf_path), "text": "\n".join(combined_parts), "pages": pages, "warnings": warnings}
 
 
 def main() -> None:
@@ -64,6 +88,9 @@ def main() -> None:
         json_path = args.json.expanduser().resolve()
         json_path.parent.mkdir(parents=True, exist_ok=True)
         json_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    for warning in result.get("warnings", []):
+        print(warning, file=sys.stderr)
 
     if not args.output and not args.json:
         print(result["text"])

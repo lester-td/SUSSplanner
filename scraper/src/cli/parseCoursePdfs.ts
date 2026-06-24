@@ -170,7 +170,10 @@ async function extractPdfWithPdfplumber(pdfPath: string, textPath: string, jsonP
   if (jsonPath) args.push("--json", jsonPath);
 
   try {
-    await execFileAsync("python3", args, { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 20 });
+    const { stderr } = await execFileAsync("python3", args, { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 20 });
+    if (stderr.trim().length > 0) {
+      console.warn(stderr.trim());
+    }
   } catch (error) {
     const err = error as Error & { stderr?: string };
     throw new Error(
