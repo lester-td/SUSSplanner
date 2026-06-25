@@ -33,7 +33,7 @@ export function SemesterPlannerPanel({
         id={COURSE_BANK_DROP_ID}
         className={(isOver) => `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
           isOver
-            ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
+            ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] ring-2 ring-[var(--primary-ring-soft)] shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
             : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
         }`}
       >

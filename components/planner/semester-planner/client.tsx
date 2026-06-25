@@ -8,10 +8,12 @@ import {
   DragOverlay,
   PointerSensor,
   TouchSensor,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import type { CollisionDetection, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
 import {
   BookIcon,
@@ -59,6 +61,17 @@ import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
 type SearchResponse = {
   courses: CourseSearchResult[];
+};
+
+const pointerFirstCollisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+
+  if (pointerCollisions.length > 0)
+  {
+    return pointerCollisions;
+  }
+
+  return rectIntersection(args);
 };
 
 export function SemesterPlannerClient({
@@ -914,6 +927,7 @@ export function SemesterPlannerClient({
             activator: AutoScrollActivator.Pointer,
             layoutShiftCompensation: false,
           }}
+          collisionDetection={pointerFirstCollisionDetection}
           sensors={sensors}
           onDragStart={handleCourseDragStart}
           onDragEnd={handleCourseDragEnd}
@@ -945,7 +959,7 @@ export function SemesterPlannerClient({
                     id={`${SEMESTER_DROP_ID_PREFIX}${semesterIndex}`}
                     className={(isOver) => `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
                       isOver
-                        ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
+                        ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] ring-2 ring-[var(--primary-ring-soft)] shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
                         : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
                     }`}
                   >
