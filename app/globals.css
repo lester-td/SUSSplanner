@@ -680,6 +680,17 @@
   box-shadow: var(--shadow-elev-1);
 }
 
+:root[data-color-scheme="dark"] .planner-course-card:not(.planner-course-card--active):hover {
+  border-color: rgb(var(--suss-light-blue-rgb) / 0.46);
+  background: #1A2942;
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.58),
+    0 8px 18px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgb(var(--suss-light-blue-rgb) / 0.22),
+    0 0 24px rgb(var(--suss-light-blue-rgb) / 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
 :root[data-color-scheme="dark"] .planner-course-card--active,
 :root[data-color-scheme="dark"] .planner-course-card--overlay {
   border-color: var(--primary);
