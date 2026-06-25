@@ -172,7 +172,7 @@ export function CourseCard({
       style={style}
       {...(draggable ? listeners : {})}
       {...(draggable ? attributes : {})}
-      className={`planner-course-card rounded-[0.85rem] border px-3 py-2.5 ${active ? "planner-course-card--active transition-colors duration-200" : "transition-all duration-200"} ${
+      className={`planner-course-card rounded-[0.85rem] border px-3 py-2.5 ${active ? "planner-course-card--active transition-colors duration-200" : "transition-all duration-200 hover:shadow-[var(--shadow-elev-2)]"} ${
         draggable ? "cursor-grab active:cursor-grabbing select-none touch-none" : ""
       } ${
         active
