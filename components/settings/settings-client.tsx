@@ -408,18 +408,6 @@ export function SettingsClient()
           </SettingRow>
         </Section>
 
-        <Section id="theme" title="Theme">
-          <p className="max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
-            Pick the timetable color palette. The preview reflects the selected palette and the
-            timetable defaults below.
-          </p>
-          <TimetablePreview settings={settings} theme={selectedTheme} />
-          <ThemePicker
-            selectedThemeId={settings.themeId}
-            onSelectTheme={(themeId) => updateSettings({ themeId })}
-          />
-        </Section>
-
         <Section id="timetable" title="Timetable">
           <SettingRow
             title="Timetable orientation"
@@ -436,6 +424,18 @@ export function SettingsClient()
             />
           </SettingRow>
 
+        </Section>
+
+        <Section id="theme" title="Theme">
+          <p className="max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
+            Pick the timetable color palette. The preview reflects the selected palette and
+            timetable orientation.
+          </p>
+          <TimetablePreview settings={settings} theme={selectedTheme} />
+          <ThemePicker
+            selectedThemeId={settings.themeId}
+            onSelectTheme={(themeId) => updateSettings({ themeId })}
+          />
         </Section>
 
         <Section id="reminders" title="Course Registration Reminders">
