@@ -704,6 +704,15 @@
   background: var(--input-surface);
 }
 
+.planner-continuation-card {
+  background: color-mix(in srgb, var(--surface-container-lowest), var(--suss-grey) 18%);
+}
+
+:root[data-color-scheme="dark"] .planner-continuation-card {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: #101827;
+}
+
 :root[data-color-scheme="dark"] .planner-notice {
   border-color: var(--brand-divider);
   background: var(--surface-variant);

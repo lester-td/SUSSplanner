@@ -18,6 +18,7 @@ import type { CollisionDetection, DragEndEvent, DragStartEvent } from "@dnd-kit/
 import {
   BookIcon,
   CalendarWeekIcon,
+  ContinueIcon,
   DownloadIcon,
   EditCalendarIcon,
   ListIcon,
@@ -986,14 +987,22 @@ export function SemesterPlannerClient({
                     </div>
 
                     {continuedCourses.length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                         {continuedCourses.map((course) => (
-                          <span
+                          <div
                             key={`${course.id}-continued-${semesterIndex}`}
-                            className="rounded-[999px] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[11px] font-medium leading-4 text-[var(--on-surface-variant)]"
+                            className="planner-continuation-card flex min-h-12 items-center gap-2 rounded-[0.75rem] border border-dashed border-[var(--outline-variant)] px-3 py-2 text-[var(--on-surface-variant)]"
                           >
-                            {course.courseCode} continues
-                          </span>
+                            <ContinueIcon className="h-4 w-4 shrink-0 opacity-75" />
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-medium leading-4">
+                                Continues from Semester {semesterIndex}
+                              </p>
+                              <p className="truncate text-[12px] font-semibold leading-4">
+                                {course.courseCode}
+                              </p>
+                            </div>
+                          </div>
                         ))}
                       </div>
                     ) : null}

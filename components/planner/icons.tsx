@@ -13,6 +13,7 @@ import {
   TbChevronsRight,
   TbClock,
   TbCode,
+  TbCornerDownRight,
   TbColumns3,
   TbDownload,
   TbEye,
@@ -231,4 +232,9 @@ export function PinIcon({ className }: IconProps)
 export function EditIcon({ className }: IconProps)
 {
   return renderIcon(TbPencil, className);
+}
+
+export function ContinueIcon({ className }: IconProps)
+{
+  return renderIcon(TbCornerDownRight, className);
 }
