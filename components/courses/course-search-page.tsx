@@ -197,6 +197,19 @@ const ASSESSMENT_MODE_OPTIONS = [
   "Online Exam",
 ] as const;
 
+function hasActiveCourseFilters(filters: CourseSearchFilters)
+{
+  return filters.q.trim().length > 0
+    || filters.semesterIds.length > 0
+    || filters.scheduleTypes.length > 0
+    || filters.undergraduateOnly
+    || filters.postgraduateOnly
+    || filters.availableAsGspOnly
+    || filters.assessmentModes.length > 0
+    || filters.schoolNames.length > 0
+    || filters.courseLevels.length > 0;
+}
+
 export function CourseSearchPage({
   semesters,
   schools,
@@ -222,7 +235,6 @@ export function CourseSearchPage({
   const requestQuery = useMemo(() => buildCourseSearchParams({
     ...filters,
     q: deferredQuery,
-    limit: 40,
   }).toString(), [
     deferredQuery,
     filters.assessmentModes.join("|"),
@@ -236,13 +248,6 @@ export function CourseSearchPage({
   ]);
 
   useEffect(() => {
-    if (!deferredQuery.trim())
-    {
-      setResults([]);
-      setLoading(false);
-      return;
-    }
-
     const controller = new AbortController();
     setLoading(true);
 
@@ -299,7 +304,7 @@ export function CourseSearchPage({
                 <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
               </div>
               <div className="text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                {loading ? "Searching..." : `${results.length} matches`}
+                {loading ? "Searching..." : `${results.length} courses found`}
               </div>
             </div>
 
@@ -315,7 +320,7 @@ export function CourseSearchPage({
             </label>
           </div>
 
-          {deferredQuery.trim() && results.length === 0 && !loading ? (
+          {hasActiveCourseFilters(filters) && results.length === 0 && !loading ? (
             <div className="elev-1 rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               No courses matched the current query and checkbox filters.
             </div>

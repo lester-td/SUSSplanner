@@ -173,7 +173,6 @@ export function SemesterPlannerClient({
     const controller = new AbortController();
     const params = new URLSearchParams({
       q: deferredSearch.trim(),
-      limit: "10",
     });
 
     if (searchSemesterId !== "all")

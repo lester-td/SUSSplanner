@@ -346,7 +346,6 @@ export async function searchCourses({
   assessmentModes,
   schoolNames,
   courseLevels,
-  limit,
 }: CourseSearchFilters)
 {
   const searchTerm = q.trim();
@@ -442,41 +441,32 @@ export async function searchCourses({
     end`
     : sql<number>`9`;
 
+  const groupedCourseColumns = [
+    courses.courseCode,
+    courses.courseName,
+    courses.schoolName,
+    courses.isPostgraduate,
+    courses.courseLevel,
+    courses.creditUnits,
+    courses.presentationPattern,
+    courses.courseSynopsis,
+  ] as const;
+
   const rows = hasClassFilters
     ? await db
         .select(selectShape)
         .from(courses)
         .innerJoin(classes, and(...classFilterPredicates))
         .where(predicates.length > 0 ? and(...predicates) : undefined)
-        .groupBy(
-          courses.courseCode,
-          courses.courseName,
-          courses.schoolName,
-          courses.isPostgraduate,
-          courses.courseLevel,
-          courses.creditUnits,
-          courses.presentationPattern,
-          courses.courseSynopsis,
-        )
+        .groupBy(...groupedCourseColumns)
         .orderBy(asc(searchRanking), asc(courses.courseCode))
-        .limit(limit)
     : await db
         .select(selectShape)
         .from(courses)
         .leftJoin(classes, eq(classes.courseCode, courses.courseCode))
         .where(predicates.length > 0 ? and(...predicates) : undefined)
-        .groupBy(
-          courses.courseCode,
-          courses.courseName,
-          courses.schoolName,
-          courses.isPostgraduate,
-          courses.courseLevel,
-          courses.creditUnits,
-          courses.presentationPattern,
-          courses.courseSynopsis,
-        )
-        .orderBy(asc(searchRanking), asc(courses.courseCode))
-        .limit(limit);
+        .groupBy(...groupedCourseColumns)
+        .orderBy(asc(searchRanking), asc(courses.courseCode));
 
   const offeredSemestersByCourseCode = await getOfferedSemestersForCourseCodes(
     rows.map((row) => row.courseCode),
@@ -718,7 +708,6 @@ export async function getCoursesWithAvailableClasses(
     assessmentModes: [],
     schoolNames: [],
     courseLevels: [],
-    limit: 200,
   });
 }
 

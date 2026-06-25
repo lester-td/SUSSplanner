@@ -597,7 +597,6 @@ export function PlannerClient({
 
     const params = new URLSearchParams({
       q: deferredSearch,
-      limit: "20",
     });
     params.append("semesterIds", String(semesterId));
 
