@@ -59,6 +59,9 @@ export type CourseSearchResult = {
   hasAvailableClasses: boolean;
   availableClassCount: number;
   offeredSemesters: SemesterRecord[];
+  scheduleTypes: ScheduleType[];
+  availableAsGsp: boolean;
+  assessmentModes: string[];
 };
 
 export type CourseRecord = {

@@ -30,6 +30,11 @@ type SearchResponse = {
 
 const SYNOPSIS_WORD_LIMIT = 100;
 const COURSES_PER_PAGE = 10;
+const COURSE_CATALOG_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+
+let cachedAllCourses: CourseSearchResult[] | null = null;
+let cachedAllCoursesFetchedAt = 0;
+let pendingAllCoursesRequest: Promise<CourseSearchResult[]> | null = null;
 
 function normalizeSearchTerm(term: string)
 {
@@ -146,21 +151,6 @@ function toggleInList<T>(values: T[], value: T)
     : [...values, value];
 }
 
-function useDebouncedValue<T>(value: T, delayMs: number)
-{
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedValue(value);
-    }, delayMs);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [delayMs, value]);
-
-  return debouncedValue;
-}
-
 function buildLevelOptions(courseLevels: string[])
 {
   const mappedLevels = new Map<number, string>();
@@ -221,6 +211,181 @@ function buildPaginationPages(currentPage: number, totalPages: number)
   return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
 }
 
+function includesText(value: string | null, searchTerm: string)
+{
+  return value?.toLowerCase().includes(searchTerm) ?? false;
+}
+
+function getSearchRanking(course: CourseSearchResult, searchTerm: string)
+{
+  if (!searchTerm)
+  {
+    return 9;
+  }
+
+  const courseCode = course.courseCode.toLowerCase();
+  const courseName = course.courseName?.toLowerCase() ?? "";
+  const schoolName = course.schoolName?.toLowerCase() ?? "";
+  const courseSynopsis = course.courseSynopsis?.toLowerCase() ?? "";
+
+  if (courseCode === searchTerm)
+  {
+    return 0;
+  }
+  if (courseCode.startsWith(searchTerm))
+  {
+    return 1;
+  }
+  if (courseCode.includes(searchTerm))
+  {
+    return 2;
+  }
+  if (courseName.startsWith(searchTerm))
+  {
+    return 3;
+  }
+  if (courseName.includes(searchTerm))
+  {
+    return 4;
+  }
+  if (schoolName.startsWith(searchTerm))
+  {
+    return 5;
+  }
+  if (schoolName.includes(searchTerm))
+  {
+    return 6;
+  }
+  if (courseSynopsis.startsWith(searchTerm))
+  {
+    return 7;
+  }
+  if (courseSynopsis.includes(searchTerm))
+  {
+    return 8;
+  }
+
+  return 9;
+}
+
+function filterCourses(courses: CourseSearchResult[], filters: CourseSearchFilters)
+{
+  const searchTerm = filters.q.trim().toLowerCase();
+  const selectedAssessmentModes = new Set(filters.assessmentModes.map((value) => value.trim()).filter(Boolean));
+
+  return courses
+    .filter((course) => {
+      if (searchTerm
+        && !includesText(course.courseCode, searchTerm)
+        && !includesText(course.courseName, searchTerm)
+        && !includesText(course.schoolName, searchTerm)
+        && !includesText(course.courseSynopsis, searchTerm))
+      {
+        return false;
+      }
+
+      if (filters.semesterIds.length > 0
+        && !course.offeredSemesters.some((semester) => filters.semesterIds.includes(semester.semesterId)))
+      {
+        return false;
+      }
+
+      if (filters.scheduleTypes.length > 0
+        && !course.scheduleTypes.some((scheduleType) => filters.scheduleTypes.includes(scheduleType)))
+      {
+        return false;
+      }
+
+      if (filters.postgraduateOnly && course.isPostgraduate !== true)
+      {
+        return false;
+      }
+
+      if (filters.undergraduateOnly !== filters.postgraduateOnly)
+      {
+        if (filters.undergraduateOnly && course.isPostgraduate === true)
+        {
+          return false;
+        }
+
+        if (filters.postgraduateOnly && course.isPostgraduate !== true)
+        {
+          return false;
+        }
+      }
+
+      if (filters.availableAsGspOnly && !course.availableAsGsp)
+      {
+        return false;
+      }
+
+      if (selectedAssessmentModes.size > 0
+        && !course.assessmentModes.some((assessmentMode) => selectedAssessmentModes.has(assessmentMode)))
+      {
+        return false;
+      }
+
+      if (filters.schoolNames.length > 0 && (!course.schoolName || !filters.schoolNames.includes(course.schoolName)))
+      {
+        return false;
+      }
+
+      if (filters.courseLevels.length > 0 && (!course.courseLevel || !filters.courseLevels.includes(course.courseLevel)))
+      {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((left, right) => (
+      getSearchRanking(left, searchTerm) - getSearchRanking(right, searchTerm)
+      || left.courseCode.localeCompare(right.courseCode)
+    ));
+}
+
+async function fetchCourseResults(requestQuery: string, signal?: AbortSignal)
+{
+  const response = await fetch(`/api/courses/search${requestQuery ? `?${requestQuery}` : ""}`, {
+    signal,
+  });
+
+  if (!response.ok)
+  {
+    throw new Error("Unable to search courses.");
+  }
+
+  const payload = await response.json() as SearchResponse;
+  return payload.courses;
+}
+
+function isCachedCatalogFresh(now = Date.now())
+{
+  return cachedAllCourses !== null
+    && now - cachedAllCoursesFetchedAt < COURSE_CATALOG_REFRESH_INTERVAL_MS;
+}
+
+function fetchAllCourses()
+{
+  pendingAllCoursesRequest ??= fetchCourseResults(`refresh=${Date.now()}`)
+    .then((courses) => {
+      cachedAllCourses = courses;
+      cachedAllCoursesFetchedAt = Date.now();
+      return courses;
+    })
+    .finally(() => {
+      pendingAllCoursesRequest = null;
+    });
+
+  return pendingAllCoursesRequest;
+}
+
+function getAllCourses()
+{
+  return isCachedCatalogFresh()
+    ? Promise.resolve(cachedAllCourses)
+    : fetchAllCourses();
+}
+
 export function CourseSearchPage({
   semesters,
   schools,
@@ -234,21 +399,18 @@ export function CourseSearchPage({
 })
 {
   const [filters, setFilters] = useState(initialFilters);
-  const [results, setResults] = useState<CourseSearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [allCourses, setAllCourses] = useState<CourseSearchResult[]>(cachedAllCourses ?? []);
+  const [loading, setLoading] = useState(cachedAllCourses === null);
   const [currentPage, setCurrentPage] = useState(1);
-  const deferredQuery = useDebouncedValue(filters.q, 250);
   const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
+  const filteredCourses = useMemo(() => filterCourses(allCourses, filters), [allCourses, filters]);
 
   useEffect(() => {
     setFilters(initialFilters);
   }, [initialFilters]);
 
-  const requestQuery = useMemo(() => buildCourseSearchParams({
-    ...filters,
-    q: deferredQuery,
-  }).toString(), [
-    deferredQuery,
+  const filterKey = useMemo(() => buildCourseSearchParams(filters).toString(), [
+    filters.q,
     filters.assessmentModes.join("|"),
     filters.availableAsGspOnly,
     filters.courseLevels.join("|"),
@@ -261,49 +423,81 @@ export function CourseSearchPage({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [requestQuery]);
+  }, [filterKey]);
 
-  const totalPages = Math.max(1, Math.ceil(results.length / COURSES_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / COURSES_PER_PAGE));
   const pageResults = useMemo(() => {
     const startIndex = (currentPage - 1) * COURSES_PER_PAGE;
-    return results.slice(startIndex, startIndex + COURSES_PER_PAGE);
-  }, [currentPage, results]);
+    return filteredCourses.slice(startIndex, startIndex + COURSES_PER_PAGE);
+  }, [currentPage, filteredCourses]);
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
+    let isActive = true;
 
-    fetch(`/api/courses/search?${requestQuery}`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok)
-        {
-          throw new Error("Unable to search courses.");
-        }
-        return response.json() as Promise<SearchResponse>;
-      })
-      .then((payload) => setResults(payload.courses))
-      .catch((error: unknown) => {
-        if ((error as { name?: string })?.name === "AbortError")
-        {
-          return;
-        }
-        setResults([]);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted)
-        {
-          setLoading(false);
-        }
-      });
+    function refreshCatalog({ showLoading }: { showLoading: boolean })
+    {
+      if (showLoading)
+      {
+        setLoading(true);
+      }
 
-    return () => controller.abort();
-  }, [deferredQuery, requestQuery]);
+      getAllCourses()
+        .then((courses) => {
+          if (isActive && courses)
+          {
+            setAllCourses(courses);
+          }
+        })
+        .catch(() => {
+          if (isActive && !cachedAllCourses)
+          {
+            setAllCourses([]);
+          }
+        })
+        .finally(() => {
+          if (isActive && showLoading)
+          {
+            setLoading(false);
+          }
+        });
+    }
+
+    if (cachedAllCourses)
+    {
+      setAllCourses(cachedAllCourses);
+      setLoading(false);
+
+      if (!isCachedCatalogFresh())
+      {
+        refreshCatalog({ showLoading: false });
+      }
+    }
+    else
+    {
+      refreshCatalog({ showLoading: true });
+    }
+
+    function handlePageActive()
+    {
+      if (!isCachedCatalogFresh())
+      {
+        refreshCatalog({ showLoading: cachedAllCourses === null });
+      }
+    }
+
+    window.addEventListener("focus", handlePageActive);
+    document.addEventListener("visibilitychange", handlePageActive);
+
+    return () => {
+      isActive = false;
+      window.removeEventListener("focus", handlePageActive);
+      document.removeEventListener("visibilitychange", handlePageActive);
+    };
+  }, []);
 
   function resetCheckboxFilters()
   {
@@ -330,7 +524,7 @@ export function CourseSearchPage({
                 <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
               </div>
               <div className="text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                {loading ? "Searching..." : `${results.length} courses found`}
+                {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
               </div>
             </div>
 
@@ -346,7 +540,7 @@ export function CourseSearchPage({
             </label>
           </div>
 
-          {hasActiveCourseFilters(filters) && results.length === 0 && !loading ? (
+          {hasActiveCourseFilters(filters) && filteredCourses.length === 0 && !loading ? (
             <div className="elev-1 rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               No courses matched the current query and checkbox filters.
             </div>
@@ -413,11 +607,11 @@ export function CourseSearchPage({
             </div>
           )}
 
-          {results.length > 0 ? (
+          {filteredCourses.length > 0 ? (
             <CoursePagination
               currentPage={currentPage}
               pageSize={COURSES_PER_PAGE}
-              totalItems={results.length}
+              totalItems={filteredCourses.length}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
             />
