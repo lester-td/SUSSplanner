@@ -87,12 +87,14 @@
     --surface-container-lowest: #17191D;
     --surface-container-low: #181B20;
     --surface-container: #181B20;
+    --surface-container-nested: #1A1D22;
     --surface-container-high: #20242B;
     --surface-container-highest: #252A32;
     --surface-variant: #1D2026;
     --input-surface: #131518;
-    --outline: rgba(255, 255, 255, 0.11);
-    --outline-variant: rgba(255, 255, 255, 0.07);
+    --outline: rgba(255, 255, 255, 0.14);
+    --section-border: rgba(255, 255, 255, 0.11);
+    --outline-variant: rgba(255, 255, 255, 0.08);
     --primary: #3B82F6;
     --primary-container: #2563EB;
     --primary-fixed: rgb(59 130 246 / 0.1);
@@ -113,7 +115,7 @@
     --secondary-soft: #1D2026;
     --tertiary: #F59E0B;
     --tertiary-soft: rgba(245, 158, 11, 0.1);
-    --brand-divider: rgba(255, 255, 255, 0.07);
+    --brand-divider: rgba(255, 255, 255, 0.08);
     --brand-chip-bg: #1D2026;
     --rail-week-bg: #15181E;
     --today-column-bg: #181B20;
@@ -123,7 +125,7 @@
     --header-chip-bg: #20242B;
     --header-chip-active-bg: #3B82F6;
     --header-chip-active-text: #ffffff;
-    --header-divider: rgba(255, 255, 255, 0.07);
+    --header-divider: rgba(255, 255, 255, 0.08);
     --footer-surface: #17191D;
     --primary-ring-soft: rgba(59, 130, 246, 0.35);
     --primary-ring-strong: rgba(59, 130, 246, 0.45);
@@ -247,9 +249,20 @@
   box-shadow: var(--shadow-elev-1);
 }
 
+:root[data-color-scheme="dark"] .gpa-summary-row {
+  border: 1px solid var(--section-border);
+  background: var(--surface-container-low);
+  padding: 0.75rem;
+}
+
+:root[data-color-scheme="dark"] .gpa-summary-row .gpa-summary-card {
+  border-color: var(--section-border);
+  background: var(--surface-container-nested);
+}
+
 :root[data-color-scheme="dark"] .gpa-summary-card--emphasized {
-  border-color: var(--outline-variant);
-  background: var(--surface-container-lowest);
+  border-color: var(--section-border);
+  background: var(--surface-container-nested);
   color: var(--on-surface);
 }
 
@@ -360,6 +373,31 @@
 
 :root[data-color-scheme="dark"] .calculator-panel {
   padding: 1.25rem;
+}
+
+:root[data-color-scheme="dark"] .calculators-stack {
+  row-gap: 3rem;
+}
+
+:root[data-color-scheme="dark"] .calculator-section + .calculator-section {
+  border-top: 1px solid var(--section-border);
+  padding-top: 2.25rem;
+}
+
+:root[data-color-scheme="dark"] .calculator-major-panel {
+  border-color: var(--section-border);
+  background: var(--surface-container-lowest);
+}
+
+:root[data-color-scheme="dark"] .calculator-inner-panel,
+:root[data-color-scheme="dark"] .calculator-nested-panel {
+  border-color: var(--brand-divider);
+  background: var(--surface-container-nested);
+}
+
+:root[data-color-scheme="dark"] .calculator-section-header {
+  border-bottom: 1px solid var(--brand-divider);
+  padding-bottom: 0.75rem;
 }
 
 :root[data-color-scheme="dark"] .calculator-segmented-control {

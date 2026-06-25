@@ -318,8 +318,8 @@ export function GpaCalculatorClient()
   }
 
   return (
-    <div className="calculator-page w-full pb-8 pt-8">
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="calculator-page calculator-section calculator-section--gpa w-full pb-8 pt-8">
+      <div className="calculator-section-header mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-[30px] font-semibold leading-10 tracking-[-0.03em] text-[var(--on-surface)]">
             GPA Calculator
@@ -327,7 +327,7 @@ export function GpaCalculatorClient()
         </div>
       </div>
 
-      <section className="mb-5 grid gap-3 sm:grid-cols-3">
+      <section className="gpa-summary-row mb-5 grid gap-3 rounded-[1rem] sm:grid-cols-3">
         <GpaSummaryCard
           label="Current GPA"
           value={formatGpa(currentGpa)}
@@ -349,7 +349,7 @@ export function GpaCalculatorClient()
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0">
           <div ref={searchContainerRef} className="relative z-20 mb-4">
-            <div className="calculator-panel rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+            <div className="calculator-panel calculator-major-panel rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   {isCustomModule ? (
@@ -504,7 +504,7 @@ export function GpaCalculatorClient()
             </div>
           </div>
 
-          <div className="calculator-panel overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
+          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
             <div className="flex items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-3.5">
               <div>
                 <h2 className="text-[15px] font-bold text-[var(--on-surface)]">Current semester modules</h2>
@@ -630,7 +630,7 @@ export function GpaCalculatorClient()
         </section>
 
         <aside className="space-y-4">
-          <section className="calculator-panel relative rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
+          <section className="calculator-panel calculator-major-panel relative rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
             <div className="group absolute right-3 top-3">
               <button
                 type="button"
@@ -676,7 +676,7 @@ export function GpaCalculatorClient()
             </div>
           </section>
 
-          <section className="calculator-panel rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-4">
+          <section className="calculator-panel calculator-nested-panel rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-4">
             <h2 className="text-[13px] font-bold text-[var(--on-surface)]">SUSS grade scale</h2>
             <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-1.5 text-[12px]">
               {GRADE_OPTIONS.map((option) => (
