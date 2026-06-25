@@ -7,6 +7,8 @@ import type { ReactNode } from "react";
 import {
   BookIcon,
   CalendarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   LayersIcon,
   ListIcon,
   RefreshIcon,
@@ -27,6 +29,7 @@ type SearchResponse = {
 };
 
 const SYNOPSIS_WORD_LIMIT = 100;
+const COURSES_PER_PAGE = 10;
 
 function normalizeSearchTerm(term: string)
 {
@@ -210,6 +213,14 @@ function hasActiveCourseFilters(filters: CourseSearchFilters)
     || filters.courseLevels.length > 0;
 }
 
+function buildPaginationPages(currentPage: number, totalPages: number)
+{
+  const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+  const endPage = Math.min(totalPages, startPage + 4);
+
+  return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+}
+
 export function CourseSearchPage({
   semesters,
   schools,
@@ -225,6 +236,7 @@ export function CourseSearchPage({
   const [filters, setFilters] = useState(initialFilters);
   const [results, setResults] = useState<CourseSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const deferredQuery = useDebouncedValue(filters.q, 250);
   const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
 
@@ -246,6 +258,20 @@ export function CourseSearchPage({
     filters.schoolNames.join("|"),
     filters.semesterIds.join("|"),
   ]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [requestQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(results.length / COURSES_PER_PAGE));
+  const pageResults = useMemo(() => {
+    const startIndex = (currentPage - 1) * COURSES_PER_PAGE;
+    return results.slice(startIndex, startIndex + COURSES_PER_PAGE);
+  }, [currentPage, results]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -326,7 +352,7 @@ export function CourseSearchPage({
             </div>
           ) : (
             <div className="divide-y divide-[var(--brand-divider)] border-y border-[var(--brand-divider)]">
-              {results.map((course) => {
+              {pageResults.map((course) => {
                 const semesterIndicators = buildSemesterIndicators(course);
 
                 return (
@@ -386,6 +412,16 @@ export function CourseSearchPage({
               })}
             </div>
           )}
+
+          {results.length > 0 ? (
+            <CoursePagination
+              currentPage={currentPage}
+              pageSize={COURSES_PER_PAGE}
+              totalItems={results.length}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          ) : null}
         </section>
 
         <aside className="mt-2 border-l border-[var(--brand-divider)] pl-2.5 lg:mt-0 lg:sticky lg:top-[90px] lg:self-start">
@@ -524,6 +560,82 @@ export function CourseSearchPage({
         </aside>
       </div>
     </div>
+  );
+}
+
+function CoursePagination({
+  currentPage,
+  pageSize,
+  totalItems,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+})
+{
+  const pages = buildPaginationPages(currentPage, totalPages);
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  function goToPage(page: number)
+  {
+    onPageChange(Math.max(1, Math.min(page, totalPages)));
+  }
+
+  return (
+    <nav
+      aria-label="Courses pagination"
+      className="flex flex-col gap-2 border-t border-[var(--brand-divider)] pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div className="font-medium">
+        Showing {startItem}-{endItem} of {totalItems}
+      </div>
+
+      {totalPages > 1 ? (
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Previous page"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
+          >
+            <ChevronLeftIcon className="h-4 w-4" />
+          </button>
+
+          {pages.map((page) => (
+            <button
+              key={page}
+              type="button"
+              aria-label={`Page ${page}`}
+              aria-current={page === currentPage ? "page" : undefined}
+              onClick={() => goToPage(page)}
+              className={`inline-flex h-8 min-w-8 items-center justify-center rounded-[0.35rem] border px-2 text-[12px] font-semibold leading-4 transition-colors ${
+                page === currentPage
+                  ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                  : "border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            aria-label="Next page"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
+          >
+            <ChevronRightIcon className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
+    </nav>
   );
 }
 
