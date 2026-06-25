@@ -476,7 +476,7 @@ export function SettingsClient()
             <button
               type="button"
               onClick={resetSettings}
-              className="rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
+              className="app-danger-action rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
             >
               Reset Settings
             </button>

@@ -58,7 +58,7 @@ export function IconButton({
       title={label}
       className={`inline-flex h-8 w-8 items-center justify-center rounded-[0.5rem] border transition-colors ${
         danger
-          ? "border-transparent text-[var(--error)] hover:bg-[var(--accent-soft)]"
+          ? "app-icon-button--danger border-transparent text-[var(--error)] hover:bg-[var(--accent-soft)]"
           : "border-transparent text-[var(--on-surface-variant)] hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)]"
       } ${disabled ? "cursor-not-allowed opacity-40" : ""} ${className}`}
       onClick={onClick}

@@ -277,7 +277,7 @@ function ClashScheduleSection({
                 <td className="border-b border-[var(--outline-variant)] px-3 py-2.5">
                   <div className="flex flex-wrap gap-1.5">
                     {clash.events.map((event) => (
-                      <span key={event.eventId} className="rounded-[0.4rem] border border-[var(--outline-variant)] bg-white px-2 py-1 text-[12px] font-semibold text-[var(--on-surface)] shadow-sm">
+                      <span key={event.eventId} className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-white px-2 py-1 text-[12px] font-semibold text-[var(--on-surface)] shadow-sm">
                         {formatClashEventLabel(event, isExam)}
                       </span>
                     ))}
