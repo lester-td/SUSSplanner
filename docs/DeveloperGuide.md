@@ -425,7 +425,7 @@ class-group, semester, and optional week information.
 | `/timetable` | Server-loads semesters with classes/weeks, then `PlannerClient` restores local state and fetches timetable/course/class data interactively. |
 | `/planner` | Server-loads semester metadata, then `SemesterPlannerClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
 | `/calculators` | Force-dynamic, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` and `OcasCalculatorClient` manage browser-local GPA calculation and OCAS assessment simulation. |
-| `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` performs debounced API search using filters and paginates the returned course list client-side at 10 courses per page. |
+| `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` fetches the full catalog, caches it in memory for return navigation, refreshes stale cached data after 15 minutes, filters/searches the cached catalog client-side, and paginates results at 10 courses per page. |
 | `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
 | `/share?sem=...&classes=...` | Validates and resolves the shared timetable on the server, then renders a read-only `ShareClient` with explicit import. Missing or malformed parameters get explanatory UI. |
 
@@ -438,7 +438,7 @@ All route handlers explicitly use the Node.js runtime.
 
 | Method and route | Inputs | Response / purpose |
 |---|---|---|
-| `GET /api/courses/search` | `q`; repeatable `semesterIds`; repeatable `scheduleTypes`; presence flags `undergraduateOnly`, `postgraduateOnly`, `availableAsGspOnly`; repeatable `assessmentModes` (`TMA`, `GBA`, `Quiz`, `ECA`, `Written Exam`, `Proctored Online Exam`, `Online Exam`); repeatable `schools`; repeatable `courseLevels` | `{ courses: CourseSearchResult[] }`; searches code, name, school, and synopsis and returns class counts/offered semesters. |
+| `GET /api/courses/search` | `q`; repeatable `semesterIds`; repeatable `scheduleTypes`; presence flags `undergraduateOnly`, `postgraduateOnly`, `availableAsGspOnly`; repeatable `assessmentModes` (`TMA`, `GBA`, `Quiz`, `ECA`, `Written Exam`, `Proctored Online Exam`, `Online Exam`); repeatable `schools`; repeatable `courseLevels` | `{ courses: CourseSearchResult[] }`; searches code, name, school, and synopsis and returns class counts, offered semesters, and lightweight filter metadata. |
 | `GET /api/calculator/courses` | `q` | `{ courses: { courseCode, courseName, creditUnits }[] }`; searches the complete course catalog by code or name without joining classes or filtering by semester presentation. Returns up to 8 ranked results. |
 | `GET /api/courses/[courseCode]` | Optional `semesterId`, optional `scheduleType` | `{ course, classes, assessmentComponents }`; returns `404` when the course is missing. |
 | `GET /api/classes` | Mode A: `courseCode` plus optional `semesterId`/`sem` and `scheduleType` | `{ classes: CourseClassRecord[] }`; class groups and their events. |
