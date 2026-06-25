@@ -22,49 +22,49 @@ import {
 const PREVIEW_BLOCKS = [
   {
     dayIndex: 0,
-    timeIndex: 1,
+    timeIndex: 0,
     course: "ICT239",
     title: "Web Application Development",
     colorIndex: 0,
   },
   {
     dayIndex: 1,
-    timeIndex: 3,
+    timeIndex: 2,
     course: "MTH212",
     title: "Statistical Analysis",
     colorIndex: 1,
   },
   {
     dayIndex: 2,
-    timeIndex: 5,
+    timeIndex: 3,
     course: "BUS105",
     title: "Statistics",
     colorIndex: 2,
   },
   {
     dayIndex: 3,
-    timeIndex: 2,
+    timeIndex: 1,
     course: "FIN306",
     title: "Financial Markets",
     colorIndex: 3,
   },
   {
     dayIndex: 0,
-    timeIndex: 4,
+    timeIndex: 2,
     course: "PSY107",
     title: "Introduction to Psychology 1",
     colorIndex: 4,
   },
   {
     dayIndex: 2,
-    timeIndex: 2,
+    timeIndex: 1,
     course: "ANL201",
     title: "Data Visualisation for Business",
     colorIndex: 6,
   },
   {
     dayIndex: 3,
-    timeIndex: 5,
+    timeIndex: 3,
     course: "SWK356",
     title: "Social Work in Healthcare",
     colorIndex: 7,
@@ -226,12 +226,12 @@ function TimetablePreview({
 {
   const isVertical = settings.timetableOrientation === "vertical";
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-  const times = ["09:00", "10:00", "12:00", "14:00", "16:00", "19:00", "21:00"];
+  const times = ["08:30", "12:00", "15:30", "19:00"];
   const gridTemplateColumns = isVertical
     ? `4.5rem repeat(${days.length}, minmax(8rem, 1fr))`
-    : "4.5rem repeat(6, minmax(7rem, 1fr))";
+    : `4.5rem repeat(${times.length}, minmax(7rem, 1fr))`;
   const gridTemplateRows = isVertical
-    ? "3rem repeat(6, 4.5rem)"
+    ? `3rem repeat(${times.length}, 4.5rem)`
     : `3rem repeat(${days.length}, 5.25rem)`;
 
   return (
@@ -261,7 +261,7 @@ function TimetablePreview({
             >
               {day}
             </div>
-          )) : times.slice(0, -1).map((time, timeIndex) => (
+          )) : times.map((time, timeIndex) => (
             <div
               key={time}
               className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-semibold text-[var(--on-surface-variant)]"
@@ -271,7 +271,7 @@ function TimetablePreview({
             </div>
           ))}
 
-          {isVertical ? times.slice(0, -1).map((time, timeIndex) => (
+          {isVertical ? times.map((time, timeIndex) => (
             <div
               key={time}
               className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-semibold text-[var(--on-surface-variant)]"
@@ -289,7 +289,7 @@ function TimetablePreview({
             </div>
           ))}
 
-          {days.flatMap((day, dayIndex) => times.slice(0, -1).map((time, timeIndex) => (
+          {days.flatMap((day, dayIndex) => times.map((time, timeIndex) => (
             <div
               key={`${day}-${time}`}
               className="rounded bg-[var(--surface-container-lowest)] ring-1 ring-[var(--outline-variant)]"
