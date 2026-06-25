@@ -7,7 +7,6 @@ export type SettingsState = {
   colorScheme: ColorSchemePreference;
   themeId: string;
   timetableOrientation: TimetableOrientation;
-  showCourseTitles: boolean;
   registrationReminders: boolean;
 };
 
@@ -24,7 +23,6 @@ export const DEFAULT_APP_SETTINGS: SettingsState = {
   colorScheme: "system",
   themeId: "current-timetable",
   timetableOrientation: "horizontal",
-  showCourseTitles: true,
   registrationReminders: true,
 };
 
@@ -95,9 +93,6 @@ export function normalizeAppSettings(value: unknown): SettingsState
     timetableOrientation: isTimetableOrientation(candidate.timetableOrientation)
       ? candidate.timetableOrientation
       : DEFAULT_APP_SETTINGS.timetableOrientation,
-    showCourseTitles: typeof candidate.showCourseTitles === "boolean"
-      ? candidate.showCourseTitles
-      : DEFAULT_APP_SETTINGS.showCourseTitles,
     registrationReminders: typeof candidate.registrationReminders === "boolean"
       ? candidate.registrationReminders
       : DEFAULT_APP_SETTINGS.registrationReminders,

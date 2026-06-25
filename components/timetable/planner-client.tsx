@@ -1135,7 +1135,6 @@ export function PlannerClient({
                     });
                   }}
                   showCurrentTime={showCurrentTime}
-                  showCourseNames={appSettings.showCourseTitles}
                 />
               ) : (
                 <ExamCalendar cards={examCards} colorByShareKey={colorByShareKey} />

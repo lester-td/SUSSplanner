@@ -5,15 +5,10 @@ import type { CSSProperties, ReactNode } from "react";
 
 import {
   CalendarWeekIcon,
-  ColumnsIcon,
   RefreshIcon,
-  RowsIcon,
-  SettingsIcon,
-  SunIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
 import {
-  APP_SETTINGS_STORAGE_KEY,
   APP_THEME_OPTIONS,
   DEFAULT_APP_SETTINGS,
   announceAppSettingsUpdated,
@@ -294,7 +289,7 @@ function TimetablePreview({
               } as CSSProperties}
             >
               <span className="timetable-cell__module truncate">{block.course}</span>
-              {settings.showCourseTitles ? (
+              {!isVertical ? (
                 <span className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4">
                   {block.title}
                 </span>
@@ -352,19 +347,11 @@ export function SettingsClient()
     <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-1.5 text-[12px] font-bold text-[var(--primary)]">
-            <SettingsIcon className="h-4 w-4" />
-            Preferences
-          </div>
-          <h1 className="mt-4 text-[32px] font-black leading-10 text-[var(--on-surface)]">
+          <h1 className="text-[32px] font-black leading-10 text-[var(--on-surface)]">
             Settings
           </h1>
           <p className="mt-2 max-w-3xl text-[15px] leading-7 text-[var(--on-surface-variant)]">
-            Customise how SUSS Planner looks and behaves on this browser. These controls are saved locally under{" "}
-            <code className="rounded bg-[var(--surface-container-low)] px-1.5 py-0.5 text-[12px] font-bold">
-              {APP_SETTINGS_STORAGE_KEY}
-            </code>{" "}
-            on this device.
+            Customise how SUSS Planner looks and behaves on this browser.
           </p>
         </div>
 
@@ -425,20 +412,6 @@ export function SettingsClient()
             />
           </SettingRow>
 
-          <SettingRow
-            title="Course titles"
-            description="Show course titles inside timetable blocks when there is enough space."
-          >
-            <SegmentedControl
-              label="Course titles"
-              value={settings.showCourseTitles ? "show" : "hide"}
-              options={[
-                { value: "show", label: "Show" },
-                { value: "hide", label: "Hide" },
-              ]}
-              onChange={(value) => updateSettings({ showCourseTitles: value === "show" })}
-            />
-          </SettingRow>
         </Section>
 
         <Section id="reminders" title="Course Registration Reminders">
@@ -457,21 +430,6 @@ export function SettingsClient()
             />
           </SettingRow>
         </Section>
-      </div>
-
-      <div className="mt-5 grid gap-3 text-[13px] leading-6 text-[var(--on-surface-variant)] sm:grid-cols-3">
-        <div className="flex items-start gap-2">
-          <SunIcon className="mt-0.5 h-4 w-4 text-[var(--primary)]" />
-          <span>Appearance settings are local only.</span>
-        </div>
-        <div className="flex items-start gap-2">
-          <ColumnsIcon className="mt-0.5 h-4 w-4 text-[var(--primary)]" />
-          <span>Timetable defaults apply across this browser.</span>
-        </div>
-        <div className="flex items-start gap-2">
-          <RowsIcon className="mt-0.5 h-4 w-4 text-[var(--primary)]" />
-          <span>Existing saved timetables keep their current layout.</span>
-        </div>
       </div>
 
       <span className="sr-only">Current color scheme preference: {settings.colorScheme}</span>
