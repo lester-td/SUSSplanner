@@ -225,14 +225,14 @@ function TimetablePreview({
 })
 {
   const isVertical = settings.timetableOrientation === "vertical";
-  const days = ["Mon", "Tue", "Wed", "Thu"];
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   const times = ["09:00", "10:00", "12:00", "14:00", "16:00", "19:00", "21:00"];
   const gridTemplateColumns = isVertical
-    ? "4.5rem repeat(4, minmax(8rem, 1fr))"
+    ? `4.5rem repeat(${days.length}, minmax(8rem, 1fr))`
     : "4.5rem repeat(6, minmax(7rem, 1fr))";
   const gridTemplateRows = isVertical
     ? "3rem repeat(6, 4.5rem)"
-    : "3rem repeat(4, 5.25rem)";
+    : `3rem repeat(${days.length}, 5.25rem)`;
 
   return (
     <div className="overflow-hidden rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
