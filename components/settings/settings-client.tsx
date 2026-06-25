@@ -21,76 +21,53 @@ import {
 
 const PREVIEW_BLOCKS = [
   {
-    day: "Mon",
-    time: "10:00",
+    dayIndex: 0,
+    timeIndex: 1,
     course: "ICT239",
     title: "Web Application Development",
     colorIndex: 0,
-    column: "col-start-2",
-    row: "row-start-2 row-span-2",
   },
   {
-    day: "Tue",
-    time: "14:00",
-    course: "MTH219",
-    title: "Statistics for Data Science",
+    dayIndex: 1,
+    timeIndex: 3,
+    course: "MTH212",
+    title: "Statistical Analysis",
     colorIndex: 1,
-    column: "col-start-3",
-    row: "row-start-4 row-span-2",
   },
   {
-    day: "Wed",
-    time: "19:00",
+    dayIndex: 2,
+    timeIndex: 5,
     course: "BUS105",
-    title: "Business Communication",
+    title: "Statistics",
     colorIndex: 2,
-    column: "col-start-4",
-    row: "row-start-7 row-span-2",
   },
   {
-    day: "Thu",
-    time: "12:00",
-    course: "FIN201",
-    title: "Corporate Finance",
+    dayIndex: 3,
+    timeIndex: 2,
+    course: "FIN306",
+    title: "Financial Markets",
     colorIndex: 3,
-    column: "col-start-5",
-    row: "row-start-3 row-span-2",
   },
   {
-    day: "Mon",
-    time: "16:00",
+    dayIndex: 0,
+    timeIndex: 4,
     course: "PSY107",
-    title: "Introduction to Psychology",
+    title: "Introduction to Psychology 1",
     colorIndex: 4,
-    column: "col-start-2",
-    row: "row-start-6 row-span-2",
   },
   {
-    day: "Tue",
-    time: "09:00",
-    course: "SCO101",
-    title: "Why Do Good?",
-    colorIndex: 5,
-    column: "col-start-3",
-    row: "row-start-2 row-span-2",
-  },
-  {
-    day: "Wed",
-    time: "12:00",
+    dayIndex: 2,
+    timeIndex: 2,
     course: "ANL201",
-    title: "Analytics for Decision Making",
+    title: "Data Visualisation for Business",
     colorIndex: 6,
-    column: "col-start-4",
-    row: "row-start-3 row-span-2",
   },
   {
-    day: "Thu",
-    time: "19:00",
-    course: "LAW101",
-    title: "Legal Methods",
+    dayIndex: 3,
+    timeIndex: 5,
+    course: "SWK356",
+    title: "Social Work in Healthcare",
     colorIndex: 7,
-    column: "col-start-5",
-    row: "row-start-7 row-span-2",
   },
 ] as const;
 
@@ -248,8 +225,14 @@ function TimetablePreview({
 })
 {
   const isVertical = settings.timetableOrientation === "vertical";
-  const days = ["", "Mon", "Tue", "Wed", "Thu"];
+  const days = ["Mon", "Tue", "Wed", "Thu"];
   const times = ["09:00", "10:00", "12:00", "14:00", "16:00", "19:00", "21:00"];
+  const gridTemplateColumns = isVertical
+    ? "4.5rem repeat(4, minmax(8rem, 1fr))"
+    : "4.5rem repeat(6, minmax(7rem, 1fr))";
+  const gridTemplateRows = isVertical
+    ? "3rem repeat(6, 4.5rem)"
+    : "3rem repeat(4, 5.25rem)";
 
   return (
     <div className="overflow-hidden rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
@@ -263,26 +246,67 @@ function TimetablePreview({
         </span>
       </div>
 
-      <div className="p-3">
-        <div className="grid grid-cols-5 grid-rows-8 gap-1 text-[11px] leading-4">
-          {days.map((day) => (
-            <div key={day || "axis"} className="min-h-8 rounded bg-[var(--surface-container-low)] px-2 py-2 font-bold text-[var(--on-surface-variant)]">
+      <div className="overflow-x-auto p-3">
+        <div
+          className="grid min-w-[46rem] gap-1 text-[11px] leading-4"
+          style={{ gridTemplateColumns, gridTemplateRows }}
+        >
+          <div className="rounded bg-[var(--surface-container-low)]" style={{ gridColumn: 1, gridRow: 1 }} />
+
+          {isVertical ? days.map((day, dayIndex) => (
+            <div
+              key={day}
+              className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-bold text-[var(--on-surface-variant)]"
+              style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
+            >
               {day}
             </div>
-          ))}
-          {times.map((time) => (
-            <div key={time} className="rounded bg-[var(--surface-container-low)] px-2 py-2 font-semibold text-[var(--on-surface-variant)]">
+          )) : times.slice(0, -1).map((time, timeIndex) => (
+            <div
+              key={time}
+              className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-semibold text-[var(--on-surface-variant)]"
+              style={{ gridColumn: timeIndex + 2, gridRow: 1 }}
+            >
               {time}
             </div>
           ))}
-          {Array.from({ length: 28 }).map((_, index) => (
-            <div key={index} className="min-h-8 rounded bg-[var(--surface-container-lowest)] ring-1 ring-[var(--outline-variant)]" />
+
+          {isVertical ? times.slice(0, -1).map((time, timeIndex) => (
+            <div
+              key={time}
+              className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-semibold text-[var(--on-surface-variant)]"
+              style={{ gridColumn: 1, gridRow: timeIndex + 2 }}
+            >
+              {time}
+            </div>
+          )) : days.map((day, dayIndex) => (
+            <div
+              key={day}
+              className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-bold text-[var(--on-surface-variant)]"
+              style={{ gridColumn: 1, gridRow: dayIndex + 2 }}
+            >
+              {day}
+            </div>
           ))}
+
+          {days.flatMap((day, dayIndex) => times.slice(0, -1).map((time, timeIndex) => (
+            <div
+              key={`${day}-${time}`}
+              className="rounded bg-[var(--surface-container-lowest)] ring-1 ring-[var(--outline-variant)]"
+              style={{
+                gridColumn: isVertical ? dayIndex + 2 : timeIndex + 2,
+                gridRow: isVertical ? timeIndex + 2 : dayIndex + 2,
+              }}
+            />
+          )))}
+
           {PREVIEW_BLOCKS.map((block) => (
             <div
-              key={`${block.day}-${block.course}`}
-              className={`timetable-cell z-10 ${block.column} ${block.row}`}
+              key={block.course}
+              className="timetable-cell z-10"
               style={{
+                gridColumn: isVertical ? block.dayIndex + 2 : block.timeIndex + 2,
+                gridRow: isVertical ? block.timeIndex + 2 : block.dayIndex + 2,
                 "--block-bg": theme.colors[block.colorIndex],
                 "--block-border": theme.colors[block.colorIndex],
                 "--block-text": getPreviewTextColor(theme.colors[block.colorIndex]),
@@ -294,7 +318,7 @@ function TimetablePreview({
                   {block.title}
                 </span>
               ) : null}
-              <span className="timetable-cell__time mt-auto">{block.time}</span>
+              <span className="timetable-cell__time mt-auto">{times[block.timeIndex]}</span>
             </div>
           ))}
         </div>
