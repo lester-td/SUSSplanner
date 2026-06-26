@@ -96,14 +96,14 @@
     --surface: #141414;
     --surface-bright: #191919;
     --surface-dim: #141414;
-    --surface-container-lowest: #161616;
-    --surface-container-low: #1b1b1b;
-    --surface-container: #202020;
-    --surface-container-nested: #232323;
-    --surface-container-high: #292929;
-    --surface-container-highest: #303030;
-    --surface-variant: #1f1f1f;
-    --input-surface: #161616;
+    --surface-container-lowest: #1d1d1d;
+    --surface-container-low: #242424;
+    --surface-container: #2a2a2a;
+    --surface-container-nested: #313131;
+    --surface-container-high: #383838;
+    --surface-container-highest: #404040;
+    --surface-variant: #3b3b3b;
+    --input-surface: #1b1b1b;
     --outline: rgba(255, 255, 255, 0.16);
     --section-border: rgba(255, 255, 255, 0.1);
     --outline-variant: rgba(255, 255, 255, 0.08);
@@ -369,19 +369,27 @@
 :root[data-color-scheme="dark"] .home-shortcut-card,
 :root[data-color-scheme="dark"] .calculator-panel,
 :root[data-color-scheme="dark"] .timetable-toolbar,
-:root[data-color-scheme="dark"] .timetable-side-panel,
+:root[data-color-scheme="dark"] .timetable-side-panel {
+  border-color: var(--brand-divider);
+  background: var(--surface-container-low);
+  box-shadow: var(--shadow-elev-1);
+}
+
 :root[data-color-scheme="dark"] .timetable-selected-card {
   border-color: var(--brand-divider);
-  background: var(--surface-container-lowest);
+  background: var(--surface-container-high);
   box-shadow: var(--shadow-elev-1);
 }
 
 :root[data-color-scheme="dark"] .home-feature-card:hover,
-:root[data-color-scheme="dark"] .home-shortcut-card:hover,
-:root[data-color-scheme="dark"] .timetable-selected-card:hover {
+:root[data-color-scheme="dark"] .home-shortcut-card:hover {
   border-color: var(--outline);
   background: var(--surface-container-high);
   box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .timetable-selected-card:hover {
+  background: var(--surface-container-highest);
 }
 
 :root[data-color-scheme="dark"] .home-feature-icon,
@@ -407,7 +415,7 @@
 
 :root[data-color-scheme="dark"] .calculator-major-panel {
   border-color: var(--section-border);
-  background: var(--surface-container-lowest);
+  background: var(--surface-container);
 }
 
 :root[data-color-scheme="dark"] .calculator-inner-panel,
@@ -443,7 +451,7 @@
 :root[data-color-scheme="dark"] .planner-control-card,
 :root[data-color-scheme="dark"] .planner-drop-zone {
   border-color: var(--brand-divider);
-  background: var(--surface-container-low);
+  background: var(--surface-container);
   box-shadow: var(--shadow-elev-1);
 }
 
@@ -461,7 +469,7 @@
 :root[data-color-scheme="dark"] .planner-summary-stat,
 :root[data-color-scheme="dark"] .planner-progress-card {
   border-color: var(--brand-divider);
-  background: var(--surface-container-lowest);
+  background: var(--surface-container);
   box-shadow: var(--shadow-elev-1);
 }
 
@@ -551,7 +559,7 @@
 :root[data-color-scheme="dark"] .timetable-notice,
 :root[data-color-scheme="dark"] .timetable-alerts-card {
   border-color: var(--brand-divider);
-  background: var(--surface-container-low);
+  background: var(--surface-container);
   color: var(--on-surface-variant);
   box-shadow: var(--shadow-elev-1);
 }
