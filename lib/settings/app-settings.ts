@@ -29,7 +29,7 @@ export const DEFAULT_APP_SETTINGS: SettingsState = {
 export const APP_THEME_OPTIONS: ThemeOption[] = [
   {
     id: "current-timetable",
-    name: "Current Timetable",
+    name: "Default",
     colors: COURSE_COLOR_PALETTE,
   },
   {
