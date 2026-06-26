@@ -8,6 +8,7 @@ import {
   RefreshIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
+import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import {
   APP_THEME_OPTIONS,
   DEFAULT_APP_SETTINGS,
@@ -18,73 +19,168 @@ import {
   type SettingsState,
   type ThemeOption,
 } from "@/lib/settings/app-settings";
+import {
+  START_MINUTES,
+  buildTimeSlots,
+  getVisibleEndMinutes,
+} from "@/lib/timetable/date-utils";
+import type { TimetableBlock } from "@/lib/timetable/types";
 
-const PREVIEW_BLOCKS = [
+const PREVIEW_SAMPLE_COURSES = [
   {
-    dayIndex: 0,
-    timeIndex: 0,
-    course: "ICT239",
-    title: "Web Application Development",
-    colorIndex: 0,
+    courseCode: "ICT239",
+    courseName: "Web Application Development",
+    groupCode: "TG01",
+    groupCodeType: "TG",
+    weekLabel: "1-13",
+    venue: "SR 2.1",
   },
   {
-    dayIndex: 1,
-    timeIndex: 2,
-    course: "MTH212",
-    title: "Statistical Analysis",
-    colorIndex: 1,
+    courseCode: "PSY107",
+    courseName: "Introduction to Psychology",
+    groupCode: "TG02",
+    groupCodeType: "TG",
+    weekLabel: "1-13",
+    venue: "SR 4.3",
   },
   {
-    dayIndex: 2,
-    timeIndex: 3,
-    course: "BUS105",
-    title: "Statistics",
-    colorIndex: 2,
+    courseCode: "ANL201",
+    courseName: "Data Visualisation for Business",
+    groupCode: "TG03",
+    groupCodeType: "TG",
+    weekLabel: "2,4,6,8,10,12",
+    venue: "Lab 5.2",
   },
   {
-    dayIndex: 3,
-    timeIndex: 1,
-    course: "FIN306",
-    title: "Financial Markets",
-    colorIndex: 3,
+    courseCode: "MTH212",
+    courseName: "Statistical Analysis",
+    groupCode: "TG04",
+    groupCodeType: "TG",
+    weekLabel: "1-13",
+    venue: "SR 6.1",
   },
   {
-    dayIndex: 0,
-    timeIndex: 2,
-    course: "PSY107",
-    title: "Introduction to Psychology 1",
-    colorIndex: 4,
+    courseCode: "BUS105",
+    courseName: "Business Statistics",
+    groupCode: "TG05",
+    groupCodeType: "TG",
+    weekLabel: "1, 3, 5, 7, 9, 11, 13",
+    venue: "SR 3.2",
   },
   {
-    dayIndex: 2,
-    timeIndex: 1,
-    course: "ANL201",
-    title: "Data Visualisation for Business",
-    colorIndex: 6,
+    courseCode: "FIN306",
+    courseName: "Financial Markets and Instruments",
+    groupCode: "TG06",
+    groupCodeType: "TG",
+    weekLabel: "1-13",
+    venue: "SR 2.8",
   },
   {
-    dayIndex: 3,
-    timeIndex: 3,
-    course: "SWK356",
-    title: "Social Work in Healthcare",
-    colorIndex: 7,
+    courseCode: "SWK356",
+    courseName: "Social Work in Healthcare",
+    groupCode: "TG07",
+    groupCodeType: "TG",
+    weekLabel: "2-12",
+    venue: "SR 1.4",
   },
 ] as const;
 
-function getPreviewTextColor(hexColor: string)
+const PREVIEW_DAYS = [1, 2, 3, 4, 5] as const;
+const PREVIEW_START_TIMES = [8 * 60 + 30, 12 * 60, 15 * 60 + 30] as const;
+
+function hashSeed(value: string)
 {
-  const normalized = hexColor.trim().replace(/^#/, "");
-  if (!/^[0-9a-fA-F]{6}$/.test(normalized))
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1)
   {
-    return "#111827";
+    hash = Math.imul(hash, 31) + value.charCodeAt(index);
+    hash |= 0;
+  }
+  return hash === 0 ? 1 : Math.abs(hash);
+}
+
+function createSeededRandom(seed: string)
+{
+  let state = hashSeed(seed);
+  return () => {
+    state = Math.imul(state, 1664525) + 1013904223;
+    state |= 0;
+    return (state >>> 0) / 0x100000000;
+  };
+}
+
+function shuffleWithSeed<T>(values: readonly T[], seed: string)
+{
+  const result = [...values];
+  const random = createSeededRandom(seed);
+
+  for (let index = result.length - 1; index > 0; index -= 1)
+  {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
   }
 
-  const red = Number.parseInt(normalized.slice(0, 2), 16);
-  const green = Number.parseInt(normalized.slice(2, 4), 16);
-  const blue = Number.parseInt(normalized.slice(4, 6), 16);
-
-  return `rgb(${Math.round(red * 0.18)} ${Math.round(green * 0.18)} ${Math.round(blue * 0.18)})`;
+  return result;
 }
+
+const PREVIEW_SLOT_ASSIGNMENTS = (() => {
+  const assignments = shuffleWithSeed(
+    PREVIEW_DAYS.flatMap((dayOfWeek) => PREVIEW_START_TIMES.map((startMinutes) => ({
+      dayOfWeek,
+      startMinutes,
+    }))),
+    "settings-preview-v3",
+  ).slice(0, PREVIEW_SAMPLE_COURSES.length);
+
+  if (!assignments.some((assignment) => assignment.dayOfWeek === 5))
+  {
+    assignments[assignments.length - 1] = {
+      ...assignments[assignments.length - 1],
+      dayOfWeek: 5,
+    };
+  }
+
+  const swkIndex = PREVIEW_SAMPLE_COURSES.findIndex((course) => course.courseCode === "SWK356");
+  if (swkIndex >= 0)
+  {
+    assignments[swkIndex] = {
+      ...assignments[swkIndex],
+      startMinutes: PREVIEW_START_TIMES[0],
+    };
+  }
+
+  return assignments;
+})();
+
+const PREVIEW_TIMETABLE_BLOCKS = PREVIEW_SAMPLE_COURSES.map((course, index) => {
+  const slot = PREVIEW_SLOT_ASSIGNMENTS[index];
+
+  return {
+    id: `preview-${course.courseCode.toLowerCase()}`,
+    shareKey: `preview-${course.courseCode.toLowerCase()}`,
+    courseCode: course.courseCode,
+    courseName: course.courseName,
+    groupCode: course.groupCode,
+    groupCodeType: course.groupCodeType,
+    dayOfWeek: slot.dayOfWeek,
+    startMinutes: slot.startMinutes,
+    endMinutes: slot.startMinutes + 180,
+    weekLabel: course.weekLabel,
+    venue: course.venue,
+    eventMode: null,
+    occurrenceCount: 1,
+    eventIds: [index + 1],
+  } satisfies TimetableBlock;
+});
+
+const PREVIEW_VISIBLE_END_MINUTES = getVisibleEndMinutes(
+  PREVIEW_TIMETABLE_BLOCKS.reduce(
+    (latestEndMinutes, block) => Math.max(latestEndMinutes, block.endMinutes),
+    START_MINUTES,
+  ),
+);
+
+const PREVIEW_TIME_SLOTS = buildTimeSlots(PREVIEW_VISIBLE_END_MINUTES);
 
 function Section({
   title,
@@ -224,103 +320,48 @@ function TimetablePreview({
   theme: ThemeOption;
 })
 {
-  const isVertical = settings.timetableOrientation === "vertical";
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-  const times = ["08:30", "12:00", "15:30", "19:00"];
-  const gridTemplateColumns = isVertical
-    ? `4.5rem repeat(${days.length}, minmax(8rem, 1fr))`
-    : `4.5rem repeat(${times.length}, minmax(7rem, 1fr))`;
-  const gridTemplateRows = isVertical
-    ? `3rem repeat(${times.length}, 4.5rem)`
-    : `3rem repeat(${days.length}, 5.25rem)`;
+  const isHorizontal = settings.timetableOrientation === "horizontal";
+  const blockColorByKey = useMemo(
+    () => new Map(
+      PREVIEW_TIMETABLE_BLOCKS.map((block, index) => [
+        block.shareKey,
+        theme.colors[index % theme.colors.length],
+      ]),
+    ),
+    [theme.colors],
+  );
 
   return (
     <div className="overflow-hidden rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
       <div className="flex items-center justify-between gap-3 border-b border-[var(--outline-variant)] px-4 py-3">
         <div className="flex items-center gap-2">
           <CalendarWeekIcon className="h-4 w-4 text-[var(--primary)]" />
-          <span className="text-[13px] font-bold text-[var(--on-surface)]">Theme preview</span>
+          <span className="text-[13px] font-bold text-[var(--on-surface)]">Timetable preview</span>
         </div>
         <span className="text-[12px] font-semibold text-[var(--on-surface-variant)]">
-          {isVertical ? "Vertical" : "Horizontal"}
+          {isHorizontal ? "Horizontal" : "Vertical"}
         </span>
       </div>
 
-      <div className="overflow-x-auto p-3">
-        <div
-          className="grid min-w-[46rem] gap-1 text-[11px] leading-4"
-          style={{ gridTemplateColumns, gridTemplateRows }}
-        >
-          <div className="rounded bg-[var(--surface-container-low)]" style={{ gridColumn: 1, gridRow: 1 }} />
-
-          {isVertical ? days.map((day, dayIndex) => (
-            <div
-              key={day}
-              className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-bold text-[var(--on-surface-variant)]"
-              style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
-            >
-              {day}
-            </div>
-          )) : times.map((time, timeIndex) => (
-            <div
-              key={time}
-              className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-semibold text-[var(--on-surface-variant)]"
-              style={{ gridColumn: timeIndex + 2, gridRow: 1 }}
-            >
-              {time}
-            </div>
-          ))}
-
-          {isVertical ? times.map((time, timeIndex) => (
-            <div
-              key={time}
-              className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-semibold text-[var(--on-surface-variant)]"
-              style={{ gridColumn: 1, gridRow: timeIndex + 2 }}
-            >
-              {time}
-            </div>
-          )) : days.map((day, dayIndex) => (
-            <div
-              key={day}
-              className="flex items-center rounded bg-[var(--surface-container-low)] px-2 font-bold text-[var(--on-surface-variant)]"
-              style={{ gridColumn: 1, gridRow: dayIndex + 2 }}
-            >
-              {day}
-            </div>
-          ))}
-
-          {days.flatMap((day, dayIndex) => times.map((time, timeIndex) => (
-            <div
-              key={`${day}-${time}`}
-              className="rounded bg-[var(--surface-container-lowest)] ring-1 ring-[var(--outline-variant)]"
-              style={{
-                gridColumn: isVertical ? dayIndex + 2 : timeIndex + 2,
-                gridRow: isVertical ? timeIndex + 2 : dayIndex + 2,
-              }}
-            />
-          )))}
-
-          {PREVIEW_BLOCKS.map((block) => (
-            <div
-              key={block.course}
-              className="timetable-cell z-10"
-              style={{
-                gridColumn: isVertical ? block.dayIndex + 2 : block.timeIndex + 2,
-                gridRow: isVertical ? block.timeIndex + 2 : block.dayIndex + 2,
-                "--block-bg": theme.colors[block.colorIndex],
-                "--block-border": theme.colors[block.colorIndex],
-                "--block-text": getPreviewTextColor(theme.colors[block.colorIndex]),
-              } as CSSProperties}
-            >
-              <span className="timetable-cell__module truncate">{block.course}</span>
-              {!isVertical ? (
-                <span className="mt-1 line-clamp-2 text-[11px] font-semibold leading-4">
-                  {block.title}
-                </span>
-              ) : null}
-              <span className="timetable-cell__time mt-auto">{times[block.timeIndex]}</span>
-            </div>
-          ))}
+      <div className="overflow-hidden bg-[var(--surface-container-lowest)] p-2 sm:p-3">
+        <div className="origin-top-left" style={{ zoom: 0.88 } as CSSProperties}>
+          <TimetableCanvas
+            blocks={PREVIEW_TIMETABLE_BLOCKS}
+            blockColorByKey={blockColorByKey}
+            isHorizontal={isHorizontal}
+            timeSlots={PREVIEW_TIME_SLOTS}
+            visibleEndMinutes={PREVIEW_VISIBLE_END_MINUTES}
+            showAllWeeks={true}
+            dayDateByDay={{}}
+            activeShareKey={null}
+            deEmphasisMode="none"
+            activeCourseCode={null}
+            courseCanPickByCode={{}}
+            isPickMode={false}
+            suppressActiveOutline
+            onBlockClick={() => undefined}
+            showCurrentTime={false}
+          />
         </div>
       </div>
     </div>
