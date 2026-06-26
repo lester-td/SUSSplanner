@@ -23,6 +23,9 @@ const TIMETABLE_GRID_CLASS = "timetable-grid";
 const TIMETABLE_GRID_TIME_LABEL_CLASS = "timetable-grid__time-label";
 const TIMETABLE_GRID_DAY_LABEL_CLASS = "timetable-grid__day-label";
 const TIMETABLE_GRID_DAY_DATE_CLASS = "timetable-grid__day-date";
+const TIMETABLE_SLOT_STRIPES_CLASS = "timetable-grid__slot-stripes";
+const TIMETABLE_SLOT_STRIPES_HORIZONTAL_CLASS = "timetable-grid__slot-stripes--horizontal";
+const TIMETABLE_SLOT_STRIPES_VERTICAL_CLASS = "timetable-grid__slot-stripes--vertical";
 const TIMETABLE_BLOCK_CLASS = "timetable-cell";
 
 function formatCompactMinutes(minutes: number)
@@ -486,10 +489,14 @@ export function TimetableCanvas({
     .map((label, index) => ({ label, dayOfWeek: index + 1 }))
     .filter((day) => day.dayOfWeek <= 5 || hasSaturdayClasses);
   const rangeMinutes = Math.max(30, visibleEndMinutes - START_MINUTES);
+  const slotIntervalCount = Math.max(1, timeSlots.length - 1);
   const verticalSlotSize = isMobile ? 34 : 30;
   const daySize = 84;
   const contentHeight = (rangeMinutes / 30) * verticalSlotSize;
   const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 56 : 58);
+  const timetableGridStyle: CSSProperties = {
+    ["--timetable-slot-count" as string]: slotIntervalCount,
+  };
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
   const dayLaneCounts = dayBlocksByIndex.map((dayBlocks) => dayBlocks.reduce((maxLaneCount, block) => {
@@ -526,7 +533,7 @@ export function TimetableCanvas({
   if (isHorizontal)
   {
     return (
-      <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`}>
+      <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`} style={timetableGridStyle}>
         <div className={`min-w-0 ${isMobile ? "overflow-x-auto" : "overflow-x-visible"}`}>
           <div style={isMobile ? { minWidth: `${horizontalMinWidthPx}px` } : undefined}>
             <div className="grid grid-cols-[3.75rem_minmax(0,1fr)] grid-rows-[1.25rem_minmax(0,1fr)] gap-0">
@@ -545,7 +552,7 @@ export function TimetableCanvas({
               </div>
 
               <div
-                className="sticky left-0 z-30 border border-[var(--outline-variant)] border-t-0 bg-[var(--surface-container-lowest)]"
+                className="sticky left-0 z-30 border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
                 style={{ height: `${horizontalContentHeight}px` }}
               >
                 {visibleDays.map((day, dayIndex) => (
@@ -568,7 +575,7 @@ export function TimetableCanvas({
               </div>
 
               <div
-                className="relative w-full overflow-visible border border-[var(--outline-variant)] border-l-0 border-t-0 bg-[var(--surface-container-lowest)]"
+                className={`${TIMETABLE_SLOT_STRIPES_CLASS} ${TIMETABLE_SLOT_STRIPES_HORIZONTAL_CLASS} relative w-full overflow-visible border-y border-r border-l-0 border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]`}
                 style={{ height: `${horizontalContentHeight}px` }}
               >
                 {visibleDays.map((day, index) => (
@@ -576,13 +583,6 @@ export function TimetableCanvas({
                     key={day.dayOfWeek}
                     className="absolute inset-x-0 border-t border-[var(--outline-variant)]"
                     style={{ top: `${horizontalDayTops[index]}px` }}
-                  />
-                ))}
-                {timeSlots.map((slot) => (
-                  <div
-                    key={slot}
-                    className={`absolute inset-y-0 border-l ${slot % 60 === 0 ? "border-[var(--outline-variant)]" : "border-[var(--outline-variant)]/35"}`}
-                    style={{ left: `${((slot - START_MINUTES) / rangeMinutes) * 100}%` }}
                   />
                 ))}
 
@@ -643,10 +643,10 @@ export function TimetableCanvas({
   }
 
   return (
-    <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`}>
+    <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`} style={timetableGridStyle}>
       <div className="w-full">
         <div className="grid gap-0" style={{ gridTemplateColumns: verticalGridTemplateColumns, gridTemplateRows: `${verticalHeaderHeightPx}px` }}>
-          <div />
+          <div className="bg-[var(--surface-container-lowest)]" />
           {visibleDays.map((day, index) => (
             <div
               key={day.dayOfWeek}
@@ -687,21 +687,13 @@ export function TimetableCanvas({
           {visibleDays.map((day, dayIndex) => (
             <div
               key={day.dayOfWeek}
-              className={`relative border-l border-[var(--outline-variant)] ${
+              className={`${TIMETABLE_SLOT_STRIPES_CLASS} ${TIMETABLE_SLOT_STRIPES_VERTICAL_CLASS} relative border-b border-l border-[var(--outline-variant)] ${
                 dayIndex === visibleDays.length - 1 ? "border-r" : ""
               } ${
                 showNowLine && todayVisibleIndex === dayIndex ? "bg-[var(--today-column-bg)]" : "bg-[var(--surface-container-lowest)]"
               }`}
               style={{ height: `${contentHeight}px` }}
             >
-              {timeSlots.map((slot) => (
-                <div
-                  key={slot}
-                  className={`absolute inset-x-0 border-t ${slot % 60 === 0 ? "border-[var(--outline-variant)]" : "border-[var(--outline-variant)]/35"}`}
-                  style={{ top: `${((slot - START_MINUTES) / rangeMinutes) * contentHeight}px` }}
-                />
-              ))}
-
               {showNowLine && todayVisibleIndex === dayIndex && nowMinutes >= START_MINUTES && nowMinutes <= visibleEndMinutes ? (
                 <div
                   className="absolute inset-x-0 z-20 border-t border-[var(--now-line)]"

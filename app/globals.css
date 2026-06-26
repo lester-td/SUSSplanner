@@ -51,6 +51,8 @@
     --brand-chip-bg: color-mix(in srgb, var(--suss-light-blue), #fff 74%);
     --rail-week-bg: color-mix(in srgb, var(--suss-grey) 30%, #fff 70%);
     --today-column-bg: color-mix(in srgb, var(--suss-light-blue), #fff 86%);
+    --timetable-stripe-a: var(--surface-container-lowest);
+    --timetable-stripe-b: color-mix(in srgb, var(--surface-container-lowest), #000 3%);
     --header-surface: var(--suss-blue);
     --header-text: #ffffff;
     --header-text-muted: rgb(255 255 255 / 0.78);
@@ -132,6 +134,8 @@
     --brand-chip-bg: rgb(var(--suss-light-blue-rgb) / 0.1);
     --rail-week-bg: #181818;
     --today-column-bg: rgb(var(--suss-light-blue-rgb) / 0.06);
+    --timetable-stripe-a: var(--surface-container-lowest);
+    --timetable-stripe-b: color-mix(in srgb, var(--surface-container-lowest), #fff 4%);
     --header-surface: #06162c;
     --header-text: #f6fafc;
     --header-text-muted: #c9d2dc;
@@ -608,6 +612,8 @@
 .timetable-grid {
   --timetable-grid-label-size: 14px;
   --timetable-grid-date-size: 11px;
+  --timetable-slot-count: 1;
+  border-radius: 0;
 }
 
 @media (max-width: 767px) {
@@ -630,6 +636,20 @@
     font-size: 0.66rem;
     line-height: 0.82rem;
   }
+}
+
+.timetable-grid__slot-stripes {
+  background-repeat: repeat;
+}
+
+.timetable-grid__slot-stripes--horizontal {
+  background-image: linear-gradient(to right, var(--timetable-stripe-a) 0 50%, var(--timetable-stripe-b) 50% 100%);
+  background-size: calc(200% / var(--timetable-slot-count)) 100%;
+}
+
+.timetable-grid__slot-stripes--vertical {
+  background-image: linear-gradient(to bottom, var(--timetable-stripe-a) 0 50%, var(--timetable-stripe-b) 50% 100%);
+  background-size: 100% calc(200% / var(--timetable-slot-count));
 }
 
 .timetable-grid__time-label {
