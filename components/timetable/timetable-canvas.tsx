@@ -489,13 +489,12 @@ export function TimetableCanvas({
     .map((label, index) => ({ label, dayOfWeek: index + 1 }))
     .filter((day) => day.dayOfWeek <= 5 || hasSaturdayClasses);
   const rangeMinutes = Math.max(30, visibleEndMinutes - START_MINUTES);
-  const slotIntervalCount = Math.max(1, timeSlots.length - 1);
   const verticalSlotSize = isMobile ? 34 : 30;
   const daySize = 84;
   const contentHeight = (rangeMinutes / 30) * verticalSlotSize;
   const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 56 : 58);
   const timetableGridStyle: CSSProperties = {
-    ["--timetable-slot-count" as string]: slotIntervalCount,
+    ["--timetable-range-minutes" as string]: rangeMinutes,
   };
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
