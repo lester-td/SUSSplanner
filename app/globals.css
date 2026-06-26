@@ -620,8 +620,6 @@
 .timetable-grid {
   --timetable-grid-label-size: 14px;
   --timetable-grid-date-size: 11px;
-  --timetable-stripe-interval-minutes: 60;
-  --timetable-range-minutes: 60;
   border-radius: 0;
 }
 
@@ -645,20 +643,6 @@
     font-size: 0.66rem;
     line-height: 0.82rem;
   }
-}
-
-.timetable-grid__slot-stripes {
-  background-repeat: repeat;
-}
-
-.timetable-grid__slot-stripes--horizontal {
-  background-image: linear-gradient(to right, var(--timetable-stripe-a) 0 50%, var(--timetable-stripe-b) 50% 100%);
-  background-size: calc(100% * var(--timetable-stripe-interval-minutes) / var(--timetable-range-minutes)) 100%;
-}
-
-.timetable-grid__slot-stripes--vertical {
-  background-image: linear-gradient(to bottom, var(--timetable-stripe-a) 0 50%, var(--timetable-stripe-b) 50% 100%);
-  background-size: 100% calc(100% * var(--timetable-stripe-interval-minutes) / var(--timetable-range-minutes));
 }
 
 .timetable-grid__time-label {
