@@ -414,7 +414,7 @@ function DetailStat({
 })
 {
   return (
-    <div className="border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2.5">
+    <div className="dark-neutral-accent-card border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2.5">
       <div className="flex items-center gap-2 text-[var(--primary)]">
         {icon}
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">{label}</span>

@@ -318,8 +318,8 @@ export function GpaCalculatorClient()
   }
 
   return (
-    <div className="w-full pb-8 pt-8">
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="calculator-page calculator-section calculator-section--gpa w-full pb-8 pt-8">
+      <div className="calculator-section-header mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-[30px] font-semibold leading-10 tracking-[-0.03em] text-[var(--on-surface)]">
             GPA Calculator
@@ -327,7 +327,7 @@ export function GpaCalculatorClient()
         </div>
       </div>
 
-      <section className="mb-5 grid gap-3 sm:grid-cols-3">
+      <section className="gpa-summary-row mb-5 grid gap-3 rounded-[1rem] sm:grid-cols-3">
         <GpaSummaryCard
           label="Current GPA"
           value={formatGpa(currentGpa)}
@@ -349,7 +349,7 @@ export function GpaCalculatorClient()
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0">
           <div ref={searchContainerRef} className="relative z-20 mb-4">
-            <div className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+            <div className="calculator-panel calculator-major-panel rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   {isCustomModule ? (
@@ -369,23 +369,23 @@ export function GpaCalculatorClient()
                     setSearchResults([]);
                     setCustomModuleNotice("");
                   }}
-                  className="relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
+                  className="calculator-segmented-control relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
                   aria-pressed={isCustomModule}
                   aria-label={`Add module mode: ${isCustomModule ? "Custom" : "Search"}. Click to toggle.`}
                 >
                   <span
                     aria-hidden="true"
-                    className={`absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomModule ? "translate-x-full" : "translate-x-0"}`}
+                    className={`calculator-segmented-control__thumb absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomModule ? "translate-x-full" : "translate-x-0"}`}
                   />
                   <span
                     aria-hidden="true"
-                    className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomModule ? "text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                    className={`calculator-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomModule ? "calculator-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                   >
                     Search
                   </span>
                   <span
                     aria-hidden="true"
-                    className={`relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomModule ? "text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                    className={`calculator-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomModule ? "calculator-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                   >
                     Custom
                   </span>
@@ -425,7 +425,7 @@ export function GpaCalculatorClient()
                     />
                     <button
                       type="submit"
-                      className="inline-flex h-full items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)] sm:px-4"
+                      className="calculator-primary-action inline-flex h-full items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)] sm:px-4"
                     >
                       <PlusIcon className="h-4 w-4" />
                       <span className="hidden sm:inline">Add Module</span>
@@ -504,7 +504,7 @@ export function GpaCalculatorClient()
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
+          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
             <div className="flex items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-3.5">
               <div>
                 <h2 className="text-[15px] font-bold text-[var(--on-surface)]">Current semester modules</h2>
@@ -630,7 +630,7 @@ export function GpaCalculatorClient()
         </section>
 
         <aside className="space-y-4">
-          <section className="relative rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
+          <section className="calculator-panel calculator-major-panel relative rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
             <div className="group absolute right-3 top-3">
               <button
                 type="button"
@@ -641,7 +641,7 @@ export function GpaCalculatorClient()
               </button>
               <div
                 role="tooltip"
-                className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-64 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-on-primary shadow-[var(--shadow-elev-2)] group-hover:block group-focus-within:block"
+                className="calculator-primary-popover pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-64 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-on-primary shadow-[var(--shadow-elev-2)] group-hover:block group-focus-within:block"
               >
                 <span className="mb-0.5 block font-bold">Calculating completed CUs</span>
                 Exclude credit units from pass/fail modules.
@@ -676,7 +676,7 @@ export function GpaCalculatorClient()
             </div>
           </section>
 
-          <section className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-4">
+          <section className="calculator-panel calculator-nested-panel rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-4">
             <h2 className="text-[13px] font-bold text-[var(--on-surface)]">SUSS grade scale</h2>
             <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-1.5 text-[12px]">
               {GRADE_OPTIONS.map((option) => (
@@ -711,7 +711,7 @@ export function GpaCalculatorClient()
                 setModules([]);
                 setClearConfirmOpen(false);
               }}
-              className="rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
+              className="app-danger-action rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
             >
               Clear All Modules
             </button>
@@ -739,18 +739,18 @@ function GpaSummaryCard({
 })
 {
   return (
-    <article className={`rounded-[0.9rem] border p-4 elev-1 ${
+    <article className={`gpa-summary-card rounded-[0.9rem] border p-4 elev-1 ${
       emphasized
-        ? "border-[var(--primary)] bg-[var(--primary)] text-on-primary"
+        ? "gpa-summary-card--emphasized border-[var(--primary)] bg-[var(--primary)] text-on-primary"
         : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface)]"
     }`}>
-      <p className={`text-[12px] font-bold uppercase tracking-[0.06em] ${
+      <p className={`gpa-summary-card__meta text-[12px] font-bold uppercase tracking-[0.06em] ${
         emphasized ? "text-white/75" : "text-[var(--on-surface-variant)]"
       }`}>
         {label}
       </p>
       <p className="mt-1 text-[32px] font-extrabold leading-10 tracking-[-0.04em]">{value}</p>
-      <p className={`mt-1 text-[12px] ${emphasized ? "text-white/75" : "text-[var(--on-surface-variant)]"}`}>
+      <p className={`gpa-summary-card__meta mt-1 text-[12px] ${emphasized ? "text-white/75" : "text-[var(--on-surface-variant)]"}`}>
         {detail}
       </p>
     </article>

@@ -423,8 +423,8 @@ export function OcasCalculatorClient()
   }
 
   return (
-    <section className="w-full pb-8">
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <section className="calculator-page calculator-section calculator-section--ocas w-full pb-8">
+      <div className="calculator-section-header mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h2 className="text-[28px] font-semibold leading-9 tracking-[-0.03em] text-[var(--on-surface)]">
             OCAS Calculator
@@ -435,7 +435,7 @@ export function OcasCalculatorClient()
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0">
           <div ref={searchContainerRef} className="relative z-20 mb-4">
-            <div className="rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+            <div className="calculator-panel calculator-major-panel rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <CalculatorIcon className="h-7 w-7 text-[var(--primary)]" />
@@ -459,7 +459,7 @@ export function OcasCalculatorClient()
               </div>
 
               {selectedCourse ? (
-                <div className="mt-4 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-4">
+                <div className="calculator-panel calculator-inner-panel mt-4 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-[13px] font-bold text-[var(--primary)]">{selectedCourse.courseCode}</p>
@@ -557,7 +557,7 @@ export function OcasCalculatorClient()
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
+          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-3.5">
               <div>
                 <h3 className="text-[15px] font-bold text-[var(--on-surface)]">Assessment strategy</h3>
@@ -569,10 +569,10 @@ export function OcasCalculatorClient()
               </div>
               {courseDetail && visibleAssessments.length > 0 ? (
                 <div className="flex flex-wrap gap-2 text-[12px] font-semibold text-[var(--on-surface-variant)]">
-                  <span className="rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[var(--primary)]">
+                  <span className="calculator-chip rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[var(--primary)]">
                     OCAS {formatPercent(ocasWeight)}
                   </span>
-                  <span className="rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[var(--primary)]">
+                  <span className="calculator-chip rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[var(--primary)]">
                     OES {formatPercent(oesWeight)}
                   </span>
                 </div>
@@ -612,8 +612,8 @@ export function OcasCalculatorClient()
                         onClick={() => setSelectedScheduleType(scheduleType)}
                         className={`rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${
                           selectedScheduleType === scheduleType
-                            ? "bg-[var(--primary)] text-on-primary"
-                            : "bg-[var(--brand-chip-bg)] text-[var(--primary)] hover:bg-[var(--surface-container-high)]"
+                            ? "calculator-primary-action bg-[var(--primary)] text-on-primary"
+                            : "calculator-chip bg-[var(--brand-chip-bg)] text-[var(--primary)] hover:bg-[var(--surface-container-high)]"
                         }`}
                       >
                         {scheduleType === "daytime" ? "Daytime" : "Evening"}
@@ -666,7 +666,7 @@ export function OcasCalculatorClient()
                                       {component.assessmentMode ?? "Assessment"} • Weight {component.weightPercentage.toFixed(1)}%
                                     </p>
                                   </div>
-                                  <span className="rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[12px] font-semibold text-[var(--primary)]">
+                                  <span className="calculator-chip rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[12px] font-semibold text-[var(--primary)]">
                                     {component.weightPercentage.toFixed(1)}%
                                   </span>
                                 </div>
@@ -685,7 +685,7 @@ export function OcasCalculatorClient()
                                         }))}
                                         className={`rounded-full px-2.5 py-1 transition-colors ${
                                           isPercentageMode
-                                            ? "bg-[var(--primary)] text-on-primary"
+                                            ? "calculator-primary-action bg-[var(--primary)] text-on-primary"
                                             : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
                                         }`}
                                       >
@@ -700,7 +700,7 @@ export function OcasCalculatorClient()
                                         className={`rounded-full px-2.5 py-1 transition-colors ${
                                           isPercentageMode
                                             ? "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
-                                            : "bg-[var(--primary)] text-on-primary"
+                                            : "calculator-primary-action bg-[var(--primary)] text-on-primary"
                                         }`}
                                       >
                                         Score
@@ -780,7 +780,7 @@ export function OcasCalculatorClient()
         </section>
 
         <aside className="space-y-4">
-          <section className="rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
+          <section className="calculator-panel calculator-major-panel rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
             <div className="space-y-4">
               <div className="grid gap-0 divide-y divide-[var(--brand-divider)] sm:grid-cols-2 sm:divide-x sm:divide-y-0">
                 <div className="pb-4 sm:pr-4">

@@ -72,6 +72,11 @@ const portalLinks = [
     icon: SettingsIcon,
   },
   {
+    label: "SUSS Planner Settings",
+    href: "/settings",
+    icon: SettingsIcon,
+  },
+  {
     label: "Academic Calendar",
     href: "#",
     icon: CalendarIcon,
@@ -108,7 +113,7 @@ export default async function HomePage()
 
   return (
     <AppShell activeSection="home" currentSemesterContext={currentSemesterContext} showFooter={true} showNav={false}>
-      <div className="px-3 pb-3 pt-8 md:px-[16px]">
+      <div className="home-page px-3 pb-3 pt-8 md:px-[16px]">
         <main className="mx-auto flex w-full max-w-7xl flex-col gap-8">
           <section className="w-full">
             <p className="text-[24px] font-bold leading-[1.15] tracking-[-0.045em] text-[var(--on-surface)] sm:text-[32px] lg:text-[40px]">
@@ -125,9 +130,9 @@ export default async function HomePage()
                   key={area.href}
                   prefetch
                   href={area.href}
-                  className="group flex min-h-[13rem] cursor-pointer flex-col rounded-[1.25rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:shadow-[var(--shadow-elev-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                  className="home-feature-card group flex min-h-[13rem] cursor-pointer flex-col rounded-[1.25rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:shadow-[var(--shadow-elev-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                 >
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-[1rem] ${area.tone} transition-transform group-hover:scale-105`}>
+                  <div className={`home-feature-icon flex h-11 w-11 items-center justify-center rounded-[1rem] ${area.tone} transition-transform group-hover:scale-105`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <h2 className="mt-4 text-[22px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)] transition-colors group-hover:text-[var(--primary)]">
@@ -149,18 +154,38 @@ export default async function HomePage()
             <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {portalLinks.map((item) => {
                 const Icon = item.icon;
+                const content = (
+                  <>
+                    <span className="home-shortcut-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.8rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">{item.label}</span>
+                  </>
+                );
+                const className = "home-shortcut-card group flex items-center gap-3 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 text-[14px] font-bold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]";
+
+                if (item.href.startsWith("/"))
+                {
+                  return (
+                    <Link
+                      key={item.label}
+                      prefetch
+                      href={item.href}
+                      className={className}
+                    >
+                      {content}
+                    </Link>
+                  );
+                }
 
                 return (
                   <a
                     key={item.label}
                     href={item.href}
                     aria-label={`${item.label} placeholder link`}
-                    className="group flex items-center gap-3 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 text-[14px] font-bold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                    className={className}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.8rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0 flex-1">{item.label}</span>
+                    {content}
                   </a>
                 );
               })}

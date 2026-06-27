@@ -214,6 +214,12 @@ type TimetableLaneLayout = {
   laneCount: number;
 };
 
+type TimetableStripeSegment = {
+  startMinutes: number;
+  endMinutes: number;
+  isEvenHour: boolean;
+};
+
 function getContrastingTextColorFromHex(hexColor: string)
 {
   const normalized = hexColor.trim().replace(/^#/, "");
@@ -437,6 +443,28 @@ function getHorizontalTimeLabelStyle(slot: number, firstSlot: number, lastSlot: 
   return { top: `${topPx}px`, transform: "translateY(-50%)" };
 }
 
+function buildHourlyStripeSegments(startMinutes: number, endMinutes: number)
+{
+  const segments: TimetableStripeSegment[] = [];
+  let segmentStart = startMinutes;
+
+  while (segmentStart < endMinutes)
+  {
+    const nextHourBoundary = (Math.floor(segmentStart / 60) + 1) * 60;
+    const segmentEnd = Math.min(nextHourBoundary, endMinutes);
+
+    segments.push({
+      startMinutes: segmentStart,
+      endMinutes: segmentEnd,
+      isEvenHour: Math.floor(segmentStart / 60) % 2 === 0,
+    });
+
+    segmentStart = segmentEnd;
+  }
+
+  return segments;
+}
+
 export function TimetableCanvas({
   blocks,
   blockColorByKey,
@@ -490,6 +518,7 @@ export function TimetableCanvas({
   const daySize = 84;
   const contentHeight = (rangeMinutes / 30) * verticalSlotSize;
   const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 56 : 58);
+  const hourlyStripeSegments = buildHourlyStripeSegments(START_MINUTES, visibleEndMinutes);
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
   const dayLaneCounts = dayBlocksByIndex.map((dayBlocks) => dayBlocks.reduce((maxLaneCount, block) => {
@@ -545,7 +574,7 @@ export function TimetableCanvas({
               </div>
 
               <div
-                className="sticky left-0 z-30 border border-[var(--outline-variant)] border-t-0 bg-[var(--surface-container-lowest)]"
+                className="sticky left-0 z-30 border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
                 style={{ height: `${horizontalContentHeight}px` }}
               >
                 {visibleDays.map((day, dayIndex) => (
@@ -568,21 +597,29 @@ export function TimetableCanvas({
               </div>
 
               <div
-                className="relative w-full overflow-visible border border-[var(--outline-variant)] border-l-0 border-t-0 bg-[var(--surface-container-lowest)]"
+                className="relative w-full overflow-visible border-y border-r border-l-0 border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
                 style={{ height: `${horizontalContentHeight}px` }}
               >
+                <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                  {hourlyStripeSegments.map((segment) => (
+                    <div
+                      key={`${segment.startMinutes}-${segment.endMinutes}`}
+                      className="absolute inset-y-0"
+                      style={{
+                        left: `${((segment.startMinutes - START_MINUTES) / rangeMinutes) * 100}%`,
+                        width: `${((segment.endMinutes - segment.startMinutes) / rangeMinutes) * 100}%`,
+                        backgroundColor: segment.isEvenHour ? "var(--timetable-stripe-a)" : "var(--timetable-stripe-b)",
+                        opacity: 0.88,
+                      }}
+                    />
+                  ))}
+                </div>
+
                 {visibleDays.map((day, index) => (
                   <div
                     key={day.dayOfWeek}
                     className="absolute inset-x-0 border-t border-[var(--outline-variant)]"
                     style={{ top: `${horizontalDayTops[index]}px` }}
-                  />
-                ))}
-                {timeSlots.map((slot) => (
-                  <div
-                    key={slot}
-                    className={`absolute inset-y-0 border-l ${slot % 60 === 0 ? "border-[var(--outline-variant)]" : "border-[var(--outline-variant)]/35"}`}
-                    style={{ left: `${((slot - START_MINUTES) / rangeMinutes) * 100}%` }}
                   />
                 ))}
 
@@ -646,7 +683,7 @@ export function TimetableCanvas({
     <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`}>
       <div className="w-full">
         <div className="grid gap-0" style={{ gridTemplateColumns: verticalGridTemplateColumns, gridTemplateRows: `${verticalHeaderHeightPx}px` }}>
-          <div />
+          <div className="bg-[var(--surface-container-lowest)]" />
           {visibleDays.map((day, index) => (
             <div
               key={day.dayOfWeek}
@@ -687,20 +724,27 @@ export function TimetableCanvas({
           {visibleDays.map((day, dayIndex) => (
             <div
               key={day.dayOfWeek}
-              className={`relative border-l border-[var(--outline-variant)] ${
+              className={`relative border-b border-l border-[var(--outline-variant)] ${
                 dayIndex === visibleDays.length - 1 ? "border-r" : ""
               } ${
                 showNowLine && todayVisibleIndex === dayIndex ? "bg-[var(--today-column-bg)]" : "bg-[var(--surface-container-lowest)]"
               }`}
               style={{ height: `${contentHeight}px` }}
             >
-              {timeSlots.map((slot) => (
-                <div
-                  key={slot}
-                  className={`absolute inset-x-0 border-t ${slot % 60 === 0 ? "border-[var(--outline-variant)]" : "border-[var(--outline-variant)]/35"}`}
-                  style={{ top: `${((slot - START_MINUTES) / rangeMinutes) * contentHeight}px` }}
-                />
-              ))}
+              <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                {hourlyStripeSegments.map((segment) => (
+                  <div
+                    key={`${segment.startMinutes}-${segment.endMinutes}`}
+                    className="absolute inset-x-0"
+                    style={{
+                      top: `${((segment.startMinutes - START_MINUTES) / rangeMinutes) * 100}%`,
+                      height: `${((segment.endMinutes - segment.startMinutes) / rangeMinutes) * 100}%`,
+                      backgroundColor: segment.isEvenHour ? "var(--timetable-stripe-a)" : "var(--timetable-stripe-b)",
+                      opacity: 0.88,
+                    }}
+                  />
+                ))}
+              </div>
 
               {showNowLine && todayVisibleIndex === dayIndex && nowMinutes >= START_MINUTES && nowMinutes <= visibleEndMinutes ? (
                 <div

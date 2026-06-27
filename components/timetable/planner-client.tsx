@@ -30,6 +30,14 @@ import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { exportPngDataUrlToPdf } from "@/lib/export/pdf-client";
 import { exportElementToPng, renderElementToPngDataUrl } from "@/lib/export/png";
 import {
+  APP_SETTINGS_STORAGE_KEY,
+  APP_SETTINGS_UPDATED_EVENT,
+  DEFAULT_APP_SETTINGS,
+  getSettingsThemePalette,
+  readAppSettings,
+  type SettingsState,
+} from "@/lib/settings/app-settings";
+import {
   buildTimeSlots,
   formatClassGroupLabel,
   getCurrentWeekChip,
@@ -49,7 +57,6 @@ import {
   buildSelectedCourseCards,
   buildTimetableBlocks,
   buildWeekOptions,
-  COURSE_COLOR_PALETTE,
   formatExamCalendarOverviewSubtitle,
   getCourseColor,
   getLatestEndMinutes,
@@ -113,6 +120,7 @@ function createDefaultSemesterState(
   currentSemesterId: number,
   currentWeekId: number | null,
   semesterWeeks: SemesterWeekRecord[],
+  defaultOrientation: TimetableOrientation,
 ): PlannerStorageState
 {
   const currentWeek = semesterWeeks.find((week) => week.weekId === currentWeekId) ?? null;
@@ -129,20 +137,9 @@ function createDefaultSemesterState(
     hiddenClasses: [],
     courseColorsByCourseCode: {},
     selectedWeekId,
-    orientation: "vertical",
+    orientation: defaultOrientation,
     viewMode: "class",
   };
-}
-
-function createInitialSemesterState(
-  semesters: SemesterOption[],
-  currentSemesterId: number,
-  currentWeekId: number | null,
-): PlannerStorageState
-{
-  const semesterId = currentSemesterId || semesters[0]?.semesterId || 0;
-  const semesterWeeks = semesters.find((semester) => semester.semesterId === semesterId)?.weeks ?? [];
-  return createDefaultSemesterState(semesterId, currentSemesterId, currentWeekId, semesterWeeks);
 }
 
 function formatSemesterRailMonthYear(semester: SemesterOption)
@@ -306,6 +303,59 @@ function sortSelectedCards(
   });
 }
 
+function buildThemedCourseColorMap(
+  cards: ReturnType<typeof buildSelectedCourseCards>,
+  palette: readonly string[],
+)
+{
+  const colorMap = new Map<string, string>();
+  let colorIndex = 0;
+
+  for (const card of cards)
+  {
+    if (colorMap.has(card.courseCode))
+    {
+      continue;
+    }
+
+    colorMap.set(card.courseCode, palette[colorIndex % palette.length] ?? card.color);
+    colorIndex += 1;
+  }
+
+  return colorMap;
+}
+
+const THEME_COLOR_PREFERENCE_PREFIX = "theme-color:";
+
+function buildThemeColorPreference(colorIndex: number)
+{
+  return `${THEME_COLOR_PREFERENCE_PREFIX}${colorIndex}`;
+}
+
+function resolveThemeColorPreference(
+  colorPreference: string | undefined,
+  palette: readonly string[],
+)
+{
+  if (!colorPreference)
+  {
+    return null;
+  }
+
+  if (!colorPreference.startsWith(THEME_COLOR_PREFERENCE_PREFIX))
+  {
+    return null;
+  }
+
+  const colorIndex = Number.parseInt(colorPreference.slice(THEME_COLOR_PREFERENCE_PREFIX.length), 10);
+  if (!Number.isFinite(colorIndex) || colorIndex < 0)
+  {
+    return null;
+  }
+
+  return palette[colorIndex % palette.length] ?? null;
+}
+
 export function PlannerClient({
   semesters,
   currentSemesterId,
@@ -317,8 +367,9 @@ export function PlannerClient({
 })
 {
   const [ready, setReady] = useState(false);
+  const [appSettings, setAppSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
   const [semesterId, setSemesterId] = useState<number>(currentSemesterId);
-  const [orientation, setOrientation] = useState<TimetableOrientation>("vertical");
+  const [orientation, setOrientation] = useState<TimetableOrientation>(DEFAULT_APP_SETTINGS.timetableOrientation);
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [sortMode, setSortMode] = useState<"code" | "exam" | "credit">("code");
   const [searchInput, setSearchInput] = useState("");
@@ -357,6 +408,7 @@ export function PlannerClient({
   const selectableWeeks = buildSelectableWeeks(semesterWeeks, timetableData.events);
 
   useEffect(() => {
+    const settings = readAppSettings();
     const saved = loadSavedTimetable();
     const savedSemesterExists = Boolean(saved && semesters.some((semester) => semester.semesterId === saved.semesterId));
     const semesterIdToLoad = savedSemesterExists && saved
@@ -365,17 +417,42 @@ export function PlannerClient({
     const next = savedSemesterExists && saved
       ? saved
       : getSavedSemesterState(saved, semesterIdToLoad)
-        ?? createInitialSemesterState(semesters, currentSemesterId, currentWeekId);
+        ?? createDefaultSemesterState(
+          semesterIdToLoad,
+          currentSemesterId,
+          currentWeekId,
+          semesters.find((semester) => semester.semesterId === semesterIdToLoad)?.weeks ?? [],
+          settings.timetableOrientation,
+        );
 
+    setAppSettings(settings);
     setSemesterId(semesterIdToLoad);
     setSelectedClasses(next.selectedClasses);
     setHiddenClasses(next.hiddenClasses);
     setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
     setSelectedWeekId(next.selectedWeekId);
-    setOrientation(saved?.orientation ?? "vertical");
+    setOrientation(saved?.orientation ?? settings.timetableOrientation);
     setViewMode(saved?.viewMode ?? "class");
     setReady(true);
   }, [currentSemesterId, currentWeekId, semesters]);
+
+  useEffect(() => {
+    const refreshSettings = () => setAppSettings(readAppSettings());
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === APP_SETTINGS_STORAGE_KEY)
+      {
+        refreshSettings();
+      }
+    };
+
+    window.addEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!ready)
@@ -556,13 +633,28 @@ export function PlannerClient({
     () => sortSelectedCards(buildSelectedCourseCards(timetableData), sortMode),
     [sortMode, timetableData],
   );
+  const themePalette = useMemo(() => getSettingsThemePalette(appSettings), [appSettings]);
+  const defaultColorByCourseCode = useMemo(
+    () => buildThemedCourseColorMap(selectedCards, themePalette),
+    [selectedCards, themePalette],
+  );
   const colorByShareKey = useMemo(
-    () => new Map(selectedCards.map((card) => [card.shareKey, courseColorsByCourseCode[card.courseCode] ?? card.color])),
-    [courseColorsByCourseCode, selectedCards],
+    () => new Map(selectedCards.map((card) => [
+      card.shareKey,
+      resolveThemeColorPreference(courseColorsByCourseCode[card.courseCode], themePalette)
+        ?? defaultColorByCourseCode.get(card.courseCode)
+        ?? card.color,
+    ])),
+    [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards, themePalette],
   );
   const colorByCourseCode = useMemo(
-    () => new Map(selectedCards.map((card) => [card.courseCode, courseColorsByCourseCode[card.courseCode] ?? card.color])),
-    [courseColorsByCourseCode, selectedCards],
+    () => new Map(selectedCards.map((card) => [
+      card.courseCode,
+      resolveThemeColorPreference(courseColorsByCourseCode[card.courseCode], themePalette)
+        ?? defaultColorByCourseCode.get(card.courseCode)
+        ?? card.color,
+    ])),
+    [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards, themePalette],
   );
   const selectedShareKeyByCourseCode = useMemo(
     () => new Map(selectedClasses.map((selection) => [selection.courseCode, buildSharedClassIdentifier(selection)])),
@@ -586,9 +678,14 @@ export function PlannerClient({
         groupCodeType: group.groupCodeType,
         groupCode: group.groupCode,
       };
-      return [buildSharedClassIdentifier(identifier), colorByCourseCode.get(group.courseCode) ?? getCourseColor(group.courseCode)] as const;
+      return [
+        buildSharedClassIdentifier(identifier),
+        colorByCourseCode.get(group.courseCode)
+          ?? defaultColorByCourseCode.get(group.courseCode)
+          ?? getCourseColor(group.courseCode),
+      ] as const;
     }))
-  ), [classPickerClasses, colorByCourseCode]);
+  ), [classPickerClasses, colorByCourseCode, defaultColorByCourseCode]);
   const displayedBlocks = useMemo(() => {
     if (!classPickerCourse)
     {
@@ -712,30 +809,6 @@ export function PlannerClient({
 
   function addClassSelection(selection: SharedClassIdentifier)
   {
-    setCourseColorsByCourseCode((current) => {
-      if (current[selection.courseCode])
-      {
-        return current;
-      }
-
-      const usedColors = new Set<string>();
-      for (const card of selectedCards)
-      {
-        if (card.courseCode === selection.courseCode)
-        {
-          continue;
-        }
-        usedColors.add(current[card.courseCode] ?? card.color);
-      }
-
-      const nextColor = COURSE_COLOR_PALETTE.find((color) => !usedColors.has(color))
-        ?? COURSE_COLOR_PALETTE[usedColors.size % COURSE_COLOR_PALETTE.length];
-
-      return {
-        ...current,
-        [selection.courseCode]: nextColor,
-      };
-    });
     setSelectedClasses((current) => replaceSelectionForCourse(current, selection));
     setHiddenClasses((current) => current.filter((value) => !value.startsWith(`${selection.courseCode}:`)));
     closeClassPicker();
@@ -763,6 +836,7 @@ export function PlannerClient({
         currentSemesterId,
         currentWeekId,
         semesters.find((semester) => semester.semesterId === nextSemesterId)?.weeks ?? [],
+        appSettings.timetableOrientation,
       );
 
     setSemesterId(nextSemesterId);
@@ -934,9 +1008,9 @@ export function PlannerClient({
 
   return (
     <>
-      <div ref={exportCaptureRef} className={`flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
+      <div ref={exportCaptureRef} className={`timetable-page flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
-          <div className="elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+          <div className="timetable-toolbar elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
               items={semesterItems}
               selectedId={String(semesterId)}
@@ -987,9 +1061,9 @@ export function PlannerClient({
           </div>
 
           {plannerNotice || timetableData.unresolvedSelections.length > 0 ? (
-            <div className="space-y-2 bg-[var(--surface-container-lowest)] px-2.5 pt-2 sm:px-3 sm:pt-2.5">
+            <div className="timetable-notice-stack space-y-2 bg-[var(--surface-container-lowest)] px-2.5 pt-2 sm:px-3 sm:pt-2.5">
               {plannerNotice ? (
-                <div className="rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--primary)] sm:text-[12px]">
+                <div className="timetable-notice rounded-[0.5rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[11px] font-medium leading-4 text-[var(--primary)] sm:text-[12px]">
                   {plannerNotice}
                 </div>
               ) : null}
@@ -1006,7 +1080,7 @@ export function PlannerClient({
             clashes={timetableData.clashes}
           />
 
-          <div className="flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-1 pb-0.5 sm:pb-1">
+          <div className="timetable-canvas-shell flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] px-1 pb-0.5 sm:pb-1">
             <div className={`min-h-0 flex-1 ${viewMode === "class" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"}`}>
               {viewMode === "class" ? (
                 <TimetableCanvas
@@ -1069,7 +1143,7 @@ export function PlannerClient({
           </div>
         </section>
 
-        <aside className={`flex min-h-0 w-full flex-col border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] ${orientation === "horizontal" ? "md:w-full md:border-l-0 md:border-t" : "md:w-[30%] md:border-l md:border-t-0"}`}>
+        <aside className={`timetable-side-panel flex min-h-0 w-full flex-col border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] ${orientation === "horizontal" ? "md:w-full md:border-l-0 md:border-t" : "md:w-[30%] md:border-l md:border-t-0"}`}>
           <div className="flex h-12 shrink-0 items-center justify-between bg-[var(--surface-container-lowest)] px-2.5 sm:h-14 sm:px-3">
             <div>
               <h3 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)] sm:text-[18px] sm:leading-6">My Courses</h3>
@@ -1094,7 +1168,7 @@ export function PlannerClient({
                 </button>
                 <span className="text-[9px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[10px]">PT</span>
               </div>
-              <span className="rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-1.5 py-0.5 text-[10px] font-medium leading-[13px] text-[var(--primary)] sm:px-2 sm:text-[11px] sm:leading-[14px]">
+              <span className="timetable-chip rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-1.5 py-0.5 text-[10px] font-medium leading-[13px] text-[var(--primary)] sm:px-2 sm:text-[11px] sm:leading-[14px]">
                 {selectedCards.length} Selected
               </span>
             </div>
@@ -1191,7 +1265,7 @@ export function PlannerClient({
             </div>
 
             {shareMessage ? (
-              <div className="mt-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[10px] font-semibold leading-4 text-[var(--primary)] sm:text-[11px]">
+              <div className="timetable-notice mt-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-2.5 py-1.5 text-[10px] font-semibold leading-4 text-[var(--primary)] sm:text-[11px]">
                 {shareMessage}
               </div>
             ) : null}
@@ -1205,7 +1279,7 @@ export function PlannerClient({
                 return (
                   <article
                     key={record.shareKey}
-                    className={`elev-1 group relative rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-1.5 transition-[box-shadow] hover:shadow-md sm:px-2.5 sm:py-2 ${
+                    className={`timetable-selected-card elev-1 group relative rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-1.5 transition-[box-shadow] hover:shadow-md sm:px-2.5 sm:py-2 ${
                       colorPickerCourseCode === record.courseCode ? "overflow-visible" : "overflow-hidden"
                     } ${
                       orientation === "horizontal" ? "md:h-full" : ""
@@ -1231,7 +1305,7 @@ export function PlannerClient({
                                   className="pointer-events-none absolute -top-[7px] left-[5px] h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
                                 />
                                 <div className="grid grid-cols-4 gap-1.5">
-                                  {COURSE_COLOR_PALETTE.map((color) => (
+                                  {themePalette.map((color, colorIndex) => (
                                     <button
                                       key={color}
                                       type="button"
@@ -1241,7 +1315,7 @@ export function PlannerClient({
                                       onClick={() => {
                                         setCourseColorsByCourseCode((current) => ({
                                           ...current,
-                                          [record.courseCode]: color,
+                                          [record.courseCode]: buildThemeColorPreference(colorIndex),
                                         }));
                                         setColorPickerCourseCode(null);
                                       }}
