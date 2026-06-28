@@ -35,6 +35,7 @@ export default async function CoursesPage({
     >
       <CourseSearchPage
         semesters={allSemesters}
+        currentSemesterId={currentSemesterContext.semester?.semesterId ?? null}
         schools={facets.schools}
         courseLevels={facets.courseLevels}
         initialFilters={parsed}

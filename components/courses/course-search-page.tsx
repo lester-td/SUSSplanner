@@ -21,6 +21,7 @@ import {
   XIcon,
 } from "@/components/planner/icons";
 import { AddToSemesterPlannerButton } from "@/components/planner/add-to-semester-planner-button";
+import { AddToTimetableButton } from "@/components/timetable/add-to-timetable-button";
 import {
   buildCourseSearchParams,
   extractCourseLevelNumber,
@@ -392,11 +393,13 @@ function getAllCourses()
 
 export function CourseSearchPage({
   semesters,
+  currentSemesterId,
   schools,
   courseLevels,
   initialFilters,
 }: {
   semesters: SemesterRecord[];
+  currentSemesterId: number | null;
   schools: string[];
   courseLevels: string[];
   initialFilters: CourseSearchFilters;
@@ -743,8 +746,8 @@ export function CourseSearchPage({
                 const semesterIndicators = buildSemesterIndicators(course);
 
                 return (
-                <article key={course.courseCode} className="relative px-4 py-3">
-                  <div className="pr-28 sm:pr-32">
+                <article key={course.courseCode} className="px-4 py-3">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                     <h2 className="min-w-0 flex-1 text-[18px] font-bold leading-7 tracking-[-0.02em]">
                       <Link
                         href={`/courses/${course.courseCode}`}
@@ -754,10 +757,15 @@ export function CourseSearchPage({
                         <span>{renderHighlightedText(course.courseName, filters.q, "Untitled course")}</span>
                       </Link>
                     </h2>
-                  </div>
 
-                  <div className="absolute right-4 top-3">
-                    <AddToSemesterPlannerButton course={course} compact />
+                    <div className="flex shrink-0 flex-wrap items-center gap-1 lg:justify-end">
+                      <AddToTimetableButton
+                        course={course}
+                        compact
+                        fallbackSemesterId={currentSemesterId}
+                      />
+                      <AddToSemesterPlannerButton course={course} compact />
+                    </div>
                   </div>
 
                   <div className="mt-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">

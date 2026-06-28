@@ -43,9 +43,16 @@ import {
   getCurrentWeekChip,
 } from "@/lib/timetable/date-utils";
 import {
+  TIMETABLE_STORAGE_KEY,
+  TIMETABLE_STUDY_MODE_STORAGE_KEY,
+  TIMETABLE_STUDY_MODE_UPDATED_EVENT,
+  TIMETABLE_UPDATED_EVENT,
   loadSavedTimetable,
   getSavedSemesterState,
+  readTimetableStudyMode,
   saveTimetableToLocalStorage,
+  saveTimetableStudyMode,
+  type TimetableStudyMode,
 } from "@/lib/timetable/local-storage";
 import {
   buildSharedClassIdentifier,
@@ -373,7 +380,7 @@ export function PlannerClient({
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [sortMode, setSortMode] = useState<"code" | "exam" | "credit">("code");
   const [searchInput, setSearchInput] = useState("");
-  const [studyMode, setStudyMode] = useState<"full-time" | "part-time">("full-time");
+  const [studyMode, setStudyMode] = useState<TimetableStudyMode>("full-time");
   const [selectedClasses, setSelectedClasses] = useState<SharedClassIdentifier[]>([]);
   const [hiddenClasses, setHiddenClasses] = useState<string[]>([]);
   const [courseColorsByCourseCode, setCourseColorsByCourseCode] = useState<Record<string, string>>({});
@@ -433,26 +440,68 @@ export function PlannerClient({
     setSelectedWeekId(next.selectedWeekId);
     setOrientation(saved?.orientation ?? settings.timetableOrientation);
     setViewMode(saved?.viewMode ?? "class");
+    setStudyMode(readTimetableStudyMode());
     setReady(true);
   }, [currentSemesterId, currentWeekId, semesters]);
 
   useEffect(() => {
     const refreshSettings = () => setAppSettings(readAppSettings());
+    const refreshStudyMode = () => setStudyMode(readTimetableStudyMode());
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === APP_SETTINGS_STORAGE_KEY)
       {
         refreshSettings();
       }
+
+      if (event.key === TIMETABLE_STUDY_MODE_STORAGE_KEY)
+      {
+        refreshStudyMode();
+      }
     };
 
     window.addEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
+    window.addEventListener(TIMETABLE_STUDY_MODE_UPDATED_EVENT, refreshStudyMode);
     window.addEventListener("storage", handleStorageChange);
 
     return () => {
       window.removeEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
+      window.removeEventListener(TIMETABLE_STUDY_MODE_UPDATED_EVENT, refreshStudyMode);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  useEffect(() => {
+    const syncSavedTimetable = () => {
+      const saved = loadSavedTimetable();
+      if (!saved || !semesters.some((semester) => semester.semesterId === saved.semesterId))
+      {
+        return;
+      }
+
+      const next = getSavedSemesterState(saved, saved.semesterId) ?? saved;
+      setSemesterId(saved.semesterId);
+      setSelectedClasses(next.selectedClasses);
+      setHiddenClasses(next.hiddenClasses);
+      setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
+      setSelectedWeekId(next.selectedWeekId);
+      setOrientation(saved.orientation ?? appSettings.timetableOrientation);
+      setViewMode(saved.viewMode ?? "class");
+    };
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === TIMETABLE_STORAGE_KEY)
+      {
+        syncSavedTimetable();
+      }
+    };
+
+    window.addEventListener(TIMETABLE_UPDATED_EVENT, syncSavedTimetable);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener(TIMETABLE_UPDATED_EVENT, syncSavedTimetable);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [appSettings.timetableOrientation, semesters]);
 
   useEffect(() => {
     if (!ready)
@@ -779,6 +828,15 @@ export function PlannerClient({
     setHiddenClasses((current) => current.includes(shareKey)
       ? current.filter((value) => value !== shareKey)
       : [...current, shareKey]);
+  }
+
+  function toggleStudyMode()
+  {
+    setStudyMode((current) => {
+      const next = current === "full-time" ? "part-time" : "full-time";
+      saveTimetableStudyMode(next);
+      return next;
+    });
   }
 
   function removeClass(shareKey: string)
@@ -1157,7 +1215,7 @@ export function PlannerClient({
                   aria-checked={studyMode === "part-time"}
                   aria-label="Toggle study mode"
                   className="relative h-5 w-9 rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-low)] transition-colors"
-                  onClick={() => setStudyMode((current) => current === "full-time" ? "part-time" : "full-time")}
+                  onClick={toggleStudyMode}
                 >
                   <span
                     className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-[var(--primary)] transition-all ${

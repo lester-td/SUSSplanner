@@ -16,6 +16,7 @@ import {
   SunIcon,
 } from "@/components/planner/icons";
 import { ClassScheduleModalContent } from "@/components/timetable/class-schedule-modal-content";
+import { AddToTimetableButton } from "@/components/timetable/add-to-timetable-button";
 import { Modal } from "@/components/ui/modal";
 import {
   formatClassGroupLabel,
@@ -53,12 +54,14 @@ function formatAssessmentWeight(value: number)
 export function CourseDetailPage({
   course,
   offeredSemesters,
+  currentSemesterId,
   selectedSemesterId,
   classes: initialClasses,
   assessments,
 }: {
   course: CourseRecord;
   offeredSemesters: SemesterRecord[];
+  currentSemesterId: number | null;
   selectedSemesterId?: number;
   classes: CourseClassRecord[];
   assessments: AssessmentComponentRecord[];
@@ -190,6 +193,12 @@ export function CourseDetailPage({
                     {displaySemesterLabel}
                   </span>
                   <div className="ml-auto flex flex-wrap items-center gap-2.5">
+                    <AddToTimetableButton
+                      course={{ ...course, offeredSemesters }}
+                      appearance="outline"
+                      preferredSemesterId={activeSemesterId}
+                      fallbackSemesterId={currentSemesterId}
+                    />
                     <AddToSemesterPlannerButton course={course} appearance="outline" />
                     {course.synopsisUrl ? (
                       <a
