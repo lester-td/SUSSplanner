@@ -783,7 +783,7 @@ function CoursePagination({
   return (
     <nav
       aria-label="Courses pagination"
-      className="flex flex-col gap-2 border-t border-[var(--brand-divider)] pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-2 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="font-medium">
         Showing {startItem}-{endItem} of {totalItems}
