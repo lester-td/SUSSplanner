@@ -236,6 +236,12 @@
   background: var(--surface-container-lowest);
 }
 
+.course-pagination-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
 :root[data-color-scheme="dark"] body,
 :root[data-color-scheme="dark"] .app-content-surface {
   background: var(--background);
@@ -243,6 +249,12 @@
 
 :root[data-color-scheme="dark"] .course-search-sticky-header {
   background: var(--background);
+}
+
+:root[data-color-scheme="dark"] .course-pagination-active {
+  border-color: var(--suss-light-blue);
+  background: var(--suss-light-blue);
+  color: var(--on-primary);
 }
 
 :root[data-color-scheme="dark"] .elev-3,

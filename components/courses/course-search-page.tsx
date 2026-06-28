@@ -916,7 +916,7 @@ function CoursePagination({
             ) : null}
           </div>
 
-          <div className="inline-flex h-8 min-w-[5.5rem] items-center justify-center rounded-[0.35rem] border border-[var(--primary)] bg-[var(--primary)] px-2 text-center text-[12px] font-semibold leading-4 text-[var(--on-primary)]">
+          <div className="course-pagination-active inline-flex h-8 min-w-[5.5rem] items-center justify-center rounded-[0.35rem] border px-2 text-center text-[12px] font-semibold leading-4">
             Page {currentPage}
           </div>
 
@@ -979,7 +979,7 @@ function CoursePagination({
               onClick={() => goToPage(page)}
               className={`inline-flex h-8 min-w-8 items-center justify-center rounded-[0.35rem] border px-2 text-[12px] font-semibold leading-4 transition-colors ${
                 page === currentPage
-                  ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                  ? "course-pagination-active"
                   : "border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
               }`}
             >
