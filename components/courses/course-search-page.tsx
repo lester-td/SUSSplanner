@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -404,6 +404,7 @@ export function CourseSearchPage({
   const [allCourses, setAllCourses] = useState<CourseSearchResult[]>(cachedAllCourses ?? []);
   const [loading, setLoading] = useState(cachedAllCourses === null);
   const [currentPage, setCurrentPage] = useState(1);
+  const shouldJumpToPageTopRef = useRef(false);
   const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
   const filteredCourses = useMemo(() => filterCourses(allCourses, filters), [allCourses, filters]);
 
@@ -436,6 +437,16 @@ export function CourseSearchPage({
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
+
+  useLayoutEffect(() => {
+    if (!shouldJumpToPageTopRef.current)
+    {
+      return;
+    }
+
+    shouldJumpToPageTopRef.current = false;
+    jumpToPageTop();
+  }, [currentPage]);
 
   useEffect(() => {
     let isActive = true;
@@ -514,6 +525,25 @@ export function CourseSearchPage({
       schoolNames: [],
       courseLevels: [],
     }));
+  }
+
+  function jumpToPageTop()
+  {
+    const root = document.documentElement;
+    const body = document.body;
+    const scroller = document.scrollingElement ?? root;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    const previousBodyScrollBehavior = body.style.scrollBehavior;
+
+    root.style.scrollBehavior = "auto";
+    body.style.scrollBehavior = "auto";
+    scroller.scrollTop = 0;
+    scroller.scrollLeft = 0;
+
+    window.requestAnimationFrame(() => {
+      root.style.scrollBehavior = previousScrollBehavior;
+      body.style.scrollBehavior = previousBodyScrollBehavior;
+    });
   }
 
   return (
@@ -615,7 +645,10 @@ export function CourseSearchPage({
               pageSize={COURSES_PER_PAGE}
               totalItems={filteredCourses.length}
               totalPages={totalPages}
-              onPageChange={setCurrentPage}
+              onPageChange={(page) => {
+                shouldJumpToPageTopRef.current = true;
+                setCurrentPage(page);
+              }}
             />
           ) : null}
         </section>
@@ -779,7 +812,11 @@ function CoursePagination({
 
   function goToPage(page: number)
   {
-    onPageChange(Math.max(1, Math.min(page, totalPages)));
+    const nextPage = Math.max(1, Math.min(page, totalPages));
+    if (nextPage !== currentPage)
+    {
+      onPageChange(nextPage);
+    }
   }
 
   return (
