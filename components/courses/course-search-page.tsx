@@ -892,53 +892,53 @@ function CoursePagination({
 
       {totalPages > 1 ? (
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 justify-self-center md:hidden">
-          <div className="flex min-w-20 items-center justify-end gap-4">
+          <div className="flex min-w-20 items-center justify-end gap-1">
             {currentPage > 1 ? (
               <>
                 <button
                   type="button"
                   aria-label="First page"
                   onClick={() => goToPage(1)}
-                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--on-surface-variant)] transition-colors hover:text-[var(--primary)]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                 >
-                  <ChevronsLeftIcon className="h-5 w-5" />
+                  <ChevronsLeftIcon className="h-4 w-4" />
                 </button>
 
                 <button
                   type="button"
                   aria-label="Previous page"
                   onClick={() => goToPage(currentPage - 1)}
-                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--on-surface-variant)] transition-colors hover:text-[var(--primary)]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                 >
-                  <ChevronLeftIcon className="h-5 w-5" />
+                  <ChevronLeftIcon className="h-4 w-4" />
                 </button>
               </>
             ) : null}
           </div>
 
-          <div className="min-w-[5.5rem] text-center text-[14px] font-bold leading-5 text-[var(--accent)]">
+          <div className="inline-flex h-8 min-w-[5.5rem] items-center justify-center rounded-[0.35rem] border border-[var(--primary)] bg-[var(--primary)] px-2 text-center text-[12px] font-semibold leading-4 text-[var(--on-primary)]">
             Page {currentPage}
           </div>
 
-          <div className="flex min-w-20 items-center justify-start gap-4">
+          <div className="flex min-w-20 items-center justify-start gap-1">
             {currentPage < totalPages ? (
               <>
                 <button
                   type="button"
                   aria-label="Next page"
                   onClick={() => goToPage(currentPage + 1)}
-                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--on-surface-variant)] transition-colors hover:text-[var(--primary)]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                 >
-                  <ChevronRightIcon className="h-5 w-5" />
+                  <ChevronRightIcon className="h-4 w-4" />
                 </button>
 
                 <button
                   type="button"
                   aria-label="Last page"
                   onClick={() => goToPage(totalPages)}
-                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--on-surface-variant)] transition-colors hover:text-[var(--primary)]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                 >
-                  <ChevronsRightIcon className="h-5 w-5" />
+                  <ChevronsRightIcon className="h-4 w-4" />
                 </button>
               </>
             ) : null}
