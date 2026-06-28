@@ -822,14 +822,14 @@ function CoursePagination({
   return (
     <nav
       aria-label="Courses pagination"
-      className="flex flex-col gap-2 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] sm:flex-row sm:items-center sm:justify-between"
+      className="grid gap-2 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] sm:grid-cols-[1fr_auto_1fr] sm:items-center"
     >
-      <div className="font-medium">
+      <div className="font-medium sm:justify-self-start">
         Showing {startItem}-{endItem} of {totalItems}
       </div>
 
       {totalPages > 1 ? (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center gap-1 sm:justify-self-center">
           {currentPage > 1 ? (
             <>
               <button
@@ -892,6 +892,8 @@ function CoursePagination({
           ) : null}
         </div>
       ) : null}
+
+      <div aria-hidden="true" className="hidden sm:block" />
     </nav>
   );
 }
