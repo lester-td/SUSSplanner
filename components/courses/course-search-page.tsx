@@ -9,6 +9,8 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
   LayersIcon,
   ListIcon,
   RefreshIcon,
@@ -793,6 +795,16 @@ function CoursePagination({
         <div className="flex items-center gap-1">
           <button
             type="button"
+            aria-label="First page"
+            onClick={() => goToPage(1)}
+            disabled={currentPage === 1}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
+          >
+            <ChevronsLeftIcon className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
             aria-label="Previous page"
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
@@ -826,6 +838,16 @@ function CoursePagination({
             className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
           >
             <ChevronRightIcon className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            aria-label="Last page"
+            onClick={() => goToPage(totalPages)}
+            disabled={currentPage === totalPages}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
+          >
+            <ChevronsRightIcon className="h-4 w-4" />
           </button>
         </div>
       ) : null}

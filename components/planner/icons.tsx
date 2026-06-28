@@ -8,6 +8,8 @@ import {
   TbCalendarWeek,
   TbChevronLeft,
   TbChevronRight,
+  TbChevronsLeft,
+  TbChevronsRight,
   TbClock,
   TbCode,
   TbColumns3,
@@ -147,6 +149,16 @@ export function ChevronLeftIcon({ className }: IconProps)
 export function ChevronRightIcon({ className }: IconProps)
 {
   return renderIcon(TbChevronRight, className);
+}
+
+export function ChevronsLeftIcon({ className }: IconProps)
+{
+  return renderIcon(TbChevronsLeft, className);
+}
+
+export function ChevronsRightIcon({ className }: IconProps)
+{
+  return renderIcon(TbChevronsRight, className);
 }
 
 export function RefreshIcon({ className }: IconProps)
