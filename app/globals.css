@@ -232,8 +232,16 @@
   box-shadow: var(--shadow-elev-3);
 }
 
+.course-search-sticky-header {
+  background: var(--surface-container-lowest);
+}
+
 :root[data-color-scheme="dark"] body,
 :root[data-color-scheme="dark"] .app-content-surface {
+  background: var(--background);
+}
+
+:root[data-color-scheme="dark"] .course-search-sticky-header {
   background: var(--background);
 }
 
