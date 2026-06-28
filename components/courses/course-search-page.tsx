@@ -708,10 +708,10 @@ export function CourseSearchPage({
   }
 
   return (
-    <div className="px-3 pb-24 md:px-[16px] lg:pb-3">
-      <div className="mx-auto grid max-w-7xl gap-2.5 lg:grid-cols-[minmax(0,1fr)_21rem]">
-        <section className="space-y-2.5 lg:pr-4">
-          <div className="course-search-sticky-header sticky top-[53px] z-30 -mx-3 border-b border-[var(--brand-divider)] px-3 pb-3 pt-8 md:-mx-[16px] md:px-[16px] lg:top-[57px] lg:mx-0 lg:px-0">
+    <div className="px-3 pb-24 md:px-[16px] md:pb-3">
+      <div className="mx-auto grid max-w-7xl gap-2.5 md:grid-cols-[minmax(0,1fr)_21rem]">
+        <section className="space-y-2.5 md:pr-4">
+          <div className="course-search-sticky-header sticky top-[53px] z-30 -mx-3 border-b border-[var(--brand-divider)] px-3 pb-3 pt-8 md:top-[57px] md:mx-0 md:px-0">
             <div className="flex flex-col gap-2.5 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
@@ -814,7 +814,7 @@ export function CourseSearchPage({
           ) : null}
         </section>
 
-        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 lg:sticky lg:top-[90px] lg:mt-0 lg:block lg:max-h-[calc(100dvh-110px)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-110px)] md:self-start md:overflow-y-auto md:overscroll-contain md:pr-1">
           {renderFilterSettings()}
         </aside>
       </div>
@@ -823,7 +823,7 @@ export function CourseSearchPage({
         <button
           type="button"
           aria-label="Close search filters"
-          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/20 md:hidden"
           onClick={() => setFiltersOpen(false)}
         />
       ) : null}
@@ -831,7 +831,7 @@ export function CourseSearchPage({
       <div
         id="course-filter-drawer"
         aria-hidden={!filtersOpen}
-        className={`fixed inset-x-0 bottom-0 z-40 max-h-[min(78dvh,42rem)] overflow-hidden border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-40 max-h-[min(78dvh,42rem)] overflow-hidden border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-2xl transition-transform duration-200 ease-out md:hidden ${
           filtersOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
       >
@@ -846,7 +846,7 @@ export function CourseSearchPage({
         aria-expanded={filtersOpen}
         aria-label={filtersOpen ? "Close search filters" : "Open search filters"}
         onClick={() => setFiltersOpen((open) => !open)}
-        className="fixed bottom-5 right-5 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_12px_30px_rgb(0_0_0/0.22)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-ring-soft)] lg:hidden"
+        className="fixed bottom-5 right-5 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_12px_30px_rgb(0_0_0/0.22)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-ring-soft)] md:hidden"
       >
         {filtersOpen ? <XIcon className="h-7 w-7" /> : <FilterIcon className="h-7 w-7" />}
       </button>
@@ -884,14 +884,70 @@ function CoursePagination({
   return (
     <nav
       aria-label="Courses pagination"
-      className="grid gap-2 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] sm:grid-cols-[1fr_auto_1fr] sm:items-center"
+      className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)]"
     >
-      <div className="font-medium sm:justify-self-start">
+      <div className="font-medium">
         Showing {startItem}-{endItem} of {totalItems}
       </div>
 
       {totalPages > 1 ? (
-        <div className="flex items-center justify-center gap-1 sm:justify-self-center">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 justify-self-center md:hidden">
+          <div className="flex min-w-20 items-center justify-end gap-4">
+            {currentPage > 1 ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="First page"
+                  onClick={() => goToPage(1)}
+                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--on-surface-variant)] transition-colors hover:text-[var(--primary)]"
+                >
+                  <ChevronsLeftIcon className="h-5 w-5" />
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Previous page"
+                  onClick={() => goToPage(currentPage - 1)}
+                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--on-surface-variant)] transition-colors hover:text-[var(--primary)]"
+                >
+                  <ChevronLeftIcon className="h-5 w-5" />
+                </button>
+              </>
+            ) : null}
+          </div>
+
+          <div className="min-w-[5.5rem] text-center text-[14px] font-bold leading-5 text-[var(--accent)]">
+            Page {currentPage}
+          </div>
+
+          <div className="flex min-w-20 items-center justify-start gap-4">
+            {currentPage < totalPages ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Next page"
+                  onClick={() => goToPage(currentPage + 1)}
+                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--on-surface-variant)] transition-colors hover:text-[var(--primary)]"
+                >
+                  <ChevronRightIcon className="h-5 w-5" />
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Last page"
+                  onClick={() => goToPage(totalPages)}
+                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--on-surface-variant)] transition-colors hover:text-[var(--primary)]"
+                >
+                  <ChevronsRightIcon className="h-5 w-5" />
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {totalPages > 1 ? (
+        <div className="hidden items-center justify-center gap-1 justify-self-center md:flex">
           {currentPage > 1 ? (
             <>
               <button
@@ -955,7 +1011,7 @@ function CoursePagination({
         </div>
       ) : null}
 
-      <div aria-hidden="true" className="hidden sm:block" />
+      <div aria-hidden="true" />
     </nav>
   );
 }
