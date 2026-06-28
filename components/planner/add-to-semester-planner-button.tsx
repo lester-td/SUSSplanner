@@ -7,6 +7,7 @@ import {
   SEMESTER_PLANNER_UPDATED_EVENT,
   announceSemesterPlannerUpdated,
   loadSemesterPlannerState,
+  removeCourseCodeFromSemesterPlanner,
   saveSemesterPlannerState,
   upsertCatalogCourseInSemesterPlanner,
 } from "@/lib/planner/storage";
@@ -65,14 +66,22 @@ export function AddToSemesterPlannerButton({
     <button
       type="button"
       onClick={() => {
-        const next = upsertCatalogCourseInSemesterPlanner(loadSemesterPlannerState(), course);
+        const current = loadSemesterPlannerState();
+        const next = added
+          ? removeCourseCodeFromSemesterPlanner(current, courseCode)
+          : upsertCatalogCourseInSemesterPlanner(current, course);
+
         saveSemesterPlannerState(next);
         announceSemesterPlannerUpdated();
-        setAdded(true);
-        onAdded?.();
+        setAdded(!added);
+
+        if (!added)
+        {
+          onAdded?.();
+        }
       }}
       className={buttonClassName}
-      aria-label={`Add ${courseCode} to planner`}
+      aria-label={added ? `Remove ${courseCode} from planner` : `Add ${courseCode} to planner`}
     >
       <PlusIcon className={compact ? "h-3.5 w-3.5 md:h-4 md:w-4" : "h-4 w-4"} />
       {added ? "In Planner" : "Add to Planner"}
