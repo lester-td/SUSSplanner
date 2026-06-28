@@ -714,7 +714,7 @@ export function CourseSearchPage({
     <div className="px-3 pb-24 md:px-[16px] md:pb-3">
       <div className="mx-auto grid max-w-7xl gap-2.5 md:grid-cols-[minmax(0,1fr)_21rem]">
         <section className="space-y-2.5 md:pr-4">
-          <div className="course-search-sticky-header sticky top-0 z-30 -mx-3 border-b border-[var(--brand-divider)] px-3 pb-3 pt-[calc(53px+0.75rem)] md:mx-0 md:px-0 md:pt-[calc(57px+0.75rem)]">
+          <div className="course-search-sticky-header sticky top-0 z-30 -mx-3 px-3 pb-3 pt-[calc(53px+0.75rem)] md:mx-0 md:px-0 md:pt-[calc(57px+0.75rem)]">
             <div className="flex flex-col gap-2.5 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
