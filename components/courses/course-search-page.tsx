@@ -618,7 +618,7 @@ export function CourseSearchPage({
           ) : null}
         </section>
 
-        <aside className="mt-2 border-l border-[var(--brand-divider)] pl-2.5 lg:mt-0 lg:sticky lg:top-[90px] lg:self-start">
+        <aside className="mt-2 border-l border-[var(--brand-divider)] pl-2.5 lg:sticky lg:top-[90px] lg:mt-0 lg:max-h-[calc(100dvh-110px)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
             <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2">
               <div className="flex items-center gap-2">
                 <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
