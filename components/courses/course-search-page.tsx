@@ -793,25 +793,27 @@ function CoursePagination({
 
       {totalPages > 1 ? (
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            aria-label="First page"
-            onClick={() => goToPage(1)}
-            disabled={currentPage === 1}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
-          >
-            <ChevronsLeftIcon className="h-4 w-4" />
-          </button>
+          {currentPage > 1 ? (
+            <>
+              <button
+                type="button"
+                aria-label="First page"
+                onClick={() => goToPage(1)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <ChevronsLeftIcon className="h-4 w-4" />
+              </button>
 
-          <button
-            type="button"
-            aria-label="Previous page"
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
-          >
-            <ChevronLeftIcon className="h-4 w-4" />
-          </button>
+              <button
+                type="button"
+                aria-label="Previous page"
+                onClick={() => goToPage(currentPage - 1)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </button>
+            </>
+          ) : null}
 
           {pages.map((page) => (
             <button
@@ -830,25 +832,27 @@ function CoursePagination({
             </button>
           ))}
 
-          <button
-            type="button"
-            aria-label="Next page"
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
-          >
-            <ChevronRightIcon className="h-4 w-4" />
-          </button>
+          {currentPage < totalPages ? (
+            <>
+              <button
+                type="button"
+                aria-label="Next page"
+                onClick={() => goToPage(currentPage + 1)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </button>
 
-          <button
-            type="button"
-            aria-label="Last page"
-            onClick={() => goToPage(totalPages)}
-            disabled={currentPage === totalPages}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--on-surface-variant)]"
-          >
-            <ChevronsRightIcon className="h-4 w-4" />
-          </button>
+              <button
+                type="button"
+                aria-label="Last page"
+                onClick={() => goToPage(totalPages)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <ChevronsRightIcon className="h-4 w-4" />
+              </button>
+            </>
+          ) : null}
         </div>
       ) : null}
     </nav>
