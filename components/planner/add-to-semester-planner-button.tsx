@@ -59,7 +59,7 @@ export function AddToSemesterPlannerButton({
         added
           ? "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
           : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface)] hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-      } ${compact ? "gap-1 px-2 py-0 text-[11px]" : ""}`;
+      } ${compact ? "h-6 gap-0.5 px-1.5 py-0 text-[10px] leading-3 md:h-7 md:gap-1 md:px-2 md:text-[11px] md:leading-4" : ""}`;
 
   return (
     <button
@@ -74,7 +74,7 @@ export function AddToSemesterPlannerButton({
       className={buttonClassName}
       aria-label={`Add ${courseCode} to planner`}
     >
-      <PlusIcon className="h-4 w-4" />
+      <PlusIcon className={compact ? "h-3.5 w-3.5 md:h-4 md:w-4" : "h-4 w-4"} />
       {added ? "In Planner" : "Add to Planner"}
     </button>
   );
