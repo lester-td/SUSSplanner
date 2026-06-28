@@ -854,7 +854,11 @@ export function CourseSearchPage({
         aria-expanded={filtersOpen}
         aria-label={filtersOpen ? "Close search filters" : "Open search filters"}
         onClick={() => setFiltersOpen((open) => !open)}
-        className="fixed bottom-5 right-5 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_12px_30px_rgb(0_0_0/0.22)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-ring-soft)] md:hidden"
+        className={`fixed bottom-5 right-5 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full border shadow-[var(--shadow-elev-3)] transition-[background-color,border-color,color,transform] hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-ring-soft)] md:hidden ${
+          filtersOpen
+            ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]"
+            : "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)]"
+        }`}
       >
         {filtersOpen ? <XIcon className="h-7 w-7" /> : <FilterIcon className="h-7 w-7" />}
       </button>
