@@ -11,12 +11,14 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  FilterIcon,
   LayersIcon,
   ListIcon,
   RefreshIcon,
   SchoolIcon,
   SearchIcon,
   SettingsIcon,
+  XIcon,
 } from "@/components/planner/icons";
 import { AddToSemesterPlannerButton } from "@/components/planner/add-to-semester-planner-button";
 import {
@@ -404,6 +406,7 @@ export function CourseSearchPage({
   const [allCourses, setAllCourses] = useState<CourseSearchResult[]>(cachedAllCourses ?? []);
   const [loading, setLoading] = useState(cachedAllCourses === null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const shouldJumpToPageTopRef = useRef(false);
   const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
   const filteredCourses = useMemo(() => filterCourses(allCourses, filters), [allCourses, filters]);
@@ -437,6 +440,24 @@ export function CourseSearchPage({
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
+
+  useEffect(() => {
+    if (!filtersOpen)
+    {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent)
+    {
+      if (event.key === "Escape")
+      {
+        setFiltersOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [filtersOpen]);
 
   useLayoutEffect(() => {
     if (!shouldJumpToPageTopRef.current)
@@ -546,8 +567,148 @@ export function CourseSearchPage({
     });
   }
 
+  function renderFilterSettings()
+  {
+    return (
+      <>
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2">
+          <div className="flex items-center gap-2">
+            <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
+            <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
+          </div>
+          <button
+            type="button"
+            onClick={resetCheckboxFilters}
+            className="inline-flex items-center gap-1 rounded-[0.35rem] border border-[var(--outline-variant)] px-2 py-1 text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+          >
+            <RefreshIcon className="h-3 w-3" />
+            Reset all
+          </button>
+        </div>
+
+        <div className="divide-y divide-[var(--brand-divider)]">
+          <FilterGroup title="Offered In">
+            {semesters.map((semester) => (
+              <CheckboxRow
+                key={semester.semesterId}
+                label={`${semester.semesterName} (${semester.academicYear})`}
+                checked={filters.semesterIds.includes(semester.semesterId)}
+                onChange={() => setFilters((current) => ({
+                  ...current,
+                  semesterIds: toggleInList(current.semesterIds, semester.semesterId),
+                }))}
+              />
+            ))}
+          </FilterGroup>
+
+          <FilterGroup title="Schedule">
+            <CheckboxRow
+              label="Daytime"
+              checked={filters.scheduleTypes.includes("daytime")}
+              onChange={() => setFilters((current) => ({
+                ...current,
+                scheduleTypes: toggleInList(current.scheduleTypes, "daytime"),
+              }))}
+            />
+            <CheckboxRow
+              label="Evening"
+              checked={filters.scheduleTypes.includes("evening")}
+              onChange={() => setFilters((current) => ({
+                ...current,
+                scheduleTypes: toggleInList(current.scheduleTypes, "evening"),
+              }))}
+            />
+          </FilterGroup>
+
+          <FilterGroup title="Course Level" contentClassName="grid grid-cols-3 gap-y-px">
+            {levelOptions.map((levelOption) => (
+              <div key={levelOption.value}>
+                <CheckboxRow
+                  label={levelOption.label}
+                  checked={filters.courseLevels.includes(levelOption.value)}
+                  onChange={() => setFilters((current) => ({
+                    ...current,
+                    courseLevels: toggleInList(current.courseLevels, levelOption.value),
+                  }))}
+                />
+              </div>
+            ))}
+          </FilterGroup>
+
+          <FilterGroup title="Course Type">
+            <CheckboxRow
+              label="Undergraduate Courses"
+              checked={filters.undergraduateOnly}
+              onChange={() => setFilters((current) => ({
+                ...current,
+                undergraduateOnly: !current.undergraduateOnly,
+              }))}
+            />
+            <CheckboxRow
+              label="Postgraduate Courses"
+              checked={filters.postgraduateOnly}
+              onChange={() => setFilters((current) => ({
+                ...current,
+                postgraduateOnly: !current.postgraduateOnly,
+              }))}
+            />
+            <CheckboxRow
+              label="Available as GSP/UNE"
+              checked={filters.availableAsGspOnly}
+              onChange={() => setFilters((current) => ({
+                ...current,
+                availableAsGspOnly: !current.availableAsGspOnly,
+              }))}
+            />
+          </FilterGroup>
+
+          <FilterGroup title="Assessments">
+            <div className="max-h-80 space-y-px overflow-y-auto pr-1">
+              {ASSESSMENT_MODE_OPTIONS.map((assessmentMode) => (
+                <CheckboxRow
+                  key={assessmentMode}
+                  label={assessmentMode}
+                  checked={filters.assessmentModes.includes(assessmentMode)}
+                  onChange={() => setFilters((current) => ({
+                    ...current,
+                    assessmentModes: toggleInList(current.assessmentModes, assessmentMode),
+                  }))}
+                />
+              ))}
+            </div>
+          </FilterGroup>
+
+          <FilterGroup
+            title="School"
+            action={(
+              <button
+                type="button"
+                onClick={() => setFilters((current) => ({ ...current, schoolNames: [] }))}
+                className="text-[11px] font-semibold leading-4 text-[var(--primary)] transition-opacity hover:opacity-75"
+              >
+                Reset
+              </button>
+            )}
+          >
+            {schools.map((school) => (
+              <CheckboxRow
+                key={school}
+                label={school}
+                checked={filters.schoolNames.includes(school)}
+                onChange={() => setFilters((current) => ({
+                  ...current,
+                  schoolNames: toggleInList(current.schoolNames, school),
+                }))}
+              />
+            ))}
+          </FilterGroup>
+        </div>
+      </>
+    );
+  }
+
   return (
-    <div className="px-3 pb-3 pt-8 md:px-[16px]">
+    <div className="px-3 pb-24 pt-8 md:px-[16px] lg:pb-3">
       <div className="mx-auto grid max-w-7xl gap-2.5 lg:grid-cols-[minmax(0,1fr)_21rem]">
         <section className="space-y-2.5 lg:pr-4">
           <div className="pb-3">
@@ -653,141 +814,42 @@ export function CourseSearchPage({
           ) : null}
         </section>
 
-        <aside className="mt-2 border-l border-[var(--brand-divider)] pl-2.5 lg:sticky lg:top-[90px] lg:mt-0 lg:max-h-[calc(100dvh-110px)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
-            <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2">
-              <div className="flex items-center gap-2">
-                <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
-                <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
-              </div>
-              <button
-                type="button"
-                onClick={resetCheckboxFilters}
-                className="inline-flex items-center gap-1 rounded-[0.35rem] border border-[var(--outline-variant)] px-2 py-1 text-[10px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <RefreshIcon className="h-3 w-3" />
-                Reset all
-              </button>
-            </div>
-
-            <div className="divide-y divide-[var(--brand-divider)]">
-              <FilterGroup title="Offered In">
-                {semesters.map((semester) => (
-                  <CheckboxRow
-                    key={semester.semesterId}
-                    label={`${semester.semesterName} (${semester.academicYear})`}
-                    checked={filters.semesterIds.includes(semester.semesterId)}
-                    onChange={() => setFilters((current) => ({
-                      ...current,
-                      semesterIds: toggleInList(current.semesterIds, semester.semesterId),
-                    }))}
-                  />
-                ))}
-              </FilterGroup>
-
-              <FilterGroup title="Schedule">
-                <CheckboxRow
-                  label="Daytime"
-                  checked={filters.scheduleTypes.includes("daytime")}
-                  onChange={() => setFilters((current) => ({
-                    ...current,
-                    scheduleTypes: toggleInList(current.scheduleTypes, "daytime"),
-                  }))}
-                />
-                <CheckboxRow
-                  label="Evening"
-                  checked={filters.scheduleTypes.includes("evening")}
-                  onChange={() => setFilters((current) => ({
-                    ...current,
-                    scheduleTypes: toggleInList(current.scheduleTypes, "evening"),
-                  }))}
-                />
-              </FilterGroup>
-
-              <FilterGroup title="Course Level" contentClassName="grid grid-cols-3 gap-y-px">
-                {levelOptions.map((levelOption) => (
-                  <div key={levelOption.value}>
-                    <CheckboxRow
-                      label={levelOption.label}
-                      checked={filters.courseLevels.includes(levelOption.value)}
-                      onChange={() => setFilters((current) => ({
-                        ...current,
-                        courseLevels: toggleInList(current.courseLevels, levelOption.value),
-                      }))}
-                    />
-                  </div>
-                ))}
-              </FilterGroup>
-
-              <FilterGroup title="Course Type">
-                <CheckboxRow
-                  label="Undergraduate Courses"
-                  checked={filters.undergraduateOnly}
-                  onChange={() => setFilters((current) => ({
-                    ...current,
-                    undergraduateOnly: !current.undergraduateOnly,
-                  }))}
-                />
-                <CheckboxRow
-                  label="Postgraduate Courses"
-                  checked={filters.postgraduateOnly}
-                  onChange={() => setFilters((current) => ({
-                    ...current,
-                    postgraduateOnly: !current.postgraduateOnly,
-                  }))}
-                />
-                <CheckboxRow
-                  label="Available as GSP/UNE"
-                  checked={filters.availableAsGspOnly}
-                  onChange={() => setFilters((current) => ({
-                    ...current,
-                    availableAsGspOnly: !current.availableAsGspOnly,
-                  }))}
-                />
-              </FilterGroup>
-
-              <FilterGroup title="Assessments">
-                <div className="max-h-80 space-y-px overflow-y-auto pr-1">
-                  {ASSESSMENT_MODE_OPTIONS.map((assessmentMode) => (
-                    <CheckboxRow
-                      key={assessmentMode}
-                      label={assessmentMode}
-                      checked={filters.assessmentModes.includes(assessmentMode)}
-                      onChange={() => setFilters((current) => ({
-                        ...current,
-                        assessmentModes: toggleInList(current.assessmentModes, assessmentMode),
-                      }))}
-                    />
-                  ))}
-                </div>
-              </FilterGroup>
-
-              <FilterGroup
-                title="School"
-                action={(
-                  <button
-                    type="button"
-                    onClick={() => setFilters((current) => ({ ...current, schoolNames: [] }))}
-                    className="text-[11px] font-semibold leading-4 text-[var(--primary)] transition-opacity hover:opacity-75"
-                  >
-                    Reset
-                  </button>
-                )}
-              >
-                {schools.map((school) => (
-                  <CheckboxRow
-                    key={school}
-                    label={school}
-                    checked={filters.schoolNames.includes(school)}
-                    onChange={() => setFilters((current) => ({
-                      ...current,
-                      schoolNames: toggleInList(current.schoolNames, school),
-                    }))}
-                  />
-                ))}
-              </FilterGroup>
-            </div>
+        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 lg:sticky lg:top-[90px] lg:mt-0 lg:block lg:max-h-[calc(100dvh-110px)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+          {renderFilterSettings()}
         </aside>
       </div>
+
+      {filtersOpen ? (
+        <button
+          type="button"
+          aria-label="Close search filters"
+          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+          onClick={() => setFiltersOpen(false)}
+        />
+      ) : null}
+
+      <div
+        id="course-filter-drawer"
+        aria-hidden={!filtersOpen}
+        className={`fixed inset-x-0 bottom-0 z-40 max-h-[min(78dvh,42rem)] overflow-hidden border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
+          filtersOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
+        }`}
+      >
+        <div className="max-h-[min(78dvh,42rem)] overflow-y-auto px-4 pb-24 pt-4">
+          {filtersOpen ? renderFilterSettings() : null}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        aria-controls="course-filter-drawer"
+        aria-expanded={filtersOpen}
+        aria-label={filtersOpen ? "Close search filters" : "Open search filters"}
+        onClick={() => setFiltersOpen((open) => !open)}
+        className="fixed bottom-5 right-5 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_12px_30px_rgb(0_0_0/0.22)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--primary-ring-soft)] lg:hidden"
+      >
+        {filtersOpen ? <XIcon className="h-7 w-7" /> : <FilterIcon className="h-7 w-7" />}
+      </button>
     </div>
   );
 }

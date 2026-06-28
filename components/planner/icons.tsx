@@ -16,6 +16,7 @@ import {
   TbDownload,
   TbEye,
   TbEyeOff,
+  TbFilter,
   TbHome,
   TbLayoutGrid,
   TbLayoutRows,
@@ -164,6 +165,11 @@ export function ChevronsRightIcon({ className }: IconProps)
 export function RefreshIcon({ className }: IconProps)
 {
   return renderIcon(TbRefresh, className);
+}
+
+export function FilterIcon({ className }: IconProps)
+{
+  return renderIcon(TbFilter, className);
 }
 
 export function BookIcon({ className }: IconProps)
