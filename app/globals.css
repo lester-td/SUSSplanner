@@ -232,7 +232,18 @@
   box-shadow: var(--shadow-elev-3);
 }
 
+.course-search-page {
+  --course-search-navbar-height: 49px;
+  --course-search-navbar-gap: 1rem;
+}
+
+.course-search-results-column {
+  min-height: calc(100dvh - var(--course-search-navbar-height));
+}
+
 .course-search-sticky-header {
+  top: var(--course-search-navbar-height);
+  padding-top: var(--course-search-navbar-gap);
   background: var(--surface-container-lowest);
 }
 

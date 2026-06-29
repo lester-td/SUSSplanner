@@ -410,9 +410,32 @@ export function CourseSearchPage({
   const [loading, setLoading] = useState(cachedAllCourses === null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const pageShellRef = useRef<HTMLDivElement | null>(null);
   const shouldJumpToPageTopRef = useRef(false);
   const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
   const filteredCourses = useMemo(() => filterCourses(allCourses, filters), [allCourses, filters]);
+
+  useLayoutEffect(() => {
+    const pageShell = pageShellRef.current;
+    const navbar = document.querySelector<HTMLElement>(".app-navbar");
+    if (!pageShell || !navbar)
+      return undefined;
+
+    const syncNavbarHeight = () => {
+      pageShell.style.setProperty("--course-search-navbar-height", `${navbar.getBoundingClientRect().height}px`);
+    };
+
+    syncNavbarHeight();
+    window.addEventListener("resize", syncNavbarHeight);
+
+    const observer = new ResizeObserver(syncNavbarHeight);
+    observer.observe(navbar);
+
+    return () => {
+      window.removeEventListener("resize", syncNavbarHeight);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     setFilters(initialFilters);
@@ -711,10 +734,10 @@ export function CourseSearchPage({
   }
 
   return (
-    <div className="px-3 pb-24 md:px-[16px] md:pb-3">
+    <div ref={pageShellRef} className="course-search-page px-3 pb-24 md:px-[16px] md:pb-3">
       <div className="mx-auto grid max-w-7xl gap-2.5 md:grid-cols-[minmax(0,1fr)_21rem]">
-        <section className="space-y-2.5 md:pr-4">
-          <div className="course-search-sticky-header sticky top-0 z-30 -mx-3 px-3 pb-3 pt-[calc(53px+0.75rem)] md:mx-0 md:px-0 md:pt-[calc(57px+0.75rem)]">
+        <section className="course-search-results-column space-y-2.5 md:pr-4">
+          <div className="course-search-sticky-header sticky z-30 -mx-3 border-b border-[var(--brand-divider)] px-3 pb-3 md:mx-0 md:px-0">
             <div className="flex flex-col gap-2.5 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
@@ -740,8 +763,8 @@ export function CourseSearchPage({
             <div className="elev-1 rounded-[0.9rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-6 text-[14px] leading-5 text-[var(--on-surface-variant)]">
               No courses matched the current query and checkbox filters.
             </div>
-          ) : (
-            <div className="divide-y divide-[var(--brand-divider)] border-y border-[var(--brand-divider)]">
+          ) : pageResults.length > 0 ? (
+            <div className="divide-y divide-[var(--brand-divider)] border-b border-[var(--brand-divider)]">
               {pageResults.map((course) => {
                 const semesterIndicators = buildSemesterIndicators(course);
 
@@ -806,7 +829,7 @@ export function CourseSearchPage({
               );
               })}
             </div>
-          )}
+          ) : null}
 
           {filteredCourses.length > 0 ? (
             <CoursePagination
