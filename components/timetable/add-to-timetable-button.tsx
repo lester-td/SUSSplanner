@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { EditCalendarIcon } from "@/components/planner/icons";
+import { CheckIcon, EditCalendarIcon, PlusIcon } from "@/components/planner/icons";
 import {
   TIMETABLE_UPDATED_EVENT,
   announceTimetableUpdated,
@@ -195,23 +195,33 @@ export function AddToTimetableButton({
     }
   }
 
+  const compactClassName = compact ? "h-7 gap-1 px-2 py-0.5 text-[10px] leading-3 md:h-7 md:gap-1 md:px-2 md:text-[11px] md:leading-4" : "";
+
   const buttonClassName = appearance === "outline"
     ? `inline-flex items-center gap-1.5 rounded-[0.4rem] border px-2.5 py-1.5 text-[11px] font-semibold leading-4 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
         added
           ? "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
           : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-      }`
+      } ${compactClassName}`
     : `inline-flex items-center gap-1.5 rounded-[0.55rem] border px-3 py-2 text-[12px] font-semibold leading-4 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
         added
           ? "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
           : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface)] hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-      } ${compact ? "h-6 gap-0.5 px-1.5 py-0 text-[10px] leading-3 md:h-7 md:gap-1 md:px-2 md:text-[11px] md:leading-4" : ""}`;
+      } ${compactClassName}`;
+
+  const Icon = added
+    ? CheckIcon
+    : compact
+      ? PlusIcon
+      : EditCalendarIcon;
 
   const label = busy
     ? "Updating..."
-    : added
-      ? "In Timetable"
-      : "Add to Timetable";
+    : compact
+      ? "Timetable"
+      : added
+        ? "In Timetable"
+        : "Add to Timetable";
 
   return (
     <button
@@ -222,7 +232,7 @@ export function AddToTimetableButton({
       aria-label={added ? `Remove ${courseCode} from timetable` : `Add ${courseCode} to timetable`}
       title={statusMessage || (targetSemesterId === null ? "No timetable semester is available for this course." : undefined)}
     >
-      <EditCalendarIcon className={compact ? "h-3.5 w-3.5 md:h-4 md:w-4" : "h-4 w-4"} />
+      <Icon className={compact ? "h-3.5 w-3.5 md:h-4 md:w-4" : "h-4 w-4"} />
       {label}
     </button>
   );
