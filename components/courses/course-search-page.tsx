@@ -842,6 +842,18 @@ export function CourseSearchPage({
 
                   <div className="mt-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <span className="inline-flex items-center gap-1.5">
+                        <LayersIcon className="h-4 w-4 shrink-0" />
+                        {course.isPostgraduate ? "Postgraduate" : "Undergraduate"}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <ListIcon className="h-4 w-4 shrink-0" />
+                        {formatCourseLevel(course.courseLevel)}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <BookIcon className="h-4 w-4 shrink-0" />
+                        {course.creditUnits?.toFixed(1) ?? "0.0"} CU
+                      </span>
                       {semesterIndicators.length > 0 ? (
                         <span className="inline-flex items-center gap-1.5">
                           <CalendarIcon className="h-4 w-4 shrink-0" />
@@ -851,18 +863,6 @@ export function CourseSearchPage({
                       <span className="inline-flex items-center gap-1.5">
                         <SchoolIcon className="h-4 w-4 shrink-0" />
                         {renderHighlightedText(course.schoolName, filters.q, "School unavailable")}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <BookIcon className="h-4 w-4 shrink-0" />
-                        {course.creditUnits?.toFixed(1) ?? "0.0"} CU
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <ListIcon className="h-4 w-4 shrink-0" />
-                        {formatCourseLevel(course.courseLevel)}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <LayersIcon className="h-4 w-4 shrink-0" />
-                        {course.isPostgraduate ? "Postgraduate" : "Undergraduate"}
                       </span>
                     </div>
                   </div>
