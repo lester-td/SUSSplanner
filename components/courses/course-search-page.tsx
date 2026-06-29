@@ -412,6 +412,7 @@ export function CourseSearchPage({
   const [currentPage, setCurrentPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [isMobileSearchHeaderCompact, setIsMobileSearchHeaderCompact] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const pageShellRef = useRef<HTMLDivElement | null>(null);
   const shouldJumpToPageTopRef = useRef(false);
   const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
@@ -457,9 +458,11 @@ export function CourseSearchPage({
     let animationFrameId = 0;
 
     const syncSearchHeaderState = () => {
-      const nextIsCompact = mobileQuery.matches
+      const nextIsMobileViewport = mobileQuery.matches;
+      const nextIsCompact = nextIsMobileViewport
         && window.scrollY > MOBILE_SEARCH_HEADER_COLLAPSE_SCROLL_THRESHOLD;
 
+      setIsMobileViewport((current) => (current === nextIsMobileViewport ? current : nextIsMobileViewport));
       setIsMobileSearchHeaderCompact((current) => (current === nextIsCompact ? current : nextIsCompact));
     };
 
@@ -641,7 +644,7 @@ export function CourseSearchPage({
   {
     return (
       <>
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2">
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2 md:sticky md:top-0 md:z-20 md:bg-[var(--surface-container-lowest)] md:pt-2">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
             <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
@@ -778,17 +781,17 @@ export function CourseSearchPage({
   }
 
   return (
-    <div ref={pageShellRef} className="course-search-page px-3 pb-24 md:px-[16px] md:pb-3">
+    <div ref={pageShellRef} className="course-search-page px-1.5 pb-24 md:px-[16px] md:pb-3">
       <div className="mx-auto grid max-w-7xl gap-2.5 md:grid-cols-[minmax(0,1fr)_21rem]">
         <section className="course-search-results-column space-y-2.5 md:pr-4">
-          <div className={`course-search-sticky-header sticky z-30 -mx-3 border-b border-[var(--brand-divider)] px-3 transition-[padding-top,padding-bottom,background-color] duration-200 ${isMobileSearchHeaderCompact ? "pb-2" : "pb-3"} md:mx-0 md:px-0 md:pb-3`}>
+          <div className={`course-search-sticky-header sticky z-30 -mx-1.5 border-b border-[var(--brand-divider)] px-4 transition-[padding-top,padding-bottom,background-color] duration-200 ${isMobileSearchHeaderCompact ? "pb-2" : "pb-3"} md:mx-0 md:px-0 md:pb-3`}>
             <div
               aria-hidden={isMobileSearchHeaderCompact}
               className={`overflow-hidden transition-[max-height,opacity] duration-200 ${isMobileSearchHeaderCompact ? "max-h-0 opacity-0" : "max-h-20 opacity-100"} md:max-h-none md:opacity-100`}
             >
-              <div className="flex items-baseline justify-between gap-3 md:items-end">
+              <div className="flex items-baseline justify-between gap-2 md:items-end md:gap-3">
                 <div className="min-w-0">
-                  <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
+                  <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.02em] text-[var(--on-surface)] md:text-[28px] md:leading-9">Course Search</h1>
                 </div>
                 <div className="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
                   {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
@@ -797,13 +800,13 @@ export function CourseSearchPage({
             </div>
 
             <label className={`relative block transition-[margin-top] duration-200 ${isMobileSearchHeaderCompact ? "mt-0" : "mt-4"} md:mt-4`}>
-              <SearchIcon className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] transition-[left,width,height] duration-200 ${isMobileSearchHeaderCompact ? "left-3.5 h-4 w-4" : "left-4 h-5 w-5"} md:left-4 md:h-5 md:w-5`} />
+              <SearchIcon className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] transition-[left,width,height] duration-200 ${isMobileViewport ? "left-3 h-4 w-4" : isMobileSearchHeaderCompact ? "left-3 h-4 w-4" : "left-3.5 h-5 w-5"} md:left-4 md:h-5 md:w-5`} />
               <input
                 type="search"
                 value={filters.q}
                 onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
-                placeholder="Search by course code, course title, or descriptions"
-                className={`elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] pr-4 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-[border-color,box-shadow,padding,font-size] duration-200 ${isMobileSearchHeaderCompact ? "py-2.5 pl-11 text-[14px]" : "py-3 pl-12 text-[15px]"} md:py-3 md:pl-12 md:text-[15px]`}
+                placeholder={isMobileViewport ? "Course code, title, or description" : "Search by course code, course title, or descriptions"}
+                className={`elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] pr-4 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-[border-color,box-shadow,padding,font-size] duration-200 ${isMobileViewport ? "py-2.5 pl-10 text-[16px]" : isMobileSearchHeaderCompact ? "py-2.5 pl-10 text-[14px]" : "py-3 pl-11 text-[15px]"} md:py-3 md:pl-12 md:text-[15px]`}
               />
             </label>
           </div>
@@ -818,9 +821,9 @@ export function CourseSearchPage({
                 const semesterIndicators = buildSemesterIndicators(course);
 
                 return (
-                <article key={course.courseCode} className="px-4 py-3">
-                  <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-                    <h2 className="min-w-0 flex-1 text-[18px] font-bold leading-7 tracking-[-0.02em]">
+                <article key={course.courseCode} className="px-2.5 py-3 md:px-4">
+                  <div className="flex flex-col gap-2">
+                    <h2 className="min-w-0 text-[18px] font-bold leading-7 tracking-[-0.02em]">
                       <Link
                         href={`/courses/${course.courseCode}`}
                         className="inline items-baseline break-normal text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
@@ -829,15 +832,6 @@ export function CourseSearchPage({
                         <span>{renderHighlightedText(course.courseName, filters.q, "Untitled course")}</span>
                       </Link>
                     </h2>
-
-                    <div className="flex shrink-0 flex-wrap items-center gap-1 lg:justify-end">
-                      <AddToTimetableButton
-                        course={course}
-                        compact
-                        fallbackSemesterId={currentSemesterId}
-                      />
-                      <AddToSemesterPlannerButton course={course} compact />
-                    </div>
                   </div>
 
                   <div className="mt-1 flex flex-wrap items-start justify-between gap-x-4 gap-y-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
@@ -854,12 +848,6 @@ export function CourseSearchPage({
                         <BookIcon className="h-4 w-4 shrink-0" />
                         {course.creditUnits?.toFixed(1) ?? "0.0"} CU
                       </span>
-                      {semesterIndicators.length > 0 ? (
-                        <span className="inline-flex items-center gap-1.5">
-                          <CalendarIcon className="h-4 w-4 shrink-0" />
-                          <span>{semesterIndicators.join(" \u00b7 ")}</span>
-                        </span>
-                      ) : null}
                       <span className="inline-flex items-center gap-1.5">
                         <SchoolIcon className="h-4 w-4 shrink-0" />
                         {renderHighlightedText(course.schoolName, filters.q, "School unavailable")}
@@ -874,6 +862,24 @@ export function CourseSearchPage({
                       "No synopsis available.",
                     )}
                   </p>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                    {semesterIndicators.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-1.5 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                        <CalendarIcon className="h-4 w-4 shrink-0" />
+                        <span>{semesterIndicators.join(" \u00b7 ")}</span>
+                      </div>
+                    ) : null}
+
+                    <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1">
+                      <AddToTimetableButton
+                        course={course}
+                        compact
+                        fallbackSemesterId={currentSemesterId}
+                      />
+                      <AddToSemesterPlannerButton course={course} compact />
+                    </div>
+                  </div>
                 </article>
               );
               })}
@@ -894,7 +900,7 @@ export function CourseSearchPage({
           ) : null}
         </section>
 
-        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-110px)] md:self-start md:overflow-y-auto md:overscroll-contain md:pr-1">
+        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-150px)] md:self-start md:overflow-y-auto md:overscroll-contain md:pr-1">
           {renderFilterSettings()}
         </aside>
       </div>
@@ -953,6 +959,7 @@ function CoursePagination({
 })
 {
   const pages = buildPaginationPages(currentPage, totalPages);
+  const pageOptions = Array.from({ length: totalPages }, (_, index) => index + 1);
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
@@ -968,15 +975,86 @@ function CoursePagination({
   return (
     <nav
       aria-label="Courses pagination"
-      className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)]"
+      className="px-2.5 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] md:px-4"
     >
-      <div className="font-medium">
-        Showing {startItem}-{endItem} of {totalItems}
+      <div className="flex items-center gap-3 md:hidden">
+        <div className="min-w-0 font-medium">
+          Showing {startItem}-{endItem} of {totalItems}
+        </div>
+
+        {totalPages > 1 ? (
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            {currentPage > 1 ? (
+              <button
+                type="button"
+                aria-label="First page"
+                onClick={() => goToPage(1)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <ChevronsLeftIcon className="h-4 w-4" />
+              </button>
+            ) : null}
+
+            {currentPage > 1 ? (
+              <button
+                type="button"
+                aria-label="Previous page"
+                onClick={() => goToPage(currentPage - 1)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </button>
+            ) : null}
+
+            <label className="relative inline-flex shrink-0">
+              <span className="sr-only">Select page</span>
+              <select
+                aria-label="Select page"
+                value={currentPage}
+                onChange={(event) => goToPage(Number(event.target.value))}
+                className="course-pagination-active h-8 w-[6rem] appearance-none rounded-[0.35rem] border px-2 pr-6 text-center [text-align-last:center] text-[12px] font-semibold leading-4 outline-none md:w-[4.75rem] md:text-[12px]"
+              >
+                {pageOptions.map((page) => (
+                  <option key={page} value={page}>
+                    Page {page}
+                  </option>
+                ))}
+              </select>
+              <ChevronRightIcon className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rotate-90 text-[var(--on-primary)]" />
+            </label>
+
+            {currentPage < totalPages ? (
+              <button
+                type="button"
+                aria-label="Next page"
+                onClick={() => goToPage(currentPage + 1)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </button>
+            ) : null}
+
+            {currentPage < totalPages ? (
+              <button
+                type="button"
+                aria-label="Last page"
+                onClick={() => goToPage(totalPages)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <ChevronsRightIcon className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {totalPages > 1 ? (
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 justify-self-center md:hidden">
-          <div className="flex min-w-20 items-center justify-end gap-1">
+      <div className="hidden md:flex md:items-center md:gap-3">
+        <div className="font-medium">
+          Showing {startItem}-{endItem} of {totalItems}
+        </div>
+
+        {totalPages > 1 ? (
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             {currentPage > 1 ? (
               <>
                 <button
@@ -998,13 +1076,24 @@ function CoursePagination({
                 </button>
               </>
             ) : null}
-          </div>
 
-          <div className="course-pagination-active inline-flex h-8 min-w-[5.5rem] items-center justify-center rounded-[0.35rem] border px-2 text-center text-[12px] font-semibold leading-4">
-            Page {currentPage}
-          </div>
+            {pages.map((page) => (
+              <button
+                key={page}
+                type="button"
+                aria-label={`Page ${page}`}
+                aria-current={page === currentPage ? "page" : undefined}
+                onClick={() => goToPage(page)}
+                className={`inline-flex h-8 min-w-8 items-center justify-center rounded-[0.35rem] border px-2 text-[12px] font-semibold leading-4 transition-colors ${
+                  page === currentPage
+                    ? "course-pagination-active"
+                    : "border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
 
-          <div className="flex min-w-20 items-center justify-start gap-1">
             {currentPage < totalPages ? (
               <>
                 <button
@@ -1027,75 +1116,8 @@ function CoursePagination({
               </>
             ) : null}
           </div>
-        </div>
-      ) : null}
-
-      {totalPages > 1 ? (
-        <div className="hidden items-center justify-center gap-1 justify-self-center md:flex">
-          {currentPage > 1 ? (
-            <>
-              <button
-                type="button"
-                aria-label="First page"
-                onClick={() => goToPage(1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <ChevronsLeftIcon className="h-4 w-4" />
-              </button>
-
-              <button
-                type="button"
-                aria-label="Previous page"
-                onClick={() => goToPage(currentPage - 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </button>
-            </>
-          ) : null}
-
-          {pages.map((page) => (
-            <button
-              key={page}
-              type="button"
-              aria-label={`Page ${page}`}
-              aria-current={page === currentPage ? "page" : undefined}
-              onClick={() => goToPage(page)}
-              className={`inline-flex h-8 min-w-8 items-center justify-center rounded-[0.35rem] border px-2 text-[12px] font-semibold leading-4 transition-colors ${
-                page === currentPage
-                  ? "course-pagination-active"
-                  : "border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-
-          {currentPage < totalPages ? (
-            <>
-              <button
-                type="button"
-                aria-label="Next page"
-                onClick={() => goToPage(currentPage + 1)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </button>
-
-              <button
-                type="button"
-                aria-label="Last page"
-                onClick={() => goToPage(totalPages)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-[0.35rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <ChevronsRightIcon className="h-4 w-4" />
-              </button>
-            </>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div aria-hidden="true" />
+        ) : null}
+      </div>
     </nav>
   );
 }
