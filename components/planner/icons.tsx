@@ -1,6 +1,7 @@
 import type { IconType } from "react-icons";
 import {
   TbArrowUpRight,
+  TbCheck,
   TbBook,
   TbCalculator,
   TbCalendar,
@@ -55,6 +56,11 @@ export function SearchIcon({ className }: IconProps)
 export function PlusIcon({ className }: IconProps)
 {
   return renderIcon(TbPlus, className);
+}
+
+export function CheckIcon({ className }: IconProps)
+{
+  return renderIcon(TbCheck, className);
 }
 
 export function EyeIcon({ className }: IconProps)
