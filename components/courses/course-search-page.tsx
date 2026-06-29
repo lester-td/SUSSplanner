@@ -36,6 +36,7 @@ type SearchResponse = {
 const SYNOPSIS_WORD_LIMIT = 100;
 const COURSES_PER_PAGE = 10;
 const COURSE_CATALOG_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+const MOBILE_SEARCH_HEADER_COLLAPSE_SCROLL_THRESHOLD = 24;
 
 let cachedAllCourses: CourseSearchResult[] | null = null;
 let cachedAllCoursesFetchedAt = 0;
@@ -410,6 +411,7 @@ export function CourseSearchPage({
   const [loading, setLoading] = useState(cachedAllCourses === null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [isMobileSearchHeaderCompact, setIsMobileSearchHeaderCompact] = useState(false);
   const pageShellRef = useRef<HTMLDivElement | null>(null);
   const shouldJumpToPageTopRef = useRef(false);
   const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
@@ -434,6 +436,48 @@ export function CourseSearchPage({
     return () => {
       window.removeEventListener("resize", syncNavbarHeight);
       observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const pageShell = pageShellRef.current;
+    if (!pageShell)
+    {
+      return;
+    }
+
+    pageShell.style.setProperty(
+      "--course-search-navbar-gap",
+      isMobileSearchHeaderCompact ? "0.5rem" : "1rem",
+    );
+  }, [isMobileSearchHeaderCompact]);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    let animationFrameId = 0;
+
+    const syncSearchHeaderState = () => {
+      const nextIsCompact = mobileQuery.matches
+        && window.scrollY > MOBILE_SEARCH_HEADER_COLLAPSE_SCROLL_THRESHOLD;
+
+      setIsMobileSearchHeaderCompact((current) => (current === nextIsCompact ? current : nextIsCompact));
+    };
+
+    const scheduleSync = () => {
+      window.cancelAnimationFrame(animationFrameId);
+      animationFrameId = window.requestAnimationFrame(syncSearchHeaderState);
+    };
+
+    scheduleSync();
+    window.addEventListener("scroll", scheduleSync, { passive: true });
+    window.addEventListener("resize", scheduleSync);
+    mobileQuery.addEventListener("change", scheduleSync);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("scroll", scheduleSync);
+      window.removeEventListener("resize", scheduleSync);
+      mobileQuery.removeEventListener("change", scheduleSync);
     };
   }, []);
 
@@ -737,24 +781,29 @@ export function CourseSearchPage({
     <div ref={pageShellRef} className="course-search-page px-3 pb-24 md:px-[16px] md:pb-3">
       <div className="mx-auto grid max-w-7xl gap-2.5 md:grid-cols-[minmax(0,1fr)_21rem]">
         <section className="course-search-results-column space-y-2.5 md:pr-4">
-          <div className="course-search-sticky-header sticky z-30 -mx-3 border-b border-[var(--brand-divider)] px-3 pb-3 md:mx-0 md:px-0">
-            <div className="flex flex-col gap-2.5 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
-              </div>
-              <div className="text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
+          <div className={`course-search-sticky-header sticky z-30 -mx-3 border-b border-[var(--brand-divider)] px-3 transition-[padding-top,padding-bottom,background-color] duration-200 ${isMobileSearchHeaderCompact ? "pb-2" : "pb-3"} md:mx-0 md:px-0 md:pb-3`}>
+            <div
+              aria-hidden={isMobileSearchHeaderCompact}
+              className={`overflow-hidden transition-[max-height,opacity] duration-200 ${isMobileSearchHeaderCompact ? "max-h-0 opacity-0" : "max-h-20 opacity-100"} md:max-h-none md:opacity-100`}
+            >
+              <div className="flex items-baseline justify-between gap-3 md:items-end">
+                <div className="min-w-0">
+                  <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Course Search</h1>
+                </div>
+                <div className="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
+                  {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
+                </div>
               </div>
             </div>
 
-            <label className="relative mt-4 block">
-              <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--on-surface-variant)]" />
+            <label className={`relative block transition-[margin-top] duration-200 ${isMobileSearchHeaderCompact ? "mt-0" : "mt-4"} md:mt-4`}>
+              <SearchIcon className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] transition-[left,width,height] duration-200 ${isMobileSearchHeaderCompact ? "left-3.5 h-4 w-4" : "left-4 h-5 w-5"} md:left-4 md:h-5 md:w-5`} />
               <input
                 type="search"
                 value={filters.q}
                 onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
                 placeholder="Search by course code, course title, or descriptions"
-                className="elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-3 pl-12 pr-4 text-[15px] leading-6 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                className={`elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] pr-4 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-[border-color,box-shadow,padding,font-size] duration-200 ${isMobileSearchHeaderCompact ? "py-2.5 pl-11 text-[14px]" : "py-3 pl-12 text-[15px]"} md:py-3 md:pl-12 md:text-[15px]`}
               />
             </label>
           </div>
