@@ -13,7 +13,11 @@ import {
   LayersIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
-import { getCurrentWeekChip, type CurrentSemesterContext } from "@/lib/timetable/date-utils";
+import {
+  formatCurrentWeekChipForMobile,
+  getCurrentWeekChip,
+  type CurrentSemesterContext,
+} from "@/lib/timetable/date-utils";
 import type { PlannerSection } from "@/lib/timetable/types";
 
 type AppSection = "home" | PlannerSection | "calculator" | "settings";
@@ -87,6 +91,7 @@ export function AppShell({
     currentSemesterContext?.week ?? null,
     currentSemesterContext?.isVacation ?? false,
   );
+  const currentWeekLabelMobile = formatCurrentWeekChipForMobile(currentWeekLabel);
 
   useEffect(() => {
     if (!showHeader || !showNav)
@@ -219,7 +224,7 @@ export function AppShell({
                 </Link>
 
                 <div className="app-navbar__mobile-context app-navbar-context min-w-0 flex-1 truncate whitespace-nowrap px-1 py-1 text-right text-[11px] font-semibold leading-4 text-[var(--header-text-muted)] sm:text-[13px] sm:leading-5">
-                  {currentWeekLabel}
+                  {currentWeekLabelMobile}
                 </div>
               </div>
 

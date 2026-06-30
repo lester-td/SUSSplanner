@@ -220,3 +220,17 @@ export function getCurrentWeekChip(
     ? `AY${semester.academicYear}, ${semester.semesterName}, Week ${week.weekNo}`
     : `AY${semester.academicYear}, ${semester.semesterName}, ${week.label}`;
 }
+
+export function formatCurrentWeekChipForMobile(label: string)
+{
+  return label
+    .replace(/\bAY(\d{4})\/(\d{4})\b/g, (_match, academicYearStart: string, academicYearEnd: string) => (
+      `AY${academicYearStart.slice(-2)}/${academicYearEnd.slice(-2)}`
+    ))
+    .replace(/\bSemester Vacation\b/g, "Vacation")
+    .replace(/\bWeek (\d+)\b/g, "W$1")
+    .replace(
+      /\b(January|February|March|April|May|June|July|August|September|October|November|December) (\d{4})\b/g,
+      (_match, month: string, year: string) => `${month} '${year.slice(-2)}`,
+    );
+}
