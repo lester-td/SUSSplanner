@@ -97,6 +97,7 @@ type ClassCountsResponse = {
 };
 
 type ClassPickerCourse = Pick<CourseSearchResult, "courseCode" | "courseName">;
+type SortMode = "code" | "credit" | "exam";
 
 function buildShareQuery(semesterId: number, selectedClasses: SharedClassIdentifier[])
 {
@@ -278,7 +279,7 @@ function buildDayDateByDay(week: SemesterWeekRecord | null)
 
 function sortSelectedCards(
   cards: ReturnType<typeof buildSelectedCourseCards>,
-  sortMode: "code" | "exam" | "credit",
+  sortMode: SortMode,
 )
 {
   return [...cards].sort((left, right) => {
@@ -378,7 +379,7 @@ export function PlannerClient({
   const [semesterId, setSemesterId] = useState<number>(currentSemesterId);
   const [orientation, setOrientation] = useState<TimetableOrientation>(DEFAULT_APP_SETTINGS.timetableOrientation);
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
-  const [sortMode, setSortMode] = useState<"code" | "exam" | "credit">("code");
+  const [sortMode, setSortMode] = useState<SortMode>("code");
   const [searchInput, setSearchInput] = useState("");
   const [studyMode, setStudyMode] = useState<TimetableStudyMode>("full-time");
   const [selectedClasses, setSelectedClasses] = useState<SharedClassIdentifier[]>([]);
@@ -1443,13 +1444,12 @@ export function PlannerClient({
                   <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
                   <div className="mt-1 text-[16px] font-bold leading-6 text-[var(--primary)] sm:text-[18px]">{totalCredits.toFixed(1)} CU</div>
                 </div>
-                <div className="relative w-[8.75rem] shrink-0 sm:w-[9.75rem]">
-                  <ListIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
+                <div className="relative shrink-0 w-[8.75rem] sm:w-[9.75rem]">
                   <select
                     value={sortMode}
                     aria-label="Order selected courses"
-                    onChange={(event) => setSortMode(event.target.value as "code" | "exam" | "credit")}
-                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-7 py-1 text-center text-[13px] font-medium leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:px-8 sm:py-1.5 sm:text-[14px]"
+                    onChange={(event) => setSortMode(event.target.value as SortMode)}
+                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-3 py-1 text-left text-[13px] font-medium leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:py-1.5 sm:text-[14px]"
                   >
                     <option value="code">Order by Code</option>
                     <option value="exam">Order by Exam</option>
