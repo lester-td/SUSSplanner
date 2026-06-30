@@ -667,9 +667,12 @@
 }
 
 :root[data-color-scheme="dark"] .planner-drop-zone--active {
-  border-color: var(--primary);
-  background: var(--primary-fixed);
-  box-shadow: 0 0 0 1px var(--primary-ring-soft);
+  border-color: rgb(var(--suss-light-blue-rgb) / 0.52);
+  background: color-mix(in srgb, var(--surface-container), var(--suss-light-blue) 9%);
+  box-shadow:
+    0 0 0 1px rgb(var(--suss-light-blue-rgb) / 0.24),
+    0 14px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 :root[data-color-scheme="dark"] .planner-course-card,
