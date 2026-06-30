@@ -708,12 +708,19 @@
 }
 
 .planner-continuation-card {
-  background: color-mix(in srgb, var(--surface-container-lowest), var(--suss-grey) 18%);
+  --planner-continuation-border: rgb(var(--suss-blue-rgb) / 0.18);
+  --planner-continuation-bg: color-mix(in srgb, var(--surface-container-lowest), var(--suss-grey) 18%);
+  --planner-continuation-accent: rgb(var(--suss-blue-rgb) / 0.22);
+
+  border-color: var(--planner-continuation-border);
+  background: var(--planner-continuation-bg);
+  box-shadow: inset 3px 0 0 var(--planner-continuation-accent);
 }
 
 :root[data-color-scheme="dark"] .planner-continuation-card {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: #101827;
+  --planner-continuation-border: rgb(var(--suss-light-blue-rgb) / 0.28);
+  --planner-continuation-bg: color-mix(in srgb, var(--surface-container), #000 8%);
+  --planner-continuation-accent: rgb(var(--suss-light-blue-rgb) / 0.35);
 }
 
 :root[data-color-scheme="dark"] .planner-notice {
