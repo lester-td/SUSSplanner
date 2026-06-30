@@ -1233,8 +1233,8 @@ export function PlannerClient({
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3">
-            <div className="space-y-1">
-              <div className="grid grid-cols-3 gap-1">
+            <div className={orientation === "horizontal" ? "space-y-1 md:grid md:grid-flow-col md:auto-cols-fr md:gap-1 md:space-y-0" : "space-y-1"}>
+              <div className={`grid grid-cols-3 gap-1 ${orientation === "horizontal" ? "md:contents" : ""}`}>
                 <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share" onClick={handleShare} stretch />
                 <div className="relative" data-download-popover-root>
                   <ActionButton
@@ -1260,7 +1260,7 @@ export function PlannerClient({
                 </div>
                 <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} stretch />
               </div>
-              <div className="grid grid-cols-2 gap-1">
+              <div className={`grid grid-cols-2 gap-1 ${orientation === "horizontal" ? "md:contents" : ""}`}>
                 <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} stretch />
                 <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} stretch />
               </div>
