@@ -24,6 +24,15 @@ export const SEMESTER_DROP_ID_PREFIX = "semester-";
 
 const GHOST_CATCHUP_RATE = 0.09;
 
+export function getPlannerDropZoneClass(isOver: boolean)
+{
+  return `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
+    isOver
+      ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] ring-2 ring-[var(--primary-ring-soft)] shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
+      : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
+  }`;
+}
+
 export function getCourseDropTarget(overId: string | null): CourseDropTarget | null
 {
   if (!overId)

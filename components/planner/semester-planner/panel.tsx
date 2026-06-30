@@ -6,6 +6,7 @@ import {
   CourseCard,
   DroppableDiv,
   TRASH_DROP_ID,
+  getPlannerDropZoneClass,
 } from "@/components/planner/semester-planner/drag-drop";
 import type { SemesterPlannerCourse } from "@/lib/planner/types";
 
@@ -31,11 +32,7 @@ export function SemesterPlannerPanel({
     }`}>
       <DroppableDiv
         id={COURSE_BANK_DROP_ID}
-        className={(isOver) => `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
-          isOver
-            ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] ring-2 ring-[var(--primary-ring-soft)] shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
-            : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
-        }`}
+        className={getPlannerDropZoneClass}
       >
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">

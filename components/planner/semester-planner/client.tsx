@@ -35,6 +35,7 @@ import {
   DroppableArticle,
   SEMESTER_DROP_ID_PREFIX,
   getCourseDropTarget,
+  getPlannerDropZoneClass,
 } from "@/components/planner/semester-planner/drag-drop";
 import {
   buildSemesterOptions,
@@ -958,11 +959,7 @@ export function SemesterPlannerClient({
                   <DroppableArticle
                     key={semesterIndex}
                     id={`${SEMESTER_DROP_ID_PREFIX}${semesterIndex}`}
-                    className={(isOver) => `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
-                      isOver
-                        ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] ring-2 ring-[var(--primary-ring-soft)] shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
-                        : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
-                    }`}
+                    className={getPlannerDropZoneClass}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
