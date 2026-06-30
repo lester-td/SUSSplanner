@@ -880,6 +880,62 @@
     font-size: 0.66rem;
     line-height: 0.82rem;
   }
+
+  .exam-calendar {
+    --exam-calendar-day-text-size: 12px;
+  }
+
+  .exam-calendar .timetable-cell {
+    font-size: 0.66rem;
+    line-height: 0.82rem;
+  }
+
+  .exam-calendar .timetable-cell .timetable-cell__module {
+    font-size: 0.74rem;
+    line-height: 0.88rem;
+  }
+
+  .exam-calendar .timetable-cell .timetable-cell__time {
+    font-size: 0.66rem;
+    line-height: 0.82rem;
+  }
+
+  .exam-calendar__window {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .exam-calendar__day-label-grid,
+  .exam-calendar__day-grid {
+    gap: 0.0625rem;
+  }
+
+  .exam-calendar__day-label {
+    padding: 0.05rem 0.15rem;
+    border-radius: 0;
+    letter-spacing: 0.005em;
+  }
+
+  .exam-calendar__day {
+    min-height: 5.25rem;
+    padding: 0.05rem;
+    border-radius: 0;
+  }
+
+  .exam-calendar__day-date {
+    line-height: 1.1;
+  }
+
+  .exam-calendar__card.timetable-cell {
+    padding: 0.05rem 0.08rem;
+  }
+
+  .exam-calendar__card .timetable-cell__content {
+    gap: 0;
+  }
 }
 
 .timetable-grid__time-label {
@@ -904,6 +960,29 @@
   line-height: 1.1;
   text-transform: none;
   color: color-mix(in srgb, var(--on-surface-variant), #fff 10%);
+}
+
+.exam-calendar {
+  --exam-calendar-day-text-size: 14px;
+}
+
+.exam-calendar__day-label {
+  font-size: var(--exam-calendar-day-text-size);
+  line-height: 1.1;
+  background-color: var(--surface-container-low);
+}
+
+.exam-calendar__day-date {
+  font-size: var(--exam-calendar-day-text-size);
+  line-height: 1.1;
+}
+
+.exam-calendar__day-grid > :nth-child(odd) {
+  background-color: var(--timetable-stripe-a);
+}
+
+.exam-calendar__day-grid > :nth-child(even) {
+  background-color: var(--timetable-stripe-b);
 }
 
 /* Timetable blocks and block text lines. */
