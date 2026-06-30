@@ -465,6 +465,21 @@ export function SettingsClient()
             />
           </SettingRow>
 
+          <SettingRow
+            title="Default class type"
+            description="Choose whether new timetable entries prefer full-time TG groups or part-time CRN groups."
+          >
+            <SegmentedControl
+              label="Default class type"
+              value={settings.timetableStudyMode}
+              options={[
+                { value: "full-time", label: "Full-time" },
+                { value: "part-time", label: "Part-time" },
+              ]}
+              onChange={(timetableStudyMode) => updateSettings({ timetableStudyMode })}
+            />
+          </SettingRow>
+
         </Section>
 
         <Section id="theme" title="Theme">

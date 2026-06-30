@@ -3,12 +3,9 @@ import type { PlannerSemesterState, PlannerStorageState, SharedTimetableState } 
 
 export const TIMETABLE_STORAGE_KEY = "sussplanner.timetable.v1";
 export const TIMETABLE_UPDATED_EVENT = "sussplanner:timetable-updated";
-export const TIMETABLE_STUDY_MODE_STORAGE_KEY = "sussplanner.timetable.study-mode.v1";
-export const TIMETABLE_STUDY_MODE_UPDATED_EVENT = "sussplanner:timetable-study-mode-updated";
 
 const DEFAULT_ORIENTATION = "horizontal";
 const DEFAULT_VIEW_MODE = "class";
-export type TimetableStudyMode = "full-time" | "part-time";
 
 function canUseLocalStorage()
 {
@@ -155,29 +152,6 @@ export function announceTimetableUpdated()
   }
 
   window.dispatchEvent(new CustomEvent(TIMETABLE_UPDATED_EVENT));
-}
-
-export function readTimetableStudyMode(): TimetableStudyMode
-{
-  if (!canUseLocalStorage())
-  {
-    return "full-time";
-  }
-
-  return window.localStorage.getItem(TIMETABLE_STUDY_MODE_STORAGE_KEY) === "part-time"
-    ? "part-time"
-    : "full-time";
-}
-
-export function saveTimetableStudyMode(studyMode: TimetableStudyMode)
-{
-  if (!canUseLocalStorage())
-  {
-    return;
-  }
-
-  window.localStorage.setItem(TIMETABLE_STUDY_MODE_STORAGE_KEY, studyMode);
-  window.dispatchEvent(new CustomEvent(TIMETABLE_STUDY_MODE_UPDATED_EVENT));
 }
 
 function createEmptyTimetableState(semesterId: number): PlannerStorageState

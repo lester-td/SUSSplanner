@@ -44,15 +44,10 @@ import {
 } from "@/lib/timetable/date-utils";
 import {
   TIMETABLE_STORAGE_KEY,
-  TIMETABLE_STUDY_MODE_STORAGE_KEY,
-  TIMETABLE_STUDY_MODE_UPDATED_EVENT,
   TIMETABLE_UPDATED_EVENT,
   loadSavedTimetable,
   getSavedSemesterState,
-  readTimetableStudyMode,
   saveTimetableToLocalStorage,
-  saveTimetableStudyMode,
-  type TimetableStudyMode,
 } from "@/lib/timetable/local-storage";
 import {
   buildSharedClassIdentifier,
@@ -381,7 +376,6 @@ export function PlannerClient({
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [sortMode, setSortMode] = useState<SortMode>("code");
   const [searchInput, setSearchInput] = useState("");
-  const [studyMode, setStudyMode] = useState<TimetableStudyMode>("full-time");
   const [selectedClasses, setSelectedClasses] = useState<SharedClassIdentifier[]>([]);
   const [hiddenClasses, setHiddenClasses] = useState<string[]>([]);
   const [courseColorsByCourseCode, setCourseColorsByCourseCode] = useState<Record<string, string>>({});
@@ -441,32 +435,23 @@ export function PlannerClient({
     setSelectedWeekId(next.selectedWeekId);
     setOrientation(saved?.orientation ?? settings.timetableOrientation);
     setViewMode(saved?.viewMode ?? "class");
-    setStudyMode(readTimetableStudyMode());
     setReady(true);
   }, [currentSemesterId, currentWeekId, semesters]);
 
   useEffect(() => {
     const refreshSettings = () => setAppSettings(readAppSettings());
-    const refreshStudyMode = () => setStudyMode(readTimetableStudyMode());
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === APP_SETTINGS_STORAGE_KEY)
       {
         refreshSettings();
       }
-
-      if (event.key === TIMETABLE_STUDY_MODE_STORAGE_KEY)
-      {
-        refreshStudyMode();
-      }
     };
 
     window.addEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
-    window.addEventListener(TIMETABLE_STUDY_MODE_UPDATED_EVENT, refreshStudyMode);
     window.addEventListener("storage", handleStorageChange);
 
     return () => {
       window.removeEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
-      window.removeEventListener(TIMETABLE_STUDY_MODE_UPDATED_EVENT, refreshStudyMode);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
@@ -831,15 +816,6 @@ export function PlannerClient({
       : [...current, shareKey]);
   }
 
-  function toggleStudyMode()
-  {
-    setStudyMode((current) => {
-      const next = current === "full-time" ? "part-time" : "full-time";
-      saveTimetableStudyMode(next);
-      return next;
-    });
-  }
-
   function removeClass(shareKey: string)
   {
     setSelectedClasses((current) => current.filter((value) => `${value.courseCode}:${value.scheduleType}:${value.groupCodeType}:${value.groupCode}` !== shareKey));
@@ -955,7 +931,7 @@ export function PlannerClient({
         throw new Error("Unable to load class groups.");
       }
       const payload = await response.json() as ClassesResponse;
-      const preferredGroupType = studyMode === "full-time" ? "TG" : "CRN";
+      const preferredGroupType = appSettings.timetableStudyMode === "full-time" ? "TG" : "CRN";
       const firstClass = pickPreferredClass(payload.classes, preferredGroupType, visibleEvents);
 
       if (!firstClass)
@@ -1207,25 +1183,7 @@ export function PlannerClient({
               <h3 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)] sm:text-[18px] sm:leading-6">My Courses</h3>
               <p className="text-[10px] leading-[13px] text-[var(--on-surface-variant)] sm:text-[11px] sm:leading-[14px]">{selectedSemester ? getCurrentWeekChip(selectedSemester, semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null) : ""}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <span className="text-[9px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[10px]">FT</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={studyMode === "part-time"}
-                  aria-label="Toggle study mode"
-                  className="relative h-5 w-9 rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-low)] transition-colors"
-                  onClick={toggleStudyMode}
-                >
-                  <span
-                    className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-[var(--primary)] transition-all ${
-                      studyMode === "part-time" ? "left-[18px]" : "left-0.5"
-                    }`}
-                  />
-                </button>
-                <span className="text-[9px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[10px]">PT</span>
-              </div>
+            <div className="flex items-center">
               <span className="timetable-chip rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-1.5 py-0.5 text-[10px] font-medium leading-[13px] text-[var(--primary)] sm:px-2 sm:text-[11px] sm:leading-[14px]">
                 {selectedCards.length} Selected
               </span>
