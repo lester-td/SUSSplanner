@@ -234,6 +234,7 @@
 
 .course-search-page {
   --course-search-navbar-height: 49px;
+  --course-search-sticky-header-padding-top: 0.002rem;
 }
 
 .course-search-results-column {
@@ -242,7 +243,14 @@
 
 .course-search-sticky-header {
   top: var(--course-search-navbar-height);
+  padding-top: var(--course-search-sticky-header-padding-top);
   background: var(--surface-container-lowest);
+}
+
+@media (max-width: 767px) {
+  .course-search-page {
+    --course-search-sticky-header-padding-top: 0.375rem;
+  }
 }
 
 .course-pagination-active {
