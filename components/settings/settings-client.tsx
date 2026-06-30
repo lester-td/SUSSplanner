@@ -409,140 +409,141 @@ export function SettingsClient()
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-[32px] font-black leading-10 text-[var(--on-surface)]">
-            Settings
-          </h1>
-          <p className="mt-2 max-w-3xl text-[15px] leading-7 text-[var(--on-surface-variant)]">
-            Customise how SUSS Planner looks and behaves on this browser.
-          </p>
+    <div className="settings-page px-3 pb-3 pt-8 md:px-[16px]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-[32px] font-black leading-10 text-[var(--on-surface)]">
+              Settings
+            </h1>
+            <p className="mt-2 max-w-3xl text-[15px] leading-7 text-[var(--on-surface-variant)]">
+              Customise how SUSS Planner looks and behaves on this browser.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-2 text-[13px] font-bold text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)]"
+            onClick={() => setResetConfirmOpen(true)}
+          >
+            <RefreshIcon className="h-4 w-4" />
+            Reset
+          </button>
         </div>
 
-        <button
-          type="button"
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-2 text-[13px] font-bold text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)]"
-          onClick={() => setResetConfirmOpen(true)}
+        <div className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-6 shadow-sm sm:px-6">
+          <Section id="appearance" title="Appearance">
+            <SettingRow
+              title="Night mode"
+              description="Choose whether SUSS Planner follows your system appearance, stays light, or stays dark."
+            >
+              <SegmentedControl
+                label="Night mode"
+                value={settings.colorScheme}
+                options={[
+                  { value: "system", label: "Auto" },
+                  { value: "dark", label: "On" },
+                  { value: "light", label: "Off" },
+                ]}
+                onChange={(colorScheme) => updateSettings({ colorScheme })}
+              />
+            </SettingRow>
+          </Section>
+
+          <Section id="timetable" title="Timetable">
+            <SettingRow
+              title="Timetable orientation"
+              description="Choose the default timetable layout for desktop and print exports."
+            >
+              <SegmentedControl
+                label="Timetable orientation"
+                value={settings.timetableOrientation}
+                options={[
+                  { value: "horizontal", label: "Horizontal" },
+                  { value: "vertical", label: "Vertical" },
+                ]}
+                onChange={(timetableOrientation) => updateSettings({ timetableOrientation })}
+              />
+            </SettingRow>
+
+            <SettingRow
+              title="Default class type"
+              description="Choose whether new timetable entries prefer full-time TG groups or part-time CRN groups."
+            >
+              <SegmentedControl
+                label="Default class type"
+                value={settings.timetableStudyMode}
+                options={[
+                  { value: "full-time", label: "Full-time" },
+                  { value: "part-time", label: "Part-time" },
+                ]}
+                onChange={(timetableStudyMode) => updateSettings({ timetableStudyMode })}
+              />
+            </SettingRow>
+          </Section>
+
+          <Section id="theme" title="Theme">
+            <p className="max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
+              Pick the timetable color palette. The preview reflects the selected palette and
+              timetable orientation.
+            </p>
+            <TimetablePreview settings={settings} theme={selectedTheme} />
+            <ThemePicker
+              selectedThemeId={settings.themeId}
+              onSelectTheme={(themeId) => updateSettings({ themeId })}
+            />
+          </Section>
+
+          <Section id="reminders" title="Course Registration Reminders">
+            <SettingRow
+              title="Reminder notifications"
+              description="You can get a reminder about when eCR / add-drop periods start with a small notification."
+            >
+              <SegmentedControl
+                label="Reminder notifications"
+                value={settings.registrationReminders ? "on" : "off"}
+                options={[
+                  { value: "on", label: "On" },
+                  { value: "off", label: "Off" },
+                ]}
+                onChange={(value) => updateSettings({ registrationReminders: value === "on" })}
+              />
+            </SettingRow>
+          </Section>
+        </div>
+
+        <span className="sr-only">Current color scheme preference: {settings.colorScheme}</span>
+
+        <Modal
+          open={resetConfirmOpen}
+          title="Reset Settings?"
+          description="This will restore every setting on this page to its default value."
+          onClose={() => setResetConfirmOpen(false)}
+          maxWidthClassName="max-w-md"
+          footer={(
+            <>
+              <button
+                type="button"
+                onClick={() => setResetConfirmOpen(false)}
+                className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={resetSettings}
+                className="app-danger-action rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
+              >
+                Reset Settings
+              </button>
+            </>
+          )}
         >
-          <RefreshIcon className="h-4 w-4" />
-          Reset
-        </button>
-      </div>
-
-      <div className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-6 shadow-sm sm:px-6">
-        <Section id="appearance" title="Appearance">
-          <SettingRow
-            title="Night mode"
-            description="Choose whether SUSS Planner follows your system appearance, stays light, or stays dark."
-          >
-            <SegmentedControl
-              label="Night mode"
-              value={settings.colorScheme}
-              options={[
-                { value: "system", label: "Auto" },
-                { value: "dark", label: "On" },
-                { value: "light", label: "Off" },
-              ]}
-              onChange={(colorScheme) => updateSettings({ colorScheme })}
-            />
-          </SettingRow>
-        </Section>
-
-        <Section id="timetable" title="Timetable">
-          <SettingRow
-            title="Timetable orientation"
-            description="Choose the default timetable layout for desktop and print exports."
-          >
-            <SegmentedControl
-              label="Timetable orientation"
-              value={settings.timetableOrientation}
-              options={[
-                { value: "horizontal", label: "Horizontal" },
-                { value: "vertical", label: "Vertical" },
-              ]}
-              onChange={(timetableOrientation) => updateSettings({ timetableOrientation })}
-            />
-          </SettingRow>
-
-          <SettingRow
-            title="Default class type"
-            description="Choose whether new timetable entries prefer full-time TG groups or part-time CRN groups."
-          >
-            <SegmentedControl
-              label="Default class type"
-              value={settings.timetableStudyMode}
-              options={[
-                { value: "full-time", label: "Full-time" },
-                { value: "part-time", label: "Part-time" },
-              ]}
-              onChange={(timetableStudyMode) => updateSettings({ timetableStudyMode })}
-            />
-          </SettingRow>
-
-        </Section>
-
-        <Section id="theme" title="Theme">
-          <p className="max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
-            Pick the timetable color palette. The preview reflects the selected palette and
-            timetable orientation.
+          <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
+            You can&apos;t undo this reset. Your saved preferences on this device will be replaced with the defaults.
           </p>
-          <TimetablePreview settings={settings} theme={selectedTheme} />
-          <ThemePicker
-            selectedThemeId={settings.themeId}
-            onSelectTheme={(themeId) => updateSettings({ themeId })}
-          />
-        </Section>
-
-        <Section id="reminders" title="Course Registration Reminders">
-          <SettingRow
-            title="Reminder notifications"
-            description="You can get a reminder about when eCR / add-drop periods start with a small notification."
-          >
-            <SegmentedControl
-              label="Reminder notifications"
-              value={settings.registrationReminders ? "on" : "off"}
-              options={[
-                { value: "on", label: "On" },
-                { value: "off", label: "Off" },
-              ]}
-              onChange={(value) => updateSettings({ registrationReminders: value === "on" })}
-            />
-          </SettingRow>
-        </Section>
+        </Modal>
       </div>
-
-      <span className="sr-only">Current color scheme preference: {settings.colorScheme}</span>
-
-      <Modal
-        open={resetConfirmOpen}
-        title="Reset Settings?"
-        description="This will restore every setting on this page to its default value."
-        onClose={() => setResetConfirmOpen(false)}
-        maxWidthClassName="max-w-md"
-        footer={(
-          <>
-            <button
-              type="button"
-              onClick={() => setResetConfirmOpen(false)}
-              className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={resetSettings}
-              className="app-danger-action rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
-            >
-              Reset Settings
-            </button>
-          </>
-        )}
-      >
-        <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
-          You can&apos;t undo this reset. Your saved preferences on this device will be replaced with the defaults.
-        </p>
-      </Modal>
-    </main>
+    </div>
   );
 }
