@@ -611,8 +611,8 @@ export function SemesterPlannerClient({
   }
 
   return (
-    <div className="planner-page px-3 pb-6 pt-8 md:px-[16px]">
-      <div className="mx-auto max-w-7xl space-y-4">
+    <div className="planner-page">
+      <div className="space-y-4">
         <section className="grid gap-3 lg:grid-cols-2">
           <div className="planner-control-card rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
             <div className="flex items-start justify-between gap-3">

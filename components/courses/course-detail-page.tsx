@@ -172,8 +172,8 @@ export function CourseDetailPage({
 
   return (
     <>
-      <div className="px-3 pb-3 pt-8 md:px-[16px]">
-        <div className="mx-auto max-w-7xl space-y-4">
+      <div className="course-detail-page">
+        <div className="space-y-4">
           <div className="border-b border-[var(--outline-variant)] pb-4">
             <div className="flex flex-col gap-4">
               <div>

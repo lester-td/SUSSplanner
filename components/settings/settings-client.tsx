@@ -409,11 +409,11 @@ export function SettingsClient()
   }
 
   return (
-    <div className="settings-page px-3 pb-3 pt-8 md:px-[16px]">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+    <div className="settings-page">
+      <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[32px] font-black leading-10 text-[var(--on-surface)]">
+            <h1 className="text-[32px] font-bold leading-10 text-[var(--on-surface)]">
               Settings
             </h1>
             <p className="mt-2 max-w-3xl text-[15px] leading-7 text-[var(--on-surface-variant)]">
@@ -513,37 +513,37 @@ export function SettingsClient()
         </div>
 
         <span className="sr-only">Current color scheme preference: {settings.colorScheme}</span>
-
-        <Modal
-          open={resetConfirmOpen}
-          title="Reset Settings?"
-          description="This will restore every setting on this page to its default value."
-          onClose={() => setResetConfirmOpen(false)}
-          maxWidthClassName="max-w-md"
-          footer={(
-            <>
-              <button
-                type="button"
-                onClick={() => setResetConfirmOpen(false)}
-                className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={resetSettings}
-                className="app-danger-action rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
-              >
-                Reset Settings
-              </button>
-            </>
-          )}
-        >
-          <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
-            You can&apos;t undo this reset. Your saved preferences on this device will be replaced with the defaults.
-          </p>
-        </Modal>
       </div>
+
+      <Modal
+        open={resetConfirmOpen}
+        title="Reset Settings?"
+        description="This will restore every setting on this page to its default value."
+        onClose={() => setResetConfirmOpen(false)}
+        maxWidthClassName="max-w-md"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(false)}
+              className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={resetSettings}
+              className="app-danger-action rounded-[0.7rem] bg-red-500 px-3 py-2 text-[12px] font-semibold leading-4 text-white transition-colors hover:bg-red-400"
+            >
+              Reset Settings
+            </button>
+          </>
+        )}
+      >
+        <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
+          You can&apos;t undo this reset. Your saved preferences on this device will be replaced with the defaults.
+        </p>
+      </Modal>
     </div>
   );
 }

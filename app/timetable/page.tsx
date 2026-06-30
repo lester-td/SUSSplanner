@@ -15,7 +15,11 @@ export default async function TimetablePage()
   const { semester, week } = currentSemesterContext;
 
   return (
-    <AppShell activeSection="planner" currentSemesterContext={currentSemesterContext}>
+    <AppShell
+      activeSection="planner"
+      currentSemesterContext={currentSemesterContext}
+      contentLayout="full-bleed"
+    >
       <PlannerClient
         semesters={semesters}
         currentSemesterId={semester?.semesterId ?? semesters[0]?.semesterId ?? 0}
