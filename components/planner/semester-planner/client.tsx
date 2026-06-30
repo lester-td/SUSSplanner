@@ -1005,7 +1005,7 @@ export function SemesterPlannerClient({
                     ) : null}
 
                     <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                      {startingCourses.length === 0 ? (
+                      {startingCourses.length === 0 && continuedCourses.length === 0 ? (
                         <p className="planner-empty-state rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-5 text-[12px] leading-5 text-[var(--on-surface-variant)] sm:col-span-2 xl:col-span-3">
                           {draggedCourseId ? "Drop module here." : "Move modules here from the planner bank."}
                         </p>
