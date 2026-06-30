@@ -1,6 +1,7 @@
 import type { IconType } from "react-icons";
 import {
   TbArrowUpRight,
+  TbCheck,
   TbBook,
   TbCalculator,
   TbCalendar,
@@ -8,12 +9,15 @@ import {
   TbCalendarWeek,
   TbChevronLeft,
   TbChevronRight,
+  TbChevronsLeft,
+  TbChevronsRight,
   TbClock,
   TbCode,
   TbColumns3,
   TbDownload,
   TbEye,
   TbEyeOff,
+  TbFilter,
   TbHome,
   TbLayoutGrid,
   TbLayoutRows,
@@ -52,6 +56,11 @@ export function SearchIcon({ className }: IconProps)
 export function PlusIcon({ className }: IconProps)
 {
   return renderIcon(TbPlus, className);
+}
+
+export function CheckIcon({ className }: IconProps)
+{
+  return renderIcon(TbCheck, className);
 }
 
 export function EyeIcon({ className }: IconProps)
@@ -149,9 +158,24 @@ export function ChevronRightIcon({ className }: IconProps)
   return renderIcon(TbChevronRight, className);
 }
 
+export function ChevronsLeftIcon({ className }: IconProps)
+{
+  return renderIcon(TbChevronsLeft, className);
+}
+
+export function ChevronsRightIcon({ className }: IconProps)
+{
+  return renderIcon(TbChevronsRight, className);
+}
+
 export function RefreshIcon({ className }: IconProps)
 {
   return renderIcon(TbRefresh, className);
+}
+
+export function FilterIcon({ className }: IconProps)
+{
+  return renderIcon(TbFilter, className);
 }
 
 export function BookIcon({ className }: IconProps)

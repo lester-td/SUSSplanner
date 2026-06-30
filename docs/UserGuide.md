@@ -98,10 +98,12 @@ Use **Courses** when you want to explore courses before adding them to your
 semester planner or timetable.
 
 1. Open **Courses**.
-2. Enter a course code, title, or description.
-3. Use **Search Settings** to narrow the results.
-4. Select a course title to view its details.
-5. Select **Add to Planner** if you want to include it in your semester planner.
+2. Browse the course list or enter a course code, title, or description.
+3. Use the pagination controls to move through the results. Courses are shown
+   10 per page.
+4. Use **Search Settings** to narrow the results.
+5. Select a course title to view its details.
+6. Select **Add to Planner** if you want to include it in your semester planner.
 
 The search filters include:
 
@@ -210,9 +212,10 @@ There are four places where you can search:
 #### Search the Full Course Catalog
 
 1. Open **Courses**.
-2. Search by course code, title, or description.
+2. Browse the full catalog or search by course code, title, or description.
 3. Use **Search Settings** to narrow the results.
-4. Select a course title to view more information.
+4. Use the pagination controls to move through results, 10 courses at a time.
+5. Select a course title to view more information.
 
 #### Search in the Planner
 

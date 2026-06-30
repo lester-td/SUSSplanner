@@ -2,10 +2,22 @@ import { plannerSemesterStateSchema, plannerStorageStateSchema } from "@/lib/val
 import type { PlannerSemesterState, PlannerStorageState, SharedTimetableState } from "./types";
 
 export const TIMETABLE_STORAGE_KEY = "sussplanner.timetable.v1";
+export const TIMETABLE_UPDATED_EVENT = "sussplanner:timetable-updated";
+export const TIMETABLE_STUDY_MODE_STORAGE_KEY = "sussplanner.timetable.study-mode.v1";
+export const TIMETABLE_STUDY_MODE_UPDATED_EVENT = "sussplanner:timetable-study-mode-updated";
+
+const DEFAULT_ORIENTATION = "horizontal";
+const DEFAULT_VIEW_MODE = "class";
+export type TimetableStudyMode = "full-time" | "part-time";
 
 function canUseLocalStorage()
 {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
+function normalizeCourseCode(courseCode: string)
+{
+  return courseCode.trim().toUpperCase();
 }
 
 function normalizeSemesterState(state: PlannerSemesterState)
@@ -133,6 +145,141 @@ export function saveTimetableToLocalStorage(state: PlannerStorageState)
 
   const parsed = mergeStorageState(loadSavedTimetable(), state);
   window.localStorage.setItem(TIMETABLE_STORAGE_KEY, JSON.stringify(parsed));
+}
+
+export function announceTimetableUpdated()
+{
+  if (typeof window === "undefined")
+  {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent(TIMETABLE_UPDATED_EVENT));
+}
+
+export function readTimetableStudyMode(): TimetableStudyMode
+{
+  if (!canUseLocalStorage())
+  {
+    return "full-time";
+  }
+
+  return window.localStorage.getItem(TIMETABLE_STUDY_MODE_STORAGE_KEY) === "part-time"
+    ? "part-time"
+    : "full-time";
+}
+
+export function saveTimetableStudyMode(studyMode: TimetableStudyMode)
+{
+  if (!canUseLocalStorage())
+  {
+    return;
+  }
+
+  window.localStorage.setItem(TIMETABLE_STUDY_MODE_STORAGE_KEY, studyMode);
+  window.dispatchEvent(new CustomEvent(TIMETABLE_STUDY_MODE_UPDATED_EVENT));
+}
+
+function createEmptyTimetableState(semesterId: number): PlannerStorageState
+{
+  return {
+    semesterId,
+    selectedClasses: [],
+    hiddenClasses: [],
+    courseColorsByCourseCode: {},
+    selectedWeekId: "all",
+    orientation: DEFAULT_ORIENTATION,
+    viewMode: DEFAULT_VIEW_MODE,
+  };
+}
+
+function getTimetableStateForSemester(
+  state: PlannerStorageState | null,
+  semesterId: number,
+): PlannerStorageState
+{
+  const semesterState = getSavedSemesterState(state, semesterId);
+
+  return {
+    semesterId,
+    selectedClasses: semesterState?.selectedClasses ?? [],
+    hiddenClasses: semesterState?.hiddenClasses ?? [],
+    courseColorsByCourseCode: semesterState?.courseColorsByCourseCode ?? {},
+    selectedWeekId: semesterState?.selectedWeekId ?? "all",
+    orientation: state?.orientation ?? DEFAULT_ORIENTATION,
+    viewMode: state?.viewMode ?? DEFAULT_VIEW_MODE,
+    semesterStates: state?.semesterStates ?? {},
+  };
+}
+
+export function isCourseInTimetable(
+  state: PlannerStorageState | null,
+  semesterId: number,
+  courseCode: string,
+)
+{
+  const normalizedCode = normalizeCourseCode(courseCode);
+  const semesterState = getSavedSemesterState(state, semesterId);
+
+  return semesterState?.selectedClasses.some((selection) => selection.courseCode === normalizedCode) ?? false;
+}
+
+export function upsertClassInSavedTimetable(
+  state: PlannerStorageState | null,
+  semesterId: number,
+  selection: SharedTimetableState["selectedClasses"][number],
+)
+{
+  const base = state ? getTimetableStateForSemester(state, semesterId) : createEmptyTimetableState(semesterId);
+  const normalizedSelection = {
+    ...selection,
+    courseCode: normalizeCourseCode(selection.courseCode),
+  };
+  const nextSemesterState: PlannerSemesterState = {
+    semesterId,
+    selectedClasses: [
+      ...base.selectedClasses.filter((item) => item.courseCode !== normalizedSelection.courseCode),
+      normalizedSelection,
+    ],
+    hiddenClasses: base.hiddenClasses.filter((shareKey) => !shareKey.startsWith(`${normalizedSelection.courseCode}:`)),
+    courseColorsByCourseCode: base.courseColorsByCourseCode,
+    selectedWeekId: base.selectedWeekId,
+  };
+
+  return normalizeStorageState({
+    ...base,
+    ...nextSemesterState,
+    semesterStates: {
+      ...(state?.semesterStates ?? {}),
+      [String(semesterId)]: nextSemesterState,
+    },
+  });
+}
+
+export function removeCourseCodeFromSavedTimetable(
+  state: PlannerStorageState | null,
+  semesterId: number,
+  courseCode: string,
+)
+{
+  const base = state ? getTimetableStateForSemester(state, semesterId) : createEmptyTimetableState(semesterId);
+  const normalizedCode = normalizeCourseCode(courseCode);
+  const nextSemesterState: PlannerSemesterState = {
+    semesterId,
+    selectedClasses: base.selectedClasses.filter((selection) => selection.courseCode !== normalizedCode),
+    hiddenClasses: base.hiddenClasses.filter((shareKey) => !shareKey.startsWith(`${normalizedCode}:`)),
+    courseColorsByCourseCode: base.courseColorsByCourseCode,
+    selectedWeekId: base.selectedWeekId,
+  };
+
+  return normalizeStorageState({
+    ...base,
+    ...nextSemesterState,
+    semesterStates: {
+      ...(state?.semesterStates ?? {}),
+      [String(semesterId)]: nextSemesterState,
+    },
+  });
 }
 
 export function clearSavedTimetable()

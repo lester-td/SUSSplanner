@@ -212,3 +212,17 @@ export function upsertCatalogCourseInSemesterPlanner(
     courses: [...nextState.courses, normalized],
   });
 }
+
+export function removeCourseCodeFromSemesterPlanner(
+  state: SemesterPlannerState | null,
+  courseCode: string,
+)
+{
+  const nextState = state ?? defaultSemesterPlannerState();
+  const normalizedCode = normalizeCourseCode(courseCode);
+
+  return normalizeSemesterPlannerState({
+    ...nextState,
+    courses: nextState.courses.filter((course) => course.courseCode !== normalizedCode),
+  });
+}

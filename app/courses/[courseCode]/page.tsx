@@ -52,6 +52,7 @@ export default async function CourseDetailRoute({
       <CourseDetailPage
         course={course}
         offeredSemesters={offeredSemesters}
+        currentSemesterId={currentSemesterContext.semester?.semesterId ?? null}
         selectedSemesterId={selectedSemesterId}
         classes={classes}
         assessments={assessments}

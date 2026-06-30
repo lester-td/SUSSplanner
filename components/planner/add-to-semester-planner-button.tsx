@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { PlusIcon } from "@/components/planner/icons";
+import { CheckIcon, PlusIcon } from "@/components/planner/icons";
 import {
   SEMESTER_PLANNER_UPDATED_EVENT,
   announceSemesterPlannerUpdated,
   loadSemesterPlannerState,
+  removeCourseCodeFromSemesterPlanner,
   saveSemesterPlannerState,
   upsertCatalogCourseInSemesterPlanner,
 } from "@/lib/planner/storage";
@@ -49,33 +50,45 @@ export function AddToSemesterPlannerButton({
     };
   }, [courseCode]);
 
+  const compactClassName = compact ? "h-7 gap-1 px-2 py-0.5 text-[10px] leading-3 md:h-7 md:gap-1 md:px-2 md:text-[11px] md:leading-4" : "";
+
   const buttonClassName = appearance === "outline"
     ? `inline-flex items-center gap-1.5 rounded-[0.4rem] border px-2.5 py-1.5 text-[11px] font-semibold leading-4 transition-colors ${
         added
           ? "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
           : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-      }`
+      } ${compactClassName}`
     : `inline-flex items-center gap-1.5 rounded-[0.55rem] border px-3 py-2 text-[12px] font-semibold leading-4 transition-colors ${
         added
           ? "border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] text-[var(--primary)]"
           : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface)] hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-      } ${compact ? "gap-1 px-2 py-0 text-[11px]" : ""}`;
+      } ${compactClassName}`;
+
+  const Icon = added ? CheckIcon : PlusIcon;
 
   return (
     <button
       type="button"
       onClick={() => {
-        const next = upsertCatalogCourseInSemesterPlanner(loadSemesterPlannerState(), course);
+        const current = loadSemesterPlannerState();
+        const next = added
+          ? removeCourseCodeFromSemesterPlanner(current, courseCode)
+          : upsertCatalogCourseInSemesterPlanner(current, course);
+
         saveSemesterPlannerState(next);
         announceSemesterPlannerUpdated();
-        setAdded(true);
-        onAdded?.();
+        setAdded(!added);
+
+        if (!added)
+        {
+          onAdded?.();
+        }
       }}
       className={buttonClassName}
-      aria-label={`Add ${courseCode} to planner`}
+      aria-label={added ? `Remove ${courseCode} from planner` : `Add ${courseCode} to planner`}
     >
-      <PlusIcon className="h-4 w-4" />
-      {added ? "In Planner" : "Add to Planner"}
+      <Icon className={compact ? "h-3.5 w-3.5 md:h-4 md:w-4" : "h-4 w-4"} />
+      {compact ? "Planner" : added ? "In Planner" : "Add to Planner"}
     </button>
   );
 }

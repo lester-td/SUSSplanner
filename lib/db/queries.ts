@@ -331,6 +331,96 @@ async function getOfferedSemestersForCourseCodes(courseCodes: string[])
   return semestersByCourseCode;
 }
 
+async function getCourseSearchMetadataForCourseCodes(courseCodes: string[])
+{
+  const normalizedCourseCodes = unique(courseCodes.map(normalizeCourseCode));
+  const metadataByCourseCode = new Map<string, {
+    scheduleTypes: CourseSearchResult["scheduleTypes"];
+    availableAsGsp: boolean;
+    assessmentModes: string[];
+  }>();
+
+  if (normalizedCourseCodes.length === 0)
+  {
+    return metadataByCourseCode;
+  }
+
+  const [classRows, assessmentRows] = await Promise.all([
+    db
+      .select({
+        courseCode: classes.courseCode,
+        scheduleType: classes.scheduleType,
+        availableAsGsp: classes.availableAsGsp,
+      })
+      .from(classes)
+      .where(inArray(classes.courseCode, normalizedCourseCodes)),
+    db
+      .select({
+        courseCode: assessmentComponents.courseCode,
+        assessmentMode: assessmentComponents.assessmentMode,
+      })
+      .from(assessmentComponents)
+      .where(inArray(assessmentComponents.courseCode, normalizedCourseCodes)),
+  ]);
+
+  function getMetadata(courseCode: string)
+  {
+    const existing = metadataByCourseCode.get(courseCode);
+    if (existing)
+    {
+      return existing;
+    }
+
+    const created = {
+      scheduleTypes: [],
+      availableAsGsp: false,
+      assessmentModes: [],
+    } satisfies {
+      scheduleTypes: CourseSearchResult["scheduleTypes"];
+      availableAsGsp: boolean;
+      assessmentModes: string[];
+    };
+
+    metadataByCourseCode.set(courseCode, created);
+    return created;
+  }
+
+  for (const row of classRows)
+  {
+    const metadata = getMetadata(row.courseCode);
+
+    if ((row.scheduleType === "daytime" || row.scheduleType === "evening") && !metadata.scheduleTypes.includes(row.scheduleType))
+    {
+      metadata.scheduleTypes.push(row.scheduleType);
+    }
+
+    metadata.availableAsGsp ||= row.availableAsGsp === true;
+  }
+
+  for (const row of assessmentRows)
+  {
+    const assessmentMode = row.assessmentMode?.trim();
+    if (!assessmentMode)
+    {
+      continue;
+    }
+
+    const metadata = getMetadata(row.courseCode);
+    if (!metadata.assessmentModes.includes(assessmentMode))
+    {
+      metadata.assessmentModes.push(assessmentMode);
+    }
+  }
+
+  for (const metadata of metadataByCourseCode.values())
+  {
+    metadata.scheduleTypes.sort();
+    metadata.assessmentModes.sort((left, right) => left.localeCompare(right));
+  }
+
+  return metadataByCourseCode;
+}
+
 function unique<T>(values: T[])
 {
   return [...new Set(values)];
@@ -346,7 +436,6 @@ export async function searchCourses({
   assessmentModes,
   schoolNames,
   courseLevels,
-  limit,
 }: CourseSearchFilters)
 {
   const searchTerm = q.trim();
@@ -442,45 +531,38 @@ export async function searchCourses({
     end`
     : sql<number>`9`;
 
+  const groupedCourseColumns = [
+    courses.courseCode,
+    courses.courseName,
+    courses.schoolName,
+    courses.isPostgraduate,
+    courses.courseLevel,
+    courses.creditUnits,
+    courses.presentationPattern,
+    courses.courseSynopsis,
+  ] as const;
+
   const rows = hasClassFilters
     ? await db
         .select(selectShape)
         .from(courses)
         .innerJoin(classes, and(...classFilterPredicates))
         .where(predicates.length > 0 ? and(...predicates) : undefined)
-        .groupBy(
-          courses.courseCode,
-          courses.courseName,
-          courses.schoolName,
-          courses.isPostgraduate,
-          courses.courseLevel,
-          courses.creditUnits,
-          courses.presentationPattern,
-          courses.courseSynopsis,
-        )
+        .groupBy(...groupedCourseColumns)
         .orderBy(asc(searchRanking), asc(courses.courseCode))
-        .limit(limit)
     : await db
         .select(selectShape)
         .from(courses)
         .leftJoin(classes, eq(classes.courseCode, courses.courseCode))
         .where(predicates.length > 0 ? and(...predicates) : undefined)
-        .groupBy(
-          courses.courseCode,
-          courses.courseName,
-          courses.schoolName,
-          courses.isPostgraduate,
-          courses.courseLevel,
-          courses.creditUnits,
-          courses.presentationPattern,
-          courses.courseSynopsis,
-        )
-        .orderBy(asc(searchRanking), asc(courses.courseCode))
-        .limit(limit);
+        .groupBy(...groupedCourseColumns)
+        .orderBy(asc(searchRanking), asc(courses.courseCode));
 
-  const offeredSemestersByCourseCode = await getOfferedSemestersForCourseCodes(
-    rows.map((row) => row.courseCode),
-  );
+  const rowCourseCodes = rows.map((row) => row.courseCode);
+  const [offeredSemestersByCourseCode, metadataByCourseCode] = await Promise.all([
+    getOfferedSemestersForCourseCodes(rowCourseCodes),
+    getCourseSearchMetadataForCourseCodes(rowCourseCodes),
+  ]);
 
   return rows.map((row) => ({
     courseCode: row.courseCode,
@@ -494,6 +576,9 @@ export async function searchCourses({
     hasAvailableClasses: row.availableClassCount > 0,
     availableClassCount: row.availableClassCount,
     offeredSemesters: offeredSemestersByCourseCode.get(row.courseCode) ?? [],
+    scheduleTypes: metadataByCourseCode.get(row.courseCode)?.scheduleTypes ?? [],
+    availableAsGsp: metadataByCourseCode.get(row.courseCode)?.availableAsGsp ?? false,
+    assessmentModes: metadataByCourseCode.get(row.courseCode)?.assessmentModes ?? [],
   } satisfies CourseSearchResult));
 }
 
@@ -718,7 +803,6 @@ export async function getCoursesWithAvailableClasses(
     assessmentModes: [],
     schoolNames: [],
     courseLevels: [],
-    limit: 200,
   });
 }
 

@@ -10,13 +10,9 @@ export type CourseSearchFilters = {
   assessmentModes: string[];
   schoolNames: string[];
   courseLevels: string[];
-  limit: number;
 };
 
 type SearchInput = URLSearchParams | Record<string, string | string[] | undefined>;
-
-const MAX_LIMIT = 100;
-const DEFAULT_LIMIT = 25;
 
 function unique<T>(values: T[])
 {
@@ -63,7 +59,6 @@ function normalizeScheduleTypes(values: string[])
 export function parseCourseSearchFilters(input: SearchInput): CourseSearchFilters
 {
   const q = (readFirst(input, "q") ?? "").trim().slice(0, 120);
-  const limitValue = parsePositiveInt(readFirst(input, "limit") ?? "");
 
   return {
     q,
@@ -75,7 +70,6 @@ export function parseCourseSearchFilters(input: SearchInput): CourseSearchFilter
     assessmentModes: normalizeTextList(readAll(input, "assessmentModes")),
     schoolNames: normalizeTextList(readAll(input, "schools")),
     courseLevels: normalizeTextList(readAll(input, "courseLevels")),
-    limit: Math.min(MAX_LIMIT, Math.max(1, limitValue ?? DEFAULT_LIMIT)),
   };
 }
 
@@ -126,11 +120,6 @@ export function buildCourseSearchParams(filters: Partial<CourseSearchFilters>)
   for (const courseLevel of filters.courseLevels ?? [])
   {
     params.append("courseLevels", courseLevel);
-  }
-
-  if (filters.limit)
-  {
-    params.set("limit", String(filters.limit));
   }
 
   return params;
