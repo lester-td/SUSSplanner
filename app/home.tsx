@@ -20,10 +20,9 @@ export const metadata: Metadata = {
   description: "Start page for SUSS timetable, course, semester-planner, GPA, and school portal shortcuts.",
 };
 
-const projectAreas = [
+const mainPages = [
   {
     title: "Timetable",
-    eyebrow: "Semester schedule",
     description: "Plan your schedule with a visual timetable and catch clashes early. Sync with your calendar or export to PDF for easy access.",
     href: "/timetable",
     icon: CalendarWeekIcon,
@@ -31,7 +30,6 @@ const projectAreas = [
   },
   {
     title: "Courses",
-    eyebrow: "Catalog search",
     description: "Search course details, assessments, offered semesters, and available class groups before adding modules to a plan.",
     href: "/courses",
     icon: BookIcon,
@@ -39,7 +37,6 @@ const projectAreas = [
   },
   {
     title: "Planner",
-    eyebrow: "Degree map",
     description: "Arrange courses across semesters and track your degree progress.",
     href: "/planner",
     icon: LayersIcon,
@@ -47,15 +44,21 @@ const projectAreas = [
   },
   {
     title: "Calculators",
-    eyebrow: "GPA estimate",
     description: "Estimate your GPA based on your current grades and plan for the future by simulating different grade outcomes.",
     href: "/calculators",
     icon: CalculatorIcon,
     tone: "bg-[var(--suss-lime)] text-[var(--on-surface)]",
   },
+  {
+    title: "Settings",
+    description: "Tune the app appearance, timetable defaults, and reminder preferences.",
+    href: "/settings",
+    icon: SettingsIcon,
+    tone: "bg-[var(--surface-container-high)] text-[var(--primary)]",
+  },
 ] as const;
 
-const portalLinks = [
+const usefulLinks = [
   {
     label: "Student Portal",
     href: "#",
@@ -69,11 +72,6 @@ const portalLinks = [
   {
     label: "eServices",
     href: "#",
-    icon: SettingsIcon,
-  },
-  {
-    label: "SUSS Planner Settings",
-    href: "/settings",
     icon: SettingsIcon,
   },
   {
@@ -113,55 +111,57 @@ export default async function HomePage()
 
   return (
     <AppShell activeSection="home" currentSemesterContext={currentSemesterContext} showFooter={true} showNav={false}>
-      <div className="home-page flex flex-col gap-8">
-        <section className="w-full">
-          <p className="text-[24px] font-bold leading-[1.15] tracking-[-0.045em] text-[var(--on-surface)] sm:text-[32px] lg:text-[40px]">
+      <div className="home-page grid gap-6 sm:gap-8">
+        <section className="pt-1 sm:pt-2">
+          <p className="max-w-3xl text-[24px] font-bold leading-[1.15] tracking-[-0.045em] text-[var(--on-surface)] sm:text-[32px] lg:text-[40px]">
             Create your semester timetable, browse available courses, and plan your academic journey.
           </p>
         </section>
 
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {projectAreas.map((area) => {
-            const Icon = area.icon;
+        <section aria-label="Main pages">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
+            {mainPages.map((area) => {
+              const Icon = area.icon;
 
-            return (
-              <Link
-                key={area.href}
-                prefetch
-                href={area.href}
-                className="home-feature-card group flex min-h-[13rem] cursor-pointer flex-col rounded-[1.25rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:shadow-[var(--shadow-elev-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
-              >
-                <div className={`home-feature-icon flex h-11 w-11 items-center justify-center rounded-[1rem] ${area.tone} transition-transform group-hover:scale-105`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h2 className="mt-4 text-[22px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)] transition-colors group-hover:text-[var(--primary)]">
-                  {area.title}
-                </h2>
-                <p className="mt-2 flex-1 text-[14px] leading-6 text-[var(--on-surface-variant)]">
-                  {area.description}
-                </p>
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={area.href}
+                  prefetch
+                  href={area.href}
+                  className="home-feature-card group flex min-h-[9.5rem] cursor-pointer flex-col rounded-[1.25rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:shadow-[var(--shadow-elev-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] sm:min-h-[12rem] sm:p-5"
+                >
+                  <div className={`home-feature-icon flex h-10 w-10 items-center justify-center rounded-[1rem] ${area.tone} transition-transform group-hover:scale-105 sm:h-11 sm:w-11`}>
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </div>
+                  <h3 className="mt-4 text-[16px] font-bold leading-6 tracking-[-0.035em] text-[var(--on-surface)] transition-colors group-hover:text-[var(--primary)] sm:text-[20px]">
+                    {area.title}
+                  </h3>
+                  <p className="mt-2 hidden flex-1 text-[14px] leading-6 text-[var(--on-surface-variant)] sm:block">
+                    {area.description}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
         </section>
 
-        <section id="portal-links" className="px-0">
-          <h2 className="mt-2 text-[24px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)]">
+        <section id="portal-links" aria-labelledby="useful-links" className="px-0">
+          <h2 id="useful-links" className="text-[20px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)] sm:text-[24px]">
             Useful Links
           </h2>
 
-          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {portalLinks.map((item) => {
+          <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+            {usefulLinks.map((item) => {
               const Icon = item.icon;
               const content = (
                 <>
-                  <span className="home-shortcut-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.8rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105">
+                  <span className="home-shortcut-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.8rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105 sm:h-9 sm:w-9">
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className="min-w-0 flex-1">{item.label}</span>
+                  <span className="min-w-0 flex-1 text-left leading-5">{item.label}</span>
                 </>
               );
-              const className = "home-shortcut-card group flex items-center gap-3 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 text-[14px] font-bold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]";
+              const className = "home-shortcut-card group flex min-h-[3.5rem] items-center gap-2.5 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-[13px] font-semibold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] sm:px-4 sm:py-3";
 
               if (item.href.startsWith("/"))
               {
