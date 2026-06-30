@@ -601,8 +601,7 @@
 
 :root[data-color-scheme="dark"] .home-feature-icon,
 :root[data-color-scheme="dark"] .home-shortcut-icon,
-:root[data-color-scheme="dark"] .calculator-chip,
-:root[data-color-scheme="dark"] .timetable-chip {
+:root[data-color-scheme="dark"] .calculator-chip {
   background: var(--brand-chip-bg);
   color: var(--primary);
 }

@@ -1183,11 +1183,6 @@ export function PlannerClient({
               <h3 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)] sm:text-[18px] sm:leading-6">My Courses</h3>
               <p className="text-[10px] leading-[13px] text-[var(--on-surface-variant)] sm:text-[11px] sm:leading-[14px]">{selectedSemester ? getCurrentWeekChip(selectedSemester, semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null) : ""}</p>
             </div>
-            <div className="flex items-center">
-              <span className="timetable-chip rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-1.5 py-0.5 text-[10px] font-medium leading-[13px] text-[var(--primary)] sm:px-2 sm:text-[11px] sm:leading-[14px]">
-                {selectedCards.length} Selected
-              </span>
-            </div>
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 py-1.5 sm:px-3">
@@ -1397,10 +1392,17 @@ export function PlannerClient({
             </div>
 
             <div className={`border-t border-[var(--brand-divider)] pt-3 ${orientation === "horizontal" ? "mt-2.5" : "mt-2"}`}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
-                  <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
-                  <div className="mt-1 text-[16px] font-bold leading-6 text-[var(--primary)] sm:text-[18px]">{totalCredits.toFixed(1)} CU</div>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
+                    <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
+                    <div className="mt-1 text-[16px] font-bold leading-6 text-[var(--primary)] sm:text-[18px]">{totalCredits.toFixed(1)} CU</div>
+                  </div>
+                  <div aria-hidden="true" className="h-10 w-px bg-[var(--brand-divider)]" />
+                  <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
+                    <div className="text-[var(--on-surface-variant)]">Total Courses</div>
+                    <div className="mt-1 text-[16px] font-bold leading-6 tabular-nums text-[var(--primary)] sm:text-[18px]">{selectedCards.length}</div>
+                  </div>
                 </div>
                 <div className="relative shrink-0 w-[8.75rem] sm:w-[9.75rem]">
                   <select
