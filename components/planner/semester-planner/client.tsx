@@ -59,6 +59,13 @@ import {
   getActiveInAppRegistrationReminders,
   resolveRegistrationReminderOffsets,
 } from "@/lib/registration/reminders";
+import {
+  EMPTY_LOCAL_REGISTRATION_REMINDER_STATE,
+  REGISTRATION_REMINDER_STORAGE_KEY,
+  dismissLocalRegistrationReminder,
+  readLocalRegistrationReminderState,
+  snoozeLocalRegistrationReminder,
+} from "@/lib/registration/reminder-storage";
 import { REGISTRATION_EVENTS } from "@/lib/registration/schedule";
 import {
   APP_SETTINGS_STORAGE_KEY,
@@ -68,6 +75,7 @@ import {
   type SettingsState,
 } from "@/lib/settings/app-settings";
 import type { SemesterPlannerCourse, SemesterPlannerState } from "@/lib/planner/types";
+import type { RegistrationReminder } from "@/lib/registration/types";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
 type SearchResponse = {
@@ -83,6 +91,7 @@ export function SemesterPlannerClient({
   const [ready, setReady] = useState(false);
   const [plan, setPlan] = useState<SemesterPlannerState>(defaultSemesterPlannerState());
   const [appSettings, setAppSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
+  const [reminderInteractionState, setReminderInteractionState] = useState(EMPTY_LOCAL_REGISTRATION_REMINDER_STATE);
   const [reminderNow, setReminderNow] = useState(() => Date.now());
   const [isCustomCourse, setIsCustomCourse] = useState(false);
   const [showAllModules, setShowAllModules] = useState(false);
@@ -121,7 +130,14 @@ export function SemesterPlannerClient({
   );
 
   useEffect(() => {
+    const now = Date.now();
+
     setAppSettings(readAppSettings());
+    setReminderNow(now);
+    setReminderInteractionState(readLocalRegistrationReminderState({
+      events: REGISTRATION_EVENTS,
+      now,
+    }));
     setPlan(loadSemesterPlannerState() ?? defaultSemesterPlannerState());
     setReady(true);
   }, []);
@@ -172,9 +188,29 @@ export function SemesterPlannerClient({
   }, []);
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => setReminderNow(Date.now()), 60 * 1000);
+    const syncReminderInteractionState = () => {
+      const now = Date.now();
 
-    return () => window.clearInterval(intervalId);
+      setReminderNow(now);
+      setReminderInteractionState(readLocalRegistrationReminderState({
+        events: REGISTRATION_EVENTS,
+        now,
+      }));
+    };
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === REGISTRATION_REMINDER_STORAGE_KEY)
+      {
+        syncReminderInteractionState();
+      }
+    };
+    const intervalId = window.setInterval(syncReminderInteractionState, 60 * 1000);
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   useEffect(() => () => {
@@ -312,10 +348,11 @@ export function SemesterPlannerClient({
 
     return getActiveInAppRegistrationReminders(REGISTRATION_EVENTS, {
       enabled: inAppRemindersEnabled,
+      dismissedReminders: reminderInteractionState.dismissedReminders,
       now: reminderNow,
       offsets: resolveRegistrationReminderOffsets(reminderPreferences.offsetMinutes),
     });
-  }, [appSettings.registrationReminders, ready, reminderNow]);
+  }, [appSettings.registrationReminders, ready, reminderInteractionState, reminderNow]);
 
   useEffect(() => {
     if (!editingCourse)
@@ -652,6 +689,28 @@ export function SemesterPlannerClient({
     setSearchQuery("");
   }
 
+  function handleDismissRegistrationReminder(reminder: RegistrationReminder)
+  {
+    const now = Date.now();
+
+    setReminderNow(now);
+    setReminderInteractionState(dismissLocalRegistrationReminder(reminder, {
+      events: REGISTRATION_EVENTS,
+      now,
+    }));
+  }
+
+  function handleSnoozeRegistrationReminder(reminder: RegistrationReminder)
+  {
+    const now = Date.now();
+
+    setReminderNow(now);
+    setReminderInteractionState(snoozeLocalRegistrationReminder(reminder, {
+      events: REGISTRATION_EVENTS,
+      now,
+    }));
+  }
+
   return (
     <div className="planner-page px-3 pb-6 pt-8 md:px-[16px]">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -966,7 +1025,11 @@ export function SemesterPlannerClient({
           </div>
         ) : null}
 
-        <RegistrationReminderBanner reminders={activeRegistrationReminders} />
+        <RegistrationReminderBanner
+          reminders={activeRegistrationReminders}
+          onDismissReminder={handleDismissRegistrationReminder}
+          onSnoozeReminder={handleSnoozeRegistrationReminder}
+        />
 
         <DndContext
           autoScroll={{
