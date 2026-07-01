@@ -14,11 +14,14 @@ import {
   DEFAULT_APP_SETTINGS,
   announceAppSettingsUpdated,
   getThemeOption,
+  normalizeRegistrationReminderPreferences,
   readAppSettings,
   saveAppSettings,
+  type RegistrationReminderPreferences,
   type SettingsState,
   type ThemeOption,
 } from "@/lib/settings/app-settings";
+import { DEFAULT_REGISTRATION_REMINDER_OFFSETS } from "@/lib/registration/reminders";
 import {
   START_MINUTES,
   buildTimeSlots,
@@ -181,6 +184,10 @@ const PREVIEW_VISIBLE_END_MINUTES = getVisibleEndMinutes(
 );
 
 const PREVIEW_TIME_SLOTS = buildTimeSlots(PREVIEW_VISIBLE_END_MINUTES);
+const REMINDER_OFFSET_OPTIONS = DEFAULT_REGISTRATION_REMINDER_OFFSETS.map((offset) => ({
+  value: offset.offsetMinutes,
+  label: offset.label,
+}));
 
 function Section({
   title,
@@ -255,6 +262,53 @@ function SegmentedControl<T extends string>({
             }`}
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CheckboxButtonGroup<T extends string | number>({
+  label,
+  values,
+  options,
+  onChange,
+}: {
+  label: string;
+  values: readonly T[];
+  options: Array<{ value: T; label: string }>;
+  onChange: (values: T[]) => void;
+})
+{
+  return (
+    <div
+      className="flex flex-wrap justify-start gap-2 md:justify-end"
+      role="group"
+      aria-label={label}
+    >
+      {options.map((option) => {
+        const selected = values.includes(option.value);
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            className={`rounded-md border px-3 py-2 text-[13px] font-bold leading-4 transition ${
+              selected
+                ? "border-[var(--primary)] bg-[var(--primary-container)] text-[var(--on-primary-container)]"
+                : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
+            }`}
+            aria-pressed={selected}
+            onClick={() => {
+              onChange(
+                selected
+                  ? values.filter((value) => value !== option.value)
+                  : [...values, option.value],
+              );
+            }}
           >
             {option.label}
           </button>
@@ -402,6 +456,16 @@ export function SettingsClient()
     }));
   }
 
+  function updateRegistrationReminderPreferences(nextPreferences: Partial<RegistrationReminderPreferences>)
+  {
+    updateSettings({
+      registrationReminders: normalizeRegistrationReminderPreferences({
+        ...settings.registrationReminders,
+        ...nextPreferences,
+      }),
+    });
+  }
+
   function resetSettings()
   {
     setSettings(DEFAULT_APP_SETTINGS);
@@ -481,22 +545,44 @@ export function SettingsClient()
 
         <Section id="reminders" title="Course Registration Reminders">
           <SettingRow
-            title="Reminder notifications"
-            description="You can get a reminder about when eCR / add-drop periods start with a small notification."
+            title="In-app reminders"
+            description="Show reminders in SUSS Planner when eCR / add-drop periods are approaching."
           >
             <SegmentedControl
-              label="Reminder notifications"
+              label="In-app reminders"
               value={settings.registrationReminders.enabled ? "on" : "off"}
               options={[
                 { value: "on", label: "On" },
                 { value: "off", label: "Off" },
               ]}
-              onChange={(value) => updateSettings({
-                registrationReminders: {
-                  ...settings.registrationReminders,
-                  enabled: value === "on",
-                },
-              })}
+              onChange={(value) => updateRegistrationReminderPreferences({ enabled: value === "on" })}
+            />
+          </SettingRow>
+
+          <SettingRow
+            title="Reminder timing"
+            description="Choose when reminders should appear before registration opens."
+          >
+            <CheckboxButtonGroup
+              label="Reminder timing"
+              values={settings.registrationReminders.offsetMinutes}
+              options={REMINDER_OFFSET_OPTIONS}
+              onChange={(offsetMinutes) => updateRegistrationReminderPreferences({ offsetMinutes })}
+            />
+          </SettingRow>
+
+          <SettingRow
+            title="Reminder banner"
+            description="Show the in-app banner for active registration reminders."
+          >
+            <SegmentedControl
+              label="Reminder banner"
+              value={settings.registrationReminders.inAppBannerEnabled ? "on" : "off"}
+              options={[
+                { value: "on", label: "On" },
+                { value: "off", label: "Off" },
+              ]}
+              onChange={(value) => updateRegistrationReminderPreferences({ inAppBannerEnabled: value === "on" })}
             />
           </SettingRow>
         </Section>
