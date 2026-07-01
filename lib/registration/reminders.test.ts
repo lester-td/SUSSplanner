@@ -12,6 +12,7 @@ import {
   deriveRegistrationEventVersion,
   getActiveInAppRegistrationReminders,
   getDueRegistrationReminders,
+  resolveRegistrationReminderOffsets,
   selectMostUrgentRegistrationReminders,
 } from "@/lib/registration/reminders";
 import {
@@ -155,6 +156,14 @@ describe("registration reminder timing", () => {
 
     expect(due.length).toBeGreaterThan(0);
     expect(due.every((reminder) => reminder.channel === "push")).toBe(true);
+  });
+
+  it("resolves selected reminder offset minutes through reminder defaults", () => {
+    expect(resolveRegistrationReminderOffsets([0, 24 * 60]).map((offset) => offset.offsetMinutes))
+      .toEqual([24 * 60, 0]);
+
+    expect(resolveRegistrationReminderOffsets([15]).map((offset) => offset.offsetMinutes))
+      .toEqual(DEFAULT_APP_SETTINGS.registrationReminders.offsetMinutes);
   });
 });
 

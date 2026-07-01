@@ -33,6 +33,7 @@ import {
   SEMESTER_DROP_ID_PREFIX,
   getCourseDropTarget,
 } from "@/components/planner/semester-planner/drag-drop";
+import { RegistrationReminderBanner } from "@/components/registration/registration-reminder-banner";
 import {
   buildSemesterOptions,
   formatCreditCount,
@@ -54,6 +55,18 @@ import {
   saveSemesterPlannerState,
   serializeSemesterPlannerBackup,
 } from "@/lib/planner/storage";
+import {
+  getActiveInAppRegistrationReminders,
+  resolveRegistrationReminderOffsets,
+} from "@/lib/registration/reminders";
+import { REGISTRATION_EVENTS } from "@/lib/registration/schedule";
+import {
+  APP_SETTINGS_STORAGE_KEY,
+  APP_SETTINGS_UPDATED_EVENT,
+  DEFAULT_APP_SETTINGS,
+  readAppSettings,
+  type SettingsState,
+} from "@/lib/settings/app-settings";
 import type { SemesterPlannerCourse, SemesterPlannerState } from "@/lib/planner/types";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
@@ -69,6 +82,8 @@ export function SemesterPlannerClient({
 {
   const [ready, setReady] = useState(false);
   const [plan, setPlan] = useState<SemesterPlannerState>(defaultSemesterPlannerState());
+  const [appSettings, setAppSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
+  const [reminderNow, setReminderNow] = useState(() => Date.now());
   const [isCustomCourse, setIsCustomCourse] = useState(false);
   const [showAllModules, setShowAllModules] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,6 +121,7 @@ export function SemesterPlannerClient({
   );
 
   useEffect(() => {
+    setAppSettings(readAppSettings());
     setPlan(loadSemesterPlannerState() ?? defaultSemesterPlannerState());
     setReady(true);
   }, []);
@@ -135,6 +151,30 @@ export function SemesterPlannerClient({
       window.removeEventListener("storage", syncPlanState);
       window.removeEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncPlanState);
     };
+  }, []);
+
+  useEffect(() => {
+    const syncAppSettings = () => setAppSettings(readAppSettings());
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === APP_SETTINGS_STORAGE_KEY)
+      {
+        syncAppSettings();
+      }
+    };
+
+    window.addEventListener(APP_SETTINGS_UPDATED_EVENT, syncAppSettings);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener(APP_SETTINGS_UPDATED_EVENT, syncAppSettings);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setReminderNow(Date.now()), 60 * 1000);
+
+    return () => window.clearInterval(intervalId);
   }, []);
 
   useEffect(() => () => {
@@ -259,6 +299,23 @@ export function SemesterPlannerClient({
     () => sortedCourses.find((course) => course.id === draggedCourseId) ?? null,
     [draggedCourseId, sortedCourses],
   );
+  const activeRegistrationReminders = useMemo(() => {
+    const reminderPreferences = appSettings.registrationReminders;
+    const inAppRemindersEnabled = reminderPreferences.enabled
+      && reminderPreferences.inAppBannerEnabled
+      && reminderPreferences.channels.includes("in-app");
+
+    if (!ready || !inAppRemindersEnabled)
+    {
+      return [];
+    }
+
+    return getActiveInAppRegistrationReminders(REGISTRATION_EVENTS, {
+      enabled: inAppRemindersEnabled,
+      now: reminderNow,
+      offsets: resolveRegistrationReminderOffsets(reminderPreferences.offsetMinutes),
+    });
+  }, [appSettings.registrationReminders, ready, reminderNow]);
 
   useEffect(() => {
     if (!editingCourse)
@@ -908,6 +965,8 @@ export function SemesterPlannerClient({
             {notice}
           </div>
         ) : null}
+
+        <RegistrationReminderBanner reminders={activeRegistrationReminders} />
 
         <DndContext
           autoScroll={{

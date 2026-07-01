@@ -181,6 +181,23 @@ export function buildReminderId(eventId: string, offsetMinutes: number)
   return `${eventId}:${offsetMinutes}`;
 }
 
+export function resolveRegistrationReminderOffsets(offsetMinutes: readonly number[] | undefined)
+{
+  if (!offsetMinutes || offsetMinutes.length === 0)
+  {
+    return DEFAULT_REGISTRATION_REMINDER_OFFSETS;
+  }
+
+  const selectedOffsetMinutes = new Set(offsetMinutes);
+  const selectedOffsets = DEFAULT_REGISTRATION_REMINDER_OFFSETS.filter((offset) => (
+    selectedOffsetMinutes.has(offset.offsetMinutes)
+  ));
+
+  return selectedOffsets.length > 0
+    ? selectedOffsets
+    : DEFAULT_REGISTRATION_REMINDER_OFFSETS;
+}
+
 export function deriveRegistrationEventVersion(event: RegistrationEvent)
 {
   const scheduleVersion = event.scheduleVersion?.trim();
