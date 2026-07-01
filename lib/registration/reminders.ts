@@ -37,7 +37,6 @@ export type RegistrationReminderOptions = {
   channels?: readonly ReminderChannel[];
   channel?: ReminderChannel;
   dismissedReminders?: LocalRegistrationReminderState["dismissedReminders"];
-  snoozedReminders?: LocalRegistrationReminderState["snoozedReminders"];
 };
 
 export type DueRegistrationReminderOptions = RegistrationReminderOptions & {
@@ -48,7 +47,7 @@ export type ActiveRegistrationReminderOptions = RegistrationReminderOptions & {
   selectMostUrgentPerEvent?: boolean;
 };
 
-function parseTimestamp(value: string | Date | number)
+export function parseRegistrationReminderTimestamp(value: string | Date | number)
 {
   const timestamp = typeof value === "number"
     ? value
@@ -64,7 +63,7 @@ function resolveNowTimestamp(now: Date | string | number | undefined)
     return Date.now();
   }
 
-  return parseTimestamp(now);
+  return parseRegistrationReminderTimestamp(now);
 }
 
 function padNumber(value: number, length = 2)
@@ -114,21 +113,6 @@ function isDismissed(
   return dismissed?.eventVersion === reminder.eventVersion;
 }
 
-function isSnoozed(
-  reminder: RegistrationReminder,
-  snoozedReminders: LocalRegistrationReminderState["snoozedReminders"] | undefined,
-  nowTimestamp: number,
-)
-{
-  const snoozed = snoozedReminders?.[reminder.id];
-  const snoozedUntilTimestamp = snoozed ? parseTimestamp(snoozed.snoozedUntil) : null;
-
-  return snoozed?.eventVersion === reminder.eventVersion
-    && snoozed.reminderId === reminder.id
-    && snoozedUntilTimestamp !== null
-    && snoozedUntilTimestamp > nowTimestamp;
-}
-
 function isSent(
   reminder: RegistrationReminder,
   sentReminders: Record<string, ReminderVersionRecord> | undefined,
@@ -141,8 +125,8 @@ function isSent(
 
 function compareReminderUrgency(left: RegistrationReminder, right: RegistrationReminder)
 {
-  const leftDueAt = parseTimestamp(left.dueAt) ?? 0;
-  const rightDueAt = parseTimestamp(right.dueAt) ?? 0;
+  const leftDueAt = parseRegistrationReminderTimestamp(left.dueAt) ?? 0;
+  const rightDueAt = parseRegistrationReminderTimestamp(right.dueAt) ?? 0;
 
   if (leftDueAt !== rightDueAt)
   {
@@ -231,7 +215,7 @@ export function buildRegistrationReminderCandidates(
 
   validEvents.forEach((event) => {
     const eventVersion = deriveRegistrationEventVersion(event);
-    const eventStartsAtTimestamp = parseTimestamp(event.startsAt);
+    const eventStartsAtTimestamp = parseRegistrationReminderTimestamp(event.startsAt);
 
     if (eventStartsAtTimestamp === null)
     {
@@ -305,15 +289,15 @@ export function filterRegistrationReminders(
       return false;
     }
 
-    return !isSnoozed(reminder, options.snoozedReminders, nowTimestamp);
+    return true;
   });
 }
 
 export function isRegistrationReminderActive(reminder: RegistrationReminder, now: Date | string | number)
 {
-  const nowTimestamp = parseTimestamp(now);
-  const visibleFromTimestamp = parseTimestamp(reminder.visibleFrom);
-  const visibleUntilTimestamp = parseTimestamp(reminder.visibleUntil);
+  const nowTimestamp = parseRegistrationReminderTimestamp(now);
+  const visibleFromTimestamp = parseRegistrationReminderTimestamp(reminder.visibleFrom);
+  const visibleUntilTimestamp = parseRegistrationReminderTimestamp(reminder.visibleUntil);
 
   return nowTimestamp !== null
     && visibleFromTimestamp !== null
@@ -357,9 +341,9 @@ export function getActiveInAppRegistrationReminders(
 
 export function isRegistrationReminderDue(reminder: RegistrationReminder, now: Date | string | number)
 {
-  const nowTimestamp = parseTimestamp(now);
-  const dueAtTimestamp = parseTimestamp(reminder.dueAt);
-  const visibleUntilTimestamp = parseTimestamp(reminder.visibleUntil);
+  const nowTimestamp = parseRegistrationReminderTimestamp(now);
+  const dueAtTimestamp = parseRegistrationReminderTimestamp(reminder.dueAt);
+  const visibleUntilTimestamp = parseRegistrationReminderTimestamp(reminder.visibleUntil);
 
   return nowTimestamp !== null
     && dueAtTimestamp !== null

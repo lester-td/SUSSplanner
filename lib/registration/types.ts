@@ -39,13 +39,6 @@ export type DismissedRegistrationReminder = {
   eventVersion: string;
 };
 
-export type SnoozedRegistrationReminder = {
-  reminderId: string;
-  eventVersion: string;
-  snoozedUntil: string;
-};
-
 export type LocalRegistrationReminderState = {
   dismissedReminders: Record<string, { eventVersion: string }>;
-  snoozedReminders: Record<string, { reminderId: string; eventVersion: string; snoozedUntil: string }>;
 };
