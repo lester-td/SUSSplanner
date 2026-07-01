@@ -16,6 +16,7 @@
     "build": "next build",
     "prestart": "npm run validate:start",
     "start": "next start",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate"
   },
@@ -38,6 +39,7 @@
     "drizzle-kit": "^0.31.4",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.12",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.9"
   }
 }

@@ -160,7 +160,7 @@ function compareReminderUrgency(left: RegistrationReminder, right: RegistrationR
   return left.id.localeCompare(right.id);
 }
 
-function selectMostUrgentReminderPerEvent(reminders: readonly RegistrationReminder[])
+export function selectMostUrgentRegistrationReminders(reminders: readonly RegistrationReminder[])
 {
   const byEventId = new Map<string, RegistrationReminder>();
 
@@ -323,7 +323,7 @@ export function getActiveRegistrationReminders(
 
   return options.selectMostUrgentPerEvent === false
     ? active
-    : selectMostUrgentReminderPerEvent(active);
+    : selectMostUrgentRegistrationReminders(active);
 }
 
 export function getActiveInAppRegistrationReminders(
