@@ -1,9 +1,10 @@
 import type { RegistrationEvent } from "@/lib/registration/types";
+import { validateRegistrationSchedule } from "@/lib/registration/validation";
 
 const SOURCE_LABEL = "User-provided SUSS registration schedule";
 const SOURCE_UPDATED_AT = "2026-07-01";
 
-export const REGISTRATION_EVENTS: RegistrationEvent[] = [
+const REGISTRATION_EVENT_DATA: RegistrationEvent[] = [
   {
     id: "ecr-2026-03",
     title: "eCR Period",
@@ -45,3 +46,5 @@ export const REGISTRATION_EVENTS: RegistrationEvent[] = [
     sourceUpdatedAt: SOURCE_UPDATED_AT,
   },
 ];
+
+export const REGISTRATION_EVENTS: RegistrationEvent[] = validateRegistrationSchedule(REGISTRATION_EVENT_DATA);
