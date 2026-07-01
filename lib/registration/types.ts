@@ -25,8 +25,12 @@ export type RegistrationReminder = {
   eventVersion: string;
   channel: ReminderChannel;
   offset: ReminderOffset;
+  dueAt: string;
+  visibleFrom: string;
+  visibleUntil: string;
   remindAt: string;
   eventStartsAt: string;
+  eventEndsAt: string;
   title: string;
   body?: string;
 };
