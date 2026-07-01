@@ -486,12 +486,17 @@ export function SettingsClient()
           >
             <SegmentedControl
               label="Reminder notifications"
-              value={settings.registrationReminders ? "on" : "off"}
+              value={settings.registrationReminders.enabled ? "on" : "off"}
               options={[
                 { value: "on", label: "On" },
                 { value: "off", label: "Off" },
               ]}
-              onChange={(value) => updateSettings({ registrationReminders: value === "on" })}
+              onChange={(value) => updateSettings({
+                registrationReminders: {
+                  ...settings.registrationReminders,
+                  enabled: value === "on",
+                },
+              })}
             />
           </SettingRow>
         </Section>
