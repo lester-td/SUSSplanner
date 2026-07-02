@@ -223,6 +223,55 @@ export async function getSemestersWithWeeks()
   return getSemestersWithWeeksCached();
 }
 
+const getLatestDataUpdatedAtCached = unstable_cache(
+  async () => {
+    const rows = await Promise.all([
+      db.select({ value: sql<Date | string | null>`max(${courses.lastUpdated})` }).from(courses),
+      db.select({ value: sql<Date | string | null>`max(${semesters.lastUpdated})` }).from(semesters),
+      db.select({ value: sql<Date | string | null>`max(${semesterWeeks.lastUpdated})` }).from(semesterWeeks),
+      db.select({ value: sql<Date | string | null>`max(${classes.lastUpdated})` }).from(classes),
+      db.select({ value: sql<Date | string | null>`max(${classEvents.lastUpdated})` }).from(classEvents),
+      db.select({ value: sql<Date | string | null>`max(${assessmentComponents.lastUpdated})` }).from(assessmentComponents),
+    ]);
+
+    const timestamps = rows
+      .map(([row]) => row?.value)
+      .map((value) => {
+        if (!value)
+        {
+          return null;
+        }
+
+        const date = value instanceof Date ? value : new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+      })
+      .filter((value): value is Date => value !== null);
+
+    if (timestamps.length === 0)
+    {
+      return null;
+    }
+
+    return new Date(Math.max(...timestamps.map((value) => value.getTime()))).toISOString();
+  },
+  ["db:getLatestDataUpdatedAt"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [
+      CACHE_TAGS.courses,
+      CACHE_TAGS.semesters,
+      CACHE_TAGS.semesterWeeks,
+      CACHE_TAGS.classes,
+      CACHE_TAGS.assessments,
+    ],
+  },
+);
+
+export async function getLatestDataUpdatedAt()
+{
+  return getLatestDataUpdatedAtCached();
+}
+
 const getSemestersWithClassesAndWeeksCached = unstable_cache(
   async () => {
     const [semesterRows, weekRows] = await Promise.all([

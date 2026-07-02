@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { HomeSearch, type HomeSearchItem } from "@/components/layout/home-search";
 import {
   BookIcon,
   CalculatorIcon,
   CalendarWeekIcon,
   CalendarIcon,
   HomeIcon,
-  LayersIcon,
   SchoolIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
-import { getSemestersWithWeeks } from "@/lib/db/queries";
+import { getLatestDataUpdatedAt, getSemestersWithWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const metadata: Metadata = {
@@ -20,43 +20,38 @@ export const metadata: Metadata = {
   description: "Start page for SUSS timetable, course, semester-planner, GPA, and school portal shortcuts.",
 };
 
-const mainPages = [
+const appSearchItems = [
   {
-    title: "Timetable",
+    label: "Timetable",
     description: "Plan your schedule with a visual timetable and catch clashes early. Sync with your calendar or export to PDF for easy access.",
     href: "/timetable",
-    icon: CalendarWeekIcon,
-    tone: "bg-[var(--primary)] text-on-primary",
+    keywords: ["schedule", "classes", "calendar", "ics", "pdf"],
   },
   {
-    title: "Courses",
+    label: "Courses",
     description: "Search course details, assessments, offered semesters, and available class groups before adding modules to a plan.",
     href: "/courses",
-    icon: BookIcon,
-    tone: "bg-[var(--accent)] text-white",
+    keywords: ["modules", "course finder", "assessment", "school"],
   },
   {
-    title: "Planner",
+    label: "Planner",
     description: "Arrange courses across semesters and track your degree progress.",
     href: "/planner",
-    icon: LayersIcon,
-    tone: "bg-[var(--suss-light-blue)] text-[var(--on-surface)]",
+    keywords: ["semester planner", "degree plan", "progress"],
   },
   {
-    title: "Calculators",
+    label: "Calculators",
     description: "Estimate your GPA based on your current grades and plan for the future by simulating different grade outcomes.",
     href: "/calculators",
-    icon: CalculatorIcon,
-    tone: "bg-[var(--suss-lime)] text-[var(--on-surface)]",
+    keywords: ["gpa", "ocas", "grades"],
   },
   {
-    title: "Settings",
+    label: "Settings",
     description: "Tune the app appearance, timetable defaults, and reminder preferences.",
     href: "/settings",
-    icon: SettingsIcon,
-    tone: "bg-[var(--surface-container-high)] text-[var(--primary)]",
+    keywords: ["theme", "appearance", "preferences"],
   },
-] as const;
+] as const satisfies readonly HomeSearchItem[];
 
 const usefulLinks = [
   {
@@ -101,47 +96,70 @@ const usefulLinks = [
   },
 ] as const;
 
+function formatDataUpdatedAt(value: Date | string | null)
+{
+  if (!value)
+  {
+    return "Data last updated: Unavailable";
+  }
+
+  const updatedAt = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(updatedAt.getTime()))
+  {
+    return "Data last updated: Unavailable";
+  }
+
+  const formattedDate = new Intl.DateTimeFormat("en-SG", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Singapore",
+  }).format(updatedAt);
+
+  return `Data last updated: ${formattedDate} SGT`;
+}
+
 export default async function HomePage()
 {
-  const semesterTree = await getSemestersWithWeeks();
+  const [semesterTree, latestDataUpdatedAt] = await Promise.all([
+    getSemestersWithWeeks(),
+    getLatestDataUpdatedAt(),
+  ]);
   const currentSemesterContext = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
+  const searchItems = [
+    ...appSearchItems,
+    ...usefulLinks.map((item) => ({
+      label: item.label,
+      description: "Useful student link",
+      href: item.href === "#" ? "#portal-links" : item.href,
+      keywords: ["useful link", "student link"],
+    })),
+  ] satisfies HomeSearchItem[];
 
   return (
-    <AppShell activeSection="home" currentSemesterContext={currentSemesterContext} showFooter={true} showNav={false}>
+    <AppShell activeSection="home" currentSemesterContext={currentSemesterContext} showFooter={true}>
       <div className="home-page grid gap-6 sm:gap-8">
         <section className="pt-1 sm:pt-2">
           <p className="max-w-3xl text-[24px] font-bold leading-[1.15] tracking-[-0.045em] text-[var(--on-surface)] sm:text-[32px] lg:text-[40px]">
-            Create your semester timetable, browse available courses, and plan your academic journey.
+            Welcome to SUSS Planner.
           </p>
-        </section>
 
-        <section aria-label="Main pages">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
-            {mainPages.map((area) => {
-              const Icon = area.icon;
+          <div className="mt-8 grid gap-3">
+            <p className="text-[16px] font-semibold leading-6 text-[var(--on-surface)] sm:text-[18px]">
+              What would you like to do today?
+            </p>
+            <HomeSearch items={searchItems} />
+          </div>
 
-              return (
-                <Link
-                  key={area.href}
-                  prefetch
-                  href={area.href}
-                  className="home-feature-card group flex min-h-[9.5rem] cursor-pointer flex-col rounded-[1.25rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:shadow-[var(--shadow-elev-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] sm:min-h-[12rem] sm:p-5"
-                >
-                  <div className={`home-feature-icon flex h-10 w-10 items-center justify-center rounded-[1rem] ${area.tone} transition-transform group-hover:scale-105 sm:h-11 sm:w-11`}>
-                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </div>
-                  <h3 className="mt-4 text-[16px] font-bold leading-6 tracking-[-0.035em] text-[var(--on-surface)] transition-colors group-hover:text-[var(--primary)] sm:text-[20px]">
-                    {area.title}
-                  </h3>
-                  <p className="mt-2 hidden flex-1 text-[14px] leading-6 text-[var(--on-surface-variant)] sm:block">
-                    {area.description}
-                  </p>
-                </Link>
-              );
-            })}
+          <div className="mt-5 max-w-3xl text-[12px] leading-5 text-[var(--on-surface-variant)] sm:text-[13px]">
+            <p>
+              This is a student developed web application in beta phase. The information is provided with absolutely no warranties, although it has been checked to the best of our ability.
+            </p>
+            <p className="mt-1 font-semibold text-[var(--on-surface)]">
+              {formatDataUpdatedAt(latestDataUpdatedAt)}
+            </p>
           </div>
         </section>
 

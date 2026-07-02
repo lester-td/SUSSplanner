@@ -9,7 +9,6 @@ import {
   CalculatorIcon,
   CalendarWeekIcon,
   CodeIcon,
-  HomeIcon,
   LayersIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
@@ -24,12 +23,6 @@ type AppSection = "home" | PlannerSection | "calculator" | "settings";
 type AppShellContentLayout = "framed" | "full-bleed";
 
 const navItems = [
-  {
-    id: "home",
-    label: "Home",
-    href: "/",
-    icon: HomeIcon,
-  },
   {
     id: "planner",
     label: "Timetable",
