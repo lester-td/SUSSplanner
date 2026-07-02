@@ -34,6 +34,7 @@ export function HomeSearch({
 {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const trimmedQuery = query.trim();
   const normalizedQuery = normalizeSearchText(query);
 
   const matches = useMemo(() => {
@@ -61,6 +62,16 @@ export function HomeSearch({
       .slice(0, 6)
       .map(({ item }) => item);
   }, [items, normalizedQuery]);
+  const courseSearchItem = trimmedQuery
+    ? {
+      label: `Search courses for "${trimmedQuery}"`,
+      description: "Search course codes, names, schools, and synopses.",
+      href: `/courses?q=${encodeURIComponent(trimmedQuery)}`,
+    } satisfies HomeSearchItem
+    : null;
+  const visibleItems = courseSearchItem
+    ? [...matches.slice(0, 5), courseSearchItem]
+    : matches;
 
   function openItem(item: HomeSearchItem)
   {
@@ -74,20 +85,19 @@ export function HomeSearch({
   }
 
   return (
-    <div className="w-full max-w-3xl">
+    <div className="w-full">
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          const trimmed = query.trim();
           const bestMatch = matches[0];
 
-          if (trimmed && bestMatch)
+          if (trimmedQuery && bestMatch)
           {
             openItem(bestMatch);
             return;
           }
 
-          router.push(trimmed ? `/courses?q=${encodeURIComponent(trimmed)}` : "/courses");
+          router.push(courseSearchItem?.href ?? "/courses");
         }}
         className="relative"
       >
@@ -101,28 +111,31 @@ export function HomeSearch({
         />
       </form>
 
-      {matches.length > 0 ? (
-        <div className="mt-3 grid gap-2" aria-label="Search suggestions">
-          {matches.map((item) => {
+      {visibleItems.length > 0 ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label="Search suggestions">
+          {visibleItems.map((item) => {
             const isExternal = !item.href.startsWith("/");
+            const isCourseSearchSuggestion = courseSearchItem?.href === item.href;
 
             return (
               <button
                 key={`${item.label}-${item.href}`}
                 type="button"
                 onClick={() => openItem(item)}
-                className="group flex min-h-[3.75rem] w-full items-center justify-between gap-3 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-left transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                className="group flex min-h-[5.25rem] w-full items-start justify-between gap-3 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-left transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-[14px] font-bold leading-5 text-[var(--on-surface)] group-hover:text-[var(--primary)]">
+                  <span className="block text-[14px] font-bold leading-5 text-[var(--on-surface)] group-hover:text-[var(--primary)]">
                     {item.label}
                   </span>
-                  <span className="mt-0.5 block truncate text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                  <span className="mt-1 line-clamp-2 block text-[12px] leading-5 text-[var(--on-surface-variant)]">
                     {item.description}
                   </span>
                 </span>
                 {isExternal ? (
                   <ArrowUpRightIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)] group-hover:text-[var(--primary)]" />
+                ) : isCourseSearchSuggestion ? (
+                  <SearchIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)] group-hover:text-[var(--primary)]" />
                 ) : null}
               </button>
             );

@@ -8,7 +8,6 @@ import {
   BookIcon,
   CalculatorIcon,
   CalendarWeekIcon,
-  CodeIcon,
   LayersIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
@@ -69,6 +68,7 @@ export function AppShell({
   showHeader = true,
   showNav = true,
   showFooter = true,
+  footerContent = null,
   contentLayout = "framed",
   contentFrameClassName = "",
   contentContainerClassName = "",
@@ -79,6 +79,7 @@ export function AppShell({
   showHeader?: boolean;
   showNav?: boolean;
   showFooter?: boolean;
+  footerContent?: ReactNode;
   contentLayout?: AppShellContentLayout;
   contentFrameClassName?: string;
   contentContainerClassName?: string;
@@ -255,25 +256,17 @@ export function AppShell({
 
         {showFooter ? (
           <footer className="border-t border-[var(--brand-divider)] bg-[var(--footer-surface)]">
-            <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-end md:justify-between">
+            <div className="mx-auto max-w-7xl px-4 py-4">
               <div>
                 <p className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
                   SUSS Planner
                 </p>
-                <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                  For students by students. Visit the Git Repo to report issues.
-                </p>
+                {footerContent ? (
+                  <div className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                    {footerContent}
+                  </div>
+                ) : null}
               </div>
-
-              <a
-                className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                href="https://github.com/Simplificatedd/SUSSplanner"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <CodeIcon className="h-4 w-4" />
-                Git Repo
-              </a>
             </div>
           </footer>
         ) : null}

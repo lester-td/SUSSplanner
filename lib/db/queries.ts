@@ -272,6 +272,44 @@ export async function getLatestDataUpdatedAt()
   return getLatestDataUpdatedAtCached();
 }
 
+const getHomePageDataCoverageCached = unstable_cache(
+  async () => {
+    const [
+      courseRows,
+      classRows,
+      semesterRows,
+      assessmentRows,
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(courses),
+      db.select({ count: sql<number>`count(*)::int` }).from(classes),
+      db.select({ count: sql<number>`count(*)::int` }).from(semesters),
+      db.select({ count: sql<number>`count(*)::int` }).from(assessmentComponents),
+    ]);
+
+    return {
+      courseCount: courseRows[0]?.count ?? 0,
+      classCount: classRows[0]?.count ?? 0,
+      semesterCount: semesterRows[0]?.count ?? 0,
+      assessmentCount: assessmentRows[0]?.count ?? 0,
+    };
+  },
+  ["db:getHomePageDataCoverage"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [
+      CACHE_TAGS.courses,
+      CACHE_TAGS.semesters,
+      CACHE_TAGS.classes,
+      CACHE_TAGS.assessments,
+    ],
+  },
+);
+
+export async function getHomePageDataCoverage()
+{
+  return getHomePageDataCoverageCached();
+}
+
 const getSemestersWithClassesAndWeeksCached = unstable_cache(
   async () => {
     const [semesterRows, weekRows] = await Promise.all([
