@@ -17,6 +17,7 @@ type CalculatorModule = {
   courseCode: string;
   courseName: string;
   creditUnits: number;
+  creditUnitsEditable: boolean;
   grade: Grade;
   gradePoint: number;
   isPassFail: boolean;
@@ -78,6 +79,11 @@ function clampNumber(value: number, minimum: number, maximum: number)
 function formatGpa(value: number | null)
 {
   return value === null ? "—" : value.toFixed(2);
+}
+
+function formatCreditUnits(value: number | null)
+{
+  return value === null ? "CU unavailable" : `${value.toFixed(1)} CU`;
 }
 
 function calculateWeightedGpa(modules: CalculatorModule[])
@@ -227,10 +233,6 @@ export function GpaCalculatorClient()
     ),
     [modules],
   );
-  const passFailModuleCount = useMemo(
-    () => modules.filter((module) => module.isPassFail).length,
-    [modules],
-  );
   const currentGpa = useMemo(() => calculateWeightedGpa(modules), [modules]);
   const cumulativeGpa = useMemo(() => {
     const currentPoints = modules.reduce(
@@ -258,7 +260,8 @@ export function GpaCalculatorClient()
       {
         courseCode: course.courseCode,
         courseName: course.courseName ?? "Course name unavailable",
-        creditUnits: course.creditUnits ?? 5,
+        creditUnits: course.creditUnits ?? 0,
+        creditUnitsEditable: course.creditUnits === null,
         grade: DEFAULT_GRADE,
         gradePoint: DEFAULT_GRADE_POINT,
         isPassFail: false,
@@ -300,6 +303,7 @@ export function GpaCalculatorClient()
         courseCode,
         courseName: label,
         creditUnits,
+        creditUnitsEditable: true,
         grade: DEFAULT_GRADE,
         gradePoint: DEFAULT_GRADE_POINT,
         isPassFail: false,
@@ -318,47 +322,38 @@ export function GpaCalculatorClient()
   }
 
   return (
-    <div className="calculator-page calculator-section calculator-section--gpa w-full pb-8 pt-8">
-      <div className="calculator-section-header mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-[30px] font-semibold leading-10 tracking-[-0.03em] text-[var(--on-surface)]">
-            GPA Calculator
-          </h1>
+    <div className="calculator-page calculator-section calculator-section--gpa w-full pb-6">
+      <section className="mb-3 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3 shadow-sm sm:px-4">
+        <div className="flex gap-2 overflow-x-auto pb-1 md:hidden">
+          <StatItem label="Semester GPA" value={formatGpa(currentGpa)} className="min-w-[9.5rem] shrink-0" tone="semester" />
+          <StatItem label="Courses" value={String(modules.length)} className="min-w-[8rem] shrink-0" tone="semester" />
+          <StatItem label="Credit Units" value={currentCredits.toFixed(1)} className="min-w-[9rem] shrink-0" tone="semester" />
+          <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} className="min-w-[9.5rem] shrink-0" tone="all-time" />
+          <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} className="min-w-[10rem] shrink-0" tone="all-time" />
         </div>
-      </div>
-
-      <section className="gpa-summary-row mb-5 grid gap-3 rounded-[1rem] sm:grid-cols-3">
-        <GpaSummaryCard
-          label="Current GPA"
-          value={formatGpa(currentGpa)}
-          detail={`${currentGpaCredits.toFixed(1)} of ${currentCredits.toFixed(1)} CU counted`}
-          emphasized
-        />
-        <GpaSummaryCard
-          label="Cumulative GPA"
-          value={formatGpa(cumulativeGpa)}
-          detail={`${(priorCredits + currentGpaCredits).toFixed(1)} CU included in GPA`}
-        />
-        <GpaSummaryCard
-          label="Modules"
-          value={String(modules.length)}
-          detail={passFailModuleCount > 0 ? `${passFailModuleCount} marked Pass/Fail` : "Included this semester"}
-        />
+          <div className="hidden md:grid md:grid-cols-[repeat(3,minmax(0,1fr))_1px_repeat(2,minmax(0,1fr))] md:items-stretch md:gap-3">
+            <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" />
+            <StatItem label="Courses" value={String(modules.length)} tone="semester" />
+            <StatItem label="Credit Units" value={currentCredits.toFixed(1)} tone="semester" />
+          <div className="hidden self-stretch justify-self-center bg-[var(--outline-variant)] md:block md:w-px" aria-hidden="true" />
+            <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} tone="all-time" />
+            <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} tone="all-time" />
+          </div>
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section className="min-w-0">
-          <div ref={searchContainerRef} className="relative z-20 mb-4">
-            <div className="calculator-panel calculator-major-panel rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+          <div ref={searchContainerRef} className="relative z-20 mb-3">
+            <div className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-2.5 sm:py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   {isCustomModule ? (
-                    <BookIcon className="h-7 w-7 text-[var(--primary)]" />
+                    <BookIcon className="h-5 w-5 text-[var(--primary)]" />
                   ) : (
-                    <SearchIcon className="h-7 w-7 text-[var(--primary)]" />
+                    <SearchIcon className="h-5 w-5 text-[var(--primary)]" />
                   )}
-                  <h2 className="text-[24px] font-medium leading-8 tracking-[-0.02em] text-[var(--on-surface)]">
-                    Add a Module
+                  <h2 className="text-[16px] font-bold leading-6 text-[var(--on-surface)]">
+                    Add module
                   </h2>
                 </div>
                 <button
@@ -394,7 +389,7 @@ export function GpaCalculatorClient()
 
               {isCustomModule ? (
                 <form
-                  className="relative mt-3 h-[42px]"
+                  className="relative mt-3 h-[40px]"
                   onSubmit={(event) => {
                     event.preventDefault();
                     addCustomModule();
@@ -408,8 +403,8 @@ export function GpaCalculatorClient()
                         setCustomModuleLabel(event.target.value);
                         setCustomModuleNotice("");
                       }}
-                      placeholder="Module Code or Module Name"
-                      className="h-full min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                      placeholder="Module code or name"
+                      className="h-full min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                     />
                     <input
                       type="number"
@@ -421,11 +416,11 @@ export function GpaCalculatorClient()
                         setCustomModuleNotice("");
                       }}
                       placeholder="Credit units"
-                      className="h-full min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:px-3 sm:text-[14px]"
+                      className="h-full min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:px-3"
                     />
                     <button
                       type="submit"
-                      className="calculator-primary-action inline-flex h-full items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)] sm:px-4"
+                      className="calculator-primary-action inline-flex h-full items-center justify-center gap-2 rounded-[0.6rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)] sm:px-4"
                     >
                       <PlusIcon className="h-4 w-4" />
                       <span className="hidden sm:inline">Add Module</span>
@@ -436,16 +431,16 @@ export function GpaCalculatorClient()
                   ) : null}
                 </form>
               ) : (
-                <div className="relative mt-3 h-[42px]">
+                <div className="relative mt-3 h-[40px]">
                   <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                   <input
                     id="calculator-course-search"
                     type="search"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search by Module Code or Title..."
+                    placeholder="Search by module code or title..."
                     autoComplete="off"
-                    className="h-full w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    className="h-full w-full rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                   />
                   {searchQuery ? (
                     <button
@@ -487,7 +482,7 @@ export function GpaCalculatorClient()
                                     </span>
                                   </span>
                                   <span className="shrink-0 text-[12px] font-semibold text-[var(--on-surface-variant)]">
-                                    {alreadyAdded ? "Added" : `${course.creditUnits ?? 5} CU`}
+                                    {alreadyAdded ? "Added" : formatCreditUnits(course.creditUnits)}
                                   </span>
                                 </button>
                               </li>
@@ -504,11 +499,10 @@ export function GpaCalculatorClient()
             </div>
           </div>
 
-          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-3.5">
+          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 sm:px-4 sm:py-3.5">
               <div>
-                <h2 className="text-[15px] font-bold text-[var(--on-surface)]">Current semester modules</h2>
-                <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">Pass/Fail modules are excluded from GPA calculations.</p>
+                <h2 className="text-[15px] font-bold text-[var(--on-surface)]">Selected Courses</h2>
               </div>
               {modules.length > 0 ? (
                 <button
@@ -522,7 +516,7 @@ export function GpaCalculatorClient()
             </div>
 
             {modules.length === 0 ? (
-              <div className="px-5 py-12 text-center">
+              <div className="px-4 py-10 text-center">
                 <p className="text-[15px] font-bold text-[var(--on-surface)]">No modules added yet</p>
                 <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)]">
                   Search above to add modules and calculate your GPA.
@@ -531,8 +525,8 @@ export function GpaCalculatorClient()
             ) : (
               <div className="divide-y divide-[var(--brand-divider)]">
                 {modules.map((module) => (
-                  <div key={module.courseCode} className="grid grid-cols-[4.75rem_minmax(0,1fr)] items-stretch">
-                    <div className={`flex items-center justify-center border-r border-[var(--brand-divider)] px-2 py-3 transition-colors ${
+                  <div key={module.courseCode} className="grid grid-cols-[4.25rem_minmax(0,1fr)] items-stretch sm:grid-cols-[4.75rem_minmax(0,1fr)]">
+                    <div className={`flex items-center justify-center border-r border-[var(--brand-divider)] px-1.5 py-1.5 transition-colors sm:px-2 sm:py-2 ${
                       module.isPassFail ? "bg-[var(--surface-container-low)]" : ""
                     }`}>
                       <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 text-center text-[10px] font-bold uppercase tracking-[0.04em] transition-colors ${
@@ -552,67 +546,82 @@ export function GpaCalculatorClient()
                       </label>
                     </div>
                     <article
-                      className={`grid min-w-0 gap-3 px-4 py-4 transition-colors md:grid-cols-[minmax(0,1fr)_5.5rem_5.25rem_5.25rem_2.5rem] md:items-end ${
+                      className={`grid min-w-0 gap-2 px-2.5 py-2 transition-colors md:grid-cols-[minmax(0,1fr)_5.5rem_5.25rem_5.25rem_2.5rem] md:items-center ${
                         module.isPassFail ? "bg-[var(--surface-container-low)]" : "bg-[var(--surface-container-lowest)]"
                       }`}
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 self-center">
                         <p className="text-[14px] font-extrabold text-[var(--primary)]">{module.courseCode}</p>
                         <p className="mt-0.5 truncate text-[13px] text-[var(--on-surface-variant)]">{module.courseName}</p>
-                        {module.isPassFail ? (
-                          <span className="mt-1.5 inline-flex rounded-full bg-[var(--brand-chip-bg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.05em] text-[var(--primary)]">
-                            Excluded from GPA
-                          </span>
-                        ) : null}
                       </div>
-                      <CalculatorField label="Credits">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          value={module.creditUnits}
-                          onChange={(event) => updateModule(module.courseCode, {
-                            creditUnits: Math.max(0, Number(event.target.value) || 0),
-                          })}
-                          className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                        />
-                      </CalculatorField>
-                      <CalculatorField label="Grade">
-                        <select
-                          value={module.grade}
-                          disabled={module.isPassFail}
-                          onChange={(event) => {
-                            const grade = event.target.value as Grade;
-                            updateModule(module.courseCode, {
-                              grade,
-                              gradePoint: gradeToPoint(grade),
-                            });
-                          }}
-                          className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-45"
-                        >
-                          {GRADE_OPTIONS.map((option) => (
-                            <option key={option.grade} value={option.grade}>{option.grade}</option>
-                          ))}
-                        </select>
-                      </CalculatorField>
-                      <CalculatorField label="GPV">
-                        <select
-                          value={module.gradePoint}
-                          disabled={module.isPassFail}
-                          onChange={(event) => {
-                            const gradePoint = Number(event.target.value);
-                            updateModule(module.courseCode, {
-                              gradePoint,
-                              grade: pointToGrade(gradePoint),
-                            });
-                          }}
-                          className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-45"
-                        >
-                          {POINT_OPTIONS.map((point) => (
-                            <option key={point} value={point}>{point.toFixed(1)}</option>
-                          ))}
-                        </select>
-                      </CalculatorField>
+                      <CompactCalculatorField label="Credits">
+                        {module.creditUnitsEditable ? (
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={module.creditUnits}
+                            onChange={(event) => updateModule(module.courseCode, {
+                              creditUnits: Math.max(0, Number(event.target.value) || 0),
+                            })}
+                            className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-center text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                          />
+                        ) : (
+                          <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 text-center text-[13px] font-semibold text-[var(--on-surface)]">
+                            {formatCreditUnits(module.creditUnits)}
+                          </div>
+                        )}
+                      </CompactCalculatorField>
+                      <div className="grid min-w-0 gap-1 md:col-span-2">
+                        <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-bold uppercase tracking-[0.04em] text-[var(--on-surface-variant)]">
+                          <span>Grade</span>
+                          <span>GPV</span>
+                        </div>
+                        {module.isPassFail ? (
+                          <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 text-center text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--primary)]">
+                            Excluded from GPA
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2">
+                              <select
+                                value={module.grade}
+                                disabled={module.isPassFail}
+                                onChange={(event) => {
+                                  const grade = event.target.value as Grade;
+                                  updateModule(module.courseCode, {
+                                    grade,
+                                    gradePoint: gradeToPoint(grade),
+                                  });
+                                }}
+                                className="h-full w-full border-0 bg-transparent px-0 py-0 text-center text-[13px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-45"
+                              >
+                                {GRADE_OPTIONS.map((option) => (
+                                  <option key={option.grade} value={option.grade}>{option.grade}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2">
+                              <select
+                                value={module.gradePoint}
+                                disabled={module.isPassFail}
+                                onChange={(event) => {
+                                  const gradePoint = Number(event.target.value);
+                                  updateModule(module.courseCode, {
+                                    gradePoint,
+                                    grade: pointToGrade(gradePoint),
+                                  });
+                                }}
+                                className="h-full w-full border-0 bg-transparent px-0 py-0 text-center text-[13px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-45"
+                              >
+                                {POINT_OPTIONS.map((point) => (
+                                  <option key={point} value={point}>{point.toFixed(1)}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       <button
                         type="button"
                         aria-label={`Remove ${module.courseCode}`}
@@ -630,7 +639,7 @@ export function GpaCalculatorClient()
         </section>
 
         <aside className="space-y-4">
-          <section className="calculator-panel calculator-major-panel relative rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
+          <section className="calculator-panel calculator-major-panel relative rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:p-3">
             <div className="group absolute right-3 top-3">
               <button
                 type="button"
@@ -676,7 +685,7 @@ export function GpaCalculatorClient()
             </div>
           </section>
 
-          <section className="calculator-panel calculator-nested-panel rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-4">
+          <section className="calculator-panel calculator-nested-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-2.5 sm:p-3">
             <h2 className="text-[13px] font-bold text-[var(--on-surface)]">SUSS grade scale</h2>
             <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-1.5 text-[12px]">
               {GRADE_OPTIONS.map((option) => (
@@ -726,37 +735,6 @@ export function GpaCalculatorClient()
   );
 }
 
-function GpaSummaryCard({
-  label,
-  value,
-  detail,
-  emphasized = false,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  emphasized?: boolean;
-})
-{
-  return (
-    <article className={`gpa-summary-card rounded-[0.9rem] border p-4 elev-1 ${
-      emphasized
-        ? "gpa-summary-card--emphasized border-[var(--primary)] bg-[var(--primary)] text-on-primary"
-        : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface)]"
-    }`}>
-      <p className={`gpa-summary-card__meta text-[12px] font-bold uppercase tracking-[0.06em] ${
-        emphasized ? "text-white/75" : "text-[var(--on-surface-variant)]"
-      }`}>
-        {label}
-      </p>
-      <p className="mt-1 text-[32px] font-extrabold leading-10 tracking-[-0.04em]">{value}</p>
-      <p className={`gpa-summary-card__meta mt-1 text-[12px] ${emphasized ? "text-white/75" : "text-[var(--on-surface-variant)]"}`}>
-        {detail}
-      </p>
-    </article>
-  );
-}
-
 function CalculatorField({
   label,
   children,
@@ -768,6 +746,54 @@ function CalculatorField({
   return (
     <label className="grid min-w-0 grid-rows-[1rem_2.25rem] gap-1">
       <span className="block whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.04em] text-[var(--on-surface-variant)]">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function StatItem({
+  label,
+  value,
+  tone = "default",
+  className = "",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "semester" | "all-time";
+  className?: string;
+})
+{
+  const toneClasses = tone === "semester"
+    ? "border-[var(--outline-variant)] bg-[var(--surface-container-low)]"
+    : tone === "all-time"
+      ? "border-[var(--outline-variant)] bg-[color-mix(in_srgb,var(--surface-container-lowest),var(--surface-container-high) 18%)]"
+      : "border-[var(--outline-variant)] bg-[color-mix(in_srgb,var(--surface-container-lowest),var(--surface-container-low) 35%)]";
+
+  return (
+    <div className={`min-w-0 rounded-[0.75rem] border px-3 py-2.5 ${toneClasses} ${className}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
+        {label}
+      </p>
+      <p className="mt-1 text-[28px] font-extrabold leading-8 text-[var(--on-surface)]">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function CompactCalculatorField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+})
+{
+  return (
+    <label className="grid min-w-0 gap-1">
+      <span className="block whitespace-nowrap text-center text-[10px] font-bold uppercase leading-4 tracking-[0.04em] text-[var(--on-surface-variant)]">
         {label}
       </span>
       {children}
