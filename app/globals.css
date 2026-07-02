@@ -305,6 +305,19 @@
   display: inline;
 }
 
+.app-navbar {
+  border-color: color-mix(in srgb, var(--header-divider), var(--header-surface) 42%);
+  background:
+    radial-gradient(120% 180% at 0% 0%, rgb(var(--suss-light-blue-rgb) / 0.12), transparent 52%),
+    radial-gradient(120% 180% at 100% 0%, rgb(var(--suss-red-rgb) / 0.06), transparent 50%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--header-surface), #ffffff 14%),
+      color-mix(in srgb, var(--header-surface), #ffffff 6%)
+    );
+  box-shadow: var(--shadow-elev-1);
+}
+
 @media (max-width: 1199px) {
   .app-navbar__inner {
     padding-top: 0.625rem;
