@@ -16,6 +16,7 @@
     "build": "next build",
     "prestart": "npm run validate:start",
     "start": "next start",
+    "quotes:build": "python3 scripts/build-quotes-json.py",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate"
   },
