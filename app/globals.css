@@ -667,9 +667,12 @@
 }
 
 :root[data-color-scheme="dark"] .planner-drop-zone--active {
-  border-color: var(--primary);
-  background: var(--primary-fixed);
-  box-shadow: 0 0 0 1px var(--primary-ring-soft);
+  border-color: rgb(var(--suss-light-blue-rgb) / 0.52);
+  background: color-mix(in srgb, var(--surface-container), var(--suss-light-blue) 9%);
+  box-shadow:
+    0 0 0 1px rgb(var(--suss-light-blue-rgb) / 0.24),
+    0 14px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 :root[data-color-scheme="dark"] .planner-course-card,
@@ -678,6 +681,17 @@
   border-color: var(--brand-divider);
   background: var(--surface-container);
   box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .planner-course-card:not(.planner-course-card--active):hover {
+  border-color: rgb(var(--suss-light-blue-rgb) / 0.46);
+  background: #1A2942;
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.58),
+    0 8px 18px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgb(var(--suss-light-blue-rgb) / 0.22),
+    0 0 24px rgb(var(--suss-light-blue-rgb) / 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 :root[data-color-scheme="dark"] .planner-course-card--active,
@@ -691,6 +705,22 @@
 :root[data-color-scheme="dark"] .planner-empty-state {
   border-color: var(--outline-variant);
   background: var(--input-surface);
+}
+
+.planner-continuation-card {
+  --planner-continuation-border: rgb(var(--suss-blue-rgb) / 0.18);
+  --planner-continuation-bg: color-mix(in srgb, var(--surface-container-lowest), var(--suss-grey) 18%);
+  --planner-continuation-accent: rgb(var(--suss-blue-rgb) / 0.22);
+
+  border-color: var(--planner-continuation-border);
+  background: var(--planner-continuation-bg);
+  box-shadow: inset 3px 0 0 var(--planner-continuation-accent);
+}
+
+:root[data-color-scheme="dark"] .planner-continuation-card {
+  --planner-continuation-border: rgb(var(--suss-light-blue-rgb) / 0.28);
+  --planner-continuation-bg: color-mix(in srgb, var(--surface-container), #000 8%);
+  --planner-continuation-accent: rgb(var(--suss-light-blue-rgb) / 0.35);
 }
 
 :root[data-color-scheme="dark"] .planner-notice {

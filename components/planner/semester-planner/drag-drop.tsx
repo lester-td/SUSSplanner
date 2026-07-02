@@ -24,6 +24,15 @@ export const SEMESTER_DROP_ID_PREFIX = "semester-";
 
 const GHOST_CATCHUP_RATE = 0.09;
 
+export function getPlannerDropZoneClass(isOver: boolean)
+{
+  return `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
+    isOver
+      ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] ring-2 ring-[var(--primary-ring-soft)] shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
+      : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
+  }`;
+}
+
 export function getCourseDropTarget(overId: string | null): CourseDropTarget | null
 {
   if (!overId)
@@ -172,7 +181,7 @@ export function CourseCard({
       style={style}
       {...(draggable ? listeners : {})}
       {...(draggable ? attributes : {})}
-      className={`planner-course-card rounded-[0.85rem] border px-3 py-2.5 ${active ? "planner-course-card--active transition-colors duration-200" : "transition-all duration-200"} ${
+      className={`planner-course-card rounded-[0.85rem] border px-3 py-2.5 ${active ? "planner-course-card--active transition-colors duration-200" : "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-elev-3)]"} ${
         draggable ? "cursor-grab active:cursor-grabbing select-none touch-none" : ""
       } ${
         active

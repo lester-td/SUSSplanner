@@ -8,14 +8,17 @@ import {
   DragOverlay,
   PointerSensor,
   TouchSensor,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import type { CollisionDetection, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
 import {
   BookIcon,
   CalendarWeekIcon,
+  ContinueIcon,
   DownloadIcon,
   EditCalendarIcon,
   ListIcon,
@@ -32,6 +35,7 @@ import {
   DroppableArticle,
   SEMESTER_DROP_ID_PREFIX,
   getCourseDropTarget,
+  getPlannerDropZoneClass,
 } from "@/components/planner/semester-planner/drag-drop";
 import {
   buildSemesterOptions,
@@ -59,6 +63,17 @@ import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
 type SearchResponse = {
   courses: CourseSearchResult[];
+};
+
+const pointerFirstCollisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+
+  if (pointerCollisions.length > 0)
+  {
+    return pointerCollisions;
+  }
+
+  return rectIntersection(args);
 };
 
 export function SemesterPlannerClient({
@@ -914,6 +929,7 @@ export function SemesterPlannerClient({
             activator: AutoScrollActivator.Pointer,
             layoutShiftCompensation: false,
           }}
+          collisionDetection={pointerFirstCollisionDetection}
           sensors={sensors}
           onDragStart={handleCourseDragStart}
           onDragEnd={handleCourseDragEnd}
@@ -943,11 +959,7 @@ export function SemesterPlannerClient({
                   <DroppableArticle
                     key={semesterIndex}
                     id={`${SEMESTER_DROP_ID_PREFIX}${semesterIndex}`}
-                    className={(isOver) => `planner-drop-zone rounded-[1rem] border px-4 py-4 transition-all ${
-                      isOver
-                        ? "planner-drop-zone--active border-[var(--primary)] bg-[var(--brand-chip-bg)] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
-                        : "border-[var(--brand-divider)] bg-[var(--surface-container-low)]"
-                    }`}
+                    className={getPlannerDropZoneClass}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -972,20 +984,28 @@ export function SemesterPlannerClient({
                     </div>
 
                     {continuedCourses.length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                         {continuedCourses.map((course) => (
-                          <span
+                          <div
                             key={`${course.id}-continued-${semesterIndex}`}
-                            className="rounded-[999px] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[11px] font-medium leading-4 text-[var(--on-surface-variant)]"
+                            className="planner-continuation-card flex min-h-12 items-center gap-2 rounded-[0.75rem] border border-dashed border-[var(--outline-variant)] px-3 py-2 text-[var(--on-surface-variant)]"
                           >
-                            {course.courseCode} continues
-                          </span>
+                            <ContinueIcon className="h-4 w-4 shrink-0 opacity-75" />
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-medium leading-4">
+                                Continues from Semester {semesterIndex}
+                              </p>
+                              <p className="truncate text-[12px] font-semibold leading-4">
+                                {course.courseCode}
+                              </p>
+                            </div>
+                          </div>
                         ))}
                       </div>
                     ) : null}
 
                     <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                      {startingCourses.length === 0 ? (
+                      {startingCourses.length === 0 && continuedCourses.length === 0 ? (
                         <p className="planner-empty-state rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-5 text-[12px] leading-5 text-[var(--on-surface-variant)] sm:col-span-2 xl:col-span-3">
                           {draggedCourseId ? "Drop module here." : "Move modules here from the planner bank."}
                         </p>
