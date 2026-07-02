@@ -631,7 +631,7 @@ export function CourseSearchPage({
   {
     return (
       <>
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] bg-[var(--background)] pb-2 md:sticky md:top-0 md:z-20 md:pt-2">
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] pb-2 md:sticky md:top-0 md:z-20 md:pt-2">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
             <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
