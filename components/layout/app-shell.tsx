@@ -8,6 +8,8 @@ import {
   BookIcon,
   CalculatorIcon,
   CalendarWeekIcon,
+  CodeIcon,
+  EditIcon,
   LayersIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
@@ -18,8 +20,30 @@ import {
 } from "@/lib/timetable/date-utils";
 import type { PlannerSection } from "@/lib/timetable/types";
 
-type AppSection = "home" | PlannerSection | "calculator" | "settings";
+type AppSection = "home" | PlannerSection | "calculator" | "settings" | "feedback";
 type AppShellContentLayout = "framed" | "full-bleed";
+
+function formatDataUpdatedValue(value: Date | string | null)
+{
+  if (!value)
+  {
+    return "Unavailable";
+  }
+
+  const updatedAt = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(updatedAt.getTime()))
+  {
+    return "Unavailable";
+  }
+
+  const formattedDate = new Intl.DateTimeFormat("en-SG", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Singapore",
+  }).format(updatedAt);
+
+  return `${formattedDate} SGT`;
+}
 
 const navItems = [
   {
@@ -52,6 +76,12 @@ const navItems = [
     href: "/settings",
     icon: SettingsIcon,
   },
+  {
+    id: "feedback",
+    label: "Feedback",
+    href: "/feedback",
+    icon: EditIcon,
+  },
 ] as const satisfies Array<{
   id: AppSection;
   label: string;
@@ -69,6 +99,7 @@ export function AppShell({
   showNav = true,
   showFooter = true,
   footerContent = null,
+  dataUpdatedAt = null,
   contentLayout = "framed",
   contentFrameClassName = "",
   contentContainerClassName = "",
@@ -80,6 +111,7 @@ export function AppShell({
   showNav?: boolean;
   showFooter?: boolean;
   footerContent?: ReactNode;
+  dataUpdatedAt?: Date | string | null;
   contentLayout?: AppShellContentLayout;
   contentFrameClassName?: string;
   contentContainerClassName?: string;
@@ -256,16 +288,40 @@ export function AppShell({
 
         {showFooter ? (
           <footer className="border-t border-[var(--brand-divider)] bg-[var(--footer-surface)]">
-            <div className="mx-auto max-w-7xl px-4 py-4">
-              <div>
+            <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
                 <p className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
                   SUSS Planner
                 </p>
-                {footerContent ? (
-                  <div className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                    {footerContent}
-                  </div>
-                ) : null}
+                <div className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                  <p>
+                    This is a student developed web application in beta phase. The information is provided with absolutely no warranties, although it has been checked to the best of our ability.
+                  </p>
+                  <p className="mt-1 font-semibold text-[var(--on-surface)]">
+                    Data last updated: {formatDataUpdatedValue(dataUpdatedAt)}
+                  </p>
+                  {footerContent ? <div className="mt-1">{footerContent}</div> : null}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  prefetch
+                  href="/feedback"
+                  className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                >
+                  <EditIcon className="h-4 w-4" />
+                  Feedback
+                </Link>
+                <a
+                  className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  href="https://github.com/Simplificatedd/SUSSplanner"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <CodeIcon className="h-4 w-4" />
+                  Git Repo
+                </a>
               </div>
             </div>
           </footer>

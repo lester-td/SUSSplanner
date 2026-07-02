@@ -1,13 +1,16 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { PlannerClient } from "@/components/timetable/planner-client";
-import { getSemestersWithClassesAndWeeks } from "@/lib/db/queries";
+import { getLatestDataUpdatedAt, getSemestersWithClassesAndWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function TimetablePage()
 {
-  const semesters = await getSemestersWithClassesAndWeeks();
+  const [semesters, latestDataUpdatedAt] = await Promise.all([
+    getSemestersWithClassesAndWeeks(),
+    getLatestDataUpdatedAt(),
+  ]);
   const currentSemesterContext = getCurrentSemesterContext(
     semesters.map(({ weeks, ...semesterData }) => semesterData),
     semesters.flatMap((item) => item.weeks),
@@ -18,6 +21,7 @@ export default async function TimetablePage()
     <AppShell
       activeSection="planner"
       currentSemesterContext={currentSemesterContext}
+      dataUpdatedAt={latestDataUpdatedAt}
       contentLayout="full-bleed"
     >
       <PlannerClient

@@ -7,6 +7,7 @@ import {
   getCourseByCode,
   getCourseClasses,
   getCourseOfferedSemesters,
+  getLatestDataUpdatedAt,
   getSemestersWithWeeks,
 } from "@/lib/db/queries";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
@@ -20,10 +21,11 @@ export default async function CourseDetailRoute({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 })
 {
-  const [{ courseCode }, rawSearchParams, semesterTree] = await Promise.all([
+  const [{ courseCode }, rawSearchParams, semesterTree, latestDataUpdatedAt] = await Promise.all([
     params,
     searchParams,
     getSemestersWithWeeks(),
+    getLatestDataUpdatedAt(),
   ]);
 
   const currentSemesterContext = getCurrentSemesterContext(
@@ -48,7 +50,11 @@ export default async function CourseDetailRoute({
   ]);
 
   return (
-    <AppShell activeSection="courses" currentSemesterContext={currentSemesterContext}>
+    <AppShell
+      activeSection="courses"
+      currentSemesterContext={currentSemesterContext}
+      dataUpdatedAt={latestDataUpdatedAt}
+    >
       <CourseDetailPage
         course={course}
         offeredSemesters={offeredSemesters}

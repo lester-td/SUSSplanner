@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { CalculatorsPageClient } from "@/components/calculator/calculators-page-client";
-import { getSemestersWithWeeks } from "@/lib/db/queries";
+import { getLatestDataUpdatedAt, getSemestersWithWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const dynamic = "force-dynamic";
@@ -18,14 +18,21 @@ export const metadata: Metadata = {
 
 export default async function CalculatorsPage()
 {
-  const semesterTree = await getSemestersWithWeeks();
+  const [semesterTree, latestDataUpdatedAt] = await Promise.all([
+    getSemestersWithWeeks(),
+    getLatestDataUpdatedAt(),
+  ]);
   const currentSemesterContext = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
   );
 
   return (
-    <AppShell activeSection="calculator" currentSemesterContext={currentSemesterContext}>
+    <AppShell
+      activeSection="calculator"
+      currentSemesterContext={currentSemesterContext}
+      dataUpdatedAt={latestDataUpdatedAt}
+    >
       <CalculatorsPageClient />
     </AppShell>
   );

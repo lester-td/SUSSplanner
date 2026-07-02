@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ShareClient } from "@/components/timetable/share-client";
-import { getSemestersWithWeeks, getTimetableDataFromClassIdentifiers } from "@/lib/db/queries";
+import { getLatestDataUpdatedAt, getSemestersWithWeeks, getTimetableDataFromClassIdentifiers } from "@/lib/db/queries";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
 
@@ -12,8 +12,9 @@ export default async function SharePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 })
 {
-  const [semesterTree, rawSearchParams] = await Promise.all([
+  const [semesterTree, latestDataUpdatedAt, rawSearchParams] = await Promise.all([
     getSemestersWithWeeks(),
+    getLatestDataUpdatedAt(),
     searchParams,
   ]);
 
@@ -33,6 +34,7 @@ export default async function SharePage({
       <AppShell
         activeSection="share"
         currentSemesterContext={currentSemesterContext}
+        dataUpdatedAt={latestDataUpdatedAt}
         contentLayout="full-bleed"
       >
         <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
@@ -60,6 +62,7 @@ export default async function SharePage({
       <AppShell
         activeSection="share"
         currentSemesterContext={currentSemesterContext}
+        dataUpdatedAt={latestDataUpdatedAt}
         contentLayout="full-bleed"
       >
         <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
@@ -83,6 +86,7 @@ export default async function SharePage({
     <AppShell
       activeSection="share"
       currentSemesterContext={currentSemesterContext}
+      dataUpdatedAt={latestDataUpdatedAt}
       contentLayout="full-bleed"
     >
       <ShareClient sharedState={decodedState} timetable={timetable} />

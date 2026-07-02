@@ -8,6 +8,7 @@ import {
   CalculatorIcon,
   CalendarWeekIcon,
   CalendarIcon,
+  EditIcon,
   HomeIcon,
   SchoolIcon,
   SettingsIcon,
@@ -96,11 +97,6 @@ const usefulLinks = [
     icon: SchoolIcon,
   }
 ] as const;
-
-function formatDataUpdatedAt(value: Date | string | null)
-{
-  return `Data last updated: ${formatDataUpdatedValue(value)}`;
-}
 
 function formatDataUpdatedValue(value: Date | string | null)
 {
@@ -192,7 +188,7 @@ export default async function HomePage()
     ...usefulLinks.map((item) => ({
       label: item.label,
       description: "SUSS Website",
-      href: item.href === "#" ? "#portal-links" : item.href,
+      href: item.href,
       keywords: ["useful link", "student link"],
     })),
   ] satisfies HomeSearchItem[];
@@ -202,17 +198,7 @@ export default async function HomePage()
     <AppShell
       activeSection="home"
       currentSemesterContext={currentSemesterContext}
-      showFooter={true}
-      footerContent={(
-        <>
-          <p>
-            This is a student developed web application in beta phase. The information is provided with absolutely no warranties, although it has been checked to the best of our ability.
-          </p>
-          <p className="mt-1 font-semibold text-[var(--on-surface)]">
-            {formatDataUpdatedAt(latestDataUpdatedAt)}
-          </p>
-        </>
-      )}
+      dataUpdatedAt={latestDataUpdatedAt}
     >
       <div className="home-page grid gap-6 sm:gap-8">
         <section className="pt-1 sm:pt-2">
@@ -287,6 +273,14 @@ export default async function HomePage()
                 <p className="mt-2 text-[12px] leading-5 text-[var(--on-surface-variant)]">
                   If classes or schedules have changed since the last update, refer to the SUSS Backpack app or Canvas LMS for the latest official information.
                 </p>
+                <Link
+                  prefetch
+                  href="/feedback"
+                  className="mt-4 inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                >
+                  <EditIcon className="h-4 w-4" />
+                  Send feedback
+                </Link>
               </section>
 
               <section className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm">
