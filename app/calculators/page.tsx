@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { GpaCalculatorClient } from "@/components/calculator/gpa-calculator-client";
-import { OcasCalculatorClient } from "@/components/calculator/ocas-calculator-client";
+import { CalculatorsPageClient } from "@/components/calculator/calculators-page-client";
 import { getSemestersWithWeeks } from "@/lib/db/queries";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "GPA & OCAS Calculators | SUSS Planner",
+  title: "Calculators | SUSS Planner",
   description: "Calculate GPA and simulate OCAS assessment outcomes for SUSS modules.",
   robots: {
     index: false,
@@ -27,12 +26,7 @@ export default async function CalculatorsPage()
 
   return (
     <AppShell activeSection="calculator" currentSemesterContext={currentSemesterContext}>
-      <div className="px-3 md:px-[16px]">
-        <div className="calculators-stack mx-auto flex w-full max-w-7xl flex-col gap-10 md:gap-12">
-          <GpaCalculatorClient />
-          <OcasCalculatorClient />
-        </div>
-      </div>
+      <CalculatorsPageClient />
     </AppShell>
   );
 }

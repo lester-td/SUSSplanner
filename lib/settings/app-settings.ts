@@ -1,5 +1,5 @@
 import { COURSE_COLOR_PALETTE } from "@/lib/timetable/timetable-utils";
-import type { TimetableOrientation } from "@/lib/timetable/types";
+import type { TimetableOrientation, TimetableStudyMode } from "@/lib/timetable/types";
 
 export type ColorSchemePreference = "system" | "light" | "dark";
 
@@ -7,6 +7,7 @@ export type SettingsState = {
   colorScheme: ColorSchemePreference;
   themeId: string;
   timetableOrientation: TimetableOrientation;
+  timetableStudyMode: TimetableStudyMode;
   registrationReminders: boolean;
 };
 
@@ -23,6 +24,7 @@ export const DEFAULT_APP_SETTINGS: SettingsState = {
   colorScheme: "system",
   themeId: "current-timetable",
   timetableOrientation: "horizontal",
+  timetableStudyMode: "full-time",
   registrationReminders: true,
 };
 
@@ -64,6 +66,11 @@ function isTimetableOrientation(value: unknown): value is TimetableOrientation
   return value === "horizontal" || value === "vertical";
 }
 
+function isTimetableStudyMode(value: unknown): value is TimetableStudyMode
+{
+  return value === "full-time" || value === "part-time";
+}
+
 export function getThemeOption(themeId: string)
 {
   return APP_THEME_OPTIONS.find((theme) => theme.id === themeId) ?? APP_THEME_OPTIONS[0];
@@ -93,6 +100,9 @@ export function normalizeAppSettings(value: unknown): SettingsState
     timetableOrientation: isTimetableOrientation(candidate.timetableOrientation)
       ? candidate.timetableOrientation
       : DEFAULT_APP_SETTINGS.timetableOrientation,
+    timetableStudyMode: isTimetableStudyMode(candidate.timetableStudyMode)
+      ? candidate.timetableStudyMode
+      : DEFAULT_APP_SETTINGS.timetableStudyMode,
     registrationReminders: typeof candidate.registrationReminders === "boolean"
       ? candidate.registrationReminders
       : DEFAULT_APP_SETTINGS.registrationReminders,

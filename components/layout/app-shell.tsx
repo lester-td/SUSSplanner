@@ -13,10 +13,15 @@ import {
   LayersIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
-import { getCurrentWeekChip, type CurrentSemesterContext } from "@/lib/timetable/date-utils";
+import {
+  formatCurrentWeekChipForMobile,
+  getCurrentWeekChip,
+  type CurrentSemesterContext,
+} from "@/lib/timetable/date-utils";
 import type { PlannerSection } from "@/lib/timetable/types";
 
 type AppSection = "home" | PlannerSection | "calculator" | "settings";
+type AppShellContentLayout = "framed" | "full-bleed";
 
 const navItems = [
   {
@@ -71,6 +76,9 @@ export function AppShell({
   showHeader = true,
   showNav = true,
   showFooter = true,
+  contentLayout = "framed",
+  contentFrameClassName = "",
+  contentContainerClassName = "",
 }: {
   activeSection: AppSection | null;
   currentSemesterContext?: CurrentSemesterContext | null;
@@ -78,6 +86,9 @@ export function AppShell({
   showHeader?: boolean;
   showNav?: boolean;
   showFooter?: boolean;
+  contentLayout?: AppShellContentLayout;
+  contentFrameClassName?: string;
+  contentContainerClassName?: string;
 })
 {
   const [isMobileHeaderCollapsed, setIsMobileHeaderCollapsed] = useState(false);
@@ -87,6 +98,7 @@ export function AppShell({
     currentSemesterContext?.week ?? null,
     currentSemesterContext?.isVacation ?? false,
   );
+  const currentWeekLabelMobile = formatCurrentWeekChipForMobile(currentWeekLabel);
 
   useEffect(() => {
     if (!showHeader || !showNav)
@@ -219,7 +231,7 @@ export function AppShell({
                 </Link>
 
                 <div className="app-navbar__mobile-context app-navbar-context min-w-0 flex-1 truncate whitespace-nowrap px-1 py-1 text-right text-[11px] font-semibold leading-4 text-[var(--header-text-muted)] sm:text-[13px] sm:leading-5">
-                  {currentWeekLabel}
+                  {currentWeekLabelMobile}
                 </div>
               </div>
 
@@ -233,9 +245,19 @@ export function AppShell({
         </header>
       ) : null}
 
-      <section className="app-content-surface flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)]">
+      <section
+        className={`app-content-surface flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] ${activeSection === "planner" && contentLayout === "full-bleed" ? "app-content-surface--planner-full-bleed" : ""}`}
+      >
         <div className="flex min-h-0 flex-1 flex-col">
-          {children}
+          {contentLayout === "framed" ? (
+            <div className={`px-3 pb-3 pt-3 md:px-[16px] md:pt-8 ${contentFrameClassName}`.trim()}>
+              <div className={`mx-auto w-full max-w-7xl ${contentContainerClassName}`.trim()}>
+                {children}
+              </div>
+            </div>
+          ) : (
+            children
+          )}
         </div>
 
         {showFooter ? (

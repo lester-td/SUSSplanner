@@ -8,11 +8,11 @@ import {
   announceTimetableUpdated,
   isCourseInTimetable,
   loadSavedTimetable,
-  readTimetableStudyMode,
   removeCourseCodeFromSavedTimetable,
   saveTimetableToLocalStorage,
   upsertClassInSavedTimetable,
 } from "@/lib/timetable/local-storage";
+import { readAppSettings } from "@/lib/settings/app-settings";
 import type {
   CourseClassRecord,
   SemesterRecord,
@@ -172,7 +172,7 @@ export function AddToTimetableButton({
       }
 
       const payload = await response.json() as ClassesResponse;
-      const preferredGroupType = readTimetableStudyMode() === "part-time" ? "CRN" : "TG";
+      const preferredGroupType = readAppSettings().timetableStudyMode === "part-time" ? "CRN" : "TG";
       const selectedClass = pickPreferredClass(payload.classes, preferredGroupType);
       if (!selectedClass)
       {

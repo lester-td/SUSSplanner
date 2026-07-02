@@ -441,19 +441,6 @@ export function CourseSearchPage({
   }, []);
 
   useEffect(() => {
-    const pageShell = pageShellRef.current;
-    if (!pageShell)
-    {
-      return;
-    }
-
-    pageShell.style.setProperty(
-      "--course-search-navbar-gap",
-      isMobileSearchHeaderCompact ? "0.5rem" : "1rem",
-    );
-  }, [isMobileSearchHeaderCompact]);
-
-  useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 767px)");
     let animationFrameId = 0;
 
@@ -644,7 +631,7 @@ export function CourseSearchPage({
   {
     return (
       <>
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2 md:sticky md:top-0 md:z-20 md:bg-[var(--surface-container-lowest)] md:pt-2">
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2 md:sticky md:top-0 md:z-20 md:pt-2">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
             <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
@@ -781,25 +768,27 @@ export function CourseSearchPage({
   }
 
   return (
-    <div ref={pageShellRef} className="course-search-page px-1.5 pb-24 md:px-[16px] md:pb-3">
+    <div ref={pageShellRef} className="course-search-page">
       <div className="mx-auto grid max-w-7xl gap-2.5 md:grid-cols-[minmax(0,1fr)_21rem]">
-        <section className="course-search-results-column space-y-2.5 md:pr-4">
-          <div className={`course-search-sticky-header sticky z-30 -mx-1.5 border-b border-[var(--brand-divider)] px-4 transition-[padding-top,padding-bottom,background-color] duration-200 ${isMobileSearchHeaderCompact ? "pb-2" : "pb-3"} md:mx-0 md:px-0 md:pb-3`}>
-            <div
-              aria-hidden={isMobileSearchHeaderCompact}
-              className={`overflow-hidden transition-[max-height,opacity] duration-200 ${isMobileSearchHeaderCompact ? "max-h-0 opacity-0" : "max-h-20 opacity-100"} md:max-h-none md:opacity-100`}
-            >
-              <div className="flex items-baseline justify-between gap-2 md:items-end md:gap-3">
-                <div className="min-w-0">
-                  <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.02em] text-[var(--on-surface)] md:text-[28px] md:leading-9">Course Search</h1>
-                </div>
-                <div className="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                  {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
-                </div>
+        <section className="course-search-results-column space-y-1.5 md:space-y-2.5 md:pr-4">
+          <div
+            aria-hidden={isMobileSearchHeaderCompact}
+            className={`overflow-hidden transition-[max-height,opacity] duration-200 ${isMobileSearchHeaderCompact ? "max-h-0 opacity-0" : "max-h-20 opacity-100"} md:max-h-none md:opacity-100`}
+          >
+            <div className="flex items-baseline justify-between gap-2 md:items-end md:gap-3">
+              <div className="min-w-0">
+                <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.02em] text-[var(--on-surface)] md:text-[28px] md:leading-9">Course Search</h1>
+              </div>
+              <div className="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
+                {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
               </div>
             </div>
+          </div>
 
-            <label className={`relative block transition-[margin-top] duration-200 ${isMobileSearchHeaderCompact ? "mt-0" : "mt-4"} md:mt-4`}>
+          <div className={`course-search-sticky-header sticky z-30 border-b border-[var(--brand-divider)] transition-[padding-bottom,background-color] duration-200 ${isMobileSearchHeaderCompact ? "pb-2" : "pb-3"} md:pb-3`}>
+            <div
+              className={`relative block transition-[margin-top] duration-200 ${isMobileViewport ? (isMobileSearchHeaderCompact ? "mt-0" : "mt-2") : isMobileSearchHeaderCompact ? "mt-0" : "mt-4"} md:mt-4`}
+            >
               <SearchIcon className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] transition-[left,width,height] duration-200 ${isMobileViewport ? "left-3 h-4 w-4" : isMobileSearchHeaderCompact ? "left-3 h-4 w-4" : "left-3.5 h-5 w-5"} md:left-4 md:h-5 md:w-5`} />
               <input
                 type="search"
@@ -808,7 +797,7 @@ export function CourseSearchPage({
                 placeholder={isMobileViewport ? "Course code, title, or description" : "Search by course code, course title, or descriptions"}
                 className={`elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] pr-4 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-[border-color,box-shadow,padding,font-size] duration-200 ${isMobileViewport ? "py-2.5 pl-10 text-[16px]" : isMobileSearchHeaderCompact ? "py-2.5 pl-10 text-[14px]" : "py-3 pl-11 text-[15px]"} md:py-3 md:pl-12 md:text-[15px]`}
               />
-            </label>
+            </div>
           </div>
 
           {hasActiveCourseFilters(filters) && filteredCourses.length === 0 && !loading ? (

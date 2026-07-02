@@ -5,6 +5,7 @@ export type WeekType = "TEACHING" | "STUDY" | "EXAM";
 export type PlannerSection = "planner" | "semester-planner" | "courses" | "share";
 export type PlannerViewMode = "class" | "exam";
 export type TimetableOrientation = "horizontal" | "vertical";
+export type TimetableStudyMode = "full-time" | "part-time";
 
 export type SharedClassIdentifier = {
   courseCode: string;
