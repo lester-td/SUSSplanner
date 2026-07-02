@@ -245,7 +245,9 @@ export function AppShell({
         </header>
       ) : null}
 
-      <section className="app-content-surface flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)]">
+      <section
+        className={`app-content-surface flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] ${activeSection === "planner" && contentLayout === "full-bleed" ? "app-content-surface--planner-full-bleed" : ""}`}
+      >
         <div className="flex min-h-0 flex-1 flex-col">
           {contentLayout === "framed" ? (
             <div className={`px-3 pb-3 pt-3 md:px-[16px] md:pt-8 ${contentFrameClassName}`.trim()}>

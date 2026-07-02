@@ -453,6 +453,10 @@
   background: var(--background);
 }
 
+:root[data-color-scheme="dark"] .app-content-surface--planner-full-bleed {
+  background: var(--surface-container-lowest);
+}
+
 :root[data-color-scheme="dark"] .course-search-sticky-header {
   background: var(--background);
 }
