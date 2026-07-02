@@ -18,12 +18,12 @@ export function CalculatorsPageClient()
 
   return (
     <div className="calculators-page w-full">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3">
         <h1 className="text-[30px] font-semibold leading-10 text-[var(--on-surface)]">
           Calculators
         </h1>
         <div
-          className="inline-grid h-10 w-full grid-cols-2 rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1 sm:w-auto"
+          className="inline-grid h-12 w-full grid-cols-2 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5 sm:w-auto"
           role="tablist"
           aria-label="Calculator type"
         >
@@ -37,7 +37,7 @@ export function CalculatorsPageClient()
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setMode(item.id)}
-                className={`min-w-[6rem] rounded-[0.45rem] px-3 text-[13px] font-semibold leading-5 transition-colors ${
+                className={`min-w-[7rem] rounded-[0.8rem] px-4 text-[14px] font-semibold leading-5 transition-colors ${
                   isActive
                     ? "calculator-primary-action bg-[var(--primary)] text-on-primary"
                     : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
