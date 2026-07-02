@@ -124,6 +124,90 @@ function formatCourseLevel(courseLevel: string | null)
   return levelNumber === null ? courseLevel : `Level ${levelNumber}`;
 }
 
+function readRuntimeString(record: object, ...keys: string[])
+{
+  const source = record as Record<string, unknown>;
+
+  for (const key of keys)
+  {
+    const value = source[key];
+    if (typeof value === "string" && value.trim())
+    {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function uniqueSortedText(values: Array<string | null>)
+{
+  return [...new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))]
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function isLikelyCourseLevelFacet(value: string)
+{
+  const normalized = value.trim().toLowerCase();
+  return /^(?:level\s*)?[1-6](?:00|xx|xxx)?$/.test(normalized);
+}
+
+function mostlyLooksLikeCourseLevels(values: string[])
+{
+  return values.length > 0
+    && values.filter(isLikelyCourseLevelFacet).length >= Math.ceil(values.length * 0.75);
+}
+
+function mostlyLooksLikeSchools(values: string[])
+{
+  return values.length > 0
+    && values.filter((value) => !isLikelyCourseLevelFacet(value)).length >= Math.ceil(values.length * 0.75);
+}
+
+function normalizeCourseSearchFacets({
+  schools,
+  courseLevels,
+  courses,
+}: {
+  schools: string[];
+  courseLevels: string[];
+  courses: CourseSearchResult[];
+})
+{
+  let normalizedSchools = schools;
+  let normalizedCourseLevels = courseLevels;
+
+  if (mostlyLooksLikeCourseLevels(schools) && mostlyLooksLikeSchools(courseLevels))
+  {
+    normalizedSchools = courseLevels;
+    normalizedCourseLevels = schools;
+  }
+
+  if (mostlyLooksLikeCourseLevels(normalizedSchools))
+  {
+    normalizedSchools = uniqueSortedText(courses.map((course) => course.schoolName));
+  }
+
+  if (mostlyLooksLikeSchools(normalizedCourseLevels))
+  {
+    normalizedCourseLevels = uniqueSortedText(courses.map((course) => course.courseLevel));
+  }
+
+  return {
+    schools: normalizedSchools,
+    courseLevels: normalizedCourseLevels,
+  };
+}
+
+function formatSemesterFilterLabel(semester: SemesterRecord)
+{
+  const semesterName = readRuntimeString(semester, "semesterName", "semester_name")
+    ?? `Semester ${semester.semesterNo}`;
+  const academicYear = readRuntimeString(semester, "academicYear", "academic_year");
+
+  return academicYear ? `${semesterName} (${academicYear})` : semesterName;
+}
+
 function buildSemesterIndicators(course: CourseSearchResult)
 {
   const bySemesterNo = new Map<number, string>();
@@ -415,7 +499,11 @@ export function CourseSearchPage({
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const pageShellRef = useRef<HTMLDivElement | null>(null);
   const shouldJumpToPageTopRef = useRef(false);
-  const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
+  const normalizedFacets = useMemo(
+    () => normalizeCourseSearchFacets({ schools, courseLevels, courses: allCourses }),
+    [allCourses, courseLevels, schools],
+  );
+  const levelOptions = useMemo(() => buildLevelOptions(normalizedFacets.courseLevels), [normalizedFacets.courseLevels]);
   const filteredCourses = useMemo(() => filterCourses(allCourses, filters), [allCourses, filters]);
 
   useLayoutEffect(() => {
@@ -631,7 +719,7 @@ export function CourseSearchPage({
   {
     return (
       <>
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2 md:sticky md:top-0 md:z-20 md:pt-2">
+        <div className="course-search-filter-header sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2 pt-2">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
             <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
@@ -651,7 +739,7 @@ export function CourseSearchPage({
             {semesters.map((semester) => (
               <CheckboxRow
                 key={semester.semesterId}
-                label={`${semester.semesterName} (${semester.academicYear})`}
+                label={formatSemesterFilterLabel(semester)}
                 checked={filters.semesterIds.includes(semester.semesterId)}
                 onChange={() => setFilters((current) => ({
                   ...current,
@@ -750,7 +838,7 @@ export function CourseSearchPage({
               </button>
             )}
           >
-            {schools.map((school) => (
+            {normalizedFacets.schools.map((school) => (
               <CheckboxRow
                 key={school}
                 label={school}
@@ -889,7 +977,7 @@ export function CourseSearchPage({
           ) : null}
         </section>
 
-        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-150px)] md:self-start md:overflow-y-auto md:overscroll-contain md:pr-1">
+        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-150px)] md:self-start md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:pr-1">
           {renderFilterSettings()}
         </aside>
       </div>
@@ -910,7 +998,7 @@ export function CourseSearchPage({
           filtersOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
       >
-        <div className="max-h-[min(78dvh,42rem)] overflow-y-auto px-4 pb-24 pt-4">
+        <div className="max-h-[min(78dvh,42rem)] overflow-x-hidden overflow-y-auto px-4 pb-24 pt-4">
           {filtersOpen ? renderFilterSettings() : null}
         </div>
       </div>
@@ -1145,14 +1233,14 @@ function CheckboxRow({
 })
 {
   return (
-    <label className="flex cursor-pointer items-start gap-1.5 rounded-[0.5rem] px-1.5 py-0.5 transition-colors hover:bg-[var(--brand-chip-bg)]">
+    <label className="flex min-w-0 cursor-pointer items-start gap-1.5 rounded-[0.5rem] px-1.5 py-0.5 transition-colors hover:bg-[var(--brand-chip-bg)]">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="mt-[1px] h-3.5 w-3.5 rounded border border-[var(--outline-variant)] accent-[var(--primary)]"
+        className="mt-[1px] h-3.5 w-3.5 shrink-0 rounded border border-[var(--outline-variant)] accent-[var(--primary)]"
       />
-      <span className="text-[12px] leading-4 text-[var(--on-surface)]">{label}</span>
+      <span className="min-w-0 break-words text-[12px] leading-4 text-[var(--on-surface)]">{label}</span>
     </label>
   );
 }

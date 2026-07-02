@@ -56,6 +56,33 @@ export type CurrentSemesterContext = {
   isVacation: boolean;
 };
 
+function readRuntimeString(record: object, ...keys: string[])
+{
+  const source = record as Record<string, unknown>;
+
+  for (const key of keys)
+  {
+    const value = source[key];
+    if (typeof value === "string" && value.trim())
+    {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function getSemesterAcademicYear(semester: SemesterRecord)
+{
+  return readRuntimeString(semester, "academicYear", "academic_year");
+}
+
+function getSemesterName(semester: SemesterRecord)
+{
+  return readRuntimeString(semester, "semesterName", "semester_name")
+    ?? `Semester ${semester.semesterNo}`;
+}
+
 export function formatEventDate(date: string)
 {
   return formatDate(date, {
@@ -206,19 +233,27 @@ export function getCurrentWeekChip(
     return "No semester loaded";
   }
 
+  const academicYear = getSemesterAcademicYear(semester);
+  const academicYearLabel = academicYear ? `AY${academicYear}` : null;
+  const semesterName = getSemesterName(semester);
+
   if (isVacation)
   {
-    return `AY${semester.academicYear}, Semester Vacation`;
+    return academicYearLabel
+      ? `${academicYearLabel}, Semester Vacation`
+      : "Semester Vacation";
   }
 
   if (!week)
   {
-    return `AY${semester.academicYear}, ${semester.semesterName}`;
+    return [academicYearLabel, semesterName].filter(Boolean).join(", ");
   }
 
-  return week.weekType === "TEACHING"
-    ? `AY${semester.academicYear}, ${semester.semesterName}, Week ${week.weekNo}`
-    : `AY${semester.academicYear}, ${semester.semesterName}, ${week.label}`;
+  const weekLabel = week.weekType === "TEACHING"
+    ? `Week ${week.weekNo}`
+    : week.label;
+
+  return [academicYearLabel, semesterName, weekLabel].filter(Boolean).join(", ");
 }
 
 export function formatCurrentWeekChipForMobile(label: string)
