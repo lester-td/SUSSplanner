@@ -65,6 +65,10 @@ export function ShareClient({
   const exportCaptureRef = useRef<HTMLDivElement | null>(null);
 
   const selectedCards = useMemo(() => buildSelectedCourseCards(timetable), [timetable]);
+  const totalCredits = useMemo(
+    () => selectedCards.reduce((sum, record) => sum + (record.creditUnits ?? 0), 0),
+    [selectedCards],
+  );
   const colorByShareKey = useMemo(
     () => new Map(selectedCards.map((card) => [card.shareKey, card.color])),
     [selectedCards],
@@ -129,9 +133,9 @@ export function ShareClient({
 
   return (
     <>
-      <div className="border-b border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-3 py-2.5">
+      <div className="share-view-banner border-b border-[var(--outline-variant)] bg-[var(--primary-fixed)] px-3 py-2.5">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <p className="text-[12px] font-semibold leading-4 text-[var(--primary)]">
+          <p className="share-view-banner__text text-[12px] font-semibold leading-4 text-[var(--primary)]">
             Viewing shared timetable. Your planner is unchanged until you choose to import this timetable.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -287,6 +291,22 @@ export function ShareClient({
                   </article>
                 );
               })}
+            </div>
+
+            <div className={`border-t border-[var(--brand-divider)] pt-3 ${orientation === "horizontal" ? "mt-2.5" : "mt-2"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
+                    <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
+                    <div className="mt-1 text-[16px] font-bold leading-6 text-[var(--primary)] sm:text-[18px]">{totalCredits.toFixed(1)} CU</div>
+                  </div>
+                  <div aria-hidden="true" className="h-10 w-px bg-[var(--brand-divider)]" />
+                  <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
+                    <div className="text-[var(--on-surface-variant)]">Total Courses</div>
+                    <div className="mt-1 text-[16px] font-bold leading-6 tabular-nums text-[var(--primary)] sm:text-[18px]">{selectedCards.length}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </aside>
