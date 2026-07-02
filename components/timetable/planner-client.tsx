@@ -1186,7 +1186,7 @@ export function PlannerClient({
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 py-1.5 sm:px-3">
-            <label className="relative z-40 block">
+            <label className="relative z-20 block">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
               <input
                 className="elev-1 w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-1.5 pl-10 pr-4 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:py-2 sm:text-[14px]"
@@ -1196,7 +1196,7 @@ export function PlannerClient({
               />
 
               {searchInput ? (
-                <div className="elev-3 absolute left-0 right-0 top-full z-50 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
+                <div className="elev-3 absolute left-0 right-0 top-full z-30 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                   {searchResults.map((record) => (
                     <button
                       key={record.courseCode}
@@ -1301,7 +1301,7 @@ export function PlannerClient({
                     <div className="pl-1.5 pr-12">
                       <div className="min-w-0">
                         <div className="flex items-start gap-2">
-                          <div className="relative z-30 mt-0.5" data-color-popover-root>
+                          <div className="relative z-10 mt-0.5" data-color-popover-root>
                             <button
                               type="button"
                               aria-label={`Change ${record.courseCode} color`}
