@@ -762,7 +762,7 @@
 :root[data-color-scheme="dark"] .timetable-canvas-shell,
 :root[data-color-scheme="dark"] .timetable-notice-stack,
 :root[data-color-scheme="dark"] .timetable-alerts-shell {
-  background: var(--background);
+  background: var(--surface-container-lowest);
 }
 
 :root[data-color-scheme="dark"] .timetable-toolbar,
