@@ -465,7 +465,7 @@
 
 :root[data-color-scheme="dark"] .elev-3,
 :root[data-color-scheme="dark"] .app-modal-surface {
-  background: var(--surface-variant);
+  background: var(--surface-container-low);
   box-shadow: var(--shadow-elev-3);
 }
 
@@ -493,6 +493,10 @@
 
 :root[data-color-scheme="dark"] .dark-neutral-accent-card {
   border-left-color: var(--outline-variant);
+}
+
+:root[data-color-scheme="dark"] .class-schedule-summary-card {
+  background: var(--surface-container);
 }
 
 :root[data-color-scheme="dark"] .app-navbar {
