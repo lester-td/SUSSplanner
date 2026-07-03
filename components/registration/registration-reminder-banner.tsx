@@ -6,10 +6,13 @@ import {
 import type { ReactNode } from "react";
 import type { RegistrationReminder } from "@/lib/registration/types";
 
+type SnoozeReminderHandler = (reminder: RegistrationReminder) => void;
+
 type RegistrationReminderBannerProps = {
   reminders: RegistrationReminder[];
   onDismissReminder?: (reminder: RegistrationReminder) => void;
-  onSnoozeReminder?: (reminder: RegistrationReminder) => void;
+  onSnoozeReminder?: SnoozeReminderHandler;
+  variant?: "inline" | "notification";
   className?: string;
 };
 
@@ -32,7 +35,7 @@ function ReminderActionButton({
   return (
     <button
       type="button"
-      className="inline-flex h-8 shrink-0 items-center justify-center rounded-[0.45rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+      className="inline-flex h-7 shrink-0 items-center justify-center rounded-[0.35rem] border border-transparent px-2 text-[12px] font-semibold leading-4 text-[var(--primary)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)]"
       onClick={onClick}
     >
       {children}
@@ -44,24 +47,33 @@ function RegistrationReminderItem({
   reminder,
   onDismissReminder,
   onSnoozeReminder,
+  variant,
 }: {
   reminder: RegistrationReminder;
   onDismissReminder?: (reminder: RegistrationReminder) => void;
-  onSnoozeReminder?: (reminder: RegistrationReminder) => void;
+  onSnoozeReminder?: SnoozeReminderHandler;
+  variant: "inline" | "notification";
 })
 {
+  const isNotification = variant === "notification";
+  const itemClassName = isNotification
+    ? "relative overflow-hidden rounded-[0.35rem] border border-[var(--primary)] bg-[var(--surface-container-lowest)] py-2.5 pl-3 pr-12 text-[var(--on-surface)] shadow-[0_3px_12px_rgba(15,23,42,0.22)]"
+    : "relative overflow-hidden rounded-[0.5rem] border border-[var(--primary)] bg-[var(--surface-container-lowest)] py-3 pl-3 pr-12 text-[var(--on-surface)] shadow-sm";
+
   return (
-    <article className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <article className={itemClassName}>
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-[var(--primary)]" />
+
+      <div className={`flex flex-col gap-2 ${isNotification ? "" : "sm:flex-row sm:items-start sm:justify-between"}`}>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.45rem] bg-[var(--primary-fixed)] text-[var(--primary)]">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.35rem] bg-[var(--primary-fixed)] text-[var(--primary)]">
               <CalendarIcon className="h-4 w-4" />
             </span>
             <h3 className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">
               {reminder.title}
             </h3>
-            <span className="rounded-full border border-[var(--outline-variant)] px-2 py-0.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
+            <span className="rounded-[0.35rem] border border-[var(--outline-variant)] px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
               {reminder.offset.label}
             </span>
           </div>
@@ -72,7 +84,7 @@ function RegistrationReminderItem({
             </p>
           ) : null}
 
-          <dl className="mt-2 grid gap-1.5 text-[12px] leading-5 text-[var(--on-surface-variant)] sm:grid-cols-2">
+          <dl className={`mt-2 grid gap-1.5 text-[12px] leading-5 text-[var(--on-surface-variant)] ${isNotification ? "" : "sm:grid-cols-2"}`}>
             <div className="flex min-w-0 items-center gap-1.5">
               <ClockIcon className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
               <dt className="sr-only">Reminder time</dt>
@@ -88,25 +100,26 @@ function RegistrationReminderItem({
           </dl>
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+        <div className={`flex shrink-0 flex-wrap gap-1.5 ${isNotification ? "justify-end" : "sm:justify-end"}`}>
           {onSnoozeReminder ? (
             <ReminderActionButton onClick={() => onSnoozeReminder(reminder)}>
               Snooze
             </ReminderActionButton>
           ) : null}
-          {onDismissReminder ? (
-            <button
-              type="button"
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.45rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              aria-label={`Dismiss ${reminder.title}`}
-              title="Dismiss reminder"
-              onClick={() => onDismissReminder(reminder)}
-            >
-              <XIcon className="h-4 w-4" />
-            </button>
-          ) : null}
         </div>
       </div>
+
+      {onDismissReminder ? (
+        <button
+          type="button"
+          className="absolute bottom-0 right-0 top-0 inline-flex w-10 items-center justify-center border-l border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] sm:w-12"
+          aria-label={`Dismiss ${reminder.title}`}
+          title="Dismiss reminder"
+          onClick={() => onDismissReminder(reminder)}
+        >
+          <XIcon className="h-4 w-4" />
+        </button>
+      ) : null}
     </article>
   );
 }
@@ -115,6 +128,7 @@ export function RegistrationReminderBanner({
   reminders,
   onDismissReminder,
   onSnoozeReminder,
+  variant = "inline",
   className = "",
 }: RegistrationReminderBannerProps)
 {
@@ -123,9 +137,13 @@ export function RegistrationReminderBanner({
     return null;
   }
 
+  const variantClassName = variant === "notification"
+    ? "pointer-events-auto fixed right-3 top-3 z-50 w-[min(calc(100vw-1.5rem),24rem)] space-y-3 sm:right-4 sm:top-4"
+    : "space-y-2 rounded-[0.75rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] p-2.5";
+
   return (
     <section
-      className={`space-y-2 rounded-[0.75rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] p-2.5 ${className}`}
+      className={`${variantClassName} ${className}`}
       aria-label="Course registration reminders"
     >
       {reminders.map((reminder) => (
@@ -134,6 +152,7 @@ export function RegistrationReminderBanner({
           reminder={reminder}
           onDismissReminder={onDismissReminder}
           onSnoozeReminder={onSnoozeReminder}
+          variant={variant}
         />
       ))}
     </section>

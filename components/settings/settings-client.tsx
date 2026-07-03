@@ -572,11 +572,11 @@ export function SettingsClient()
           </SettingRow>
 
           <SettingRow
-            title="Reminder banner"
-            description="Show the in-app banner for active registration reminders."
+            title="Reminder notification"
+            description="Show the top-right notification for active registration reminders."
           >
             <SegmentedControl
-              label="Reminder banner"
+              label="Reminder notification"
               value={settings.registrationReminders.inAppBannerEnabled ? "on" : "off"}
               options={[
                 { value: "on", label: "On" },
