@@ -130,7 +130,7 @@ export function RegistrationReminderBanner({
   }
 
   const variantClassName = variant === "notification"
-    ? "pointer-events-auto fixed right-3 top-3 z-50 w-[min(calc(100vw-1.5rem),24rem)] space-y-3 sm:right-4 sm:top-4"
+    ? "pointer-events-auto fixed right-3 top-[6.75rem] z-50 w-[min(calc(100vw-1.5rem),24rem)] space-y-3 sm:right-4 sm:top-[7.25rem] xl:top-[4.75rem]"
     : "space-y-2 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] p-2.5";
 
   return (
