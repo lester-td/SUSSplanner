@@ -64,9 +64,9 @@ function getWindowStateLabel(state: WindowState)
     case "open":
       return "Open";
     case "upcoming":
-      return "Upcoming";
+      return "Soon";
     case "closing":
-      return "Closing Soon";
+      return "Closing";
     case "ended":
       return "Ended";
   }
