@@ -80,9 +80,7 @@ export function GlobalRegistrationReminders()
 
   const activeRegistrationReminders = useMemo(() => {
     const reminderPreferences = appSettings.registrationReminders;
-    const inAppRemindersEnabled = reminderPreferences.enabled
-      && reminderPreferences.inAppBannerEnabled
-      && reminderPreferences.channels.includes("in-app");
+    const inAppRemindersEnabled = reminderPreferences.enabled;
 
     if (!ready || !inAppRemindersEnabled)
     {

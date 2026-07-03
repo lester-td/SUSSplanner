@@ -1,21 +1,10 @@
 import { COURSE_COLOR_PALETTE } from "@/lib/timetable/timetable-utils";
 import type { TimetableOrientation } from "@/lib/timetable/types";
-import { DEFAULT_REGISTRATION_REMINDER_OFFSETS } from "@/lib/registration/reminders";
-import type { ReminderChannel } from "@/lib/registration/types";
 
 export type ColorSchemePreference = "system" | "light" | "dark";
 
-export type RegistrationReminderPushPreferences = {
-  enabled: boolean;
-  browserNotificationsEnabled: boolean;
-};
-
 export type RegistrationReminderPreferences = {
   enabled: boolean;
-  offsetMinutes: number[];
-  channels: ReminderChannel[];
-  inAppBannerEnabled: boolean;
-  push: RegistrationReminderPushPreferences;
 };
 
 export type SettingsState = {
@@ -34,18 +23,8 @@ export type ThemeOption = {
 export const APP_SETTINGS_STORAGE_KEY = "sussplanner:settings";
 export const APP_SETTINGS_UPDATED_EVENT = "sussplanner:settings-updated";
 
-const PUSH_REMINDERS_AVAILABLE = false;
-const DEFAULT_REGISTRATION_REMINDER_CHANNELS: ReminderChannel[] = ["in-app"];
-
 export const DEFAULT_REGISTRATION_REMINDER_PREFERENCES: RegistrationReminderPreferences = {
   enabled: true,
-  offsetMinutes: DEFAULT_REGISTRATION_REMINDER_OFFSETS.map((offset) => offset.offsetMinutes),
-  channels: DEFAULT_REGISTRATION_REMINDER_CHANNELS,
-  inAppBannerEnabled: true,
-  push: {
-    enabled: false,
-    browserNotificationsEnabled: false,
-  },
 };
 
 export const DEFAULT_APP_SETTINGS: SettingsState = {
@@ -93,94 +72,15 @@ function isTimetableOrientation(value: unknown): value is TimetableOrientation
   return value === "horizontal" || value === "vertical";
 }
 
-function isReminderChannel(value: unknown): value is ReminderChannel
-{
-  return value === "in-app" || value === "push";
-}
-
 function getDefaultRegistrationReminderPreferences(): RegistrationReminderPreferences
 {
   return {
     ...DEFAULT_REGISTRATION_REMINDER_PREFERENCES,
-    offsetMinutes: [...DEFAULT_REGISTRATION_REMINDER_PREFERENCES.offsetMinutes],
-    channels: [...DEFAULT_REGISTRATION_REMINDER_PREFERENCES.channels],
-    push: { ...DEFAULT_REGISTRATION_REMINDER_PREFERENCES.push },
   };
-}
-
-function normalizeRegistrationReminderOffsetMinutes(value: unknown)
-{
-  const defaultOffsetMinutes = DEFAULT_REGISTRATION_REMINDER_OFFSETS.map((offset) => offset.offsetMinutes);
-
-  if (!Array.isArray(value))
-  {
-    return defaultOffsetMinutes;
-  }
-
-  const allowedOffsetMinutes = new Set(defaultOffsetMinutes);
-  const seenOffsetMinutes = new Set<number>();
-  const selectedOffsetMinutes = value.filter((offsetMinutes): offsetMinutes is number => {
-    if (!Number.isInteger(offsetMinutes) || !allowedOffsetMinutes.has(offsetMinutes) || seenOffsetMinutes.has(offsetMinutes))
-    {
-      return false;
-    }
-
-    seenOffsetMinutes.add(offsetMinutes);
-    return true;
-  });
-
-  return selectedOffsetMinutes.length > 0 ? selectedOffsetMinutes : defaultOffsetMinutes;
-}
-
-function normalizeRegistrationReminderPushPreferences(value: unknown): RegistrationReminderPushPreferences
-{
-  if (!value || typeof value !== "object")
-  {
-    return { ...DEFAULT_REGISTRATION_REMINDER_PREFERENCES.push };
-  }
-
-  return {
-    enabled: false,
-    browserNotificationsEnabled: false,
-  };
-}
-
-function normalizeRegistrationReminderChannels(value: unknown)
-{
-  if (!Array.isArray(value))
-  {
-    return [...DEFAULT_REGISTRATION_REMINDER_PREFERENCES.channels];
-  }
-
-  const seenChannels = new Set<ReminderChannel>();
-  const channels = value.filter((channel): channel is ReminderChannel => {
-    if (!isReminderChannel(channel) || seenChannels.has(channel))
-    {
-      return false;
-    }
-
-    if (channel === "push" && !PUSH_REMINDERS_AVAILABLE)
-    {
-      return false;
-    }
-
-    seenChannels.add(channel);
-    return true;
-  });
-
-  return channels.length > 0 ? channels : [...DEFAULT_REGISTRATION_REMINDER_PREFERENCES.channels];
 }
 
 export function normalizeRegistrationReminderPreferences(value: unknown): RegistrationReminderPreferences
 {
-  if (typeof value === "boolean")
-  {
-    return {
-      ...getDefaultRegistrationReminderPreferences(),
-      enabled: value,
-    };
-  }
-
   if (!value || typeof value !== "object")
   {
     return getDefaultRegistrationReminderPreferences();
@@ -191,13 +91,7 @@ export function normalizeRegistrationReminderPreferences(value: unknown): Regist
   return {
     enabled: typeof candidate.enabled === "boolean"
       ? candidate.enabled
-      : DEFAULT_REGISTRATION_REMINDER_PREFERENCES.enabled,
-    offsetMinutes: normalizeRegistrationReminderOffsetMinutes(candidate.offsetMinutes),
-    channels: normalizeRegistrationReminderChannels(candidate.channels),
-    inAppBannerEnabled: typeof candidate.inAppBannerEnabled === "boolean"
-      ? candidate.inAppBannerEnabled
-      : DEFAULT_REGISTRATION_REMINDER_PREFERENCES.inAppBannerEnabled,
-    push: normalizeRegistrationReminderPushPreferences(candidate.push),
+      : getDefaultRegistrationReminderPreferences().enabled,
   };
 }
 
