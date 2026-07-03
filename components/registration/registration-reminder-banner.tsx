@@ -32,8 +32,8 @@ function RegistrationReminderItem({
 {
   const isNotification = variant === "notification";
   const itemClassName = isNotification
-    ? "relative overflow-hidden rounded-[0.35rem] border border-[var(--primary)] bg-[var(--surface-container-lowest)] py-2.5 pl-3 pr-12 text-[var(--on-surface)] shadow-[0_3px_12px_rgba(15,23,42,0.22)]"
-    : "relative overflow-hidden rounded-[0.5rem] border border-[var(--primary)] bg-[var(--surface-container-lowest)] py-3 pl-3 pr-12 text-[var(--on-surface)] shadow-sm";
+    ? "relative overflow-hidden rounded-[0.35rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-2.5 pl-3 pr-12 text-[var(--on-surface)] shadow-[var(--shadow-elev-3)]"
+    : "relative overflow-hidden rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-3 pl-3 pr-12 text-[var(--on-surface)] shadow-[var(--shadow-elev-1)]";
 
   return (
     <article className={itemClassName}>
@@ -42,13 +42,13 @@ function RegistrationReminderItem({
       <div className={`flex flex-col gap-2 ${isNotification ? "" : "sm:flex-row sm:items-start sm:justify-between"}`}>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.35rem] bg-[var(--primary-fixed)] text-[var(--primary)]">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.35rem] bg-[var(--brand-chip-bg)] text-[var(--primary)]">
               <CalendarIcon className="h-4 w-4" />
             </span>
             <h3 className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">
               {reminder.title}
             </h3>
-            <span className="rounded-[0.35rem] border border-[var(--outline-variant)] px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
+            <span className="rounded-[0.35rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
               {reminder.offset.label}
             </span>
           </div>
@@ -79,7 +79,7 @@ function RegistrationReminderItem({
       {onCloseReminder ? (
         <button
           type="button"
-          className="absolute bottom-0 right-0 top-0 inline-flex w-10 items-center justify-center border-l border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] sm:w-12"
+          className="absolute bottom-0 right-0 top-0 inline-flex w-10 items-center justify-center border-l border-[var(--brand-divider)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)] sm:w-12"
           aria-label={`Snooze ${reminder.title}`}
           title="Snooze reminder"
           onClick={() => onCloseReminder(reminder)}
@@ -105,7 +105,7 @@ export function RegistrationReminderBanner({
 
   const variantClassName = variant === "notification"
     ? "pointer-events-auto fixed right-3 top-3 z-50 w-[min(calc(100vw-1.5rem),24rem)] space-y-3 sm:right-4 sm:top-4"
-    : "space-y-2 rounded-[0.75rem] border border-[var(--primary)]/20 bg-[var(--primary-fixed)] p-2.5";
+    : "space-y-2 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] p-2.5";
 
   return (
     <section
