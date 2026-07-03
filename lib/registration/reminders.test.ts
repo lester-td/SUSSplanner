@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_APP_SETTINGS,
-  DEFAULT_REGISTRATION_REMINDER_PREFERENCES,
   normalizeAppSettings,
 } from "@/lib/settings/app-settings";
 import {
@@ -18,6 +17,7 @@ import type { RegistrationEvent, ReminderOffset } from "@/lib/registration/types
 import {
   buildRegistrationReminderCandidates,
   buildReminderId,
+  DEFAULT_REGISTRATION_REMINDER_OFFSETS,
   deriveRegistrationEventVersion,
   getActiveInAppRegistrationReminders,
   getDueRegistrationReminders,
@@ -277,7 +277,7 @@ describe("registration reminder timing", () => {
       .toEqual([24 * 60, 0]);
 
     expect(resolveRegistrationReminderOffsets([15]).map((offset) => offset.offsetMinutes))
-      .toEqual(DEFAULT_APP_SETTINGS.registrationReminders.offsetMinutes);
+      .toEqual(DEFAULT_REGISTRATION_REMINDER_OFFSETS.map((offset) => offset.offsetMinutes));
   });
 });
 
@@ -680,80 +680,40 @@ describe("registration validation", () => {
 });
 
 describe("settings normalization", () => {
-  it("normalizes legacy boolean reminder settings to preferences", () => {
+  it("defaults non-object reminder settings", () => {
     expect(normalizeAppSettings({
       ...DEFAULT_APP_SETTINGS,
       registrationReminders: true,
-    }).registrationReminders).toEqual({
-      ...DEFAULT_REGISTRATION_REMINDER_PREFERENCES,
-      enabled: true,
-    });
+    }).registrationReminders).toEqual(DEFAULT_APP_SETTINGS.registrationReminders);
 
     expect(normalizeAppSettings({
       ...DEFAULT_APP_SETTINGS,
       registrationReminders: false,
-    }).registrationReminders).toEqual({
-      ...DEFAULT_REGISTRATION_REMINDER_PREFERENCES,
-      enabled: false,
-    });
-  });
+    }).registrationReminders).toEqual(DEFAULT_APP_SETTINGS.registrationReminders);
 
-  it("normalizes malformed old reminder settings safely", () => {
     expect(normalizeAppSettings({
       ...DEFAULT_APP_SETTINGS,
       registrationReminders: "yes",
     }).registrationReminders).toEqual(DEFAULT_APP_SETTINGS.registrationReminders);
   });
 
-  it("keeps reminder preferences and interaction state separate", () => {
+  it("normalizes object reminder settings to the enabled flag", () => {
     const settings = normalizeAppSettings({
       ...DEFAULT_APP_SETTINGS,
       registrationReminders: {
         enabled: true,
-        offsetMinutes: [0, 999, 24 * 60, 0],
-        channels: ["push", "sms", "in-app", "in-app"],
-        inAppBannerEnabled: false,
-        push: {
-          enabled: true,
-          browserNotificationsEnabled: true,
-        },
-        dismissedReminders: {
-          "ecr-2026-10:0": {
-            eventVersion: "old",
-          },
-        },
-        snoozedReminders: {
-          "ecr-2026-10:0": {
-            reminderId: "ecr-2026-10:0",
-            eventVersion: "old",
-            snoozedUntil: "2026-10-12T02:00:00+08:00",
-          },
-        },
       },
     });
 
     expect(settings.registrationReminders).toEqual({
       enabled: true,
-      offsetMinutes: [0, 24 * 60],
-      channels: ["in-app"],
-      inAppBannerEnabled: false,
-      push: {
-        enabled: false,
-        browserNotificationsEnabled: false,
-      },
     });
-    expect("dismissedReminders" in settings.registrationReminders).toBe(false);
-    expect("snoozedReminders" in settings.registrationReminders).toBe(false);
   });
 
-  it("resets unknown reminder offsets and push-only channels to safe defaults", () => {
+  it("defaults object reminder settings when enabled is missing", () => {
     expect(normalizeAppSettings({
       ...DEFAULT_APP_SETTINGS,
-      registrationReminders: {
-        enabled: true,
-        offsetMinutes: [15, 30],
-        channels: ["push"],
-      },
-    }).registrationReminders).toEqual(DEFAULT_REGISTRATION_REMINDER_PREFERENCES);
+      registrationReminders: {},
+    }).registrationReminders).toEqual(DEFAULT_APP_SETTINGS.registrationReminders);
   });
 });
