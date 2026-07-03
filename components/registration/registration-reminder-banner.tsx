@@ -20,6 +20,29 @@ function formatReminderTimestamp(timestamp: string)
     .replace(/\+08:00$/, " SGT");
 }
 
+function formatCompactWindowTimestamp(timestamp: string)
+{
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(timestamp);
+
+  if (!match)
+  {
+    return formatReminderTimestamp(timestamp);
+  }
+
+  const [, year, month, day, hour, minute] = match;
+  const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const monthIndex = Number(month) - 1;
+  const hour24 = Number(hour);
+  const hour12 = hour24 % 12 || 12;
+  const period = hour24 < 12 ? "am" : "pm";
+  const minuteValue = Number(minute);
+  const time = minuteValue === 0
+    ? `${hour12}${period}`
+    : `${hour12}.${minute.padStart(2, "0")}${period}`;
+
+  return `${Number(day)}-${monthNames[monthIndex] ?? month}-${year.slice(-2)} ${time}`;
+}
+
 function RegistrationReminderItem({
   reminder,
   onCloseReminder,
@@ -62,11 +85,17 @@ function RegistrationReminderItem({
               <dt className="sr-only">Reminder time</dt>
               <dd className="truncate">Reminder: {formatReminderTimestamp(reminder.remindAt)}</dd>
             </div>
-            <div className="flex min-w-0 items-center gap-1.5">
+            <div className="flex min-w-0 items-start gap-1.5">
               <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
               <dt className="sr-only">Registration window</dt>
-              <dd className="truncate">
-                Window: {formatReminderTimestamp(reminder.eventStartsAt)} to {formatReminderTimestamp(reminder.eventEndsAt)}
+              <dd className="min-w-0">
+                <div>Window:</div>
+                <div className="truncate pl-3">
+                  Start: {formatCompactWindowTimestamp(reminder.eventStartsAt)}
+                </div>
+                <div className="truncate pl-3">
+                  End: {formatCompactWindowTimestamp(reminder.eventEndsAt)}
+                </div>
               </dd>
             </div>
           </dl>
