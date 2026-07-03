@@ -1,7 +1,6 @@
 import {
   BellIcon,
   CalendarWeekIcon,
-  ClockIcon,
   XIcon,
 } from "@/components/planner/icons";
 import type { RegistrationReminder } from "@/lib/registration/types";
@@ -14,7 +13,6 @@ type RegistrationReminderBannerProps = {
 };
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 type WindowState = "upcoming" | "open" | "closingSoon" | "ended";
 
@@ -40,58 +38,6 @@ function formatLocalDateTime(timestamp: string)
   const period = hours < 12 ? "AM" : "PM";
 
   return `${date.getDate()} ${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}, ${hour12}:${minutes} ${period}`;
-}
-
-function getStartOfLocalDay(date: Date)
-{
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-}
-
-function getReminderRelativeLabel(timestamp: string, now: Date)
-{
-  const date = parseRegistrationTimestamp(timestamp);
-
-  if (!date)
-  {
-    return "";
-  }
-
-  const dayDifference = Math.round((getStartOfLocalDay(date) - getStartOfLocalDay(now)) / DAY_MS);
-
-  if (dayDifference === 0)
-  {
-    return "Today";
-  }
-
-  if (dayDifference === 1)
-  {
-    return "Tomorrow";
-  }
-
-  if (dayDifference >= 2 && dayDifference <= 3)
-  {
-    return `In ${dayDifference} days`;
-  }
-
-  if (dayDifference === -1)
-  {
-    return "Yesterday";
-  }
-
-  if (dayDifference >= -3 && dayDifference <= -2)
-  {
-    return `${Math.abs(dayDifference)} days ago`;
-  }
-
-  return "";
-}
-
-function formatReminderDateTime(timestamp: string, now: Date)
-{
-  const relativeLabel = getReminderRelativeLabel(timestamp, now);
-  const absoluteDateTime = formatLocalDateTime(timestamp);
-
-  return relativeLabel ? `${absoluteDateTime} (${relativeLabel})` : absoluteDateTime;
 }
 
 function getWindowState(startsAt: Date | null, endsAt: Date | null, now: Date): WindowState
@@ -153,8 +99,11 @@ function RegistrationReminderItem({
 {
   const isNotification = variant === "notification";
   const itemClassName = isNotification
-    ? "relative overflow-hidden rounded-[0.35rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-2.5 pl-3 pr-12 text-[var(--on-surface)] shadow-[var(--shadow-elev-3)]"
-    : "relative overflow-hidden rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-3 pl-3 pr-12 text-[var(--on-surface)] shadow-[var(--shadow-elev-1)]";
+    ? "relative h-[6.75rem] overflow-hidden rounded-[0.35rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-2 pl-3 pr-[3.25rem] text-[var(--on-surface)] shadow-[var(--shadow-elev-3)]"
+    : "relative overflow-hidden rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-3 pl-3 pr-[3.25rem] text-[var(--on-surface)] shadow-[var(--shadow-elev-1)]";
+  const detailListClassName = isNotification
+    ? "mt-1.5 grid text-[12px] leading-[18px] text-[var(--on-surface-variant)]"
+    : "mt-2 grid gap-[0.45rem] text-[12px] leading-5 text-[var(--on-surface-variant)] sm:grid-cols-2";
   const now = new Date();
   const eventStartsAt = parseRegistrationTimestamp(reminder.eventStartsAt);
   const eventEndsAt = parseRegistrationTimestamp(reminder.eventEndsAt);
@@ -170,7 +119,7 @@ function RegistrationReminderItem({
             <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.35rem] bg-[var(--brand-chip-bg)] text-[var(--primary)]">
               <BellIcon className="h-4 w-4" />
             </span>
-            <h3 className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">
+            <h3 className="min-w-0 flex-1 truncate text-[14px] font-bold leading-5 text-[var(--on-surface)]">
               {reminder.title}
             </h3>
             <span className={`inline-flex shrink-0 items-center rounded-[0.35rem] border px-1.5 py-0.5 text-[11px] font-bold leading-4 ${getWindowStateClassName(windowState)}`}>
@@ -184,16 +133,7 @@ function RegistrationReminderItem({
             </p>
           ) : null}
 
-          <dl className={`mt-2 grid gap-[0.45rem] text-[12px] leading-5 text-[var(--on-surface-variant)] ${isNotification ? "" : "sm:grid-cols-2"}`}>
-            <div className="flex min-w-0 items-start gap-1.5">
-              <ClockIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
-              <div className="min-w-0">
-                <dt className="font-semibold leading-4 text-[var(--on-surface)]">Reminder</dt>
-                <dd className="truncate">
-                  {formatReminderDateTime(reminder.remindAt, now)}
-                </dd>
-              </div>
-            </div>
+          <dl className={detailListClassName}>
             <div className="flex min-w-0 items-start gap-1.5">
               <CalendarWeekIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
               <div className="min-w-0">
@@ -215,7 +155,7 @@ function RegistrationReminderItem({
       {onCloseReminder ? (
         <button
           type="button"
-          className="absolute inset-y-0 right-0 inline-flex h-full w-10 items-center justify-center border-l border-[var(--brand-divider)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)] sm:w-12"
+          className="absolute inset-y-0 right-0 inline-flex h-full w-11 items-center justify-center border-l border-[var(--brand-divider)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)]"
           aria-label={`Snooze ${reminder.title}`}
           title="Snooze reminder"
           onClick={() => onCloseReminder(reminder)}
@@ -240,7 +180,7 @@ export function RegistrationReminderBanner({
   }
 
   const variantClassName = variant === "notification"
-    ? "pointer-events-auto fixed right-3 top-[6.75rem] z-50 w-[min(calc(100vw-1.5rem),24rem)] space-y-3 sm:right-4 sm:top-[7.25rem] xl:top-[4.75rem]"
+    ? "pointer-events-auto fixed right-3 top-[6.75rem] z-50 w-[min(calc(100vw-1.5rem),18rem)] space-y-2.5 sm:right-4 sm:top-[7.25rem] xl:top-[4.75rem]"
     : "space-y-2 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] p-2.5";
 
   return (
