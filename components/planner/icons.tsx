@@ -1,6 +1,7 @@
 import type { IconType } from "react-icons";
 import {
   TbArrowUpRight,
+  TbBell,
   TbCheck,
   TbBook,
   TbCalculator,
@@ -96,6 +97,11 @@ export function CalendarIcon({ className }: IconProps)
 export function CalendarWeekIcon({ className }: IconProps)
 {
   return renderIcon(TbCalendarWeek, className);
+}
+
+export function BellIcon({ className }: IconProps)
+{
+  return renderIcon(TbBell, className);
 }
 
 export function ShareIcon({ className }: IconProps)

@@ -232,6 +232,54 @@
   box-shadow: var(--shadow-elev-3);
 }
 
+.registration-reminder-status--open {
+  background: #E8F5E9;
+  border-color: #A5D6A7;
+  color: #2E7D32;
+}
+
+.registration-reminder-status--upcoming {
+  background: #FFF8E1;
+  border-color: #FFD54F;
+  color: #8A5A00;
+}
+
+.registration-reminder-status--closing-soon {
+  background: #FDECEA;
+  border-color: #F5A6A0;
+  color: #B42318;
+}
+
+.registration-reminder-status--ended {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+  color: #4B5563;
+}
+
+:root[data-color-scheme="dark"] .registration-reminder-status--open {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.45);
+  color: #86EFAC;
+}
+
+:root[data-color-scheme="dark"] .registration-reminder-status--upcoming {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #FCD34D;
+}
+
+:root[data-color-scheme="dark"] .registration-reminder-status--closing-soon {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #FCA5A5;
+}
+
+:root[data-color-scheme="dark"] .registration-reminder-status--ended {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #CBD5E1;
+}
+
 .course-search-page {
   --course-search-navbar-height: 49px;
   --course-search-navbar-gap: 1rem;
