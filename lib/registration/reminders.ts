@@ -8,8 +8,12 @@ import type {
 import { validateRegistrationSchedule, validateReminderOffsets } from "@/lib/registration/validation";
 
 const MINUTE_IN_MS = 60 * 1000;
+const HOUR_IN_MS = 60 * MINUTE_IN_MS;
+const DAY_IN_MS = 24 * HOUR_IN_MS;
 const SINGAPORE_OFFSET_MS = 8 * 60 * MINUTE_IN_MS;
 const DEFAULT_REMINDER_CHANNELS: ReminderChannel[] = ["in-app", "push"];
+const UPCOMING_THRESHOLD_HOURS = [1, 6, 12, 24, 48, 72, 168] as const;
+const CLOSING_THRESHOLD_HOURS = [1, 6, 12, 24] as const;
 
 export const DEFAULT_REGISTRATION_REMINDER_OFFSETS: ReminderOffset[] = [
   {
@@ -37,6 +41,7 @@ export type RegistrationReminderOptions = {
   channels?: readonly ReminderChannel[];
   channel?: ReminderChannel;
   dismissedReminders?: LocalRegistrationReminderState["dismissedReminders"];
+  dismissedIntervals?: LocalRegistrationReminderState["dismissedIntervals"];
   snoozedEvents?: LocalRegistrationReminderState["snoozedEvents"];
 };
 
@@ -114,6 +119,21 @@ function isDismissed(
   return dismissed?.eventVersion === reminder.eventVersion;
 }
 
+function getReminderDismissalStorageKey(reminder: RegistrationReminder)
+{
+  return reminder.storageKey ?? reminder.id;
+}
+
+function isDismissedInterval(
+  reminder: RegistrationReminder,
+  dismissedIntervals: LocalRegistrationReminderState["dismissedIntervals"] | undefined,
+)
+{
+  const dismissed = dismissedIntervals?.[getReminderDismissalStorageKey(reminder)];
+
+  return dismissed?.eventVersion === reminder.eventVersion;
+}
+
 function isSnoozed(
   reminder: RegistrationReminder,
   snoozedEvents: LocalRegistrationReminderState["snoozedEvents"] | undefined,
@@ -174,6 +194,11 @@ export function selectMostUrgentRegistrationReminders(reminders: readonly Regist
 export function buildReminderId(eventId: string, offsetMinutes: number)
 {
   return `${eventId}:${offsetMinutes}`;
+}
+
+export function buildRegistrationReminderStorageKey(eventId: string, intervalKey: string)
+{
+  return `registrationReminder:${eventId}:${intervalKey}`;
 }
 
 export function resolveRegistrationReminderOffsets(offsetMinutes: readonly number[] | undefined)
@@ -259,6 +284,145 @@ export function buildRegistrationReminderCandidates(
   return reminders;
 }
 
+function resolveThresholdKey(hoursUntil: number, thresholds: readonly number[])
+{
+  const threshold = thresholds.find((candidate) => hoursUntil <= candidate);
+
+  return typeof threshold === "number" ? `${threshold}h` : null;
+}
+
+function buildCurrentRegistrationReminder(
+  event: RegistrationEvent,
+  nowTimestamp: number,
+  channel: ReminderChannel,
+): RegistrationReminder | null
+{
+  const eventStartsAtTimestamp = parseRegistrationReminderTimestamp(event.startsAt);
+  const eventEndsAtTimestamp = parseRegistrationReminderTimestamp(event.endsAt);
+
+  if (
+    eventStartsAtTimestamp === null
+    || eventEndsAtTimestamp === null
+    || nowTimestamp > eventEndsAtTimestamp
+  )
+  {
+    return null;
+  }
+
+  const eventVersion = deriveRegistrationEventVersion(event);
+  let phase: RegistrationReminder["phase"];
+  let thresholdKey: string;
+  let dueAtTimestamp: number;
+  let offset: ReminderOffset;
+
+  if (nowTimestamp < eventStartsAtTimestamp)
+  {
+    const hoursUntilStart = (eventStartsAtTimestamp - nowTimestamp) / HOUR_IN_MS;
+    const upcomingThresholdKey = resolveThresholdKey(hoursUntilStart, UPCOMING_THRESHOLD_HOURS);
+
+    if (!upcomingThresholdKey)
+    {
+      return null;
+    }
+
+    const thresholdHours = Number.parseInt(upcomingThresholdKey, 10);
+
+    phase = "upcoming";
+    thresholdKey = upcomingThresholdKey;
+    dueAtTimestamp = eventStartsAtTimestamp - thresholdHours * HOUR_IN_MS;
+    offset = {
+      offsetMinutes: thresholdHours * 60,
+      label: `${thresholdHours}h before start`,
+    };
+  }
+  else if (nowTimestamp < eventEndsAtTimestamp - DAY_IN_MS)
+  {
+    const dayIndex = Math.floor((nowTimestamp - eventStartsAtTimestamp) / DAY_IN_MS);
+
+    phase = "open";
+    thresholdKey = `day-${dayIndex}`;
+    dueAtTimestamp = eventStartsAtTimestamp + dayIndex * DAY_IN_MS;
+    offset = {
+      offsetMinutes: 0,
+      label: "Open",
+    };
+  }
+  else
+  {
+    const hoursUntilEnd = (eventEndsAtTimestamp - nowTimestamp) / HOUR_IN_MS;
+    const closingThresholdKey = resolveThresholdKey(hoursUntilEnd, CLOSING_THRESHOLD_HOURS);
+
+    if (!closingThresholdKey)
+    {
+      return null;
+    }
+
+    const thresholdHours = Number.parseInt(closingThresholdKey, 10);
+
+    phase = "closing";
+    thresholdKey = closingThresholdKey;
+    dueAtTimestamp = eventEndsAtTimestamp - thresholdHours * HOUR_IN_MS;
+    offset = {
+      offsetMinutes: thresholdHours * 60,
+      label: `${thresholdHours}h before end`,
+    };
+  }
+
+  const intervalKey = `${phase}:${thresholdKey}`;
+  const storageKey = buildRegistrationReminderStorageKey(event.id, intervalKey);
+
+  return {
+    id: storageKey,
+    eventId: event.id,
+    eventVersion,
+    channel,
+    offset,
+    dueAt: formatSingaporeTimestamp(dueAtTimestamp),
+    visibleFrom: formatSingaporeTimestamp(dueAtTimestamp),
+    visibleUntil: event.endsAt,
+    remindAt: formatSingaporeTimestamp(dueAtTimestamp),
+    eventStartsAt: event.startsAt,
+    eventEndsAt: event.endsAt,
+    title: event.title,
+    phase,
+    intervalKey,
+    storageKey,
+  };
+}
+
+function compareActiveInAppRegistrationReminderPriority(left: RegistrationReminder, right: RegistrationReminder)
+{
+  const phasePriority: Record<NonNullable<RegistrationReminder["phase"]>, number> = {
+    closing: 0,
+    open: 1,
+    upcoming: 2,
+  };
+  const leftPhasePriority = left.phase ? phasePriority[left.phase] : 3;
+  const rightPhasePriority = right.phase ? phasePriority[right.phase] : 3;
+
+  if (leftPhasePriority !== rightPhasePriority)
+  {
+    return leftPhasePriority - rightPhasePriority;
+  }
+
+  const leftStartsAt = parseRegistrationReminderTimestamp(left.eventStartsAt) ?? Number.MAX_SAFE_INTEGER;
+  const rightStartsAt = parseRegistrationReminderTimestamp(right.eventStartsAt) ?? Number.MAX_SAFE_INTEGER;
+  const leftEndsAt = parseRegistrationReminderTimestamp(left.eventEndsAt) ?? Number.MAX_SAFE_INTEGER;
+  const rightEndsAt = parseRegistrationReminderTimestamp(right.eventEndsAt) ?? Number.MAX_SAFE_INTEGER;
+
+  if (left.phase === "closing" && leftEndsAt !== rightEndsAt)
+  {
+    return leftEndsAt - rightEndsAt;
+  }
+
+  if (leftStartsAt !== rightStartsAt)
+  {
+    return leftStartsAt - rightStartsAt;
+  }
+
+  return left.id.localeCompare(right.id);
+}
+
 export function filterRegistrationReminders(
   reminders: readonly RegistrationReminder[],
   options: RegistrationReminderOptions = {},
@@ -296,6 +460,11 @@ export function filterRegistrationReminders(
     }
 
     if (isDismissed(reminder, options.dismissedReminders))
+    {
+      return false;
+    }
+
+    if (isDismissedInterval(reminder, options.dismissedIntervals))
     {
       return false;
     }
@@ -348,11 +517,20 @@ export function getActiveInAppRegistrationReminders(
   options: Omit<ActiveRegistrationReminderOptions, "channel" | "channels"> = {},
 )
 {
-  return getActiveRegistrationReminders(events, {
-    ...options,
-    channel: "in-app",
-    selectMostUrgentPerEvent: options.selectMostUrgentPerEvent ?? true,
-  });
+  const nowTimestamp = resolveNowTimestamp(options.now);
+
+  if (options.enabled === false || nowTimestamp === null)
+  {
+    return [];
+  }
+
+  return validateRegistrationSchedule(events)
+    .map((event) => buildCurrentRegistrationReminder(event, nowTimestamp, "in-app"))
+    .filter((reminder): reminder is RegistrationReminder => Boolean(reminder))
+    .filter((reminder) => !isDismissed(reminder, options.dismissedReminders))
+    .filter((reminder) => !isDismissedInterval(reminder, options.dismissedIntervals))
+    .sort(compareActiveInAppRegistrationReminderPriority)
+    .slice(0, 1);
 }
 
 export function isRegistrationReminderDue(reminder: RegistrationReminder, now: Date | string | number)

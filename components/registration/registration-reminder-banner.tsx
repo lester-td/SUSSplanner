@@ -14,7 +14,7 @@ type RegistrationReminderBannerProps = {
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-type WindowState = "upcoming" | "open" | "closingSoon" | "ended";
+type WindowState = "upcoming" | "open" | "closing" | "ended";
 
 function parseRegistrationTimestamp(timestamp: string)
 {
@@ -54,7 +54,7 @@ function getWindowState(startsAt: Date | null, endsAt: Date | null, now: Date): 
 
   const hoursUntilEnd = (endsAt.getTime() - now.getTime()) / (60 * 60 * 1000);
 
-  return hoursUntilEnd <= 24 ? "closingSoon" : "open";
+  return hoursUntilEnd <= 24 ? "closing" : "open";
 }
 
 function getWindowStateLabel(state: WindowState)
@@ -65,7 +65,7 @@ function getWindowStateLabel(state: WindowState)
       return "Open";
     case "upcoming":
       return "Upcoming";
-    case "closingSoon":
+    case "closing":
       return "Closing Soon";
     case "ended":
       return "Ended";
@@ -80,7 +80,7 @@ function getWindowStateClassName(state: WindowState)
       return "registration-reminder-status--open";
     case "upcoming":
       return "registration-reminder-status--upcoming";
-    case "closingSoon":
+    case "closing":
       return "registration-reminder-status--closing-soon";
     case "ended":
       return "registration-reminder-status--ended";
@@ -107,7 +107,7 @@ function RegistrationReminderItem({
   const now = new Date();
   const eventStartsAt = parseRegistrationTimestamp(reminder.eventStartsAt);
   const eventEndsAt = parseRegistrationTimestamp(reminder.eventEndsAt);
-  const windowState = getWindowState(eventStartsAt, eventEndsAt, now);
+  const windowState = reminder.phase ?? getWindowState(eventStartsAt, eventEndsAt, now);
 
   return (
     <article className={itemClassName}>

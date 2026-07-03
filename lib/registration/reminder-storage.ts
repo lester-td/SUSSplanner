@@ -24,6 +24,7 @@ type CurrentReminderRecord = {
 
 export const EMPTY_LOCAL_REGISTRATION_REMINDER_STATE: LocalRegistrationReminderState = {
   dismissedReminders: {},
+  dismissedIntervals: {},
   snoozedEvents: {},
 };
 
@@ -46,6 +47,7 @@ function cloneEmptyLocalRegistrationReminderState(): LocalRegistrationReminderSt
 {
   return {
     dismissedReminders: {},
+    dismissedIntervals: {},
     snoozedEvents: {},
   };
 }
@@ -63,8 +65,10 @@ function normalizeLocalRegistrationReminderState(value: unknown): LocalRegistrat
   }
 
   const dismissedReminders: LocalRegistrationReminderState["dismissedReminders"] = {};
+  const dismissedIntervals: LocalRegistrationReminderState["dismissedIntervals"] = {};
   const snoozedEvents: LocalRegistrationReminderState["snoozedEvents"] = {};
   const dismissedCandidate = value.dismissedReminders;
+  const dismissedIntervalsCandidate = value.dismissedIntervals;
   const snoozedEventsCandidate = value.snoozedEvents;
   const snoozedCandidate = value.snoozedReminders;
 
@@ -77,6 +81,20 @@ function normalizeLocalRegistrationReminderState(value: unknown): LocalRegistrat
       }
 
       dismissedReminders[reminderId] = {
+        eventVersion: record.eventVersion,
+      };
+    });
+  }
+
+  if (isRecord(dismissedIntervalsCandidate))
+  {
+    Object.entries(dismissedIntervalsCandidate).forEach(([reminderId, record]) => {
+      if (!isRecord(record) || typeof record.eventVersion !== "string" || !record.eventVersion.trim())
+      {
+        return;
+      }
+
+      dismissedIntervals[reminderId] = {
         eventVersion: record.eventVersion,
       };
     });
@@ -123,6 +141,7 @@ function normalizeLocalRegistrationReminderState(value: unknown): LocalRegistrat
 
   return {
     dismissedReminders,
+    dismissedIntervals,
     snoozedEvents,
   };
 }
@@ -156,6 +175,20 @@ function getCurrentEventRecords(events: readonly RegistrationEvent[])
   });
 
   return currentEventRecords;
+}
+
+function getEventIdFromRegistrationReminderStorageKey(storageKey: string)
+{
+  const prefix = "registrationReminder:";
+
+  if (!storageKey.startsWith(prefix))
+  {
+    return null;
+  }
+
+  const [eventId] = storageKey.slice(prefix.length).split(":");
+
+  return eventId || null;
 }
 
 function isCurrentReminderRecordStale(
@@ -192,6 +225,22 @@ export function pruneLocalRegistrationReminderState(
     }
 
     prunedState.dismissedReminders[reminderId] = {
+      eventVersion: record.eventVersion,
+    };
+  });
+
+  Object.entries(normalizedState.dismissedIntervals).forEach(([storageKey, record]) => {
+    const eventId = getEventIdFromRegistrationReminderStorageKey(storageKey);
+
+    if (
+      !eventId
+      || isCurrentReminderRecordStale(currentEventRecords.get(eventId), record.eventVersion, nowTimestamp)
+    )
+    {
+      return;
+    }
+
+    prunedState.dismissedIntervals[storageKey] = {
       eventVersion: record.eventVersion,
     };
   });
@@ -266,6 +315,7 @@ export function dismissLocalRegistrationReminder(
         eventVersion: reminder.eventVersion,
       },
     },
+    dismissedIntervals: currentState.dismissedIntervals,
     snoozedEvents: currentState.snoozedEvents,
   };
 
@@ -277,15 +327,25 @@ export function snoozeLocalRegistrationReminder(
   context: ReminderStorageContext,
 )
 {
+  return dismissLocalRegistrationReminderInterval(reminder, context);
+}
+
+export function dismissLocalRegistrationReminderInterval(
+  reminder: RegistrationReminder,
+  context: ReminderStorageContext,
+)
+{
   const currentState = readLocalRegistrationReminderState(context);
+  const storageKey = reminder.storageKey ?? reminder.id;
   const nextState: LocalRegistrationReminderState = {
     dismissedReminders: currentState.dismissedReminders,
-    snoozedEvents: {
-      ...currentState.snoozedEvents,
-      [reminder.eventId]: {
+    dismissedIntervals: {
+      ...currentState.dismissedIntervals,
+      [storageKey]: {
         eventVersion: reminder.eventVersion,
       },
     },
+    snoozedEvents: currentState.snoozedEvents,
   };
 
   return saveLocalRegistrationReminderState(nextState, context);

@@ -3,15 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { RegistrationReminderBanner } from "@/components/registration/registration-reminder-banner";
-import {
-  getActiveInAppRegistrationReminders,
-  resolveRegistrationReminderOffsets,
-} from "@/lib/registration/reminders";
+import { getActiveInAppRegistrationReminders } from "@/lib/registration/reminders";
 import {
   EMPTY_LOCAL_REGISTRATION_REMINDER_STATE,
   REGISTRATION_REMINDER_STORAGE_KEY,
+  dismissLocalRegistrationReminderInterval,
   readLocalRegistrationReminderState,
-  snoozeLocalRegistrationReminder,
 } from "@/lib/registration/reminder-storage";
 import { REGISTRATION_EVENTS } from "@/lib/registration/schedule";
 import {
@@ -95,9 +92,8 @@ export function GlobalRegistrationReminders()
     return getActiveInAppRegistrationReminders(REGISTRATION_EVENTS, {
       enabled: inAppRemindersEnabled,
       dismissedReminders: reminderInteractionState.dismissedReminders,
-      snoozedEvents: reminderInteractionState.snoozedEvents,
+      dismissedIntervals: reminderInteractionState.dismissedIntervals,
       now: reminderNow,
-      offsets: resolveRegistrationReminderOffsets(reminderPreferences.offsetMinutes),
     });
   }, [appSettings.registrationReminders, ready, reminderInteractionState, reminderNow]);
 
@@ -105,7 +101,7 @@ export function GlobalRegistrationReminders()
   {
     const now = Date.now();
 
-    setReminderInteractionState(snoozeLocalRegistrationReminder(reminder, {
+    setReminderInteractionState(dismissLocalRegistrationReminderInterval(reminder, {
       events: REGISTRATION_EVENTS,
       now,
     }));

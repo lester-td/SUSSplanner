@@ -7,6 +7,8 @@ export type ReminderOffset = {
   label: string;
 };
 
+export type RegistrationReminderPhase = "upcoming" | "open" | "closing";
+
 export type RegistrationEvent = {
   id: string;
   title: string;
@@ -33,6 +35,9 @@ export type RegistrationReminder = {
   eventEndsAt: string;
   title: string;
   body?: string;
+  phase?: RegistrationReminderPhase;
+  intervalKey?: string;
+  storageKey?: string;
 };
 
 export type DismissedRegistrationReminder = {
@@ -41,5 +46,6 @@ export type DismissedRegistrationReminder = {
 
 export type LocalRegistrationReminderState = {
   dismissedReminders: Record<string, { eventVersion: string }>;
+  dismissedIntervals: Record<string, { eventVersion: string }>;
   snoozedEvents: Record<string, { eventVersion: string }>;
 };
