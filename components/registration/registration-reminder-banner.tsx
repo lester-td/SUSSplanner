@@ -48,9 +48,6 @@ function RegistrationReminderItem({
             <h3 className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">
               {reminder.title}
             </h3>
-            <span className="rounded-[0.35rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-              {reminder.offset.label}
-            </span>
           </div>
 
           {reminder.body ? (
