@@ -13,7 +13,6 @@ import {
   SettingsIcon,
 } from "@/components/planner/icons";
 import {
-  getHomePageDataCoverage,
   getLatestDataUpdatedAt,
   getSemestersWithWeeks,
   getUpcomingAcademicCalendarEvents,
@@ -96,11 +95,6 @@ function formatDataUpdatedValue(value: Date | string | null)
   }).format(updatedAt);
 
   return `${formattedDate} SGT`;
-}
-
-function formatCount(value: number)
-{
-  return new Intl.NumberFormat("en-SG").format(value);
 }
 
 const audienceLabels: Record<AcademicCalendarEventRecord["audience"], string> = {
@@ -267,10 +261,9 @@ function getUpcomingDates(
 
 export default async function HomePage()
 {
-  const [semesterTree, latestDataUpdatedAt, dataCoverage, academicCalendarEvents] = await Promise.all([
+  const [semesterTree, latestDataUpdatedAt, academicCalendarEvents] = await Promise.all([
     getSemestersWithWeeks(),
     getLatestDataUpdatedAt(),
-    getHomePageDataCoverage(),
     getUpcomingAcademicCalendarEvents(),
   ]);
   const currentSemesterContext = getCurrentSemesterContext(
@@ -298,18 +291,18 @@ export default async function HomePage()
         Quick Links
       </h2>
 
-      <div className="mt-3 grid grid-cols-2 gap-2.5">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         {homeQuickResources.map((item) => {
           const Icon = homeQuickResourceIcons[item.id];
           const content = (
             <>
-              <span className="home-shortcut-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.5rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105 sm:h-9 sm:w-9">
+              <span className="home-shortcut-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.5rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105">
                 <Icon className="h-4 w-4" />
               </span>
               <span className="min-w-0 flex-1 text-left leading-5">{item.label}</span>
             </>
           );
-          const className = "home-shortcut-card group flex min-h-[3.5rem] items-center gap-2.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-[13px] font-semibold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] sm:px-4 sm:py-3";
+          const className = "home-shortcut-card group flex min-h-[3.25rem] items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 text-[12px] font-semibold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]";
 
           if (item.href.startsWith("/"))
           {
@@ -345,23 +338,23 @@ export default async function HomePage()
       <h2 className="text-[20px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)] sm:text-[24px]">
         Upcoming Dates
       </h2>
-      <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {upcomingDates.length > 0 ? upcomingDates.map((item) => (
-          <div key={`${item.label}-${item.detail}-${item.date}`} className="flex min-h-[6.25rem] items-start justify-between gap-3 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3 shadow-sm">
+          <div key={`${item.label}-${item.detail}-${item.date}`} className="flex min-h-[7rem] items-start justify-between gap-4 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 shadow-sm">
             <div className="min-w-0">
               {item.audiences && item.audiences.length > 0 ? (
                 <p className="mb-1 text-[10px] font-bold uppercase leading-3 text-[var(--primary)]">
                   {item.audiences.join(" • ")}
                 </p>
               ) : null}
-              <p className="text-[13px] font-bold leading-5 text-[var(--on-surface)]">
+              <p className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">
                 {item.label}
               </p>
-              <p className="text-[11px] leading-4 text-[var(--on-surface-variant)]">
+              <p className="mt-1 text-[11px] leading-4 text-[var(--on-surface-variant)]">
                 {item.detail}
               </p>
             </div>
-            <p className="shrink-0 text-right text-[12px] font-bold leading-5 text-[var(--primary)]">
+            <p className="max-w-[5.5rem] shrink-0 text-right text-[12px] font-bold leading-5 text-[var(--primary)]">
               {item.date}
             </p>
           </div>
@@ -382,7 +375,7 @@ export default async function HomePage()
     >
       <div className="home-page grid gap-6 sm:gap-8">
         <section className="pt-1 sm:pt-2">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,0.88fr)_minmax(22rem,28rem)] lg:items-start lg:gap-8 xl:gap-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start lg:gap-8 xl:gap-10">
             <div className="min-w-0">
               <p className="max-w-3xl text-[24px] font-bold leading-[1.15] tracking-[-0.045em] text-[var(--on-surface)] sm:text-[32px] lg:text-[40px]">
                 Welcome to SUSS Planner.
@@ -411,6 +404,14 @@ export default async function HomePage()
                 <p className="mt-2 text-[12px] leading-5 text-[var(--on-surface-variant)]">
                   If classes or schedules have changed since the last update, refer to the SUSS Backpack app or Canvas LMS for the latest official information.
                 </p>
+                <div className="mt-4 border-y border-[var(--outline-variant)] py-3">
+                  <p className="text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
+                    Data Last Updated
+                  </p>
+                  <p className="mt-1 text-[13px] font-bold leading-5 text-[var(--on-surface)]">
+                    {formatDataUpdatedValue(latestDataUpdatedAt)}
+                  </p>
+                </div>
                 <Link
                   prefetch
                   href="/feedback"
@@ -419,38 +420,6 @@ export default async function HomePage()
                   <EditIcon className="h-4 w-4" />
                   Send feedback
                 </Link>
-              </section>
-
-              <section>
-                <h2 className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
-                  Catalogue
-                </h2>
-                <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-y border-[var(--outline-variant)] py-3">
-                  <div>
-                    <p className="text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                      Courses
-                    </p>
-                    <p className="mt-1 text-[20px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)]">
-                      {formatCount(dataCoverage.courseCount)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                      Classes
-                    </p>
-                    <p className="mt-1 text-[20px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)]">
-                      {formatCount(dataCoverage.classCount)}
-                    </p>
-                  </div>
-                </div>
-                <div className="border-b border-[var(--outline-variant)] py-3">
-                  <p className="text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                    Data Last Updated
-                  </p>
-                  <p className="mt-1 text-[13px] font-bold leading-5 text-[var(--on-surface)]">
-                    {formatDataUpdatedValue(latestDataUpdatedAt)}
-                  </p>
-                </div>
               </section>
 
               {quickLinksSection}
