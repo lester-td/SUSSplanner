@@ -3,6 +3,7 @@
 ## Contents
 
 - [Introduction](#introduction)
+  - [App Stack and Data Storage](#app-stack-and-data-storage)
 - [Getting Started](#getting-started)
 - [Main Features](#main-features)
 - [Planning Courses](#planning-courses)
@@ -54,7 +55,7 @@ You do not need an account or sign-in.
 ### Before You Start
 
 SUSSPlanner saves your timetable, semester planner, GPA Calculator entries,
-settings, and reminder snoozes in your current browser.
+settings, and reminder dismissals in your current browser.
 
 - Your plans do not automatically appear on another device or browser.
 - Clearing your browser data may permanently remove your plans.
@@ -62,6 +63,21 @@ settings, and reminder snoozes in your current browser.
   window.
 - There is no account-based or online backup. Export a Planner JSON backup if
   you may need to restore the plan later or move it to another browser.
+
+### App Stack and Data Storage
+
+SUSSPlanner runs as a Next.js and React web app. Course, class, assessment, and
+semester data are loaded from a maintained academic database, while your
+personal planning state stays in your browser.
+
+| Area | What It Means for You |
+|---|---|
+| Web app | Use SUSSPlanner in a browser; no installation or account is required. |
+| Academic data | Course and timetable information is loaded from the app's maintained data source. |
+| Local storage | Timetable, Planner, GPA Calculator, settings, and reminder dismissals stay in this browser only. |
+| Planner backup | Export a Planner JSON file when you want a restorable local backup. |
+| Sharing | Timetable share links are read-only until the receiver imports them. |
+| Registration reminders | Reminder notifications use the registration schedule bundled with SUSSPlanner. |
 
 ## Getting Started
 
@@ -217,21 +233,23 @@ other browsers or devices.
 
 ### Course Registration Reminders
 
-Course registration reminders appear as top-right notifications when a
-configured eCR or add-drop window is approaching. By default, SUSSPlanner shows
-reminders:
+Course registration reminders appear as top-right notifications when an eCR or
+add-drop window is approaching, open, or closing soon. SUSSPlanner shows one
+registration reminder at a time.
 
-- 7 days before registration opens.
-- 1 day before registration opens.
-- At opening time.
+The reminder status uses:
 
-Each reminder shows the registration window and the reminder timing. The
-notification is visible from the reminder time until that registration window
-ends, unless you snooze it.
+- **Upcoming** when registration starts within the next 7 days.
+- **Open** when registration is open and not yet in its final 24 hours.
+- **Closing Soon** during the final 24 hours before registration ends.
 
-Reminders are local to your browser and are based on the registration schedule
-bundled with SUSSPlanner. Always confirm official dates through SUSS before
-making registration decisions.
+Closing a notification hides that specific reminder threshold. The same
+threshold will not reappear, but a later threshold may appear as the window gets
+closer, while it remains open, or as it approaches closing.
+
+Reminders and dismissals are local to your browser and are based on the
+registration schedule bundled with SUSSPlanner. Always confirm official dates
+through SUSS before making registration decisions.
 
 ## Planning Courses
 
@@ -638,14 +656,13 @@ not removed when you change appearance settings.
 1. Open **Settings**.
 2. Go to **Course Registration Reminders**.
 3. Set **In-app reminders** to **On**.
-4. Choose one or more reminder timings.
-5. Set **Reminder notification** to **On**.
-6. Open SUSSPlanner near an eCR or add-drop period.
+4. Set **Reminder notification** to **On**.
+5. Open SUSSPlanner near an eCR or add-drop period.
 
 When a reminder is active, a notification appears at the top right of the app.
-SUSSPlanner shows only the most urgent active reminder for each registration
-event. For example, when the opening-time reminder becomes active, it replaces
-the earlier 7-day or 1-day reminder for the same event.
+SUSSPlanner shows only one active registration reminder at a time. The reminder
+can change from **Upcoming** to **Open** to **Closing Soon** as the registration
+window moves through those phases.
 
 Turn **In-app reminders** off to disable all course registration reminders in
 this browser. Turn **Reminder notification** off if you want to keep the
@@ -653,14 +670,16 @@ preference saved but hide the in-app notification.
 
 ### Snooze a Reminder
 
-Use the close button to temporarily hide reminders for the current registration
-event, similar to NUSMods CourseReg reminders. This action is stored only in
-the current browser.
+Use the close button to hide the currently displayed reminder threshold,
+similar to NUSMods CourseReg reminders. This action is stored only in the
+current browser.
 
-A snoozed registration event stays hidden until that event ends or the bundled
-registration schedule changes. A reminder can appear again when:
+A dismissed threshold stays hidden for the matching registration window. A
+reminder can appear again when:
 
-- A later registration event becomes active.
+- The next upcoming or closing-soon threshold is crossed.
+- The next 24-hour open interval starts.
+- A later registration window becomes active.
 - The bundled registration schedule changes.
 - Browser storage is cleared.
 - You use another browser or device.
@@ -692,12 +711,10 @@ Your degree plan is saved in your current browser.
 ### Prepare for Course Registration
 
 1. Open **Settings** and confirm **Course Registration Reminders** are on.
-2. Choose whether you want reminders 7 days before, 1 day before, at opening
-   time, or a combination of those timings.
-3. Open **Planner** to review the modules you intend to register for.
-4. When a reminder notification appears, check the registration window shown in
+2. Open **Planner** to review the modules you intend to register for.
+3. When a reminder notification appears, check the registration window shown in
    the notification.
-5. Confirm final registration dates and availability through official SUSS
+4. Confirm final registration dates and availability through official SUSS
    channels before taking action.
 
 ### Compare Different Plans
@@ -775,7 +792,7 @@ No. SUSSPlanner does not require an account or sign-in.
 ### Where are my plans saved?
 
 Your timetable, semester planner, GPA Calculator entries, settings, and
-reminder snoozes are saved in your current browser.
+reminder dismissals are saved in your current browser.
 
 ### Will my plans appear on another device?
 
@@ -847,8 +864,9 @@ You can plan between 1 and 20 semesters.
 ### Why do I not see a course registration reminder?
 
 A reminder appears only when reminders are enabled, the notification is enabled,
-the current date is within a configured reminder window, and that registration
-event has not already been snoozed in this browser.
+the current date is within an upcoming, open, or closing-soon reminder
+threshold, and that exact threshold has not already been dismissed in this
+browser.
 
 ### Are course registration reminders official SUSS notices?
 
@@ -912,17 +930,16 @@ information available in SUSSPlanner.
 
 1. Open **Settings**.
 2. Confirm **In-app reminders** and **Reminder notification** are both **On**.
-3. Confirm at least one reminder timing is selected.
-4. Check whether you previously snoozed that registration event.
-5. Confirm that the registration window is close enough for one of your chosen
-   reminder timings.
+3. Check whether you previously dismissed the current threshold.
+4. Confirm that the registration window is within 7 days of opening, currently
+   open, or in its final 24 hours.
 
 ## Limitations
 
 - SUSSPlanner has no accounts, online syncing, or recovery without an exported
   JSON backup.
 - Your plans are saved only in your current browser.
-- Settings and reminder snoozes are also saved only in your current browser.
+- Settings and reminder dismissals are also saved only in your current browser.
 - Calculator entries are browser-local and cannot currently be exported,
   imported, shared, or recovered after browser data is cleared.
 - GPA and Pass/Fail results are planning estimates. Confirm official GPA and
