@@ -8,12 +8,13 @@ import {
 import {
   EMPTY_LOCAL_REGISTRATION_REMINDER_STATE,
   REGISTRATION_REMINDER_STORAGE_KEY,
+  dismissLocalRegistrationReminderInterval,
   dismissLocalRegistrationReminder,
   pruneLocalRegistrationReminderState,
   readLocalRegistrationReminderState,
   snoozeLocalRegistrationReminder,
 } from "@/lib/registration/reminder-storage";
-import type { RegistrationEvent, RegistrationReminder, ReminderOffset } from "@/lib/registration/types";
+import type { RegistrationEvent, ReminderOffset } from "@/lib/registration/types";
 import {
   buildRegistrationReminderCandidates,
   buildReminderId,
@@ -21,7 +22,6 @@ import {
   getActiveInAppRegistrationReminders,
   getDueRegistrationReminders,
   resolveRegistrationReminderOffsets,
-  selectMostUrgentRegistrationReminders,
 } from "@/lib/registration/reminders";
 import {
   assertValidRegistrationSchedule,
@@ -47,25 +47,6 @@ const ONE_DAY_OFFSET: ReminderOffset = {
   offsetMinutes: 24 * 60,
   label: "1 day before",
 };
-
-function makeReminder(overrides: Partial<RegistrationReminder>): RegistrationReminder
-{
-  return {
-    id: "event:0",
-    eventId: "event",
-    eventVersion: "v1",
-    channel: "in-app",
-    offset: OPENING_OFFSET,
-    dueAt: "2026-10-12T00:00:00+08:00",
-    visibleFrom: "2026-10-12T00:00:00+08:00",
-    visibleUntil: "2026-10-23T23:59:59+08:00",
-    remindAt: "2026-10-12T00:00:00+08:00",
-    eventStartsAt: "2026-10-12T00:00:00+08:00",
-    eventEndsAt: "2026-10-23T23:59:59+08:00",
-    title: "Reminder",
-    ...overrides,
-  };
-}
 
 function createMockLocalStorage()
 {
@@ -128,76 +109,158 @@ describe("registration reminder timing", () => {
     });
   });
 
-  it("hides reminders before dueAt, shows them during the window and event, then hides after event end", () => {
+  it("hides in-app reminders more than 7 days before start", () => {
     expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-      now: "2026-10-10T23:59:59+08:00",
-      offsets: [ONE_DAY_OFFSET],
-    })).toHaveLength(0);
-
-    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-      now: "2026-10-11T00:00:00+08:00",
-      offsets: [ONE_DAY_OFFSET],
-    })).toHaveLength(1);
-
-    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-      now: "2026-10-12T12:00:00+08:00",
-      offsets: [ONE_DAY_OFFSET],
-    })).toHaveLength(1);
-
-    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-      now: "2026-10-24T00:00:00+08:00",
-      offsets: [ONE_DAY_OFFSET],
+      now: "2026-10-04T23:59:59+08:00",
     })).toHaveLength(0);
   });
 
-  it("returns only the most urgent active in-app reminder per event by default", () => {
+  it.each([
+    ["168h", "2026-10-05T00:00:00+08:00"],
+    ["72h", "2026-10-09T00:00:00+08:00"],
+    ["48h", "2026-10-10T00:00:00+08:00"],
+    ["24h", "2026-10-11T00:00:00+08:00"],
+    ["12h", "2026-10-11T12:00:00+08:00"],
+    ["6h", "2026-10-11T18:00:00+08:00"],
+    ["1h", "2026-10-11T23:00:00+08:00"],
+  ])("shows the upcoming %s threshold", (thresholdKey, now) => {
+    const active = getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now,
+    });
+
+    expect(active).toHaveLength(1);
+    expect(active[0]).toMatchObject({
+      id: `registrationReminder:${BASE_EVENT.id}:upcoming:${thresholdKey}`,
+      phase: "upcoming",
+      intervalKey: `upcoming:${thresholdKey}`,
+      storageKey: `registrationReminder:${BASE_EVENT.id}:upcoming:${thresholdKey}`,
+    });
+  });
+
+  it("does not show a dismissed upcoming threshold until the next threshold is crossed", () => {
+    const currentVersion = deriveRegistrationEventVersion(BASE_EVENT);
+
+    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now: "2026-10-11T06:00:00+08:00",
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:upcoming:24h`]: {
+          eventVersion: currentVersion,
+        },
+      },
+    })).toHaveLength(0);
+
+    const nextThreshold = getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now: "2026-10-11T12:00:00+08:00",
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:upcoming:24h`]: {
+          eventVersion: currentVersion,
+        },
+      },
+    });
+
+    expect(nextThreshold[0].intervalKey).toBe("upcoming:12h");
+  });
+
+  it("shows a green open reminder immediately at start", () => {
     const active = getActiveInAppRegistrationReminders([BASE_EVENT], {
       now: BASE_EVENT.startsAt,
     });
 
     expect(active).toHaveLength(1);
-    expect(active[0].id).toBe("ecr-2026-10:0");
+    expect(active[0]).toMatchObject({
+      id: `registrationReminder:${BASE_EVENT.id}:open:day-0`,
+      phase: "open",
+      intervalKey: "open:day-0",
+    });
   });
 
-  it("can return all active reminders when most-urgent selection is disabled", () => {
-    const active = getActiveInAppRegistrationReminders([BASE_EVENT], {
-      now: BASE_EVENT.startsAt,
-      selectMostUrgentPerEvent: false,
+  it("reappears only every 24 hours while open after dismissal", () => {
+    const currentVersion = deriveRegistrationEventVersion(BASE_EVENT);
+
+    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now: "2026-10-12T12:00:00+08:00",
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
+          eventVersion: currentVersion,
+        },
+      },
+    })).toHaveLength(0);
+
+    const nextOpenReminder = getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now: "2026-10-13T00:00:00+08:00",
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
+          eventVersion: currentVersion,
+        },
+      },
     });
 
-    expect(active.map((reminder) => reminder.id).sort()).toEqual([
-      "ecr-2026-10:0",
-      "ecr-2026-10:10080",
-      "ecr-2026-10:1440",
-    ]);
+    expect(nextOpenReminder[0].intervalKey).toBe("open:day-1");
   });
 
-  it("breaks urgency ties by latest dueAt, then smaller absolute offset, then reminder ID", () => {
-    const reminders = [
-      makeReminder({
-        id: "event:latest",
-        dueAt: "2026-10-12T00:00:00+08:00",
-        offset: { offsetMinutes: 120, label: "Later" },
-      }),
-      makeReminder({
-        id: "event:earlier",
-        dueAt: "2026-10-11T00:00:00+08:00",
-        offset: { offsetMinutes: 0, label: "Earlier" },
-      }),
-      makeReminder({
-        id: "event:smaller-offset",
-        dueAt: "2026-10-12T00:00:00+08:00",
-        offset: { offsetMinutes: 60, label: "Smaller offset" },
-      }),
-      makeReminder({
-        id: "event:a-sort",
-        dueAt: "2026-10-12T00:00:00+08:00",
-        offset: { offsetMinutes: 60, label: "A sort" },
-      }),
-    ];
+  it.each([
+    ["24h", "2026-10-22T23:59:59+08:00"],
+    ["12h", "2026-10-23T11:59:59+08:00"],
+    ["6h", "2026-10-23T17:59:59+08:00"],
+    ["1h", "2026-10-23T22:59:59+08:00"],
+  ])("shows the closing %s threshold only in the final day", (thresholdKey, now) => {
+    const active = getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now,
+    });
 
-    expect(selectMostUrgentRegistrationReminders(reminders)).toHaveLength(1);
-    expect(selectMostUrgentRegistrationReminders(reminders)[0].id).toBe("event:a-sort");
+    expect(active).toHaveLength(1);
+    expect(active[0]).toMatchObject({
+      id: `registrationReminder:${BASE_EVENT.id}:closing:${thresholdKey}`,
+      phase: "closing",
+      intervalKey: `closing:${thresholdKey}`,
+    });
+  });
+
+  it("does not show a dismissed closing threshold until the next threshold is crossed", () => {
+    const currentVersion = deriveRegistrationEventVersion(BASE_EVENT);
+
+    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now: "2026-10-23T05:59:59+08:00",
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:closing:24h`]: {
+          eventVersion: currentVersion,
+        },
+      },
+    })).toHaveLength(0);
+
+    const nextThreshold = getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now: "2026-10-23T11:59:59+08:00",
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:closing:24h`]: {
+          eventVersion: currentVersion,
+        },
+      },
+    });
+
+    expect(nextThreshold[0].intervalKey).toBe("closing:12h");
+  });
+
+  it("hides ended windows", () => {
+    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
+      now: "2026-10-24T00:00:00+08:00",
+    })).toHaveLength(0);
+  });
+
+  it("does not stack multiple active in-app reminders", () => {
+    const secondEvent: RegistrationEvent = {
+      ...BASE_EVENT,
+      id: "add-drop-2026-10",
+      title: "Add-Drop Period",
+      startsAt: "2026-10-13T00:00:00+08:00",
+      endsAt: "2026-10-24T23:59:59+08:00",
+      eventType: "add-drop",
+    };
+    const active = getActiveInAppRegistrationReminders([BASE_EVENT, secondEvent], {
+      now: "2026-10-12T00:00:00+08:00",
+    });
+
+    expect(active).toHaveLength(1);
+    expect(active[0].eventId).toBe(BASE_EVENT.id);
   });
 
   it("supports due push reminders without returning in-app reminders", () => {
@@ -219,18 +282,17 @@ describe("registration reminder timing", () => {
 });
 
 describe("registration reminder filtering", () => {
-  it("hides dismissed reminders for the matching event version", () => {
+  it("hides dismissed interval reminders for the matching event version", () => {
     const active = getActiveInAppRegistrationReminders([BASE_EVENT], {
       now: BASE_EVENT.startsAt,
-      dismissedReminders: {
-        "ecr-2026-10:0": {
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
           eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
         },
       },
     });
 
-    expect(active).toHaveLength(1);
-    expect(active[0].id).toBe("ecr-2026-10:1440");
+    expect(active).toHaveLength(0);
   });
 
   it.each([
@@ -248,45 +310,40 @@ describe("registration reminder filtering", () => {
 
       const active = getActiveInAppRegistrationReminders([changedEvent], {
         now: changedEvent.startsAt,
-        dismissedReminders: {
-          "ecr-2026-10:0": {
+        dismissedIntervals: {
+          [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
             eventVersion: oldVersion,
           },
         },
       });
 
-      expect(active[0].id).toBe("ecr-2026-10:0");
+      expect(active[0].id).toBe(`registrationReminder:${BASE_EVENT.id}:open:day-0`);
     },
   );
 
-  it("hides snoozed reminders for the matching event version", () => {
+  it("ignores legacy snoozed events for the threshold-based banner", () => {
     const currentVersion = deriveRegistrationEventVersion(BASE_EVENT);
 
-    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
+    const active = getActiveInAppRegistrationReminders([BASE_EVENT], {
       now: BASE_EVENT.startsAt,
       snoozedEvents: {
         "ecr-2026-10": {
           eventVersion: currentVersion,
         },
       },
-    })).toHaveLength(0);
+    });
 
-    expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-      now: BASE_EVENT.startsAt,
-      snoozedEvents: {
-        "ecr-2026-10": {
-          eventVersion: "old-version",
-        },
-      },
-    })[0].id).toBe("ecr-2026-10:0");
+    expect(active).toHaveLength(1);
+    expect(active[0].intervalKey).toBe("open:day-0");
   });
 });
 
 describe("registration reminder storage", () => {
   it("stores dismissed records keyed by reminder ID with eventVersion only", () => {
     withMockLocalStorage(() => {
-      const reminder = getActiveInAppRegistrationReminders([BASE_EVENT], {
-        now: BASE_EVENT.startsAt,
+      const reminder = buildRegistrationReminderCandidates([BASE_EVENT], {
+        channel: "in-app",
+        offsets: [OPENING_OFFSET],
       })[0];
       const state = dismissLocalRegistrationReminder(reminder, {
         events: [BASE_EVENT],
@@ -294,61 +351,62 @@ describe("registration reminder storage", () => {
       });
 
       expect(state.dismissedReminders).toEqual({
-        "ecr-2026-10:0": {
+        [`${BASE_EVENT.id}:0`]: {
           eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
         },
       });
+      expect(state.dismissedIntervals).toEqual({});
       expect(state.snoozedEvents).toEqual({});
-      expect(state.dismissedReminders["ecr-2026-10:0"]).not.toHaveProperty("reminderId");
+      expect(state.dismissedReminders[`${BASE_EVENT.id}:0`]).not.toHaveProperty("reminderId");
       expect(JSON.parse(window.localStorage.getItem(REGISTRATION_REMINDER_STORAGE_KEY) ?? "{}"))
         .toEqual(state);
     });
   });
 
-  it("applies dismissed storage to active reminders", () => {
+  it("stores dismissed interval records keyed by window and threshold", () => {
     withMockLocalStorage(() => {
       const reminder = getActiveInAppRegistrationReminders([BASE_EVENT], {
         now: BASE_EVENT.startsAt,
       })[0];
-      const state = dismissLocalRegistrationReminder(reminder, {
-        events: [BASE_EVENT],
-        now: BASE_EVENT.startsAt,
-      });
-
-      const active = getActiveInAppRegistrationReminders([BASE_EVENT], {
-        now: BASE_EVENT.startsAt,
-        dismissedReminders: state.dismissedReminders,
-      });
-
-      expect(active).toHaveLength(1);
-      expect(active[0].id).toBe("ecr-2026-10:1440");
-    });
-  });
-
-  it("stores snoozed records keyed by event ID with eventVersion only", () => {
-    withMockLocalStorage(() => {
-      const reminder = getActiveInAppRegistrationReminders([BASE_EVENT], {
-        now: BASE_EVENT.startsAt,
-      })[0];
-      const state = snoozeLocalRegistrationReminder(reminder, {
+      const state = dismissLocalRegistrationReminderInterval(reminder, {
         events: [BASE_EVENT],
         now: BASE_EVENT.startsAt,
       });
 
       expect(state).toEqual({
         dismissedReminders: {},
-        snoozedEvents: {
-          "ecr-2026-10": {
+        dismissedIntervals: {
+          [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
             eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
           },
         },
+        snoozedEvents: {},
       });
       expect(JSON.parse(window.localStorage.getItem(REGISTRATION_REMINDER_STORAGE_KEY) ?? "{}"))
         .toEqual(state);
     });
   });
 
-  it("applies snoozed storage to all active reminders in the current event", () => {
+  it("applies dismissed interval storage to active reminders", () => {
+    withMockLocalStorage(() => {
+      const reminder = getActiveInAppRegistrationReminders([BASE_EVENT], {
+        now: BASE_EVENT.startsAt,
+      })[0];
+      const state = dismissLocalRegistrationReminderInterval(reminder, {
+        events: [BASE_EVENT],
+        now: BASE_EVENT.startsAt,
+      });
+
+      const active = getActiveInAppRegistrationReminders([BASE_EVENT], {
+        now: BASE_EVENT.startsAt,
+        dismissedIntervals: state.dismissedIntervals,
+      });
+
+      expect(active).toHaveLength(0);
+    });
+  });
+
+  it("keeps snoozeLocalRegistrationReminder as an interval dismissal alias", () => {
     withMockLocalStorage(() => {
       const reminder = getActiveInAppRegistrationReminders([BASE_EVENT], {
         now: BASE_EVENT.startsAt,
@@ -358,17 +416,12 @@ describe("registration reminder storage", () => {
         now: BASE_EVENT.startsAt,
       });
 
-      expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-        now: BASE_EVENT.startsAt,
-        offsets: [OPENING_OFFSET],
-        snoozedEvents: state.snoozedEvents,
-      })).toHaveLength(0);
-
-      expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-        now: "2026-10-12T12:00:00+08:00",
-        offsets: [ONE_DAY_OFFSET],
-        snoozedEvents: state.snoozedEvents,
-      })).toHaveLength(0);
+      expect(state.dismissedIntervals).toEqual({
+        [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
+          eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
+        },
+      });
+      expect(state.snoozedEvents).toEqual({});
     });
   });
 
@@ -379,7 +432,7 @@ describe("registration reminder storage", () => {
   ] satisfies Array<[string, Partial<RegistrationEvent>]>)(
     "prunes old dismissed records when %s changes",
     (_, changedFields) => {
-      const reminderId = "ecr-2026-10:0";
+      const reminderId = `registrationReminder:${BASE_EVENT.id}:open:day-0`;
       const oldVersion = deriveRegistrationEventVersion(BASE_EVENT);
       const changedEvent = {
         ...BASE_EVENT,
@@ -388,6 +441,11 @@ describe("registration reminder storage", () => {
 
       expect(pruneLocalRegistrationReminderState({
         dismissedReminders: {
+          [reminderId]: {
+            eventVersion: oldVersion,
+          },
+        },
+        dismissedIntervals: {
           [reminderId]: {
             eventVersion: oldVersion,
           },
@@ -403,12 +461,21 @@ describe("registration reminder storage", () => {
     withMockLocalStorage(() => {
       window.localStorage.setItem(REGISTRATION_REMINDER_STORAGE_KEY, JSON.stringify({
         dismissedReminders: {
-          "ecr-2026-10:0": {
+          [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
             eventVersion: 123,
           },
           "ecr-2026-10:1440": {
             eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
             reminderId: "should-not-persist",
+          },
+        },
+        dismissedIntervals: {
+          [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
+            eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
+            reminderId: "should-not-persist",
+          },
+          "registrationReminder:missing:open:day-0": {
+            eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
           },
         },
         snoozedEvents: {
@@ -434,6 +501,11 @@ describe("registration reminder storage", () => {
             eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
           },
         },
+        dismissedIntervals: {
+          [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
+            eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
+          },
+        },
         snoozedEvents: {
           "ecr-2026-10": {
             eventVersion: deriveRegistrationEventVersion(BASE_EVENT),
@@ -451,6 +523,14 @@ describe("registration reminder storage", () => {
           eventVersion: currentVersion,
         },
         "missing:0": {
+          eventVersion: currentVersion,
+        },
+      },
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
+          eventVersion: currentVersion,
+        },
+        "registrationReminder:missing:open:day-0": {
           eventVersion: currentVersion,
         },
       },
@@ -473,6 +553,11 @@ describe("registration reminder storage", () => {
           eventVersion: currentVersion,
         },
       },
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
+          eventVersion: currentVersion,
+        },
+      },
       snoozedEvents: {
         "ecr-2026-10": {
           eventVersion: currentVersion,
@@ -486,6 +571,11 @@ describe("registration reminder storage", () => {
     })).toEqual({
       dismissedReminders: {
         "ecr-2026-10:0": {
+          eventVersion: currentVersion,
+        },
+      },
+      dismissedIntervals: {
+        [`registrationReminder:${BASE_EVENT.id}:open:day-0`]: {
           eventVersion: currentVersion,
         },
       },
@@ -512,22 +602,15 @@ describe("registration reminder storage", () => {
       const reminder = getActiveInAppRegistrationReminders([BASE_EVENT], {
         now: BASE_EVENT.startsAt,
       })[0];
-      const dismissedState = dismissLocalRegistrationReminder(reminder, {
+      const dismissedState = dismissLocalRegistrationReminderInterval(reminder, {
         events: [BASE_EVENT],
         now: BASE_EVENT.startsAt,
       });
 
       expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
         now: BASE_EVENT.startsAt,
-        offsets: [OPENING_OFFSET],
-        dismissedReminders: dismissedState.dismissedReminders,
+        dismissedIntervals: dismissedState.dismissedIntervals,
       })).toHaveLength(0);
-
-      expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-        now: BASE_EVENT.startsAt,
-        offsets: [ONE_DAY_OFFSET],
-        dismissedReminders: dismissedState.dismissedReminders,
-      })[0].id).toBe("ecr-2026-10:1440");
 
       const snoozedState = snoozeLocalRegistrationReminder(reminder, {
         events: [BASE_EVENT],
@@ -536,15 +619,13 @@ describe("registration reminder storage", () => {
 
       expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
         now: BASE_EVENT.startsAt,
-        offsets: [OPENING_OFFSET],
-        snoozedEvents: snoozedState.snoozedEvents,
+        dismissedIntervals: snoozedState.dismissedIntervals,
       })).toHaveLength(0);
 
       expect(getActiveInAppRegistrationReminders([BASE_EVENT], {
-        now: BASE_EVENT.startsAt,
-        offsets: [ONE_DAY_OFFSET],
-        snoozedEvents: snoozedState.snoozedEvents,
-      })).toHaveLength(0);
+        now: "2026-10-13T00:00:00+08:00",
+        dismissedIntervals: snoozedState.dismissedIntervals,
+      })[0].intervalKey).toBe("open:day-1");
     });
   });
 });
