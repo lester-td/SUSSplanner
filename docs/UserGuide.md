@@ -656,8 +656,7 @@ not removed when you change appearance settings.
 1. Open **Settings**.
 2. Go to **Course Registration Reminders**.
 3. Set **In-app reminders** to **On**.
-4. Set **Reminder notification** to **On**.
-5. Open SUSSPlanner near an eCR or add-drop period.
+4. Open SUSSPlanner near an eCR or add-drop period.
 
 When a reminder is active, a notification appears at the top right of the app.
 SUSSPlanner shows only one active registration reminder at a time. The reminder
@@ -665,8 +664,7 @@ can change from **Upcoming** to **Open** to **Closing Soon** as the registration
 window moves through those phases.
 
 Turn **In-app reminders** off to disable all course registration reminders in
-this browser. Turn **Reminder notification** off if you want to keep the
-preference saved but hide the in-app notification.
+this browser.
 
 ### Snooze a Reminder
 
@@ -929,7 +927,7 @@ information available in SUSSPlanner.
 ### A Course Registration Reminder Is Missing
 
 1. Open **Settings**.
-2. Confirm **In-app reminders** and **Reminder notification** are both **On**.
+2. Confirm **In-app reminders** is **On**.
 3. Check whether you previously dismissed the current threshold.
 4. Confirm that the registration window is within 7 days of opening, currently
    open, or in its final 24 hours.

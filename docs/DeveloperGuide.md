@@ -736,7 +736,7 @@ The planner header provides these data-protection and presentation actions:
 ```mermaid
 flowchart TD
     Settings["Open /settings"]
-    Preferences["Set reminders enabled<br/>and notification visibility"]
+    Preferences["Set in-app reminders<br/>enabled or disabled"]
     SaveSettings["Persist normalized settings<br/>to sussplanner:settings"]
     NotifySettings["Dispatch sussplanner:settings-updated"]
     AppPage["Open any app page"]
@@ -763,10 +763,8 @@ flowchart TD
     Render --> Close --> Dismiss --> SaveInteraction --> Tick
 ```
 
-Registration reminders are intentionally in-app only today. The types and
-reminder candidate builder can represent a `push` channel, but
-`PUSH_REMINDERS_AVAILABLE` is `false` and settings normalization removes
-push-only channel selections from user preferences.
+Registration reminder banners are intentionally in-app only today. User
+settings expose only the in-app banner toggle.
 
 The UI integration points are:
 
@@ -776,8 +774,8 @@ The UI integration points are:
 - `components/registration/registration-reminder-banner.tsx` for the rendered
   notification.
 - `lib/registration/schedule.ts` for the bundled eCR/add-drop events.
-- `lib/registration/reminders.ts` for active phase/threshold selection, due
-  push-reminder candidates, filtering, and one-banner selection.
+- `lib/registration/reminders.ts` for active phase/threshold selection,
+  filtering, and one-banner selection.
 - `lib/registration/reminder-storage.ts` for local dismissal persistence,
   legacy snooze compatibility, and stale-record pruning.
 - `lib/settings/app-settings.ts` for settings defaults, migration, and
@@ -974,24 +972,17 @@ Persisted fields:
 `registrationReminders` contains:
 
 - `enabled`
-- `offsetMinutes`, preserved and normalized for settings compatibility; the
-  floating in-app banner currently uses fixed phase thresholds instead
-- `channels`
-- `inAppBannerEnabled`
-- `push`, currently normalized to disabled values because push reminders are
-  not available
 
-`lib/settings/app-settings.ts` normalizes legacy boolean reminder settings,
-deduplicates supported reminder offsets and channels, removes unavailable push
-channels, and dispatches `sussplanner:settings-updated` after saves. The
-`SettingsProvider` listens for that event and browser `storage` events to apply
-the resolved light/dark colour scheme to the document root.
+`lib/settings/app-settings.ts` normalizes reminder settings into the simplified
+`{ enabled }` shape, then dispatches `sussplanner:settings-updated` after
+saves. The `SettingsProvider` listens for that event and browser `storage`
+events to apply the resolved light/dark colour scheme to the document root.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Hydrating
     Hydrating --> Defaults: no valid settings JSON
-    Hydrating --> NormalizedSettings: saved JSON or legacy boolean settings
+    Hydrating --> NormalizedSettings: saved settings JSON
     Defaults --> Ready
     NormalizedSettings --> Ready
 
@@ -1362,7 +1353,7 @@ sequenceDiagram
     participant Notification as RegistrationReminderBanner
     participant Browser as localStorage
 
-    Student->>Settings: Enable in-app reminders / notification setting
+    Student->>Settings: Toggle in-app reminders
     Settings->>AppSettings: normalizeRegistrationReminderPreferences(...)
     AppSettings->>Browser: Save sussplanner:settings
     AppSettings-->>ReminderHost: sussplanner:settings-updated event
@@ -1545,8 +1536,7 @@ does not currently set shared-cache headers.
   registration feed.
 - Reminder dismissal state is local-only and does not sync across browsers or
   devices.
-- Browser push notifications are represented in the reminder types but are
-  disabled by settings normalization and not exposed as a production feature.
+- Browser push notifications are not exposed as a production feature.
 - Assessment components represent the latest strategy by course and schedule
   type, not historical semester-specific assessments.
 - The root automated test coverage is currently focused on registration
