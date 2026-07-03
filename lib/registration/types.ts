@@ -41,4 +41,5 @@ export type DismissedRegistrationReminder = {
 
 export type LocalRegistrationReminderState = {
   dismissedReminders: Record<string, { eventVersion: string }>;
+  snoozedEvents: Record<string, { eventVersion: string }>;
 };

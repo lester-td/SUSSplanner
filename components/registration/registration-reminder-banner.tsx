@@ -3,15 +3,11 @@ import {
   ClockIcon,
   XIcon,
 } from "@/components/planner/icons";
-import type { ReactNode } from "react";
 import type { RegistrationReminder } from "@/lib/registration/types";
-
-type SnoozeReminderHandler = (reminder: RegistrationReminder) => void;
 
 type RegistrationReminderBannerProps = {
   reminders: RegistrationReminder[];
-  onDismissReminder?: (reminder: RegistrationReminder) => void;
-  onSnoozeReminder?: SnoozeReminderHandler;
+  onCloseReminder?: (reminder: RegistrationReminder) => void;
   variant?: "inline" | "notification";
   className?: string;
 };
@@ -24,34 +20,13 @@ function formatReminderTimestamp(timestamp: string)
     .replace(/\+08:00$/, " SGT");
 }
 
-function ReminderActionButton({
-  children,
-  onClick,
-}: {
-  children: ReactNode;
-  onClick: () => void;
-})
-{
-  return (
-    <button
-      type="button"
-      className="inline-flex h-7 shrink-0 items-center justify-center rounded-[0.35rem] border border-transparent px-2 text-[12px] font-semibold leading-4 text-[var(--primary)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)]"
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
-
 function RegistrationReminderItem({
   reminder,
-  onDismissReminder,
-  onSnoozeReminder,
+  onCloseReminder,
   variant,
 }: {
   reminder: RegistrationReminder;
-  onDismissReminder?: (reminder: RegistrationReminder) => void;
-  onSnoozeReminder?: SnoozeReminderHandler;
+  onCloseReminder?: (reminder: RegistrationReminder) => void;
   variant: "inline" | "notification";
 })
 {
@@ -99,23 +74,15 @@ function RegistrationReminderItem({
             </div>
           </dl>
         </div>
-
-        <div className={`flex shrink-0 flex-wrap gap-1.5 ${isNotification ? "justify-end" : "sm:justify-end"}`}>
-          {onSnoozeReminder ? (
-            <ReminderActionButton onClick={() => onSnoozeReminder(reminder)}>
-              Snooze
-            </ReminderActionButton>
-          ) : null}
-        </div>
       </div>
 
-      {onDismissReminder ? (
+      {onCloseReminder ? (
         <button
           type="button"
           className="absolute bottom-0 right-0 top-0 inline-flex w-10 items-center justify-center border-l border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] sm:w-12"
-          aria-label={`Dismiss ${reminder.title}`}
-          title="Dismiss reminder"
-          onClick={() => onDismissReminder(reminder)}
+          aria-label={`Snooze ${reminder.title}`}
+          title="Snooze reminder"
+          onClick={() => onCloseReminder(reminder)}
         >
           <XIcon className="h-4 w-4" />
         </button>
@@ -126,8 +93,7 @@ function RegistrationReminderItem({
 
 export function RegistrationReminderBanner({
   reminders,
-  onDismissReminder,
-  onSnoozeReminder,
+  onCloseReminder,
   variant = "inline",
   className = "",
 }: RegistrationReminderBannerProps)
@@ -150,8 +116,7 @@ export function RegistrationReminderBanner({
         <RegistrationReminderItem
           key={`${reminder.id}:${reminder.channel}`}
           reminder={reminder}
-          onDismissReminder={onDismissReminder}
-          onSnoozeReminder={onSnoozeReminder}
+          onCloseReminder={onCloseReminder}
           variant={variant}
         />
       ))}

@@ -6,6 +6,7 @@ import type {
 import {
   DEFAULT_REGISTRATION_REMINDER_OFFSETS,
   buildRegistrationReminderCandidates,
+  deriveRegistrationEventVersion,
   parseRegistrationReminderTimestamp,
 } from "@/lib/registration/reminders";
 
@@ -23,6 +24,7 @@ type CurrentReminderRecord = {
 
 export const EMPTY_LOCAL_REGISTRATION_REMINDER_STATE: LocalRegistrationReminderState = {
   dismissedReminders: {},
+  snoozedEvents: {},
 };
 
 function canUseLocalStorage()
@@ -44,6 +46,7 @@ function cloneEmptyLocalRegistrationReminderState(): LocalRegistrationReminderSt
 {
   return {
     dismissedReminders: {},
+    snoozedEvents: {},
   };
 }
 
@@ -60,7 +63,10 @@ function normalizeLocalRegistrationReminderState(value: unknown): LocalRegistrat
   }
 
   const dismissedReminders: LocalRegistrationReminderState["dismissedReminders"] = {};
+  const snoozedEvents: LocalRegistrationReminderState["snoozedEvents"] = {};
   const dismissedCandidate = value.dismissedReminders;
+  const snoozedEventsCandidate = value.snoozedEvents;
+  const snoozedCandidate = value.snoozedReminders;
 
   if (isRecord(dismissedCandidate))
   {
@@ -76,8 +82,48 @@ function normalizeLocalRegistrationReminderState(value: unknown): LocalRegistrat
     });
   }
 
+  if (isRecord(snoozedEventsCandidate))
+  {
+    Object.entries(snoozedEventsCandidate).forEach(([eventId, record]) => {
+      if (!isRecord(record) || typeof record.eventVersion !== "string" || !record.eventVersion.trim())
+      {
+        return;
+      }
+
+      snoozedEvents[eventId] = {
+        eventVersion: record.eventVersion,
+      };
+    });
+  }
+
+  if (isRecord(snoozedCandidate))
+  {
+    Object.entries(snoozedCandidate).forEach(([reminderId, record]) => {
+      if (
+        !isRecord(record)
+        || typeof record.eventVersion !== "string"
+        || !record.eventVersion.trim()
+      )
+      {
+        return;
+      }
+
+      const [eventId] = reminderId.split(":");
+
+      if (!eventId)
+      {
+        return;
+      }
+
+      snoozedEvents[eventId] = {
+        eventVersion: record.eventVersion,
+      };
+    });
+  }
+
   return {
     dismissedReminders,
+    snoozedEvents,
   };
 }
 
@@ -96,6 +142,20 @@ function getCurrentReminderRecords(events: readonly RegistrationEvent[])
   });
 
   return currentReminderRecords;
+}
+
+function getCurrentEventRecords(events: readonly RegistrationEvent[])
+{
+  const currentEventRecords = new Map<string, CurrentReminderRecord>();
+
+  events.forEach((event) => {
+    currentEventRecords.set(event.id, {
+      eventVersion: deriveRegistrationEventVersion(event),
+      eventEndsAt: event.endsAt,
+    });
+  });
+
+  return currentEventRecords;
 }
 
 function isCurrentReminderRecordStale(
@@ -121,6 +181,7 @@ export function pruneLocalRegistrationReminderState(
 {
   const normalizedState = normalizeLocalRegistrationReminderState(state);
   const currentReminderRecords = getCurrentReminderRecords(events);
+  const currentEventRecords = getCurrentEventRecords(events);
   const nowTimestamp = getNowTimestamp(now);
   const prunedState = cloneEmptyLocalRegistrationReminderState();
 
@@ -131,6 +192,17 @@ export function pruneLocalRegistrationReminderState(
     }
 
     prunedState.dismissedReminders[reminderId] = {
+      eventVersion: record.eventVersion,
+    };
+  });
+
+  Object.entries(normalizedState.snoozedEvents).forEach(([eventId, record]) => {
+    if (isCurrentReminderRecordStale(currentEventRecords.get(eventId), record.eventVersion, nowTimestamp))
+    {
+      return;
+    }
+
+    prunedState.snoozedEvents[eventId] = {
       eventVersion: record.eventVersion,
     };
   });
@@ -194,6 +266,7 @@ export function dismissLocalRegistrationReminder(
         eventVersion: reminder.eventVersion,
       },
     },
+    snoozedEvents: currentState.snoozedEvents,
   };
 
   return saveLocalRegistrationReminderState(nextState, context);
@@ -204,6 +277,16 @@ export function snoozeLocalRegistrationReminder(
   context: ReminderStorageContext,
 )
 {
-  // NUSMods-style snooze: hide this reminder key until a new reminder key or event version appears.
-  return dismissLocalRegistrationReminder(reminder, context);
+  const currentState = readLocalRegistrationReminderState(context);
+  const nextState: LocalRegistrationReminderState = {
+    dismissedReminders: currentState.dismissedReminders,
+    snoozedEvents: {
+      ...currentState.snoozedEvents,
+      [reminder.eventId]: {
+        eventVersion: reminder.eventVersion,
+      },
+    },
+  };
+
+  return saveLocalRegistrationReminderState(nextState, context);
 }

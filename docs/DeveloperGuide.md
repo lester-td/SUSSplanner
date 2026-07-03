@@ -50,9 +50,9 @@ flowchart LR
     Maintainer["Maintainer / data operator"]
     Browser["Browser<br/>React client components"]
     LocalStorage["Browser localStorage<br/>timetable + semester planner + GPA calculator + settings"]
-    ReminderState["Reminder interaction state<br/>dismissed reminder IDs"]
+    ReminderState["Reminder interaction state<br/>dismissed reminder IDs + snoozed event IDs"]
     RegistrationSchedule["Bundled registration schedule<br/>lib/registration/schedule.ts"]
-    ReminderBanner["Course registration reminder banner<br/>Planner page"]
+    ReminderNotification["Course registration reminder notification<br/>global app overlay"]
     SemesterPlannerBackup["Semester-planner JSON backup<br/>local file"]
     SemesterPlannerPrint["A4 semester-planner print view<br/>Blob URL in new tab"]
     ShareURL["Share URL<br/>sem + semantic class identifiers"]
@@ -72,7 +72,7 @@ flowchart LR
     Browser --> ReminderState
     ReminderState --> Browser
     RegistrationSchedule --> Browser
-    Browser --> ReminderBanner
+    Browser --> ReminderNotification
     Browser --> SemesterPlannerBackup
     SemesterPlannerBackup --> Browser
     Browser --> SemesterPlannerPrint
@@ -111,7 +111,7 @@ flowchart LR
 - `DATABASE_URL` is read by the server-side database client, Drizzle tooling,
   and the setup validator; maintainers also pass it to `psql`.
 - Anonymous user state is not persisted server-side.
-- App settings and course-registration reminder dismissals are local browser
+- App settings and course-registration reminder snoozes are local browser
   preferences; they are not persisted server-side.
 - Share URLs use semantic class identifiers instead of database `class_id`
   values, making links independent of raw surrogate IDs.
@@ -178,7 +178,7 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 │   ├── layout/                  Shared application shell and navigation
 │   ├── planner/                 Semester planner UI, add button, and shared icons
 │   │   └── semester-planner/    Client, panel, drag/drop, and formatting helpers
-│   ├── registration/            Course-registration reminder banner
+│   ├── registration/            Course-registration reminder notification
 │   ├── settings/                Settings UI and settings provider
 │   ├── timetable/               Timetable, exam, selection, and share UI
 │   └── ui/                      Reusable actions and modal
@@ -548,7 +548,7 @@ flowchart LR
         Study["Build multi-semester course plan"]
         GPA["Calculate GPA and compare Pass/Fail strategy"]
         Settings["Configure local settings and timetable defaults"]
-        Reminders["Receive, dismiss, or snooze course registration reminders"]
+        Reminders["Receive and snooze course registration reminders"]
         Backup["Export or import semester-planner JSON backup"]
         Print["Open A4 semester-planner print/PDF view"]
         Share["Create shared timetable URL"]
@@ -734,33 +734,30 @@ The planner header provides these data-protection and presentation actions:
 ```mermaid
 flowchart TD
     Settings["Open /settings"]
-    Preferences["Set reminders enabled,<br/>selected offsets, and banner visibility"]
+    Preferences["Set reminders enabled,<br/>selected offsets, and notification visibility"]
     SaveSettings["Persist normalized settings<br/>to sussplanner:settings"]
     NotifySettings["Dispatch sussplanner:settings-updated"]
-    Planner["Open /planner"]
+    AppPage["Open any app page"]
     Hydrate["Read settings and reminder interaction state"]
     Tick["Refresh reminder clock and storage<br/>on mount, storage events, and 60s interval"]
     Schedule["REGISTRATION_EVENTS<br/>validated bundled schedule"]
     Candidates["Build reminder candidates<br/>for selected offsets and in-app channel"]
-    Filter["Filter disabled, wrong channel,<br/>dismissed, or inactive reminders"]
+    Filter["Filter disabled, wrong channel,<br/>dismissed, snoozed, or inactive reminders"]
     Urgent["Select most urgent active<br/>reminder per event"]
-    Banner{"Any active reminder?"}
+    Notification{"Any active reminder?"}
     Render["Render RegistrationReminderBanner"]
-    Hidden["Render no banner"]
-    Action{"User action"}
-    Dismiss["Dismiss current reminder ID<br/>for matching eventVersion"]
-    Snooze["Snooze current reminder ID<br/>using same local dismissal model"]
+    Hidden["Render no notification"]
+    Close["Close notification"]
+    Snooze["Snooze current event ID<br/>for matching eventVersion"]
     SaveInteraction["Persist to<br/>sussplanner:registration-reminders"]
 
     Settings --> Preferences --> SaveSettings --> NotifySettings
-    Planner --> Hydrate --> Tick
+    AppPage --> Hydrate --> Tick
     NotifySettings --> Hydrate
-    Tick --> Schedule --> Candidates --> Filter --> Urgent --> Banner
-    Banner -->|Yes| Render
-    Banner -->|No| Hidden
-    Render --> Action
-    Action --> Dismiss --> SaveInteraction --> Tick
-    Action --> Snooze --> SaveInteraction --> Tick
+    Tick --> Schedule --> Candidates --> Filter --> Urgent --> Notification
+    Notification -->|Yes| Render
+    Notification -->|No| Hidden
+    Render --> Close --> Snooze --> SaveInteraction --> Tick
 ```
 
 Registration reminders are intentionally in-app only today. The types and
@@ -771,15 +768,15 @@ push-only channel selections from user preferences.
 The UI integration points are:
 
 - `components/settings/settings-client.tsx` for reminder preference controls.
-- `components/planner/semester-planner/client.tsx` for computing active
-  reminders and handling dismiss/snooze.
+- `components/registration/global-registration-reminders.tsx` for computing
+  active reminders and handling close-to-snooze actions.
 - `components/registration/registration-reminder-banner.tsx` for the rendered
-  Planner banner.
+  notification.
 - `lib/registration/schedule.ts` for the bundled eCR/add-drop events.
 - `lib/registration/reminders.ts` for candidate construction, active/due
   filtering, and most-urgent selection.
-- `lib/registration/reminder-storage.ts` for local dismissal persistence and
-  stale-record pruning.
+- `lib/registration/reminder-storage.ts` for local snooze/dismissal persistence
+  and stale-record pruning.
 - `lib/settings/app-settings.ts` for settings defaults, migration, and
   normalization.
 
@@ -1010,6 +1007,8 @@ Persisted fields:
 
 - `dismissedReminders`, keyed by reminder ID
 - Per-dismissal `eventVersion`
+- `snoozedEvents`, keyed by registration event ID
+- Per-snooze `eventVersion`
 
 Reminder IDs use:
 
@@ -1051,13 +1050,15 @@ The active reminder path uses these rules:
 - Show a candidate only from `dueAt`/`visibleFrom` through the event `endsAt`.
 - Hide candidates whose reminder ID has been dismissed for the same
   `eventVersion`.
+- Hide candidates whose event ID has been snoozed for the same `eventVersion`.
 - Return only the most urgent active reminder per event by default.
 - Sort urgency by latest `dueAt`, then smaller absolute offset, then reminder
   ID.
 
-Dismiss and snooze currently share the same storage behavior: hide the current
-reminder ID for the matching event version. A later reminder ID for the same
-event can still appear.
+The floating notification follows NUSMods' CourseReg-reminder style: closing it
+snoozes the current registration event for the matching event version, so
+earlier reminder offsets for the same event do not immediately replace it. The
+storage layer still normalizes older dismissed-reminder records for compatibility.
 
 ```mermaid
 stateDiagram-v2
@@ -1066,9 +1067,10 @@ stateDiagram-v2
     CandidateBuilt --> NotYetVisible: now is before dueAt
     CandidateBuilt --> Active: dueAt <= now <= eventEndsAt
     CandidateBuilt --> Expired: now is after eventEndsAt
-    Active --> Dismissed: dismiss or snooze
-    Dismissed --> Hidden: same reminder ID and eventVersion
-    Hidden --> Active: different reminder ID becomes active
+    Active --> Snoozed: close notification
+    Dismissed --> Hidden: legacy same reminder ID and eventVersion
+    Snoozed --> Hidden: same event ID and eventVersion
+    Hidden --> Active: event is not snoozed
     Hidden --> Active: eventVersion changes
     Expired --> Pruned: storage prune removes stale record
 ```
@@ -1328,44 +1330,44 @@ sequenceDiagram
     end
 ```
 
-### Show and Dismiss a Registration Reminder
+### Show and Snooze a Registration Reminder
 
 ```mermaid
 sequenceDiagram
     actor Student
     participant Settings as SettingsClient
     participant AppSettings as lib/settings/app-settings.ts
-    participant Planner as SemesterPlannerClient
+    participant ReminderHost as GlobalRegistrationReminders
     participant Schedule as lib/registration/schedule.ts
     participant Reminders as lib/registration/reminders.ts
     participant ReminderStore as lib/registration/reminder-storage.ts
-    participant Banner as RegistrationReminderBanner
+    participant Notification as RegistrationReminderBanner
     participant Browser as localStorage
 
-    Student->>Settings: Select reminder offsets / banner setting
+    Student->>Settings: Select reminder offsets / notification setting
     Settings->>AppSettings: normalizeRegistrationReminderPreferences(...)
     AppSettings->>Browser: Save sussplanner:settings
-    AppSettings-->>Planner: sussplanner:settings-updated event
+    AppSettings-->>ReminderHost: sussplanner:settings-updated event
 
-    Student->>Planner: Open /planner
-    Planner->>AppSettings: readAppSettings()
-    Planner->>ReminderStore: readLocalRegistrationReminderState(events, now)
+    Student->>ReminderHost: Open any app page
+    ReminderHost->>AppSettings: readAppSettings()
+    ReminderHost->>ReminderStore: readLocalRegistrationReminderState(events, now)
     ReminderStore->>Browser: Read sussplanner:registration-reminders
-    ReminderStore-->>Planner: Pruned dismissedReminders
-    Planner->>Schedule: REGISTRATION_EVENTS
-    Planner->>Reminders: getActiveInAppRegistrationReminders(...)
-    Reminders-->>Planner: Most urgent active reminders
-    Planner-->>Banner: reminders + dismiss/snooze handlers
-    Banner-->>Student: Show reminder banner
+    ReminderStore-->>ReminderHost: Pruned dismissedReminders and snoozedEvents
+    ReminderHost->>Schedule: REGISTRATION_EVENTS
+    ReminderHost->>Reminders: getActiveInAppRegistrationReminders(...)
+    Reminders-->>ReminderHost: Most urgent active reminders
+    ReminderHost-->>Notification: reminders + close handler
+    Notification-->>Student: Show reminder notification
 
-    alt Student dismisses or snoozes
-        Student->>Banner: Dismiss / Snooze
-        Banner->>Planner: Handler(reminder)
-        Planner->>ReminderStore: dismiss/snoozeLocalRegistrationReminder(...)
-        ReminderStore->>Browser: Save dismissed reminder ID and eventVersion
-        ReminderStore-->>Planner: Updated interaction state
-        Planner->>Reminders: Recompute active reminders
-        Reminders-->>Planner: Hidden current reminder, or next active reminder
+    alt Student closes the notification
+        Student->>Notification: Close
+        Notification->>ReminderHost: Handler(reminder)
+        ReminderHost->>ReminderStore: snoozeLocalRegistrationReminder(...)
+        ReminderStore->>Browser: Save snoozed event record
+        ReminderStore-->>ReminderHost: Updated interaction state
+        ReminderHost->>Reminders: Recompute active reminders
+        Reminders-->>ReminderHost: Hidden current event or next active event
     end
 ```
 
@@ -1523,8 +1525,8 @@ does not currently set shared-cache headers.
 - Course registration reminders depend on the bundled static schedule in
   `lib/registration/schedule.ts`; they are not fetched from an official live
   registration feed.
-- Reminder dismiss/snooze state is local-only and does not sync across browsers
-  or devices.
+- Reminder snooze state is local-only and does not sync across browsers or
+  devices.
 - Browser push notifications are represented in the reminder types but are
   disabled by settings normalization and not exposed as a production feature.
 - Assessment components represent the latest strategy by course and schedule

@@ -37,6 +37,7 @@ export type RegistrationReminderOptions = {
   channels?: readonly ReminderChannel[];
   channel?: ReminderChannel;
   dismissedReminders?: LocalRegistrationReminderState["dismissedReminders"];
+  snoozedEvents?: LocalRegistrationReminderState["snoozedEvents"];
 };
 
 export type DueRegistrationReminderOptions = RegistrationReminderOptions & {
@@ -111,6 +112,16 @@ function isDismissed(
   const dismissed = dismissedReminders?.[reminder.id];
 
   return dismissed?.eventVersion === reminder.eventVersion;
+}
+
+function isSnoozed(
+  reminder: RegistrationReminder,
+  snoozedEvents: LocalRegistrationReminderState["snoozedEvents"] | undefined,
+)
+{
+  const snoozed = snoozedEvents?.[reminder.eventId];
+
+  return snoozed?.eventVersion === reminder.eventVersion;
 }
 
 function isSent(
@@ -285,6 +296,11 @@ export function filterRegistrationReminders(
     }
 
     if (isDismissed(reminder, options.dismissedReminders))
+    {
+      return false;
+    }
+
+    if (isSnoozed(reminder, options.snoozedEvents))
     {
       return false;
     }

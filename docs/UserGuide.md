@@ -23,7 +23,7 @@
 - [Managing Settings and Course Registration Reminders](#managing-settings-and-course-registration-reminders)
   - [Change Timetable Appearance](#change-timetable-appearance)
   - [Use Course Registration Reminders](#use-course-registration-reminders)
-  - [Dismiss or Snooze a Reminder](#dismiss-or-snooze-a-reminder)
+  - [Snooze a Reminder](#snooze-a-reminder)
 - [Common Workflows](#common-workflows)
 - [Tips and Best Practices](#tips-and-best-practices)
 - [Frequently Asked Questions](#frequently-asked-questions)
@@ -54,7 +54,7 @@ You do not need an account or sign-in.
 ### Before You Start
 
 SUSSPlanner saves your timetable, semester planner, GPA Calculator entries,
-settings, and reminder dismissals in your current browser.
+settings, and reminder snoozes in your current browser.
 
 - Your plans do not automatically appear on another device or browser.
 - Clearing your browser data may permanently remove your plans.
@@ -217,15 +217,17 @@ other browsers or devices.
 
 ### Course Registration Reminders
 
-Course registration reminders appear in **Planner** when a configured eCR or
-add-drop window is approaching. By default, SUSSPlanner shows reminders:
+Course registration reminders appear as top-right notifications when a
+configured eCR or add-drop window is approaching. By default, SUSSPlanner shows
+reminders:
 
 - 7 days before registration opens.
 - 1 day before registration opens.
 - At opening time.
 
-Each reminder shows the registration window and the reminder timing. The banner
-is visible from the reminder time until that registration window ends.
+Each reminder shows the registration window and the reminder timing. The
+notification is visible from the reminder time until that registration window
+ends, unless you snooze it.
 
 Reminders are local to your browser and are based on the registration schedule
 bundled with SUSSPlanner. Always confirm official dates through SUSS before
@@ -637,28 +639,28 @@ not removed when you change appearance settings.
 2. Go to **Course Registration Reminders**.
 3. Set **In-app reminders** to **On**.
 4. Choose one or more reminder timings.
-5. Set **Reminder banner** to **On**.
-6. Open **Planner** near an eCR or add-drop period.
+5. Set **Reminder notification** to **On**.
+6. Open SUSSPlanner near an eCR or add-drop period.
 
-When a reminder is active, a banner appears above the semester planner board.
+When a reminder is active, a notification appears at the top right of the app.
 SUSSPlanner shows only the most urgent active reminder for each registration
 event. For example, when the opening-time reminder becomes active, it replaces
 the earlier 7-day or 1-day reminder for the same event.
 
 Turn **In-app reminders** off to disable all course registration reminders in
-this browser. Turn **Reminder banner** off if you want to keep the preference
-saved but hide the Planner banner.
+this browser. Turn **Reminder notification** off if you want to keep the
+preference saved but hide the in-app notification.
 
-### Dismiss or Snooze a Reminder
+### Snooze a Reminder
 
-Use the close button to dismiss a reminder. Use **Snooze** to hide the current
-reminder in the same way. Both actions are stored only in the current browser.
+Use the close button to temporarily hide reminders for the current registration
+event, similar to NUSMods CourseReg reminders. This action is stored only in
+the current browser.
 
-A dismissed or snoozed reminder stays hidden for the matching registration
-event version. It can appear again when:
+A snoozed registration event stays hidden until that event ends or the bundled
+registration schedule changes. A reminder can appear again when:
 
-- A later configured reminder timing for the same event becomes the most urgent
-  active reminder.
+- A later registration event becomes active.
 - The bundled registration schedule changes.
 - Browser storage is cleared.
 - You use another browser or device.
@@ -693,8 +695,8 @@ Your degree plan is saved in your current browser.
 2. Choose whether you want reminders 7 days before, 1 day before, at opening
    time, or a combination of those timings.
 3. Open **Planner** to review the modules you intend to register for.
-4. When a reminder banner appears, check the registration window shown in the
-   banner.
+4. When a reminder notification appears, check the registration window shown in
+   the notification.
 5. Confirm final registration dates and availability through official SUSS
    channels before taking action.
 
@@ -748,8 +750,8 @@ SUSSPlanner keeps one multi-semester course plan at a time. To compare options:
 - Keep possible electives in the **Module Bank** until you decide.
 - Use custom courses as placeholders for future requirements.
 - Check credit units across each semester, not only the total.
-- Keep course registration reminders on if you want Planner banners near eCR
-  and add-drop periods.
+- Keep course registration reminders on if you want notifications near eCR and
+  add-drop periods.
 - Recheck course availability closer to registration because information may
   change.
 
@@ -773,7 +775,7 @@ No. SUSSPlanner does not require an account or sign-in.
 ### Where are my plans saved?
 
 Your timetable, semester planner, GPA Calculator entries, settings, and
-reminder dismissals are saved in your current browser.
+reminder snoozes are saved in your current browser.
 
 ### Will my plans appear on another device?
 
@@ -844,9 +846,9 @@ You can plan between 1 and 20 semesters.
 
 ### Why do I not see a course registration reminder?
 
-A reminder appears only when reminders are enabled, the Planner banner is
-enabled, the current date is within a configured reminder window, and that
-specific reminder has not already been dismissed or snoozed in this browser.
+A reminder appears only when reminders are enabled, the notification is enabled,
+the current date is within a configured reminder window, and that registration
+event has not already been snoozed in this browser.
 
 ### Are course registration reminders official SUSS notices?
 
@@ -909,9 +911,9 @@ information available in SUSSPlanner.
 ### A Course Registration Reminder Is Missing
 
 1. Open **Settings**.
-2. Confirm **In-app reminders** and **Reminder banner** are both **On**.
+2. Confirm **In-app reminders** and **Reminder notification** are both **On**.
 3. Confirm at least one reminder timing is selected.
-4. Check whether you previously dismissed or snoozed that reminder.
+4. Check whether you previously snoozed that registration event.
 5. Confirm that the registration window is close enough for one of your chosen
    reminder timings.
 
@@ -920,7 +922,7 @@ information available in SUSSPlanner.
 - SUSSPlanner has no accounts, online syncing, or recovery without an exported
   JSON backup.
 - Your plans are saved only in your current browser.
-- Settings and reminder dismissals are also saved only in your current browser.
+- Settings and reminder snoozes are also saved only in your current browser.
 - Calculator entries are browser-local and cannot currently be exported,
   imported, shared, or recovered after browser data is cleared.
 - GPA and Pass/Fail results are planning estimates. Confirm official GPA and

@@ -10,7 +10,6 @@ import {
 import {
   EMPTY_LOCAL_REGISTRATION_REMINDER_STATE,
   REGISTRATION_REMINDER_STORAGE_KEY,
-  dismissLocalRegistrationReminder,
   readLocalRegistrationReminderState,
   snoozeLocalRegistrationReminder,
 } from "@/lib/registration/reminder-storage";
@@ -96,38 +95,27 @@ export function GlobalRegistrationReminders()
     return getActiveInAppRegistrationReminders(REGISTRATION_EVENTS, {
       enabled: inAppRemindersEnabled,
       dismissedReminders: reminderInteractionState.dismissedReminders,
+      snoozedEvents: reminderInteractionState.snoozedEvents,
       now: reminderNow,
       offsets: resolveRegistrationReminderOffsets(reminderPreferences.offsetMinutes),
     });
   }, [appSettings.registrationReminders, ready, reminderInteractionState, reminderNow]);
 
-  function handleDismissRegistrationReminder(reminder: RegistrationReminder)
+  function handleCloseRegistrationReminder(reminder: RegistrationReminder)
   {
     const now = Date.now();
 
-    setReminderNow(now);
-    setReminderInteractionState(dismissLocalRegistrationReminder(reminder, {
-      events: REGISTRATION_EVENTS,
-      now,
-    }));
-  }
-
-  function handleSnoozeRegistrationReminder(reminder: RegistrationReminder)
-  {
-    const now = Date.now();
-
-    setReminderNow(now);
     setReminderInteractionState(snoozeLocalRegistrationReminder(reminder, {
       events: REGISTRATION_EVENTS,
       now,
     }));
+    setReminderNow(now);
   }
 
   return (
     <RegistrationReminderBanner
       reminders={activeRegistrationReminders}
-      onDismissReminder={handleDismissRegistrationReminder}
-      onSnoozeReminder={handleSnoozeRegistrationReminder}
+      onCloseReminder={handleCloseRegistrationReminder}
       variant="notification"
     />
   );
