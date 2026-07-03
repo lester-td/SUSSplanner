@@ -25,6 +25,7 @@ import {
   TbLayoutRows,
   TbLayersIntersect,
   TbList,
+  TbMail,
   TbMapPin,
   TbMoon,
   TbPencil,
@@ -198,6 +199,11 @@ export function CalculatorIcon({ className }: IconProps)
 export function HomeIcon({ className }: IconProps)
 {
   return renderIcon(TbHome, className);
+}
+
+export function MailIcon({ className }: IconProps)
+{
+  return renderIcon(TbMail, className);
 }
 
 export function SettingsIcon({ className }: IconProps)

@@ -7,13 +7,13 @@ import {
   BookIcon,
   CalculatorIcon,
   CalendarWeekIcon,
-  CalendarIcon,
   EditIcon,
   HomeIcon,
-  SchoolIcon,
+  MailIcon,
   SettingsIcon,
 } from "@/components/planner/icons";
 import { getHomePageDataCoverage, getLatestDataUpdatedAt, getSemestersWithWeeks } from "@/lib/db/queries";
+import { homeQuickResources, studentResources } from "@/lib/student-resources";
 import {
   buildWeekLabel,
   formatCompactDate,
@@ -60,43 +60,14 @@ const appSearchItems = [
   },
 ] as const satisfies readonly HomeSearchItem[];
 
-const usefulLinks = [
-  {
-    label: "Student Portal",
-    href: "https://portal.suss.edu.sg/",
-    icon: HomeIcon,
-  },
-  {
-    label: "Canvas LMS",
-    href: "https://canvas.suss.edu.sg/",
-    icon: BookIcon,
-  },
-  {
-    label: "Academic Calendar",
-    href: "https://www.suss.edu.sg/life-at-suss/onboarding/matriculation/academic-calendar",
-    icon: CalendarIcon,
-  },
-  {
-    label: "Exam Timetable",
-    href: "https://www.suss.edu.sg/docs/default-source/dept_as/ca/exam-timetable.pdf",
-    icon: CalendarWeekIcon,
-  },
-  {
-    label: "Library",
-    href: "https://library.suss.edu.sg/",
-    icon: BookIcon,
-  },
-  {
-    label: "Library Discussion Rooms",
-    href: "https://suss.libcal.com/reserve/discussionroom",
-    icon: BookIcon,
-  },
-  {
-    label: "Student Support",
-    href: "https://www.suss.edu.sg/life-at-suss/onboarding/orientation/learning---support-services",
-    icon: SchoolIcon,
-  }
-] as const;
+const homeQuickResourceIcons: Record<string, typeof BookIcon> = {
+  "suss-portal": HomeIcon,
+  canvas: BookIcon,
+  mymail: MailIcon,
+  istudyguide: BookIcon,
+  "exam-timetable": CalendarWeekIcon,
+  "discussion-room-booking": BookIcon,
+} as const;
 
 function formatDataUpdatedValue(value: Date | string | null)
 {
@@ -185,11 +156,16 @@ export default async function HomePage()
   );
   const searchItems = [
     ...appSearchItems,
-    ...usefulLinks.map((item) => ({
-      label: item.label,
-      description: "SUSS Website",
-      href: item.href,
-      keywords: ["useful link", "student link"],
+    ...studentResources.map((resource) => ({
+      label: resource.label,
+      description: resource.description,
+      href: resource.href,
+      keywords: [
+        resource.category,
+        "student resource",
+        "useful link",
+        ...resource.keywords,
+      ],
     })),
   ] satisfies HomeSearchItem[];
   const upcomingDates = getUpcomingDates(semesterTree, currentSemesterContext);
@@ -215,14 +191,14 @@ export default async function HomePage()
                 <HomeSearch items={searchItems} />
               </div>
 
-              <section id="portal-links" aria-labelledby="useful-links" className="mt-8">
-                <h2 id="useful-links" className="text-[20px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)] sm:text-[24px]">
-                  Useful Links
+              <section id="portal-links" aria-labelledby="quick-links" className="mt-8">
+                <h2 id="quick-links" className="text-[20px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)] sm:text-[24px]">
+                  Quick Links
                 </h2>
 
                 <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                  {usefulLinks.map((item) => {
-                    const Icon = item.icon;
+                  {homeQuickResources.map((item) => {
+                    const Icon = homeQuickResourceIcons[item.id];
                     const content = (
                       <>
                         <span className="home-shortcut-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.8rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105 sm:h-9 sm:w-9">
@@ -251,7 +227,8 @@ export default async function HomePage()
                       <a
                         key={item.label}
                         href={item.href}
-                        aria-label={`${item.label} placeholder link`}
+                        target="_blank"
+                        rel="noreferrer"
                         className={className}
                       >
                         {content}

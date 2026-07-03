@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Fuse from "fuse.js";
 
 import { ArrowUpRightIcon, SearchIcon } from "@/components/planner/icons";
 
@@ -12,18 +13,57 @@ export type HomeSearchItem = {
   keywords?: readonly string[];
 };
 
+type HomeSearchDocument = {
+  item: HomeSearchItem;
+  label: string;
+  compactLabel: string;
+  description: string;
+  keywords: string[];
+  compactText: string;
+};
+
 function normalizeSearchText(value: string)
 {
-  return value.trim().toLowerCase();
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ");
 }
 
-function getSearchText(item: HomeSearchItem)
+function compactSearchText(value: string)
 {
-  return [
+  return normalizeSearchText(value).replace(/\s/g, "");
+}
+
+function getSearchDocument(item: HomeSearchItem): HomeSearchDocument
+{
+  const searchText = [
     item.label,
     item.description,
     ...(item.keywords ?? []),
-  ].join(" ").toLowerCase();
+  ].join(" ");
+
+  return {
+    item,
+    label: normalizeSearchText(item.label),
+    compactLabel: compactSearchText(item.label),
+    description: normalizeSearchText(item.description),
+    keywords: (item.keywords ?? []).map(normalizeSearchText),
+    compactText: compactSearchText(searchText),
+  };
+}
+
+function isInternalLink(href: string)
+{
+  return href.startsWith("/");
+}
+
+function isMailLink(href: string)
+{
+  return href.startsWith("mailto:");
 }
 
 export function HomeSearch({
@@ -36,6 +76,23 @@ export function HomeSearch({
   const [query, setQuery] = useState("");
   const trimmedQuery = query.trim();
   const normalizedQuery = normalizeSearchText(query);
+  const compactQuery = compactSearchText(query);
+  const searchDocuments = useMemo(() => items.map(getSearchDocument), [items]);
+  const fuse = useMemo(() => new Fuse(searchDocuments, {
+    distance: 180,
+    findAllMatches: true,
+    ignoreLocation: true,
+    ignoreFieldNorm: true,
+    includeScore: true,
+    keys: [
+      { name: "label", weight: 0.45 },
+      { name: "compactLabel", weight: 0.25 },
+      { name: "keywords", weight: 0.15 },
+      { name: "description", weight: 0.1 },
+      { name: "compactText", weight: 0.05 },
+    ],
+    threshold: 0.48,
+  }), [searchDocuments]);
 
   const matches = useMemo(() => {
     if (!normalizedQuery)
@@ -43,25 +100,34 @@ export function HomeSearch({
       return items.slice(0, 6);
     }
 
-    return items
-      .map((item) => {
-        const searchText = getSearchText(item);
-        const label = item.label.toLowerCase();
-        const score = label === normalizedQuery
-          ? 0
-          : label.startsWith(normalizedQuery)
-            ? 1
-            : searchText.includes(normalizedQuery)
-              ? 2
-              : 9;
+    const rankedItems = new Map<string, { item: HomeSearchItem; score: number }>();
+    const queries = compactQuery && compactQuery !== normalizedQuery
+      ? [normalizedQuery, compactQuery]
+      : [normalizedQuery];
 
-        return { item, score };
-      })
-      .filter(({ score }) => score < 9)
+    for (const fuseQuery of queries)
+    {
+      for (const result of fuse.search(fuseQuery))
+      {
+        const key = result.item.item.href;
+        const score = result.score ?? 1;
+        const existingResult = rankedItems.get(key);
+
+        if (!existingResult || score < existingResult.score)
+        {
+          rankedItems.set(key, {
+            item: result.item.item,
+            score,
+          });
+        }
+      }
+    }
+
+    return [...rankedItems.values()]
       .sort((left, right) => left.score - right.score || left.item.label.localeCompare(right.item.label))
       .slice(0, 6)
       .map(({ item }) => item);
-  }, [items, normalizedQuery]);
+  }, [compactQuery, fuse, items, normalizedQuery]);
   const courseSearchItem = trimmedQuery
     ? {
       label: `Search courses for "${trimmedQuery}"`,
@@ -75,13 +141,19 @@ export function HomeSearch({
 
   function openItem(item: HomeSearchItem)
   {
-    if (item.href.startsWith("/"))
+    if (isInternalLink(item.href))
     {
       router.push(item.href);
       return;
     }
 
-    window.location.assign(item.href);
+    if (isMailLink(item.href))
+    {
+      window.location.assign(item.href);
+      return;
+    }
+
+    window.open(item.href, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -114,7 +186,7 @@ export function HomeSearch({
       {visibleItems.length > 0 ? (
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label="Search suggestions">
           {visibleItems.map((item) => {
-            const isExternal = !item.href.startsWith("/");
+            const isExternal = !isInternalLink(item.href);
             const isCourseSearchSuggestion = courseSearchItem?.href === item.href;
 
             return (
