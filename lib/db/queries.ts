@@ -6,6 +6,7 @@ import {
   desc,
   eq,
   exists,
+  gte,
   ilike,
   inArray,
   isNull,
@@ -34,6 +35,8 @@ import type {
 } from "@/lib/timetable/types";
 import { db } from "./index";
 import {
+  academicCalendarEvents,
+  academicCalendarEventSemesters,
   assessmentComponents,
   classes,
   classEvents,
@@ -44,6 +47,21 @@ import {
 } from "./schema";
 
 const LOOKUP_REVALIDATE_SECONDS = 600;
+
+export type AcademicCalendarEventRecord = {
+  eventId: number;
+  calendarYear: number;
+  audience: "FTUG" | "PTUG" | "LAW" | "GRAD";
+  eventTitle: string;
+  eventCategory: string;
+  startDate: string;
+  endDate: string;
+  status: "confirmed" | "tentative" | "cancelled";
+  sourceUrl: string | null;
+  remarks: string | null;
+  sortOrder: number;
+  semesters: SemesterRecord[];
+};
 
 function normalizeCourseCode(courseCode: string)
 {
@@ -223,12 +241,98 @@ export async function getSemestersWithWeeks()
   return getSemestersWithWeeksCached();
 }
 
+const getUpcomingAcademicCalendarEventsCached = unstable_cache(
+  async (today: string) => {
+    const rows = await db
+      .select({
+        eventId: academicCalendarEvents.eventId,
+        calendarYear: academicCalendarEvents.calendarYear,
+        audience: academicCalendarEvents.audience,
+        eventTitle: academicCalendarEvents.eventTitle,
+        eventCategory: academicCalendarEvents.eventCategory,
+        startDate: academicCalendarEvents.startDate,
+        endDate: academicCalendarEvents.endDate,
+        status: academicCalendarEvents.status,
+        sourceUrl: academicCalendarEvents.sourceUrl,
+        remarks: academicCalendarEvents.remarks,
+        sortOrder: academicCalendarEvents.sortOrder,
+        semesterId: semesters.semesterId,
+        academicYear: semesters.academicYear,
+        semesterNo: semesters.semesterNo,
+        semesterName: semesters.semesterName,
+      })
+      .from(academicCalendarEvents)
+      .leftJoin(academicCalendarEventSemesters, eq(academicCalendarEventSemesters.eventId, academicCalendarEvents.eventId))
+      .leftJoin(semesters, eq(semesters.semesterId, academicCalendarEventSemesters.semesterId))
+      .where(and(
+        gte(academicCalendarEvents.endDate, today),
+        inArray(academicCalendarEvents.status, ["confirmed", "tentative"]),
+      ))
+      .orderBy(
+        asc(academicCalendarEvents.startDate),
+        asc(academicCalendarEvents.sortOrder),
+        asc(academicCalendarEvents.eventTitle),
+        asc(academicCalendarEvents.audience),
+        asc(semesters.academicYear),
+        asc(semesters.semesterNo),
+      );
+
+    const eventsById = new Map<number, AcademicCalendarEventRecord>();
+
+    for (const row of rows)
+    {
+      let event = eventsById.get(row.eventId);
+      if (!event)
+      {
+        event = {
+          eventId: row.eventId,
+          calendarYear: row.calendarYear,
+          audience: row.audience as AcademicCalendarEventRecord["audience"],
+          eventTitle: row.eventTitle,
+          eventCategory: row.eventCategory,
+          startDate: row.startDate,
+          endDate: row.endDate,
+          status: row.status as AcademicCalendarEventRecord["status"],
+          sourceUrl: row.sourceUrl,
+          remarks: row.remarks,
+          sortOrder: row.sortOrder,
+          semesters: [],
+        };
+        eventsById.set(row.eventId, event);
+      }
+
+      if (row.semesterId !== null && row.academicYear !== null && row.semesterNo !== null && row.semesterName !== null)
+      {
+        event.semesters.push({
+          semesterId: row.semesterId,
+          academicYear: row.academicYear,
+          semesterNo: row.semesterNo as SemesterRecord["semesterNo"],
+          semesterName: row.semesterName,
+        });
+      }
+    }
+
+    return [...eventsById.values()];
+  },
+  ["db:getUpcomingAcademicCalendarEvents"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.academicCalendarEvents, CACHE_TAGS.semesters],
+  },
+);
+
+export async function getUpcomingAcademicCalendarEvents(today = new Date().toISOString().slice(0, 10))
+{
+  return getUpcomingAcademicCalendarEventsCached(today);
+}
+
 const getLatestDataUpdatedAtCached = unstable_cache(
   async () => {
     const rows = await Promise.all([
       db.select({ value: sql<Date | string | null>`max(${courses.lastUpdated})` }).from(courses),
       db.select({ value: sql<Date | string | null>`max(${semesters.lastUpdated})` }).from(semesters),
       db.select({ value: sql<Date | string | null>`max(${semesterWeeks.lastUpdated})` }).from(semesterWeeks),
+      db.select({ value: sql<Date | string | null>`max(${academicCalendarEvents.lastUpdated})` }).from(academicCalendarEvents),
       db.select({ value: sql<Date | string | null>`max(${classes.lastUpdated})` }).from(classes),
       db.select({ value: sql<Date | string | null>`max(${classEvents.lastUpdated})` }).from(classEvents),
       db.select({ value: sql<Date | string | null>`max(${assessmentComponents.lastUpdated})` }).from(assessmentComponents),
@@ -261,6 +365,7 @@ const getLatestDataUpdatedAtCached = unstable_cache(
       CACHE_TAGS.courses,
       CACHE_TAGS.semesters,
       CACHE_TAGS.semesterWeeks,
+      CACHE_TAGS.academicCalendarEvents,
       CACHE_TAGS.classes,
       CACHE_TAGS.assessments,
     ],

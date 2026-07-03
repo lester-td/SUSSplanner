@@ -49,6 +49,28 @@ CREATE TABLE IF NOT EXISTS semester_weeks (
     CONSTRAINT chk_week_dates CHECK (end_date >= start_date)
 );
 
+CREATE TABLE IF NOT EXISTS academic_calendar_events (
+    event_id          BIGSERIAL PRIMARY KEY,
+    calendar_year     SMALLINT NOT NULL CHECK (calendar_year >= 2000),
+    audience          VARCHAR(20) NOT NULL CHECK (audience IN ('FTUG', 'PTUG', 'LAW', 'GRAD')),
+    event_title       VARCHAR(255) NOT NULL,
+    event_category    VARCHAR(50) NOT NULL,
+    start_date        DATE NOT NULL,
+    end_date          DATE NOT NULL,
+    status            VARCHAR(20) NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'tentative', 'cancelled')),
+    source_url        TEXT,
+    remarks           TEXT,
+    sort_order        INT NOT NULL DEFAULT 1,
+    last_updated      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_academic_calendar_event_dates CHECK (end_date >= start_date)
+);
+
+CREATE TABLE IF NOT EXISTS academic_calendar_event_semesters (
+    event_id          BIGINT NOT NULL REFERENCES academic_calendar_events(event_id) ON DELETE CASCADE,
+    semester_id       BIGINT NOT NULL REFERENCES semesters(semester_id) ON DELETE CASCADE,
+    PRIMARY KEY (event_id, semester_id)
+);
+
 CREATE TABLE IF NOT EXISTS classes (
     class_id          BIGSERIAL PRIMARY KEY,
     course_code       VARCHAR(20) NOT NULL REFERENCES courses(course_code) ON DELETE RESTRICT,
@@ -164,6 +186,30 @@ ON semester_weeks (semester_id);
 CREATE INDEX IF NOT EXISTS idx_semester_weeks_semester_dates
 ON semester_weeks (semester_id, start_date, end_date);
 
+CREATE INDEX IF NOT EXISTS idx_academic_calendar_events_audience
+ON academic_calendar_events (audience);
+
+CREATE INDEX IF NOT EXISTS idx_academic_calendar_events_calendar_year
+ON academic_calendar_events (calendar_year);
+
+CREATE INDEX IF NOT EXISTS idx_academic_calendar_events_dates
+ON academic_calendar_events (start_date, end_date);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_academic_calendar_event
+ON academic_calendar_events (
+    calendar_year,
+    audience,
+    event_title,
+    start_date,
+    end_date
+);
+
+CREATE INDEX IF NOT EXISTS idx_academic_calendar_event_semesters_semester
+ON academic_calendar_event_semesters (semester_id);
+
+CREATE INDEX IF NOT EXISTS idx_academic_calendar_event_semesters_event
+ON academic_calendar_event_semesters (event_id);
+
 CREATE INDEX IF NOT EXISTS idx_assessment_components_course
 ON assessment_components (course_code);
 
@@ -262,6 +308,12 @@ BEFORE UPDATE ON semester_weeks
 FOR EACH ROW
 EXECUTE FUNCTION set_last_updated();
 
+DROP TRIGGER IF EXISTS trg_academic_calendar_events_last_updated ON academic_calendar_events;
+CREATE TRIGGER trg_academic_calendar_events_last_updated
+BEFORE UPDATE ON academic_calendar_events
+FOR EACH ROW
+EXECUTE FUNCTION set_last_updated();
+
 DROP TRIGGER IF EXISTS trg_classes_last_updated ON classes;
 CREATE TRIGGER trg_classes_last_updated
 BEFORE UPDATE ON classes
@@ -283,6 +335,8 @@ EXECUTE FUNCTION set_last_updated();
 ANALYZE courses;
 ANALYZE semesters;
 ANALYZE semester_weeks;
+ANALYZE academic_calendar_events;
+ANALYZE academic_calendar_event_semesters;
 ANALYZE classes;
 ANALYZE class_events;
 ANALYZE assessment_components;
