@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import {
+  BellIcon,
   CalendarWeekIcon,
   RefreshIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
+import { requestRegistrationReminderPopup } from "@/lib/registration/reminder-storage";
 import {
   APP_THEME_OPTIONS,
   DEFAULT_APP_SETTINGS,
@@ -27,6 +29,15 @@ import {
   getVisibleEndMinutes,
 } from "@/lib/timetable/date-utils";
 import type { TimetableBlock } from "@/lib/timetable/types";
+
+const ENABLE_REMINDER_POPUP_DEBUG = process.env.NODE_ENV !== "production"
+  && process.env.NEXT_PUBLIC_ENABLE_REMINDER_POPUP_DEBUG === "true";
+
+const REMINDER_SCHEDULE_POPOVER_GAP = 6;
+const REMINDER_SCHEDULE_POPOVER_MARGIN = 16;
+const REMINDER_SCHEDULE_POPOVER_MAX_HEIGHT = 320;
+const REMINDER_SCHEDULE_POPOVER_MAX_WIDTH = 352;
+const REMINDER_SCHEDULE_MOBILE_TABLET_QUERY = "(max-width: 1199px)";
 
 const PREVIEW_SAMPLE_COURSES = [
   {
@@ -205,13 +216,37 @@ function Section({
 function SettingRow({
   title,
   description,
+  detail,
+  alignControl = "center",
   children,
 }: {
   title: string;
   description: string;
+  detail?: ReactNode;
+  alignControl?: "center" | "start";
   children: ReactNode;
 })
 {
+  if (alignControl === "start")
+  {
+    return (
+      <div className="grid gap-3">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="min-w-0 text-[15px] font-bold leading-6 text-[var(--on-surface)]">{title}</h3>
+          <div className="flex shrink-0">{children}</div>
+        </div>
+        <p className="max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
+          {description}
+        </p>
+        {detail ? (
+          <div>
+            {detail}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(14rem,auto)] md:items-center">
       <div>
@@ -219,9 +254,247 @@ function SettingRow({
         <p className="mt-1 max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
           {description}
         </p>
+        {detail ? (
+          <div className="mt-3">
+            {detail}
+          </div>
+        ) : null}
       </div>
       <div className="flex md:justify-end">{children}</div>
     </div>
+  );
+}
+
+function ReminderSchedulePopover()
+{
+  const [open, setOpen] = useState(false);
+  const [openSource, setOpenSource] = useState<"click" | "hover" | null>(null);
+  const [popoverPosition, setPopoverPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const hoverCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const schedulePopoverId = "registration-reminder-schedule-popover";
+
+  function clearHoverCloseTimeout()
+  {
+    if (hoverCloseTimeoutRef.current)
+    {
+      clearTimeout(hoverCloseTimeoutRef.current);
+      hoverCloseTimeoutRef.current = null;
+    }
+  }
+
+  function closePopover()
+  {
+    clearHoverCloseTimeout();
+    setOpen(false);
+    setOpenSource(null);
+  }
+
+  function openPopover(source: "click" | "hover")
+  {
+    clearHoverCloseTimeout();
+    setOpen(true);
+    setOpenSource((currentSource) => currentSource === "click" ? currentSource : source);
+  }
+
+  function canClickOpenPopover()
+  {
+    return typeof window !== "undefined" && window.matchMedia(REMINDER_SCHEDULE_MOBILE_TABLET_QUERY).matches;
+  }
+
+  function shouldKeepHoverPopoverOpen(relatedTarget: EventTarget | null)
+  {
+    const nextTarget = relatedTarget instanceof Node ? relatedTarget : null;
+
+    return Boolean(
+      nextTarget
+      && (triggerRef.current?.contains(nextTarget) || popoverRef.current?.contains(nextTarget)),
+    );
+  }
+
+  function closeHoverPopover(relatedTarget: EventTarget | null, delayMs = 0)
+  {
+    if (openSource !== "hover" || shouldKeepHoverPopoverOpen(relatedTarget))
+      return;
+
+    clearHoverCloseTimeout();
+
+    if (delayMs <= 0)
+    {
+      closePopover();
+      return;
+    }
+
+    hoverCloseTimeoutRef.current = setTimeout(() => {
+      closePopover();
+    }, delayMs);
+  }
+
+  const updatePopoverPosition = () => {
+    const triggerElement = triggerRef.current;
+    const popoverElement = popoverRef.current;
+
+    if (!triggerElement || !popoverElement)
+      return;
+
+    const triggerRect = triggerElement.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const usableWidth = Math.max(0, viewportWidth - (REMINDER_SCHEDULE_POPOVER_MARGIN * 2));
+    const width = Math.min(REMINDER_SCHEDULE_POPOVER_MAX_WIDTH, usableWidth);
+    const contentHeight = popoverElement.scrollHeight;
+    const availableBelow = viewportHeight - triggerRect.bottom - REMINDER_SCHEDULE_POPOVER_GAP - REMINDER_SCHEDULE_POPOVER_MARGIN;
+    const availableAbove = triggerRect.top - REMINDER_SCHEDULE_POPOVER_GAP - REMINDER_SCHEDULE_POPOVER_MARGIN;
+    const openAbove = availableBelow < contentHeight && availableAbove > availableBelow;
+    const availableVerticalSpace = Math.max(0, openAbove ? availableAbove : availableBelow);
+    const maxHeight = Math.min(
+      REMINDER_SCHEDULE_POPOVER_MAX_HEIGHT,
+      Math.max(0, viewportHeight - (REMINDER_SCHEDULE_POPOVER_MARGIN * 2)),
+      availableVerticalSpace,
+    );
+    const measuredHeight = Math.min(contentHeight, Math.max(maxHeight, 0));
+    const preferredLeft = triggerRect.left;
+    const left = Math.min(
+      Math.max(REMINDER_SCHEDULE_POPOVER_MARGIN, preferredLeft),
+      Math.max(REMINDER_SCHEDULE_POPOVER_MARGIN, viewportWidth - width - REMINDER_SCHEDULE_POPOVER_MARGIN),
+    );
+    const top = openAbove
+      ? triggerRect.top - REMINDER_SCHEDULE_POPOVER_GAP - measuredHeight
+      : triggerRect.bottom + REMINDER_SCHEDULE_POPOVER_GAP;
+
+    setPopoverPosition({
+      top: Math.max(REMINDER_SCHEDULE_POPOVER_MARGIN, top),
+      left,
+      width,
+      maxHeight,
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!open)
+    {
+      setPopoverPosition(null);
+      return;
+    }
+
+    updatePopoverPosition();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open)
+      return;
+
+    function handlePointerDown(event: PointerEvent)
+    {
+      const target = event.target as Node;
+
+      if (!triggerRef.current?.contains(target) && !popoverRef.current?.contains(target))
+        closePopover();
+    }
+
+    function handleKeyDown(event: KeyboardEvent)
+    {
+      if (event.key === "Escape")
+        closePopover();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", updatePopoverPosition);
+    window.addEventListener("scroll", updatePopoverPosition, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", updatePopoverPosition);
+      window.removeEventListener("scroll", updatePopoverPosition, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    return () => {
+      clearHoverCloseTimeout();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open || !popoverPosition)
+      return;
+
+    updatePopoverPosition();
+  }, [open, popoverPosition?.width, popoverPosition?.maxHeight]);
+
+  const popover = open ? (
+    <div
+      id={schedulePopoverId}
+      ref={popoverRef}
+      role="dialog"
+      aria-label="Reminder schedule"
+      className="fixed z-50 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3 text-[12px] leading-5 text-[var(--on-surface-variant)] shadow-lg"
+      onMouseEnter={clearHoverCloseTimeout}
+      onMouseLeave={(event) => closeHoverPopover(event.relatedTarget)}
+      style={{
+        top: popoverPosition?.top ?? -9999,
+        left: popoverPosition?.left ?? -9999,
+        width: popoverPosition?.width ?? REMINDER_SCHEDULE_POPOVER_MAX_WIDTH,
+        maxHeight: popoverPosition
+          ? `min(${popoverPosition.maxHeight}px, calc(100vh - 2rem))`
+          : "min(320px, calc(100vh - 2rem))",
+        overflowY: "auto",
+        visibility: popoverPosition ? "visible" : "hidden",
+      }}
+    >
+      <p className="text-[13px] font-bold leading-5 text-[var(--on-surface)]">Reminder schedule</p>
+      <div className="mt-2 grid gap-2">
+        <div>
+          <p className="font-bold text-[var(--on-surface)]">Upcoming</p>
+          <p>7d • 3d • 2d • 1d • 12h • 6h • 1h before opening</p>
+        </div>
+        <div>
+          <p className="font-bold text-[var(--on-surface)]">Open</p>
+          <p>At opening • Every 24h while open</p>
+        </div>
+        <div>
+          <p className="font-bold text-[var(--on-surface)]">Closing soon</p>
+          <p>24h • 12h • 6h • 1h before closing</p>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="inline-flex cursor-pointer items-center rounded-md px-0.5 py-1 text-[13px] font-bold leading-5 text-[var(--primary)] underline decoration-[var(--primary)]/45 underline-offset-4 outline-none transition hover:text-[var(--on-surface)] hover:decoration-[var(--on-surface)] focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
+        aria-expanded={open}
+        aria-controls={schedulePopoverId}
+        aria-haspopup="dialog"
+        onClick={(event) => {
+          if (event.detail === 0 || canClickOpenPopover())
+            openPopover("click");
+        }}
+        onMouseEnter={() => openPopover("hover")}
+        onMouseLeave={(event) => closeHoverPopover(event.relatedTarget, 80)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && open)
+          {
+            event.preventDefault();
+            closePopover();
+          }
+        }}
+      >
+        Reminder schedule
+      </button>
+      {popover}
+    </>
   );
 }
 
@@ -374,6 +647,7 @@ export function SettingsClient()
 {
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [requestedReminderCount, setRequestedReminderCount] = useState(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -418,6 +692,13 @@ export function SettingsClient()
   {
     setSettings(DEFAULT_APP_SETTINGS);
     setResetConfirmOpen(false);
+  }
+
+  function requestAnotherRegistrationReminder()
+  {
+    updateRegistrationReminderPreferences({ enabled: true });
+    requestRegistrationReminderPopup();
+    setRequestedReminderCount((currentCount) => currentCount + 1);
   }
 
   return (
@@ -494,7 +775,9 @@ export function SettingsClient()
         <Section id="reminders" title="Course Registration Reminders">
           <SettingRow
             title="In-app reminders"
-            description="Show registration reminder banners for eCR / add-drop periods."
+            description="Receive in-app reminders for eCR, Add/Drop, and Pass/Fail before each window opens, while it is active, and before it closes."
+            detail={<ReminderSchedulePopover />}
+            alignControl="start"
           >
             <SegmentedControl
               label="In-app reminders"
@@ -506,9 +789,27 @@ export function SettingsClient()
               onChange={(value) => updateRegistrationReminderPreferences({ enabled: value === "on" })}
             />
           </SettingRow>
-          <p className="max-w-3xl rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[13px] leading-6 text-[var(--on-surface-variant)]">
-            Reminders appear 7 days, 3 days, 2 days, 1 day, 12 hours, 6 hours and 1 hour before registration opens, daily while registration is open, and during the final 24 hours before it closes.
-          </p>
+          {ENABLE_REMINDER_POPUP_DEBUG ? (
+            <div className="flex flex-col gap-2 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">Reminder popup</p>
+                <p className="mt-1 max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)]">
+                  Create another visible registration reminder for the current active window.
+                </p>
+                <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--primary)]" aria-live="polite">
+                  {requestedReminderCount > 0 ? `Requested ${requestedReminderCount}. Click again to stack another.` : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-bold text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)]"
+                onClick={requestAnotherRegistrationReminder}
+              >
+                <BellIcon className="h-4 w-4" />
+                Pop reminder
+              </button>
+            </div>
+          ) : null}
         </Section>
       </div>
 
