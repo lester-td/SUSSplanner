@@ -4,6 +4,7 @@ import {
   XIcon,
 } from "@/components/planner/icons";
 import type { RegistrationReminder } from "@/lib/registration/types";
+import type { ReactNode } from "react";
 
 type RegistrationReminderBannerProps = {
   reminders: RegistrationReminder[];
@@ -87,6 +88,21 @@ function getWindowStateClassName(state: WindowState)
   }
 }
 
+export function RegistrationReminderStatusPill({
+  state,
+  children,
+}: {
+  state: WindowState;
+  children: ReactNode;
+})
+{
+  return (
+    <span className={`inline-flex shrink-0 items-center rounded-[0.35rem] border px-1.5 py-0.5 text-[11px] font-bold leading-4 ${getWindowStateClassName(state)}`}>
+      {children}
+    </span>
+  );
+}
+
 function RegistrationReminderItem({
   reminder,
   onCloseReminder,
@@ -122,9 +138,9 @@ function RegistrationReminderItem({
             <h3 className="min-w-0 flex-1 truncate text-[14px] font-bold leading-5 text-[var(--on-surface)]">
               {reminder.title}
             </h3>
-            <span className={`inline-flex shrink-0 items-center rounded-[0.35rem] border px-1.5 py-0.5 text-[11px] font-bold leading-4 ${getWindowStateClassName(windowState)}`}>
+            <RegistrationReminderStatusPill state={windowState}>
               {getWindowStateLabel(windowState)}
-            </span>
+            </RegistrationReminderStatusPill>
           </div>
 
           {reminder.body ? (

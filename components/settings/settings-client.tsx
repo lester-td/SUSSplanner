@@ -8,6 +8,7 @@ import {
   CalendarWeekIcon,
   RefreshIcon,
 } from "@/components/planner/icons";
+import { RegistrationReminderStatusPill } from "@/components/registration/registration-reminder-banner";
 import { Modal } from "@/components/ui/modal";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { requestRegistrationReminderPopup } from "@/lib/registration/reminder-storage";
@@ -453,16 +454,16 @@ function ReminderSchedulePopover()
       <p className="text-[13px] font-bold leading-5 text-[var(--on-surface)]">Reminder schedule</p>
       <div className="mt-2 grid gap-2">
         <div>
-          <p className="font-bold text-[var(--on-surface)]">Upcoming</p>
-          <p>7d • 3d • 2d • 1d • 12h • 6h • 1h before opening</p>
+          <RegistrationReminderStatusPill state="upcoming">Upcoming</RegistrationReminderStatusPill>
+          <p className="mt-1">7d • 3d • 2d • 1d • 12h • 6h • 1h before opening</p>
         </div>
         <div>
-          <p className="font-bold text-[var(--on-surface)]">Open</p>
-          <p>At opening • Every 24h while open</p>
+          <RegistrationReminderStatusPill state="open">Open</RegistrationReminderStatusPill>
+          <p className="mt-1">At opening • Every 24h while open</p>
         </div>
         <div>
-          <p className="font-bold text-[var(--on-surface)]">Closing soon</p>
-          <p>24h • 12h • 6h • 1h before closing</p>
+          <RegistrationReminderStatusPill state="closing">Closing Soon</RegistrationReminderStatusPill>
+          <p className="mt-1">24h • 12h • 6h • 1h before closing</p>
         </div>
       </div>
     </div>
