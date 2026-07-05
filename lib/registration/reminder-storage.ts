@@ -12,7 +12,6 @@ import {
 
 export const REGISTRATION_REMINDER_STORAGE_KEY = "sussplanner:registration-reminders";
 export const REGISTRATION_REMINDER_STATE_UPDATED_EVENT = "sussplanner:registration-reminders-updated";
-export const REGISTRATION_REMINDER_POPUP_REQUESTED_EVENT = "sussplanner:registration-reminder-popup-requested";
 
 export type ReminderStorageContext = {
   events: readonly RegistrationEvent[];
@@ -47,20 +46,6 @@ export function announceRegistrationReminderStateUpdated()
   }
 
   window.dispatchEvent(new CustomEvent(REGISTRATION_REMINDER_STATE_UPDATED_EVENT));
-}
-
-export function requestRegistrationReminderPopup()
-{
-  if (
-    typeof window === "undefined"
-    || typeof window.dispatchEvent !== "function"
-    || typeof CustomEvent === "undefined"
-  )
-  {
-    return;
-  }
-
-  window.dispatchEvent(new CustomEvent(REGISTRATION_REMINDER_POPUP_REQUESTED_EVENT));
 }
 
 function getNowTimestamp(now: Date | string | number | undefined)

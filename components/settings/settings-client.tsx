@@ -4,14 +4,12 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import {
-  BellIcon,
   CalendarWeekIcon,
   RefreshIcon,
 } from "@/components/planner/icons";
 import { RegistrationReminderStatusPill } from "@/components/registration/registration-reminder-banner";
 import { Modal } from "@/components/ui/modal";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
-import { requestRegistrationReminderPopup } from "@/lib/registration/reminder-storage";
 import {
   APP_THEME_OPTIONS,
   DEFAULT_APP_SETTINGS,
@@ -30,9 +28,6 @@ import {
   getVisibleEndMinutes,
 } from "@/lib/timetable/date-utils";
 import type { TimetableBlock } from "@/lib/timetable/types";
-
-const ENABLE_REMINDER_POPUP_DEBUG = process.env.NODE_ENV !== "production"
-  && process.env.NEXT_PUBLIC_ENABLE_REMINDER_POPUP_DEBUG === "true";
 
 const REMINDER_SCHEDULE_POPOVER_GAP = 6;
 const REMINDER_SCHEDULE_POPOVER_MARGIN = 16;
@@ -648,7 +643,6 @@ export function SettingsClient()
 {
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
-  const [requestedReminderCount, setRequestedReminderCount] = useState(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -693,13 +687,6 @@ export function SettingsClient()
   {
     setSettings(DEFAULT_APP_SETTINGS);
     setResetConfirmOpen(false);
-  }
-
-  function requestAnotherRegistrationReminder()
-  {
-    updateRegistrationReminderPreferences({ enabled: true });
-    requestRegistrationReminderPopup();
-    setRequestedReminderCount((currentCount) => currentCount + 1);
   }
 
   return (
@@ -776,7 +763,7 @@ export function SettingsClient()
         <Section id="reminders" title="Course Registration Reminders">
           <SettingRow
             title="In-app reminders"
-            description="Receive in-app reminders for eCR, Add/Drop, and Pass/Fail before each window opens, while it is active, and before it closes."
+            description="Receive in-app reminders for eCR and Add/Drop before each window opens, while it is active, and before it closes."
             detail={<ReminderSchedulePopover />}
             alignControl="start"
           >
@@ -790,27 +777,6 @@ export function SettingsClient()
               onChange={(value) => updateRegistrationReminderPreferences({ enabled: value === "on" })}
             />
           </SettingRow>
-          {ENABLE_REMINDER_POPUP_DEBUG ? (
-            <div className="flex flex-col gap-2 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">Reminder popup</p>
-                <p className="mt-1 max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)]">
-                  Create another visible registration reminder for the current active window.
-                </p>
-                <p className="mt-1 text-[12px] font-semibold leading-5 text-[var(--primary)]" aria-live="polite">
-                  {requestedReminderCount > 0 ? `Requested ${requestedReminderCount}. Click again to stack another.` : ""}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] font-bold text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)]"
-                onClick={requestAnotherRegistrationReminder}
-              >
-                <BellIcon className="h-4 w-4" />
-                Pop reminder
-              </button>
-            </div>
-          ) : null}
         </Section>
       </div>
 

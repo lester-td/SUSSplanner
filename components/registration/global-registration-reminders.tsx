@@ -6,7 +6,6 @@ import { RegistrationReminderBanner } from "@/components/registration/registrati
 import { getActiveInAppRegistrationReminders } from "@/lib/registration/reminders";
 import {
   EMPTY_LOCAL_REGISTRATION_REMINDER_STATE,
-  REGISTRATION_REMINDER_POPUP_REQUESTED_EVENT,
   REGISTRATION_REMINDER_STORAGE_KEY,
   REGISTRATION_REMINDER_STATE_UPDATED_EVENT,
   dismissLocalRegistrationReminderInterval,
@@ -27,7 +26,6 @@ export function GlobalRegistrationReminders()
   const [ready, setReady] = useState(false);
   const [appSettings, setAppSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
   const [reminderInteractionState, setReminderInteractionState] = useState(EMPTY_LOCAL_REGISTRATION_REMINDER_STATE);
-  const [manualRegistrationReminders, setManualRegistrationReminders] = useState<RegistrationReminder[]>([]);
   const [reminderNow, setReminderNow] = useState(() => Date.now());
 
   const syncReminderInteractionState = () => {
@@ -83,37 +81,6 @@ export function GlobalRegistrationReminders()
     };
   }, []);
 
-  useEffect(() => {
-    const handleReminderPopupRequested = () => {
-      const now = Date.now();
-      const [reminder] = getActiveInAppRegistrationReminders(REGISTRATION_EVENTS, {
-        enabled: true,
-        now,
-      });
-
-      if (!reminder)
-      {
-        return;
-      }
-
-      setReminderNow(now);
-      setManualRegistrationReminders((currentReminders) => [
-        ...currentReminders,
-        {
-          ...reminder,
-          id: `${reminder.id}:manual:${now}:${currentReminders.length}`,
-          storageKey: reminder.storageKey ?? reminder.id,
-        },
-      ]);
-    };
-
-    window.addEventListener(REGISTRATION_REMINDER_POPUP_REQUESTED_EVENT, handleReminderPopupRequested);
-
-    return () => {
-      window.removeEventListener(REGISTRATION_REMINDER_POPUP_REQUESTED_EVENT, handleReminderPopupRequested);
-    };
-  }, []);
-
   const activeRegistrationReminders = useMemo(() => {
     const reminderPreferences = appSettings.registrationReminders;
     const inAppRemindersEnabled = reminderPreferences.enabled;
@@ -133,14 +100,6 @@ export function GlobalRegistrationReminders()
 
   function handleCloseRegistrationReminder(reminder: RegistrationReminder)
   {
-    if (reminder.id.includes(":manual:"))
-    {
-      setManualRegistrationReminders((currentReminders) => (
-        currentReminders.filter((currentReminder) => currentReminder.id !== reminder.id)
-      ));
-      return;
-    }
-
     const now = Date.now();
 
     setReminderInteractionState(dismissLocalRegistrationReminderInterval(reminder, {
@@ -152,7 +111,7 @@ export function GlobalRegistrationReminders()
 
   return (
     <RegistrationReminderBanner
-      reminders={[...activeRegistrationReminders, ...manualRegistrationReminders]}
+      reminders={activeRegistrationReminders}
       onCloseReminder={handleCloseRegistrationReminder}
       variant="notification"
     />
