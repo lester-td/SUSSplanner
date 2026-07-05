@@ -243,6 +243,14 @@ The reminder status uses:
 - **Open** when registration is open and not yet in its final 24 hours.
 - **Closing Soon** during the final 24 hours before registration ends.
 
+The reminder schedule is:
+
+- **Upcoming:** 7 days, 3 days, 2 days, 1 day, 12 hours, 6 hours, and 1 hour
+  before the window opens.
+- **Open:** when the window opens, then every 24 hours while it remains open.
+- **Closing Soon:** 24 hours, 12 hours, 6 hours, and 1 hour before the window
+  closes.
+
 Closing a notification hides that specific reminder threshold. The same
 threshold will not reappear, but a later threshold may appear as the window gets
 closer, while it remains open, or as it approaches closing.
@@ -663,6 +671,9 @@ SUSSPlanner shows only one active registration reminder at a time. The reminder
 can change from **Upcoming** to **Open** to **Closing Soon** as the registration
 window moves through those phases.
 
+Use **Reminder schedule** beside the setting to see the exact Upcoming, Open,
+and Closing Soon cadence.
+
 Turn **In-app reminders** off to disable all course registration reminders in
 this browser.
 
@@ -675,8 +686,9 @@ current browser.
 A dismissed threshold stays hidden for the matching registration window. A
 reminder can appear again when:
 
-- The next upcoming or closing-soon threshold is crossed.
+- The next upcoming threshold is crossed.
 - The next 24-hour open interval starts.
+- The next closing-soon threshold is crossed.
 - A later registration window becomes active.
 - The bundled registration schedule changes.
 - Browser storage is cleared.
@@ -861,10 +873,11 @@ You can plan between 1 and 20 semesters.
 
 ### Why do I not see a course registration reminder?
 
-A reminder appears only when reminders are enabled, the notification is enabled,
-the current date is within an upcoming, open, or closing-soon reminder
-threshold, and that exact threshold has not already been dismissed in this
-browser.
+A reminder appears only when **In-app reminders** are enabled, the current date
+is within an upcoming, open, or closing-soon reminder threshold, and that exact
+threshold has not already been dismissed in this browser. SUSSPlanner shows at
+most one registration reminder at a time, so a more urgent closing-soon or open
+reminder can take priority over an upcoming one.
 
 ### Are course registration reminders official SUSS notices?
 
@@ -931,6 +944,8 @@ information available in SUSSPlanner.
 3. Check whether you previously dismissed the current threshold.
 4. Confirm that the registration window is within 7 days of opening, currently
    open, or in its final 24 hours.
+5. If more than one registration window is active, check whether another window
+   has a more urgent reminder.
 
 ## Limitations
 

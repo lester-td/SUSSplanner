@@ -1506,7 +1506,7 @@ does not currently set shared-cache headers.
 | Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, and this guide. Preserve support for existing public versions or reject them with a clear notice. |
 | Change semester-planner print output | Update `lib/export/semester-planner-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
 | Change app settings | Update `lib/settings/app-settings.ts`, `components/settings/settings-client.tsx`, `components/settings/settings-provider.tsx`, and tests that cover normalization/migration. |
-| Change course registration reminders | Update `lib/registration/schedule.ts`, `lib/registration/reminders.ts`, `lib/registration/reminder-storage.ts`, `components/registration/registration-reminder-banner.tsx`, Planner integration, tests, and both guides. Verify timing boundaries around each changed event. |
+| Change course registration reminders | Update `lib/registration/schedule.ts`, `lib/registration/reminders.ts`, `lib/registration/reminder-storage.ts`, `components/registration/global-registration-reminders.tsx`, `components/registration/registration-reminder-banner.tsx`, settings controls, tests, and both guides. Verify timing boundaries around each changed event. |
 | Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and optionally revalidate caches afterward. |
 
 ## Known Limitations
