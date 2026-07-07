@@ -7,9 +7,10 @@ import {
   CalendarWeekIcon,
   RefreshIcon,
 } from "@/components/planner/icons";
-import { RegistrationReminderStatusPill } from "@/components/registration/registration-reminder-banner";
+import { RegistrationReminderStatusPill } from "@/components/registration/reminder-status-pill";
 import { Modal } from "@/components/ui/modal";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
+import { REGISTRATION_REMINDER_SCHEDULE_DISPLAY_ITEMS } from "@/lib/registration/reminder-schedule-display";
 import {
   APP_THEME_OPTIONS,
   DEFAULT_APP_SETTINGS,
@@ -448,18 +449,12 @@ function ReminderSchedulePopover()
     >
       <p className="text-[13px] font-bold leading-5 text-[var(--on-surface)]">Reminder schedule</p>
       <div className="mt-2 grid gap-2">
-        <div>
-          <RegistrationReminderStatusPill state="upcoming">Upcoming</RegistrationReminderStatusPill>
-          <p className="mt-1">7d • 3d • 2d • 1d • 12h • 6h • 1h before opening</p>
-        </div>
-        <div>
-          <RegistrationReminderStatusPill state="open">Open</RegistrationReminderStatusPill>
-          <p className="mt-1">At opening • Every 24h while open</p>
-        </div>
-        <div>
-          <RegistrationReminderStatusPill state="closing">Closing Soon</RegistrationReminderStatusPill>
-          <p className="mt-1">24h • 12h • 6h • 1h before closing</p>
-        </div>
+        {REGISTRATION_REMINDER_SCHEDULE_DISPLAY_ITEMS.map((item) => (
+          <div key={item.phase}>
+            <RegistrationReminderStatusPill state={item.phase}>{item.label}</RegistrationReminderStatusPill>
+            <p className="mt-1">{item.description}</p>
+          </div>
+        ))}
       </div>
     </div>
   ) : null;

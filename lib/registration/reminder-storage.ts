@@ -7,8 +7,9 @@ import {
   DEFAULT_REGISTRATION_REMINDER_OFFSETS,
   buildRegistrationReminderCandidates,
   deriveRegistrationEventVersion,
-  parseRegistrationReminderTimestamp,
+  getRegistrationReminderDismissalStorageKey,
 } from "@/lib/registration/reminders";
+import { parseRegistrationReminderTimestamp } from "@/lib/registration/reminder-time";
 
 export const REGISTRATION_REMINDER_STORAGE_KEY = "sussplanner:registration-reminders";
 export const REGISTRATION_REMINDER_STATE_UPDATED_EVENT = "sussplanner:registration-reminders-updated";
@@ -72,6 +73,21 @@ function isRecord(value: unknown): value is Record<string, unknown>
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function getValidEventVersion(record: unknown)
+{
+  if (!isRecord(record) || typeof record.eventVersion !== "string" || !record.eventVersion.trim())
+  {
+    return null;
+  }
+
+  return record.eventVersion;
+}
+
+function buildVersionRecord(eventVersion: string)
+{
+  return { eventVersion };
+}
+
 function normalizeLocalRegistrationReminderState(value: unknown): LocalRegistrationReminderState
 {
   if (!isRecord(value))
@@ -90,53 +106,51 @@ function normalizeLocalRegistrationReminderState(value: unknown): LocalRegistrat
   if (isRecord(dismissedCandidate))
   {
     Object.entries(dismissedCandidate).forEach(([reminderId, record]) => {
-      if (!isRecord(record) || typeof record.eventVersion !== "string" || !record.eventVersion.trim())
+      const eventVersion = getValidEventVersion(record);
+
+      if (!eventVersion)
       {
         return;
       }
 
-      dismissedReminders[reminderId] = {
-        eventVersion: record.eventVersion,
-      };
+      dismissedReminders[reminderId] = buildVersionRecord(eventVersion);
     });
   }
 
   if (isRecord(dismissedIntervalsCandidate))
   {
     Object.entries(dismissedIntervalsCandidate).forEach(([reminderId, record]) => {
-      if (!isRecord(record) || typeof record.eventVersion !== "string" || !record.eventVersion.trim())
+      const eventVersion = getValidEventVersion(record);
+
+      if (!eventVersion)
       {
         return;
       }
 
-      dismissedIntervals[reminderId] = {
-        eventVersion: record.eventVersion,
-      };
+      dismissedIntervals[reminderId] = buildVersionRecord(eventVersion);
     });
   }
 
   if (isRecord(snoozedEventsCandidate))
   {
     Object.entries(snoozedEventsCandidate).forEach(([eventId, record]) => {
-      if (!isRecord(record) || typeof record.eventVersion !== "string" || !record.eventVersion.trim())
+      const eventVersion = getValidEventVersion(record);
+
+      if (!eventVersion)
       {
         return;
       }
 
-      snoozedEvents[eventId] = {
-        eventVersion: record.eventVersion,
-      };
+      snoozedEvents[eventId] = buildVersionRecord(eventVersion);
     });
   }
 
   if (isRecord(snoozedCandidate))
   {
     Object.entries(snoozedCandidate).forEach(([reminderId, record]) => {
-      if (
-        !isRecord(record)
-        || typeof record.eventVersion !== "string"
-        || !record.eventVersion.trim()
-      )
+      const eventVersion = getValidEventVersion(record);
+
+      if (!eventVersion)
       {
         return;
       }
@@ -148,9 +162,7 @@ function normalizeLocalRegistrationReminderState(value: unknown): LocalRegistrat
         return;
       }
 
-      snoozedEvents[eventId] = {
-        eventVersion: record.eventVersion,
-      };
+      snoozedEvents[eventId] = buildVersionRecord(eventVersion);
     });
   }
 
@@ -239,9 +251,7 @@ export function pruneLocalRegistrationReminderState(
       return;
     }
 
-    prunedState.dismissedReminders[reminderId] = {
-      eventVersion: record.eventVersion,
-    };
+    prunedState.dismissedReminders[reminderId] = buildVersionRecord(record.eventVersion);
   });
 
   Object.entries(normalizedState.dismissedIntervals).forEach(([storageKey, record]) => {
@@ -255,9 +265,7 @@ export function pruneLocalRegistrationReminderState(
       return;
     }
 
-    prunedState.dismissedIntervals[storageKey] = {
-      eventVersion: record.eventVersion,
-    };
+    prunedState.dismissedIntervals[storageKey] = buildVersionRecord(record.eventVersion);
   });
 
   Object.entries(normalizedState.snoozedEvents).forEach(([eventId, record]) => {
@@ -266,9 +274,7 @@ export function pruneLocalRegistrationReminderState(
       return;
     }
 
-    prunedState.snoozedEvents[eventId] = {
-      eventVersion: record.eventVersion,
-    };
+    prunedState.snoozedEvents[eventId] = buildVersionRecord(record.eventVersion);
   });
 
   return prunedState;
@@ -328,9 +334,7 @@ export function dismissLocalRegistrationReminder(
   const nextState: LocalRegistrationReminderState = {
     dismissedReminders: {
       ...currentState.dismissedReminders,
-      [reminder.id]: {
-        eventVersion: reminder.eventVersion,
-      },
+      [reminder.id]: buildVersionRecord(reminder.eventVersion),
     },
     dismissedIntervals: currentState.dismissedIntervals,
     snoozedEvents: currentState.snoozedEvents,
@@ -353,14 +357,12 @@ export function dismissLocalRegistrationReminderInterval(
 )
 {
   const currentState = readLocalRegistrationReminderState(context);
-  const storageKey = reminder.storageKey ?? reminder.id;
+  const storageKey = getRegistrationReminderDismissalStorageKey(reminder);
   const nextState: LocalRegistrationReminderState = {
     dismissedReminders: currentState.dismissedReminders,
     dismissedIntervals: {
       ...currentState.dismissedIntervals,
-      [storageKey]: {
-        eventVersion: reminder.eventVersion,
-      },
+      [storageKey]: buildVersionRecord(reminder.eventVersion),
     },
     snoozedEvents: currentState.snoozedEvents,
   };

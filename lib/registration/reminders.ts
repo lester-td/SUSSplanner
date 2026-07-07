@@ -5,15 +5,20 @@ import type {
   ReminderChannel,
   ReminderOffset,
 } from "@/lib/registration/types";
+import {
+  CLOSING_REMINDER_THRESHOLD_HOURS,
+  UPCOMING_REMINDER_THRESHOLD_HOURS,
+} from "@/lib/registration/reminder-thresholds";
+import {
+  formatSingaporeTimestamp,
+  parseRegistrationReminderTimestamp,
+} from "@/lib/registration/reminder-time";
 import { validateRegistrationSchedule, validateReminderOffsets } from "@/lib/registration/validation";
 
 const MINUTE_IN_MS = 60 * 1000;
 const HOUR_IN_MS = 60 * MINUTE_IN_MS;
 const DAY_IN_MS = 24 * HOUR_IN_MS;
-const SINGAPORE_OFFSET_MS = 8 * 60 * MINUTE_IN_MS;
 const DEFAULT_REMINDER_CHANNELS: ReminderChannel[] = ["in-app", "push"];
-const UPCOMING_THRESHOLD_HOURS = [1, 6, 12, 24, 48, 72, 168] as const;
-const CLOSING_THRESHOLD_HOURS = [1, 6, 12, 24] as const;
 
 export const DEFAULT_REGISTRATION_REMINDER_OFFSETS: ReminderOffset[] = [
   {
@@ -53,14 +58,7 @@ export type ActiveRegistrationReminderOptions = RegistrationReminderOptions & {
   selectMostUrgentPerEvent?: boolean;
 };
 
-export function parseRegistrationReminderTimestamp(value: string | Date | number)
-{
-  const timestamp = typeof value === "number"
-    ? value
-    : value instanceof Date ? value.getTime() : Date.parse(value);
-
-  return Number.isNaN(timestamp) ? null : timestamp;
-}
+export { parseRegistrationReminderTimestamp } from "@/lib/registration/reminder-time";
 
 function resolveNowTimestamp(now: Date | string | number | undefined)
 {
@@ -70,31 +68,6 @@ function resolveNowTimestamp(now: Date | string | number | undefined)
   }
 
   return parseRegistrationReminderTimestamp(now);
-}
-
-function padNumber(value: number, length = 2)
-{
-  return String(value).padStart(length, "0");
-}
-
-function formatSingaporeTimestamp(timestamp: number)
-{
-  const date = new Date(timestamp + SINGAPORE_OFFSET_MS);
-
-  return [
-    padNumber(date.getUTCFullYear(), 4),
-    "-",
-    padNumber(date.getUTCMonth() + 1),
-    "-",
-    padNumber(date.getUTCDate()),
-    "T",
-    padNumber(date.getUTCHours()),
-    ":",
-    padNumber(date.getUTCMinutes()),
-    ":",
-    padNumber(date.getUTCSeconds()),
-    "+08:00",
-  ].join("");
 }
 
 function normalizeChannels(options: Pick<RegistrationReminderOptions, "channel" | "channels">)
@@ -119,7 +92,7 @@ function isDismissed(
   return dismissed?.eventVersion === reminder.eventVersion;
 }
 
-function getReminderDismissalStorageKey(reminder: RegistrationReminder)
+export function getRegistrationReminderDismissalStorageKey(reminder: RegistrationReminder)
 {
   return reminder.storageKey ?? reminder.id;
 }
@@ -129,7 +102,7 @@ function isDismissedInterval(
   dismissedIntervals: LocalRegistrationReminderState["dismissedIntervals"] | undefined,
 )
 {
-  const dismissed = dismissedIntervals?.[getReminderDismissalStorageKey(reminder)];
+  const dismissed = dismissedIntervals?.[getRegistrationReminderDismissalStorageKey(reminder)];
 
   return dismissed?.eventVersion === reminder.eventVersion;
 }
@@ -318,7 +291,7 @@ function buildCurrentRegistrationReminder(
   if (nowTimestamp < eventStartsAtTimestamp)
   {
     const hoursUntilStart = (eventStartsAtTimestamp - nowTimestamp) / HOUR_IN_MS;
-    const upcomingThresholdKey = resolveThresholdKey(hoursUntilStart, UPCOMING_THRESHOLD_HOURS);
+    const upcomingThresholdKey = resolveThresholdKey(hoursUntilStart, UPCOMING_REMINDER_THRESHOLD_HOURS);
 
     if (!upcomingThresholdKey)
     {
@@ -350,7 +323,7 @@ function buildCurrentRegistrationReminder(
   else
   {
     const hoursUntilEnd = (eventEndsAtTimestamp - nowTimestamp) / HOUR_IN_MS;
-    const closingThresholdKey = resolveThresholdKey(hoursUntilEnd, CLOSING_THRESHOLD_HOURS);
+    const closingThresholdKey = resolveThresholdKey(hoursUntilEnd, CLOSING_REMINDER_THRESHOLD_HOURS);
 
     if (!closingThresholdKey)
     {

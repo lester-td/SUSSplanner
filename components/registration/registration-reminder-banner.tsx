@@ -3,8 +3,13 @@ import {
   CalendarWeekIcon,
   XIcon,
 } from "@/components/planner/icons";
+import { RegistrationReminderStatusPill } from "@/components/registration/reminder-status-pill";
+import { getRegistrationReminderWindowState } from "@/lib/registration/reminder-status";
+import {
+  formatRegistrationReminderDateTime,
+  parseRegistrationReminderDate,
+} from "@/lib/registration/reminder-time";
 import type { RegistrationReminder } from "@/lib/registration/types";
-import type { ReactNode } from "react";
 
 type RegistrationReminderBannerProps = {
   reminders: RegistrationReminder[];
@@ -12,96 +17,6 @@ type RegistrationReminderBannerProps = {
   variant?: "inline" | "notification";
   className?: string;
 };
-
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-type WindowState = "upcoming" | "open" | "closing" | "ended";
-
-function parseRegistrationTimestamp(timestamp: string)
-{
-  const date = new Date(timestamp);
-
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function formatLocalDateTime(timestamp: string)
-{
-  const date = parseRegistrationTimestamp(timestamp);
-
-  if (!date)
-  {
-    return timestamp;
-  }
-
-  const hours = date.getHours();
-  const hour12 = hours % 12 || 12;
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const period = hours < 12 ? "AM" : "PM";
-
-  return `${date.getDate()} ${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}, ${hour12}:${minutes} ${period}`;
-}
-
-function getWindowState(startsAt: Date | null, endsAt: Date | null, now: Date): WindowState
-{
-  if (!startsAt || !endsAt || now > endsAt)
-  {
-    return "ended";
-  }
-
-  if (now < startsAt)
-  {
-    return "upcoming";
-  }
-
-  const hoursUntilEnd = (endsAt.getTime() - now.getTime()) / (60 * 60 * 1000);
-
-  return hoursUntilEnd <= 24 ? "closing" : "open";
-}
-
-function getWindowStateLabel(state: WindowState)
-{
-  switch (state)
-  {
-    case "open":
-      return "Open";
-    case "upcoming":
-      return "Soon";
-    case "closing":
-      return "Closing";
-    case "ended":
-      return "Ended";
-  }
-}
-
-function getWindowStateClassName(state: WindowState)
-{
-  switch (state)
-  {
-    case "open":
-      return "registration-reminder-status--open";
-    case "upcoming":
-      return "registration-reminder-status--upcoming";
-    case "closing":
-      return "registration-reminder-status--closing-soon";
-    case "ended":
-      return "registration-reminder-status--ended";
-  }
-}
-
-export function RegistrationReminderStatusPill({
-  state,
-  children,
-}: {
-  state: WindowState;
-  children: ReactNode;
-})
-{
-  return (
-    <span className={`inline-flex shrink-0 items-center rounded-[0.35rem] border px-1.5 py-0.5 text-[11px] font-bold leading-4 ${getWindowStateClassName(state)}`}>
-      {children}
-    </span>
-  );
-}
 
 function RegistrationReminderItem({
   reminder,
@@ -121,9 +36,9 @@ function RegistrationReminderItem({
     ? "mt-1.5 grid text-[12px] leading-[18px] text-[var(--on-surface-variant)]"
     : "mt-2 grid gap-[0.45rem] text-[12px] leading-5 text-[var(--on-surface-variant)] sm:grid-cols-2";
   const now = new Date();
-  const eventStartsAt = parseRegistrationTimestamp(reminder.eventStartsAt);
-  const eventEndsAt = parseRegistrationTimestamp(reminder.eventEndsAt);
-  const windowState = reminder.phase ?? getWindowState(eventStartsAt, eventEndsAt, now);
+  const eventStartsAt = parseRegistrationReminderDate(reminder.eventStartsAt);
+  const eventEndsAt = parseRegistrationReminderDate(reminder.eventEndsAt);
+  const windowState = reminder.phase ?? getRegistrationReminderWindowState(eventStartsAt, eventEndsAt, now);
 
   return (
     <article className={itemClassName}>
@@ -138,9 +53,7 @@ function RegistrationReminderItem({
             <h3 className="min-w-0 flex-1 truncate text-[14px] font-bold leading-5 text-[var(--on-surface)]">
               {reminder.title}
             </h3>
-            <RegistrationReminderStatusPill state={windowState}>
-              {getWindowStateLabel(windowState)}
-            </RegistrationReminderStatusPill>
+            <RegistrationReminderStatusPill state={windowState} />
           </div>
 
           {reminder.body ? (
@@ -156,10 +69,10 @@ function RegistrationReminderItem({
                 <dt className="font-semibold leading-4 text-[var(--on-surface)]">Window</dt>
                 <dd className="min-w-0">
                   <div className="truncate">
-                    <span className="font-medium text-[var(--on-surface)]">Start:</span> {formatLocalDateTime(reminder.eventStartsAt)}
+                    <span className="font-medium text-[var(--on-surface)]">Start:</span> {formatRegistrationReminderDateTime(reminder.eventStartsAt)}
                   </div>
                   <div className="truncate">
-                    <span className="font-medium text-[var(--on-surface)]">End:</span> {formatLocalDateTime(reminder.eventEndsAt)}
+                    <span className="font-medium text-[var(--on-surface)]">End:</span> {formatRegistrationReminderDateTime(reminder.eventEndsAt)}
                   </div>
                 </dd>
               </div>
