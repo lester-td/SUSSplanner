@@ -10,13 +10,14 @@
     "validate:dev": "node scripts/validate-project.mjs --mode=dev",
     "validate:build": "node scripts/validate-project.mjs --mode=build",
     "validate:start": "node scripts/validate-project.mjs --mode=start",
-    "predev": "npm run validate:dev",
+    "predev": "npm run validate:dev && npm run quotes:build",
     "dev": "next dev",
-    "prebuild": "npm run validate:build",
+    "prebuild": "npm run validate:build && npm run quotes:build",
     "build": "next build",
     "prestart": "npm run validate:start",
     "start": "next start",
-    "quotes:build": "python3 scripts/build-quotes-json.py",
+    "quotes:build": "tsx scripts/build-quotes.ts",
+    "quotes:test": "tsx scripts/test-build-quotes.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate"
   },
@@ -39,6 +40,7 @@
     "drizzle-kit": "^0.31.4",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.12",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
