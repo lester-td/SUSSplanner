@@ -76,6 +76,25 @@ const pointerFirstCollisionDetection: CollisionDetection = (args) => {
   return rectIntersection(args);
 };
 
+const MOBILE_DRAG_SCROLL_EDGE_SIZE = 96;
+const MOBILE_DRAG_SCROLL_MAX_SPEED = 18;
+
+function getDragClientY(event: Event)
+{
+  if ("clientY" in event && typeof event.clientY === "number")
+  {
+    return event.clientY;
+  }
+
+  if (typeof TouchEvent !== "undefined" && event instanceof TouchEvent)
+  {
+    const touch = event.touches[0] ?? event.changedTouches[0];
+    return touch?.clientY ?? null;
+  }
+
+  return null;
+}
+
 export function SemesterPlannerClient({
   semesters,
 }: {
@@ -105,6 +124,9 @@ export function SemesterPlannerClient({
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileDragScrollFrameRef = useRef<number | null>(null);
+  const mobileDragPointerYRef = useRef<number | null>(null);
+  const mobileDragTrackingCleanupRef = useRef<(() => void) | null>(null);
   const deferredSearch = useDeferredValue(searchQuery);
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -157,6 +179,13 @@ export function SemesterPlannerClient({
     {
       window.clearTimeout(noticeTimeoutRef.current);
     }
+
+    if (mobileDragScrollFrameRef.current !== null)
+    {
+      window.cancelAnimationFrame(mobileDragScrollFrameRef.current);
+    }
+
+    mobileDragTrackingCleanupRef.current?.();
   }, []);
 
   useEffect(() => {
@@ -293,6 +322,112 @@ export function SemesterPlannerClient({
       window.clearTimeout(noticeTimeoutRef.current);
     }
     noticeTimeoutRef.current = window.setTimeout(() => setNotice(""), 2800);
+  }
+
+  function stopMobileDragAutoScroll()
+  {
+    mobileDragPointerYRef.current = null;
+    mobileDragTrackingCleanupRef.current?.();
+    mobileDragTrackingCleanupRef.current = null;
+
+    if (mobileDragScrollFrameRef.current !== null)
+    {
+      window.cancelAnimationFrame(mobileDragScrollFrameRef.current);
+      mobileDragScrollFrameRef.current = null;
+    }
+  }
+
+  function startMobileDragAutoScroll(event: Event)
+  {
+    if (typeof window === "undefined" || !window.matchMedia("(max-width: 767px)").matches)
+    {
+      return;
+    }
+
+    stopMobileDragAutoScroll();
+    updateMobileDragAutoScroll(getDragClientY(event));
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      updateMobileDragAutoScroll(moveEvent.clientY);
+    };
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      const touch = moveEvent.touches[0] ?? moveEvent.changedTouches[0];
+      if (touch)
+      {
+        updateMobileDragAutoScroll(touch.clientY);
+      }
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { capture: true });
+    window.addEventListener("touchmove", handleTouchMove, { capture: true, passive: true });
+
+    mobileDragTrackingCleanupRef.current = () => {
+      window.removeEventListener("pointermove", handlePointerMove, { capture: true });
+      window.removeEventListener("touchmove", handleTouchMove, { capture: true });
+    };
+  }
+
+  function updateMobileDragAutoScroll(pointerY: number | null)
+  {
+    if (typeof window === "undefined" || !window.matchMedia("(max-width: 767px)").matches)
+    {
+      stopMobileDragAutoScroll();
+      return;
+    }
+
+    mobileDragPointerYRef.current = pointerY;
+
+    if (pointerY === null || mobileDragScrollFrameRef.current !== null)
+    {
+      return;
+    }
+
+    const scroll = () => {
+      const currentPointerY = mobileDragPointerYRef.current;
+
+      if (currentPointerY === null)
+      {
+        mobileDragScrollFrameRef.current = null;
+        return;
+      }
+
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const scrollTop = window.scrollY;
+      const documentHeight = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight,
+      );
+      const topDistance = currentPointerY;
+      const bottomDistance = viewportHeight - currentPointerY;
+      let scrollAmount = 0;
+
+      if (topDistance < MOBILE_DRAG_SCROLL_EDGE_SIZE)
+      {
+        const edgeRatio = (MOBILE_DRAG_SCROLL_EDGE_SIZE - Math.max(0, topDistance)) / MOBILE_DRAG_SCROLL_EDGE_SIZE;
+        scrollAmount = -Math.ceil(edgeRatio * MOBILE_DRAG_SCROLL_MAX_SPEED);
+      }
+      else if (bottomDistance < MOBILE_DRAG_SCROLL_EDGE_SIZE)
+      {
+        const edgeRatio = (MOBILE_DRAG_SCROLL_EDGE_SIZE - Math.max(0, bottomDistance)) / MOBILE_DRAG_SCROLL_EDGE_SIZE;
+        scrollAmount = Math.ceil(edgeRatio * MOBILE_DRAG_SCROLL_MAX_SPEED);
+      }
+
+      const maxScrollTop = Math.max(0, documentHeight - viewportHeight);
+      const canScrollUp = scrollTop > 0;
+      const canScrollDown = scrollTop < maxScrollTop;
+
+      if ((scrollAmount < 0 && canScrollUp) || (scrollAmount > 0 && canScrollDown))
+      {
+        window.scrollTo({
+          top: Math.min(maxScrollTop, Math.max(0, scrollTop + scrollAmount)),
+          behavior: "auto",
+        });
+      }
+
+      mobileDragScrollFrameRef.current = window.requestAnimationFrame(scroll);
+    };
+
+    mobileDragScrollFrameRef.current = window.requestAnimationFrame(scroll);
   }
 
   function updatePlan(updater: (current: SemesterPlannerState) => SemesterPlannerState)
@@ -555,6 +690,13 @@ export function SemesterPlannerClient({
   function handleCourseDragStart(event: DragStartEvent)
   {
     setDraggedCourseId(String(event.active.id));
+    startMobileDragAutoScroll(event.activatorEvent);
+  }
+
+  function handleCourseDragCancel()
+  {
+    setDraggedCourseId(null);
+    stopMobileDragAutoScroll();
   }
 
   function handleCourseDragEnd(event: DragEndEvent)
@@ -563,6 +705,7 @@ export function SemesterPlannerClient({
     const dropTarget = getCourseDropTarget(event.over ? String(event.over.id) : null);
 
     setDraggedCourseId(null);
+    stopMobileDragAutoScroll();
 
     if (!dropTarget)
     {
@@ -611,24 +754,96 @@ export function SemesterPlannerClient({
 
   return (
     <div className="planner-page">
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
+        <div className="md:hidden">
+          <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)]">Semester Planner</h1>
+          <p className="mt-2 text-[13px] leading-5 text-[var(--on-surface-variant)]">
+            Forecast your courses and credit units fulfilment
+          </p>
+        </div>
+
+        <div className="sticky top-[3.55rem] z-30 -mx-3 border-y border-[var(--brand-divider)] bg-[color-mix(in_srgb,var(--surface-container-lowest)_92%,transparent)] px-3 py-2 shadow-[var(--shadow-elev-1)] backdrop-blur md:hidden">
+          <div className="grid grid-cols-3 items-center gap-2">
+            <button
+              type="button"
+              onClick={openPlanPdf}
+              className="planner-primary-action inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2 py-1.5 text-[11px] font-semibold leading-4 text-on-primary shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
+            >
+              <DownloadIcon className="h-3.5 w-3.5" />
+              Download PDF
+            </button>
+            <div className="relative min-w-0" data-backup-popover-root>
+              <button
+                type="button"
+                onClick={() => setBackupMenuOpen((current) => !current)}
+                aria-expanded={backupMenuOpen}
+                aria-haspopup="menu"
+                className="inline-flex w-full min-w-0 items-center justify-center gap-1.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+              >
+                <DownloadIcon className="h-3.5 w-3.5" />
+                Backup
+              </button>
+              {backupMenuOpen ? (
+                <div className="elev-3 absolute left-1/2 top-full z-40 mt-1.5 w-[min(17rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -top-[7px] left-5 h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
+                  />
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={exportPlan}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
+                    >
+                      <DownloadIcon className="h-4 w-4" />
+                      Export
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBackupMenuOpen(false);
+                        importFileInputRef.current?.click();
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
+                    >
+                      <UploadIcon className="h-4 w-4" />
+                      Import
+                    </button>
+                  </div>
+                  <p className="mt-2 border-t border-[var(--outline-variant)] px-1 pt-2 text-[10px] leading-4 text-[var(--on-surface-variant)]">
+                    Export a restorable JSON backup, or import one to replace your current semester plan after confirmation.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(true)}
+              className="inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[0.6rem] border border-[var(--error)] bg-[var(--surface-container-lowest)] px-2 py-1.5 text-[11px] font-semibold leading-4 text-[var(--error)] transition-colors hover:bg-[var(--error-container)]"
+            >
+              <RefreshIcon className="h-3.5 w-3.5" />
+              Reset
+            </button>
+          </div>
+        </div>
+
         <section className="grid gap-3 lg:grid-cols-2">
-          <div className="planner-control-card rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
+          <div className="planner-control-card order-2 rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:px-5 md:py-5 lg:order-1">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 {isCustomCourse ? (
                 <BookIcon className="h-7 w-7 text-[var(--primary)]" />
                 ) : (
                 <SearchIcon className="h-7 w-7 text-[var(--primary)]" />
                 )}
                 <div>
-                  <h2 className="text-[28px] font-medium leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Add a Course</h2>
+                  <h2 className="text-[20px] font-semibold leading-7 text-[var(--on-surface)] md:text-[28px] md:font-medium md:leading-9 md:tracking-[-0.02em]">Add Course</h2>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCustomCourse((current) => !current)}
-                className="planner-segmented-control relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
+                className="planner-segmented-control relative inline-grid h-[34px] shrink-0 grid-cols-2 overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
                 aria-pressed={isCustomCourse}
                 aria-label={`Add course mode: ${isCustomCourse ? "Custom" : "Search"}. Click to toggle.`}
               >
@@ -638,13 +853,13 @@ export function SemesterPlannerClient({
                 />
                 <span
                   aria-hidden="true"
-                  className={`planner-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomCourse ? "planner-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                  className={`planner-segmented-label relative z-10 flex min-w-[3.1rem] items-center justify-center rounded-[0.3rem] px-1.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 md:min-w-[4.25rem] md:px-2.5 ${!isCustomCourse ? "planner-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                 >
                   Search
                 </span>
                 <span
                   aria-hidden="true"
-                  className={`planner-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomCourse ? "planner-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                  className={`planner-segmented-label relative z-10 flex min-w-[3.1rem] items-center justify-center rounded-[0.3rem] px-1.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 md:min-w-[4.25rem] md:px-2.5 ${isCustomCourse ? "planner-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
                 >
                   Custom
                 </span>
@@ -710,7 +925,7 @@ export function SemesterPlannerClient({
               </div>
             ) : (
               <div className="mt-3">
-                <label className="relative z-30 block">
+                <label className="relative z-20 block">
                   <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                   <input
                     type="search"
@@ -720,7 +935,7 @@ export function SemesterPlannerClient({
                     className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-4 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                   />
                   {searchQuery.trim() ? (
-                    <div className="elev-3 absolute left-0 right-0 top-full z-40 mt-1.5 max-h-[28rem] overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
+                    <div className="elev-3 absolute left-0 right-0 top-full z-20 mt-1.5 max-h-[28rem] overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                       {searchDropdownResults.map((course) => (
                         <button
                           key={course.courseCode}
@@ -769,19 +984,20 @@ export function SemesterPlannerClient({
             )}
           </div>
 
-          <div className="planner-control-card rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+          <div className="planner-control-card order-1 rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:px-5 md:py-5 lg:order-2">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <CalendarWeekIcon className="h-7 w-7 text-[var(--primary)]" />
-                  <h1 className="text-[28px] font-extrabold leading-9 tracking-[-0.02em] text-[var(--on-surface)]">Semester Planner</h1>
+                <div className="flex items-center gap-2 md:hidden">
+                  <ListIcon className="h-6 w-6 text-[var(--primary)]" />
+                  <h2 className="text-[20px] font-semibold leading-7 text-[var(--on-surface)]">Credits</h2>
                 </div>
-                <p className="mt-1 max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
+                <h1 className="hidden text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[28px] sm:font-extrabold sm:leading-9 sm:tracking-[-0.02em] md:block">Semester Planner</h1>
+                <p className="mt-2 hidden max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:mt-1 sm:text-[14px] sm:leading-6 md:block">
                   Forecast your courses and credit units fulfilment
                 </p>
               </div>
 
-              <div className="flex flex-col items-start gap-1.5 self-start md:items-end">
+              <div className="hidden flex-col items-start gap-1.5 self-start md:flex md:items-end">
                 <div className="flex gap-2 md:justify-end">
                   <button
                     type="button"
@@ -844,20 +1060,10 @@ export function SemesterPlannerClient({
                     </div>
                   ) : null}
                 </div>
-                <input
-                  ref={importFileInputRef}
-                  type="file"
-                  accept=".json,application/json"
-                  className="hidden"
-                  onChange={(event) => {
-                    void selectImportFile(event.target.files?.[0]);
-                    event.target.value = "";
-                  }}
-                />
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="mt-3 grid grid-cols-2 gap-3 md:mt-4">
               <label className="space-y-1">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Target Credits</span>
                 <input
@@ -889,7 +1095,7 @@ export function SemesterPlannerClient({
               </label>
             </div>
 
-            <div className="planner-progress-card mt-4 rounded-[0.85rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3">
+            <div className="planner-progress-card mt-3 rounded-[0.85rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 md:mt-4 md:py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-[12px] font-semibold text-[var(--on-surface)]">Credits Allocated</span>
                 <span className={`text-[12px] font-semibold ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
@@ -910,11 +1116,25 @@ export function SemesterPlannerClient({
             </div>
 
             <div className="mt-3 grid gap-3 md:grid-cols-3">
-              <SummaryStat icon={<CalendarWeekIcon className="h-5 w-5" />} label="Assigned" value={formatCredits(assignedCredits)} />
-              <SummaryStat icon={<EditCalendarIcon className="h-5 w-5" />} label="Planned" value={formatCredits(plan.totalCreditsGoal)} />
+              <div className="hidden md:block">
+                <SummaryStat icon={<CalendarWeekIcon className="h-5 w-5" />} label="Assigned" value={formatCredits(assignedCredits)} />
+              </div>
+              <div className="hidden md:block">
+                <SummaryStat icon={<EditCalendarIcon className="h-5 w-5" />} label="Planned" value={formatCredits(plan.totalCreditsGoal)} />
+              </div>
               <SummaryStat icon={<ListIcon className="h-5 w-5" />} label="Total Courses" value={String(sortedCourses.length)} />
             </div>
           </div>
+          <input
+            ref={importFileInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={(event) => {
+              void selectImportFile(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
         </section>
 
         {notice ? (
@@ -932,8 +1152,9 @@ export function SemesterPlannerClient({
           sensors={sensors}
           onDragStart={handleCourseDragStart}
           onDragEnd={handleCourseDragEnd}
+          onDragCancel={handleCourseDragCancel}
         >
-        <section className="grid gap-4 xl:grid-cols-[21rem_minmax(0,1fr)]">
+        <section className="grid gap-3 md:gap-4 xl:grid-cols-[21rem_minmax(0,1fr)]">
           <SemesterPlannerPanel
             bankCourses={bankCourses}
             draggedCourseId={draggedCourseId}
@@ -943,7 +1164,7 @@ export function SemesterPlannerClient({
             onToggleShowAllModules={() => setShowAllModules((current) => !current)}
           />
 
-          <section className="space-y-4">
+          <section className="space-y-3 md:space-y-4">
             <div className="space-y-3">
               {semesterIndexes.map((semesterIndex) => {
                 const startingCourses = sortedCourses.filter((course) => course.assignedSemester === semesterIndex);
@@ -1003,9 +1224,9 @@ export function SemesterPlannerClient({
                       </div>
                     ) : null}
 
-                    <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="mt-3 grid gap-2 md:mt-4 sm:grid-cols-2 xl:grid-cols-3">
                       {startingCourses.length === 0 && continuedCourses.length === 0 ? (
-                        <p className="planner-empty-state rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-5 text-[12px] leading-5 text-[var(--on-surface-variant)] sm:col-span-2 xl:col-span-3">
+                        <p className="planner-empty-state rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)] md:py-5 sm:col-span-2 xl:col-span-3">
                           {draggedCourseId ? "Drop module here." : "Move modules here from the planner bank."}
                         </p>
                       ) : null}
@@ -1024,18 +1245,18 @@ export function SemesterPlannerClient({
                 );
               })}
 
-              <article className="planner-drop-zone rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-4">
+              <article className="planner-drop-zone rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:px-4 md:py-4">
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface-variant)]">
                     New Semester
                   </h2>
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-3 md:mt-4">
                   <button
                     type="button"
                     onClick={addSemester}
-                    className="planner-empty-state flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-5 text-[12px] font-semibold leading-5 text-[var(--primary)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)]"
+                    className="planner-empty-state flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-4 text-[12px] font-semibold leading-5 text-[var(--primary)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] md:py-5"
                   >
                     <PlusIcon className="h-4 w-4" />
                     <span>Add Semester</span>

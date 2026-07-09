@@ -4,13 +4,14 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { HomeSearch, type HomeSearchItem } from "@/components/layout/home-search";
 import {
+  ArrowUpRightIcon,
   BookIcon,
   CalculatorIcon,
   CalendarWeekIcon,
   EditIcon,
   HomeIcon,
+  LayersIcon,
   MailIcon,
-  SettingsIcon,
 } from "@/components/planner/icons";
 import {
   getLatestDataUpdatedAt,
@@ -66,6 +67,29 @@ const appSearchItems = [
   },
 ] as const satisfies readonly HomeSearchItem[];
 
+const heroQuickActions = [
+  {
+    label: "Plan Timetable",
+    href: "/timetable",
+    icon: CalendarWeekIcon,
+  },
+  {
+    label: "Find Courses",
+    href: "/courses",
+    icon: BookIcon,
+  },
+  {
+    label: "Calculate GPA",
+    href: "/calculators",
+    icon: CalculatorIcon,
+  },
+  {
+    label: "Open Planner",
+    href: "/planner",
+    icon: LayersIcon,
+  },
+] as const;
+
 const homeQuickResourceIcons: Record<string, typeof BookIcon> = {
   "suss-portal": HomeIcon,
   canvas: BookIcon,
@@ -109,6 +133,8 @@ type UpcomingDateItem = {
   label: string;
   detail: string;
   date: string;
+  startDate: string;
+  endDate: string;
   audiences?: string[];
 };
 
@@ -194,6 +220,8 @@ function getUpcomingCalendarDates(calendarEvents: AcademicCalendarEventRecord[])
         label: group.status === "tentative" ? `${group.label} (TBC)` : group.label,
         detail: scopes.join(", "),
         date: formatUpcomingCalendarDate(group),
+        startDate: group.startDate,
+        endDate: group.endDate,
         audiences,
       };
     });
@@ -212,6 +240,8 @@ function getUpcomingSemesterDates(
     label: string;
     detail: string;
     date: string;
+    startDate: string;
+    endDate: string;
   }> = [];
 
   if (currentSemesterContext.semester && currentSemesterContext.week && today <= currentSemesterContext.week.endDate)
@@ -220,6 +250,8 @@ function getUpcomingSemesterDates(
       label: `${buildWeekLabel(currentSemesterContext.week)} ends`,
       detail: `${currentSemesterContext.semester.semesterName}, AY${currentSemesterContext.semester.academicYear}`,
       date: formatCompactDate(currentSemesterContext.week.endDate),
+      startDate: currentSemesterContext.week.endDate,
+      endDate: currentSemesterContext.week.endDate,
     });
   }
 
@@ -235,6 +267,8 @@ function getUpcomingSemesterDates(
       label: isSemesterStart ? "Semester begins" : `${buildWeekLabel(week)} starts`,
       detail: `${semester.semesterName}, AY${semester.academicYear}`,
       date: formatCompactDate(week.startDate),
+      startDate: week.startDate,
+      endDate: week.startDate,
     });
 
     if (items.length >= 6)
@@ -285,13 +319,38 @@ export default async function HomePage()
     })),
   ] satisfies HomeSearchItem[];
   const upcomingDates = getUpcomingDates(academicCalendarEvents, semesterTree, currentSemesterContext);
+  const disclaimerSection = (
+    <section
+      className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm"
+      aria-labelledby="home-disclaimer"
+    >
+      <h2 id="home-disclaimer" className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
+        Disclaimer
+      </h2>
+      <p className="mt-3 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+        SUSS Planner is currently in beta. Please cross-reference official materials for critical academic decisions.
+      </p>
+      <p className="mt-2 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+        If classes or schedules have changed since the last update, refer to the SUSS Backpack app or Canvas LMS for the latest official information.
+      </p>
+      <div className="mt-4 border-t border-[var(--outline-variant)] pt-3">
+        <p className="text-[12px] font-semibold leading-5 text-[var(--on-surface)]">
+          Data last updated: {formatDataUpdatedValue(latestDataUpdatedAt)}
+        </p>
+      </div>
+    </section>
+  );
   const quickLinksSection = (
-    <section id="portal-links" aria-labelledby="quick-links">
+    <section
+      id="portal-links"
+      aria-labelledby="quick-links"
+      className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm"
+    >
       <h2 id="quick-links" className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
         Quick Links
       </h2>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-1 xl:grid-cols-2">
         {homeQuickResources.map((item) => {
           const Icon = homeQuickResourceIcons[item.id];
           const content = (
@@ -300,9 +359,12 @@ export default async function HomePage()
                 <Icon className="h-4 w-4" />
               </span>
               <span className="min-w-0 flex-1 text-left leading-5">{item.label}</span>
+              {!item.href.startsWith("/") ? (
+                <ArrowUpRightIcon className="h-3.5 w-3.5 shrink-0 text-[var(--on-surface-variant)] transition-colors group-hover:text-[var(--primary)]" />
+              ) : null}
             </>
           );
-          const className = "home-shortcut-card group flex min-h-[3.25rem] items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 text-[12px] font-semibold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]";
+          const className = "home-shortcut-card group flex min-h-[3rem] items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 text-[12px] font-semibold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]";
 
           if (item.href.startsWith("/"))
           {
@@ -334,31 +396,43 @@ export default async function HomePage()
     </section>
   );
   const upcomingDatesSection = (
-    <section>
-      <h2 className="text-[20px] font-bold leading-7 tracking-[-0.04em] text-[var(--on-surface)] sm:text-[24px]">
-        Upcoming Dates
-      </h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {upcomingDates.length > 0 ? upcomingDates.map((item) => (
-          <div key={`${item.label}-${item.detail}-${item.date}`} className="flex min-h-[7rem] items-start justify-between gap-4 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-3 shadow-sm">
-            <div className="min-w-0">
-              {item.audiences && item.audiences.length > 0 ? (
-                <p className="mb-1 text-[10px] font-bold uppercase leading-3 text-[var(--primary)]">
-                  {item.audiences.join(" • ")}
-                </p>
-              ) : null}
-              <p className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">
-                {item.label}
-              </p>
-              <p className="mt-1 text-[11px] leading-4 text-[var(--on-surface-variant)]">
-                {item.detail}
-              </p>
-            </div>
-            <p className="max-w-[5.5rem] shrink-0 text-right text-[12px] font-bold leading-5 text-[var(--primary)]">
-              {item.date}
-            </p>
-          </div>
-        )) : (
+    <section aria-labelledby="upcoming-dates">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 id="upcoming-dates" className="text-[17px] font-bold leading-6 tracking-[-0.03em] text-[var(--on-surface)] sm:text-[24px] sm:leading-7 sm:tracking-[-0.035em]">
+            Upcoming Dates
+          </h2>
+        </div>
+      </div>
+
+      <div className="mt-3 sm:mt-4">
+        {upcomingDates.length > 0 ? (
+          <ol className="relative divide-y divide-[color-mix(in_srgb,var(--on-surface),transparent_94%)] before:absolute before:bottom-1.5 before:left-2 before:top-1.5 before:hidden before:w-px before:bg-[color-mix(in_srgb,var(--brand-divider),transparent_60%)] sm:space-y-5 sm:divide-y-0 sm:before:block sm:before:bottom-2 sm:before:left-[0.625rem] sm:before:top-2">
+            {upcomingDates.map((item) => (
+              <li key={`${item.label}-${item.detail}-${item.date}`} className="relative py-3 first:pt-0 last:pb-0 sm:py-0 sm:pl-9">
+                <span className="absolute left-0 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--surface-container-lowest)] sm:flex sm:h-5 sm:w-5">
+                  <span className="h-2 w-2 rounded-full bg-[var(--primary)] sm:h-2.5 sm:w-2.5" />
+                </span>
+
+                <div className="sm:border-b sm:border-[color-mix(in_srgb,var(--outline-variant),transparent_65%)] sm:pb-5 sm:last:border-b-0 sm:last:pb-0">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 sm:gap-x-3 sm:gap-y-1">
+                    <p className="text-[12px] font-bold leading-4 text-[var(--primary)] sm:text-[14px] sm:leading-5">
+                      {item.date}
+                    </p>
+                  </div>
+
+                  <p className="mt-0.5 text-[13px] font-bold leading-5 text-[var(--on-surface)] sm:mt-1 sm:text-[15px] sm:leading-6">
+                    {item.label}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-[var(--on-surface-variant)] sm:mt-1 sm:text-[12px] sm:leading-5">
+                    {item.audiences && item.audiences.length > 0 ? `${item.audiences.join(" • ")} · ` : ""}
+                    {item.detail}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
           <p className="text-[12px] leading-5 text-[var(--on-surface-variant)]">
             No upcoming academic calendar dates are loaded.
           </p>
@@ -374,58 +448,91 @@ export default async function HomePage()
       dataUpdatedAt={latestDataUpdatedAt}
     >
       <div className="home-page grid gap-6 sm:gap-8">
-        <section className="pt-1 sm:pt-2">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start lg:gap-8 xl:gap-10">
-            <div className="min-w-0">
-              <p className="max-w-3xl text-[24px] font-bold leading-[1.15] tracking-[-0.045em] text-[var(--on-surface)] sm:text-[32px] lg:text-[40px]">
-                Welcome to SUSS Planner.
-              </p>
-
-              <div className="mt-8 grid gap-3">
-                <p className="text-[16px] font-semibold leading-6 text-[var(--on-surface)] sm:text-[18px]">
-                  What would you like to do today?
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start lg:gap-8 xl:gap-10">
+          <div className="min-w-0">
+            <section className="pt-1 sm:pt-2" aria-labelledby="home-hero-title">
+              <div className="max-w-4xl">
+                <h1 id="home-hero-title" className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[42px] sm:leading-[1.08] sm:tracking-[-0.045em] lg:text-[52px]">
+                  Welcome to SUSS Planner.
+                </h1>
+                <p className="mt-2 max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:mt-3 sm:text-[18px] sm:leading-7">
+                  Find courses, timetable slots, calculators, portals, and key dates in one place.
                 </p>
-                <HomeSearch items={searchItems} />
               </div>
 
-              <div className="mt-8">
-                {upcomingDatesSection}
+              <div className="mt-3 flex flex-wrap gap-1.5 sm:mt-5 sm:gap-2" aria-label="Quick actions">
+                {heroQuickActions.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      prefetch
+                      href={item.href}
+                      className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[11px] font-bold leading-4 text-[var(--on-surface)] shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)] sm:min-h-10 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[12px]"
+                    >
+                      <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
+
+              <div className="mt-3 max-w-4xl sm:mt-4">
+                <HomeSearch
+                  items={searchItems}
+                  placeholder="Search courses, pages, deadlines, portals..."
+                  prominent
+                  showSuggestionsOnEmpty={false}
+                />
+              </div>
+            </section>
+
+            <div className="mt-6 sm:mt-8">
+              {upcomingDatesSection}
             </div>
-
-            <aside className="grid gap-6" aria-label="Home page status">
-              <section>
-                <h2 className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
-                  Announcement
-                </h2>
-                <p className="mt-3 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                  SUSS Planner is currently in beta. Please cross-reference official materials for critical academic decisions.
-                </p>
-                <p className="mt-2 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                  If classes or schedules have changed since the last update, refer to the SUSS Backpack app or Canvas LMS for the latest official information.
-                </p>
-                <div className="mt-4 border-y border-[var(--outline-variant)] py-3">
-                  <p className="text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                    Data Last Updated
-                  </p>
-                  <p className="mt-1 text-[13px] font-bold leading-5 text-[var(--on-surface)]">
-                    {formatDataUpdatedValue(latestDataUpdatedAt)}
-                  </p>
-                </div>
-                <Link
-                  prefetch
-                  href="/feedback"
-                  className="mt-4 inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                >
-                  <EditIcon className="h-4 w-4" />
-                  Send feedback
-                </Link>
-              </section>
-
-              {quickLinksSection}
-            </aside>
           </div>
-        </section>
+
+          <aside className="grid gap-4 lg:sticky lg:top-24" aria-label="Home page utilities">
+            {disclaimerSection}
+            {quickLinksSection}
+
+            <section className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm" aria-labelledby="feedback-cta">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.65rem] bg-[var(--accent-soft)] text-[var(--primary)]">
+                  <EditIcon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <h2 id="feedback-cta" className="text-[15px] font-bold leading-5 text-[var(--on-surface)]">
+                    Improve the planner
+                  </h2>
+                  <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                    Report outdated data, broken links, or workflow issues.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link
+                      prefetch
+                      href="/feedback"
+                      className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-bold leading-4 text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
+                    >
+                      <EditIcon className="h-4 w-4" />
+                      Send feedback
+                    </Link>
+                    <a
+                      href="https://github.com/Simplificatedd/SUSSplanner/issues"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-bold leading-4 text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
+                    >
+                      GitHub Issues
+                      <ArrowUpRightIcon className="h-4 w-4" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
       </div>
     </AppShell>
   );

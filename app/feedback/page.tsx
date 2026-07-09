@@ -34,10 +34,10 @@ export default async function FeedbackPage()
     >
       <div className="feedback-page w-full">
         <div className="mb-5 flex flex-col gap-1.5 sm:mb-6 sm:gap-2">
-          <h1 className="text-[28px] font-bold leading-8 text-[var(--on-surface)] sm:text-[32px] sm:leading-10">
+          <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[32px] sm:leading-10 sm:tracking-normal">
             Feedback
           </h1>
-          <p className="max-w-3xl text-[14px] leading-6 text-[var(--on-surface-variant)] sm:text-[15px] sm:leading-7">
+          <p className="max-w-3xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[15px] sm:leading-7">
             Help improve SUSS Planner by opening a public GitHub issue or sending a private feedback form to the maintainers.
           </p>
         </div>

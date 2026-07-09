@@ -179,7 +179,7 @@ export function CourseDetailPage({
               <div>
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
                   <span className="text-[32px] font-black leading-none tracking-[-0.05em] text-[var(--primary)]">{course.courseCode}</span>
-                  <h1 className="text-[30px] font-semibold leading-[1.05] tracking-[-0.03em] text-[var(--on-surface)]">
+                  <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[30px] sm:font-semibold sm:leading-[1.05] sm:tracking-[-0.03em]">
                     {course.courseName ?? "Untitled course"}
                   </h1>
                 </div>
@@ -192,7 +192,29 @@ export function CourseDetailPage({
                     <CalendarWeekIcon className="h-4 w-4 text-[var(--primary)]" />
                     {displaySemesterLabel}
                   </span>
-                  <div className="ml-auto flex flex-wrap items-center gap-2.5">
+                  <div className="flex w-full flex-nowrap items-center gap-2 sm:hidden">
+                    <AddToTimetableButton
+                      course={{ ...course, offeredSemesters }}
+                      appearance="outline"
+                      compact
+                      preferredSemesterId={activeSemesterId}
+                      fallbackSemesterId={currentSemesterId}
+                    />
+                    <AddToSemesterPlannerButton course={course} appearance="outline" compact />
+                    {course.synopsisUrl ? (
+                      <a
+                        href={course.synopsisUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex h-7 items-center gap-1 whitespace-nowrap rounded-[0.4rem] border border-[var(--outline-variant)] px-2 py-0.5 text-[10px] font-semibold leading-3 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] md:text-[11px] md:leading-4"
+                      >
+                        <BookIcon className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        View @ SUSS
+                        <ArrowUpRightIcon className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      </a>
+                    ) : null}
+                  </div>
+                  <div className="hidden flex-wrap items-center gap-2.5 sm:ml-auto sm:flex">
                     <AddToTimetableButton
                       course={{ ...course, offeredSemesters }}
                       appearance="outline"
@@ -208,7 +230,7 @@ export function CourseDetailPage({
                         className="inline-flex items-center gap-1 rounded-[0.4rem] border border-[var(--outline-variant)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                       >
                         <BookIcon className="h-4 w-4" />
-                        View Details at SUSS
+                        View @ SUSS
                         <ArrowUpRightIcon className="h-4 w-4" />
                       </a>
                     ) : null}
@@ -216,7 +238,7 @@ export function CourseDetailPage({
                 </div>
               </div>
 
-              <div className="grid gap-2.5 md:grid-cols-3">
+              <div className="grid grid-cols-3 gap-2 md:gap-2.5">
                 <DetailStat icon={<BookIcon className="h-5 w-5" />} label="Credit Units" value={`${course.creditUnits?.toFixed(1) ?? "0.0"} CU`} />
                 <DetailStat icon={<LayersIcon className="h-5 w-5" />} label="Course Level" value={course.courseLevel ?? "Level unavailable"} />
                 <DetailStat icon={<SchoolIcon className="h-5 w-5" />} label="Academic Track" value={course.isPostgraduate ? "Postgraduate" : "Undergraduate"} />
@@ -224,7 +246,7 @@ export function CourseDetailPage({
 
               {course.courseSynopsis ? (
                 <div className="bg-[var(--surface-container-low)] px-3 py-2.5">
-                  <p className="text-[15px] leading-7 text-[var(--on-surface)]">
+                  <p className="text-[14px] leading-6 text-[var(--on-surface)]">
                     {course.courseSynopsis}
                   </p>
                 </div>
@@ -423,12 +445,12 @@ function DetailStat({
 })
 {
   return (
-    <div className="dark-neutral-accent-card border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2.5">
-      <div className="flex items-center gap-2 text-[var(--primary)]">
-        {icon}
-        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">{label}</span>
+    <div className="dark-neutral-accent-card min-w-0 border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-2 py-2 sm:px-3 sm:py-2.5">
+      <div className="flex min-w-0 flex-col items-start gap-1 text-[var(--primary)] sm:flex-row sm:items-center sm:gap-2">
+        <span className="[&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5">{icon}</span>
+        <span className="text-[9px] font-semibold uppercase leading-3 tracking-[0.04em] text-[var(--on-surface-variant)] sm:text-[11px] sm:leading-4 sm:tracking-[0.08em]">{label}</span>
       </div>
-      <div className="mt-2 text-[18px] font-semibold leading-6 text-[var(--on-surface)]">{value}</div>
+      <div className="mt-1.5 min-w-0 break-words text-[12px] font-semibold leading-4 text-[var(--on-surface)] sm:mt-2 sm:text-[18px] sm:leading-6">{value}</div>
     </div>
   );
 }

@@ -287,7 +287,7 @@ export function AppShell({
         </div>
 
         {showFooter ? (
-          <footer className="border-t border-[var(--brand-divider)] bg-[var(--footer-surface)]">
+          <footer className={`border-t border-[var(--brand-divider)] bg-[var(--footer-surface)] ${activeSection === "home" ? "hidden sm:block" : ""}`}>
             <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
@@ -308,13 +308,13 @@ export function AppShell({
                 <Link
                   prefetch
                   href="/feedback"
-                  className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                 >
                   <EditIcon className="h-4 w-4" />
                   Feedback
                 </Link>
                 <a
-                  className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                   href="https://github.com/Simplificatedd/SUSSplanner"
                   target="_blank"
                   rel="noreferrer"

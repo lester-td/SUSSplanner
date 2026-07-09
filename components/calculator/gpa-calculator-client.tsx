@@ -323,13 +323,17 @@ export function GpaCalculatorClient()
 
   return (
     <div className="calculator-page calculator-section calculator-section--gpa w-full pb-6">
-      <section className="mb-3 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-3 shadow-sm sm:px-4">
-        <div className="flex gap-2 overflow-x-auto pb-1 md:hidden">
-          <StatItem label="Semester GPA" value={formatGpa(currentGpa)} className="min-w-[9.5rem] shrink-0" tone="semester" />
-          <StatItem label="Courses" value={String(modules.length)} className="min-w-[8rem] shrink-0" tone="semester" />
-          <StatItem label="Credit Units" value={currentCredits.toFixed(1)} className="min-w-[9rem] shrink-0" tone="semester" />
-          <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} className="min-w-[9.5rem] shrink-0" tone="all-time" />
-          <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} className="min-w-[10rem] shrink-0" tone="all-time" />
+      <section className="mb-2 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-2 shadow-sm md:mb-3 md:px-4 md:py-3">
+        <div className="grid gap-1.5 md:hidden">
+          <div className="grid grid-cols-3 gap-1.5">
+            <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" compact />
+            <StatItem label="Courses" value={String(modules.length)} tone="semester" compact />
+            <StatItem label="Credit Units" value={currentCredits.toFixed(1)} tone="semester" compact />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} tone="all-time" compact />
+            <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} tone="all-time" compact />
+          </div>
         </div>
           <div className="hidden md:grid md:grid-cols-[repeat(3,minmax(0,1fr))_1px_repeat(2,minmax(0,1fr))] md:items-stretch md:gap-3">
             <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" />
@@ -353,7 +357,7 @@ export function GpaCalculatorClient()
                     <SearchIcon className="h-5 w-5 text-[var(--primary)]" />
                   )}
                   <h2 className="text-[16px] font-bold leading-6 text-[var(--on-surface)]">
-                    Add module
+                    Add courses
                   </h2>
                 </div>
                 <button
@@ -524,115 +528,198 @@ export function GpaCalculatorClient()
               </div>
             ) : (
               <div className="divide-y divide-[var(--brand-divider)]">
-                {modules.map((module) => (
-                  <div key={module.courseCode} className="grid grid-cols-[4.25rem_minmax(0,1fr)] items-stretch sm:grid-cols-[4.75rem_minmax(0,1fr)]">
-                    <div className={`flex items-center justify-center border-r border-[var(--brand-divider)] px-1.5 py-1.5 transition-colors sm:px-2 sm:py-2 ${
-                      module.isPassFail ? "bg-[var(--surface-container-low)]" : ""
-                    }`}>
-                      <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 text-center text-[10px] font-bold uppercase tracking-[0.04em] transition-colors ${
-                        module.isPassFail
-                          ? "text-[var(--primary)]"
-                          : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
-                      }`}>
-                        <input
-                          type="checkbox"
-                          checked={module.isPassFail}
-                          onChange={(event) => updateModule(module.courseCode, {
-                            isPassFail: event.target.checked,
-                          })}
-                          className="h-4 w-4 accent-[var(--primary)]"
-                        />
-                        Pass/Fail
-                      </label>
-                    </div>
-                    <article
-                      className={`grid min-w-0 gap-2 px-2.5 py-2 transition-colors md:grid-cols-[minmax(0,1fr)_5.5rem_5.25rem_5.25rem_2.5rem] md:items-center ${
+                  {modules.map((module) => (
+                    <div key={module.courseCode}>
+                      <article className={`grid gap-2 px-2.5 py-2 md:hidden ${
                         module.isPassFail ? "bg-[var(--surface-container-low)]" : "bg-[var(--surface-container-lowest)]"
-                      }`}
-                    >
-                      <div className="min-w-0 self-center">
-                        <p className="text-[14px] font-extrabold text-[var(--primary)]">{module.courseCode}</p>
-                        <p className="mt-0.5 truncate text-[13px] text-[var(--on-surface-variant)]">{module.courseName}</p>
-                      </div>
-                      <CompactCalculatorField label="Credits">
-                        {module.creditUnitsEditable ? (
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.5"
-                            value={module.creditUnits}
-                            onChange={(event) => updateModule(module.courseCode, {
-                              creditUnits: Math.max(0, Number(event.target.value) || 0),
-                            })}
-                            className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-center text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                          />
-                        ) : (
-                          <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 text-center text-[13px] font-semibold text-[var(--on-surface)]">
+                      }`}>
+                        <div className="flex min-w-0 items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[14px] font-extrabold text-[var(--primary)]">{module.courseCode}</p>
+                            <p className="mt-0.5 truncate text-[13px] text-[var(--on-surface-variant)]">{module.courseName}</p>
+                          </div>
+                          <span className="shrink-0 text-[13px] font-semibold text-[var(--on-surface-variant)]">
                             {formatCreditUnits(module.creditUnits)}
-                          </div>
-                        )}
-                      </CompactCalculatorField>
-                      <div className="grid min-w-0 gap-1 md:col-span-2">
-                        <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-bold uppercase tracking-[0.04em] text-[var(--on-surface-variant)]">
-                          <span>Grade</span>
-                          <span>GPV</span>
+                          </span>
                         </div>
-                        {module.isPassFail ? (
-                          <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 text-center text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--primary)]">
-                            Excluded from GPA
+
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <label
+                            aria-label={`${module.courseCode} pass/fail`}
+                            className={`inline-flex w-8 shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 text-center text-[9px] font-bold uppercase leading-none tracking-normal transition-colors ${
+                            module.isPassFail
+                              ? "text-[var(--primary)]"
+                              : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
+                          }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={module.isPassFail}
+                              onChange={(event) => updateModule(module.courseCode, {
+                                isPassFail: event.target.checked,
+                              })}
+                              className="h-4 w-4 shrink-0 accent-[var(--primary)]"
+                            />
+                            P/F
+                          </label>
+                          <div className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-1.5">
+                            <select
+                              value={module.grade}
+                              disabled={module.isPassFail}
+                              aria-label={`${module.courseCode} grade`}
+                              onChange={(event) => {
+                                const grade = event.target.value as Grade;
+                                updateModule(module.courseCode, {
+                                  grade,
+                                  gradePoint: gradeToPoint(grade),
+                                });
+                              }}
+                              className="h-full w-full border-0 bg-transparent px-0 py-0 text-center text-[13px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-45"
+                            >
+                              {GRADE_OPTIONS.map((option) => (
+                                <option key={option.grade} value={option.grade}>{option.grade}</option>
+                              ))}
+                            </select>
                           </div>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2">
-                              <select
-                                value={module.grade}
-                                disabled={module.isPassFail}
-                                onChange={(event) => {
-                                  const grade = event.target.value as Grade;
-                                  updateModule(module.courseCode, {
-                                    grade,
-                                    gradePoint: gradeToPoint(grade),
-                                  });
-                                }}
-                                className="h-full w-full border-0 bg-transparent px-0 py-0 text-center text-[13px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-45"
-                              >
-                                {GRADE_OPTIONS.map((option) => (
-                                  <option key={option.grade} value={option.grade}>{option.grade}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2">
-                              <select
-                                value={module.gradePoint}
-                                disabled={module.isPassFail}
-                                onChange={(event) => {
-                                  const gradePoint = Number(event.target.value);
-                                  updateModule(module.courseCode, {
-                                    gradePoint,
-                                    grade: pointToGrade(gradePoint),
-                                  });
-                                }}
-                                className="h-full w-full border-0 bg-transparent px-0 py-0 text-center text-[13px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-45"
-                              >
-                                {POINT_OPTIONS.map((point) => (
-                                  <option key={point} value={point}>{point.toFixed(1)}</option>
-                                ))}
-                              </select>
-                            </div>
+                          <div className="flex h-9 min-w-0 flex-1 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-1.5">
+                            <select
+                              value={module.gradePoint}
+                              disabled={module.isPassFail}
+                              aria-label={`${module.courseCode} grade point value`}
+                              onChange={(event) => {
+                                const gradePoint = Number(event.target.value);
+                                updateModule(module.courseCode, {
+                                  gradePoint,
+                                  grade: pointToGrade(gradePoint),
+                                });
+                              }}
+                              className="h-full w-full border-0 bg-transparent px-0 py-0 text-center text-[13px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-45"
+                            >
+                              {POINT_OPTIONS.map((point) => (
+                                <option key={point} value={point}>{point.toFixed(1)}</option>
+                              ))}
+                            </select>
                           </div>
-                        )}
+                          <button
+                            type="button"
+                            aria-label={`Remove ${module.courseCode}`}
+                            onClick={() => setModules((current) => current.filter((item) => item.courseCode !== module.courseCode))}
+                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--error-container)] hover:text-[var(--error)] md:border-0"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </article>
+
+                      <div className="hidden grid-cols-[4.25rem_minmax(0,1fr)] items-stretch md:grid sm:grid-cols-[4.75rem_minmax(0,1fr)]">
+                        <div className={`flex items-center justify-center border-r border-[var(--brand-divider)] px-1.5 py-1.5 transition-colors sm:px-2 sm:py-2 ${
+                          module.isPassFail ? "bg-[var(--surface-container-low)]" : ""
+                        }`}>
+                          <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 text-center text-[10px] font-bold uppercase tracking-[0.04em] transition-colors ${
+                            module.isPassFail
+                              ? "text-[var(--primary)]"
+                              : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
+                          }`}>
+                            <input
+                              type="checkbox"
+                              checked={module.isPassFail}
+                              onChange={(event) => updateModule(module.courseCode, {
+                                isPassFail: event.target.checked,
+                              })}
+                              className="h-4 w-4 accent-[var(--primary)]"
+                            />
+                            Pass/Fail
+                          </label>
+                        </div>
+                        <article
+                          className={`grid min-w-0 gap-2 px-2.5 py-2 transition-colors md:grid-cols-[minmax(0,1fr)_5.5rem_5.25rem_5.25rem_2.5rem] md:items-center ${
+                            module.isPassFail ? "bg-[var(--surface-container-low)]" : "bg-[var(--surface-container-lowest)]"
+                          }`}
+                        >
+                          <div className="min-w-0 self-center">
+                            <p className="text-[14px] font-extrabold text-[var(--primary)]">{module.courseCode}</p>
+                            <p className="mt-0.5 truncate text-[13px] text-[var(--on-surface-variant)]">{module.courseName}</p>
+                          </div>
+                          <CompactCalculatorField label="Credits">
+                            {module.creditUnitsEditable ? (
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.5"
+                                value={module.creditUnits}
+                                onChange={(event) => updateModule(module.courseCode, {
+                                  creditUnits: Math.max(0, Number(event.target.value) || 0),
+                                })}
+                                className="h-9 w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-center text-[13px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                              />
+                            ) : (
+                              <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 text-center text-[13px] font-semibold text-[var(--on-surface)]">
+                                {formatCreditUnits(module.creditUnits)}
+                              </div>
+                            )}
+                          </CompactCalculatorField>
+                          <div className="grid min-w-0 gap-1 md:col-span-2">
+                            <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-bold uppercase tracking-[0.04em] text-[var(--on-surface-variant)]">
+                              <span>Grade</span>
+                              <span>GPV</span>
+                            </div>
+                            {module.isPassFail ? (
+                              <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 text-center text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--primary)]">
+                                Excluded from GPA
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2">
+                                  <select
+                                    value={module.grade}
+                                    disabled={module.isPassFail}
+                                    onChange={(event) => {
+                                      const grade = event.target.value as Grade;
+                                      updateModule(module.courseCode, {
+                                        grade,
+                                        gradePoint: gradeToPoint(grade),
+                                      });
+                                    }}
+                                    className="h-full w-full border-0 bg-transparent px-0 py-0 text-center text-[13px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-45"
+                                  >
+                                    {GRADE_OPTIONS.map((option) => (
+                                      <option key={option.grade} value={option.grade}>{option.grade}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="flex h-9 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2">
+                                  <select
+                                    value={module.gradePoint}
+                                    disabled={module.isPassFail}
+                                    onChange={(event) => {
+                                      const gradePoint = Number(event.target.value);
+                                      updateModule(module.courseCode, {
+                                        gradePoint,
+                                        grade: pointToGrade(gradePoint),
+                                      });
+                                    }}
+                                    className="h-full w-full border-0 bg-transparent px-0 py-0 text-center text-[13px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-45"
+                                  >
+                                    {POINT_OPTIONS.map((point) => (
+                                      <option key={point} value={point}>{point.toFixed(1)}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${module.courseCode}`}
+                            onClick={() => setModules((current) => current.filter((item) => item.courseCode !== module.courseCode))}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--error-container)] hover:text-[var(--error)]"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </article>
                       </div>
-                      <button
-                        type="button"
-                        aria-label={`Remove ${module.courseCode}`}
-                        onClick={() => setModules((current) => current.filter((item) => item.courseCode !== module.courseCode))}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--error-container)] hover:text-[var(--error)]"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </article>
-                  </div>
-                ))}
+                    </div>
+                  ))}
               </div>
             )}
           </div>
@@ -758,11 +845,13 @@ function StatItem({
   value,
   tone = "default",
   className = "",
+  compact = false,
 }: {
   label: string;
   value: string;
   tone?: "default" | "semester" | "all-time";
   className?: string;
+  compact?: boolean;
 })
 {
   const toneClasses = tone === "semester"
@@ -772,11 +861,11 @@ function StatItem({
       : "border-[var(--outline-variant)] bg-[color-mix(in_srgb,var(--surface-container-lowest),var(--surface-container-low) 35%)]";
 
   return (
-    <div className={`min-w-0 rounded-[0.75rem] border px-3 py-2.5 ${toneClasses} ${className}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
+    <div className={`min-w-0 rounded-[0.75rem] border ${compact ? "px-2 py-1.5" : "px-3 py-2.5"} ${toneClasses} ${className}`}>
+      <p className={`${compact ? "text-[9px] font-medium leading-3 tracking-normal" : "text-[11px] font-semibold tracking-[0.06em]"} uppercase text-[var(--on-surface-variant)]`}>
         {label}
       </p>
-      <p className="mt-1 text-[28px] font-extrabold leading-8 text-[var(--on-surface)]">
+      <p className={`${compact ? "mt-0.5 text-[19px] font-bold leading-6" : "mt-1 text-[28px] font-extrabold leading-8"} text-[var(--on-surface)]`}>
         {value}
       </p>
     </div>

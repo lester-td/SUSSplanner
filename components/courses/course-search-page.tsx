@@ -865,7 +865,7 @@ export function CourseSearchPage({
           >
             <div className="flex items-baseline justify-between gap-2 md:items-end md:gap-3">
               <div className="min-w-0">
-                <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.02em] text-[var(--on-surface)] md:text-[28px] md:leading-9">Course Search</h1>
+                <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[32px] sm:leading-10 sm:tracking-normal">Course Search</h1>
               </div>
               <div className="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
                 {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}

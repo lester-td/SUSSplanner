@@ -39,8 +39,8 @@ export default async function SharePage({
       >
         <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
           <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
-            <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.01em] text-[var(--on-surface)]">Shared timetable</h1>
-            <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">
+            <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:font-semibold sm:leading-8 sm:tracking-[-0.01em]">Shared timetable</h1>
+            <p className="mt-2 text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[14px]">
               Open a shared timetable URL here to preview it in read-only mode, compare clashes, and import it into your saved planner only if you choose to.
             </p>
             <Link href="/timetable" className="mt-6 inline-flex rounded-[0.25rem] bg-[var(--primary)] px-4 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)] hover:text-on-primary">
@@ -67,8 +67,8 @@ export default async function SharePage({
       >
         <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center px-3 py-3 md:px-[16px]">
           <div className="w-full max-w-xl rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-6 py-8 text-center shadow-sm">
-            <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.01em] text-[var(--on-surface)]">Invalid shared link</h1>
-            <p className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">
+            <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:font-semibold sm:leading-8 sm:tracking-[-0.01em]">Invalid shared link</h1>
+            <p className="mt-2 text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[14px]">
               This share URL is missing required timetable information or has malformed class identifiers.
             </p>
             <Link href="/timetable" className="mt-6 inline-flex rounded-[0.25rem] bg-[var(--primary)] px-4 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)] hover:text-on-primary">
