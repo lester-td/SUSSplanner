@@ -698,7 +698,7 @@ export function SettingsClient()
           </div>
         </div>
 
-        <div className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-4 shadow-sm sm:px-6 sm:py-6">
+        <div className="-mx-3 border-y border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-4 sm:mx-0 sm:rounded-lg sm:border sm:px-6 sm:py-6 sm:shadow-sm">
           <Section id="appearance" title="Appearance">
             <SettingRow
               title="Night mode"
