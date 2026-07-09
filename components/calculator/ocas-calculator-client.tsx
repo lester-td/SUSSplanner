@@ -666,16 +666,16 @@ export function OcasCalculatorClient()
 
                             return (
                               <div key={component.componentId} className="px-2.5 py-2 sm:px-3 sm:py-2.5">
-                                <div className="flex items-center justify-between gap-2 sm:gap-3">
-                                  <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
-                                    <p className="min-w-0 truncate text-[14px] font-bold text-[var(--on-surface)]">
+                                <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                                  <div className="flex min-w-0 items-baseline gap-1.5 sm:flex-1 sm:gap-2">
+                                    <p className="min-w-0 truncate text-[14px] font-bold leading-5 text-[var(--on-surface)]">
                                       {component.componentName}
                                     </p>
-                                    <span className="shrink-0 text-[13px] font-semibold text-[var(--on-surface-variant)]">
+                                    <span className="shrink-0 text-[13px] font-semibold leading-5 text-[var(--on-surface-variant)]">
                                       {component.weightPercentage.toFixed(1)}%
                                     </span>
                                   </div>
-                                  <div className="flex shrink-0 items-center justify-end">
+                                  <div className="flex min-w-0 items-center justify-start sm:shrink-0 sm:justify-end">
                                     <div className="inline-flex rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-0.5 text-[11px] font-semibold leading-4">
                                       <button
                                         type="button"
