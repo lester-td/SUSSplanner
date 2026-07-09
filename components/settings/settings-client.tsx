@@ -763,17 +763,18 @@ export function SettingsClient()
 
           <Section id="reminders" title="Course Registration Reminders">
             <SettingRow
-              title="Reminder notifications"
-              description="You can get a reminder about when eCR / add-drop periods start with a small notification."
+              title="In-app reminders"
+              description="Receive in-app reminders for eCR and Add/Drop before each window opens, while it is active, and before it closes."
+              detail={<ReminderSchedulePopover />}
             >
               <SegmentedControl
-                label="Reminder notifications"
-                value={settings.registrationReminders ? "on" : "off"}
+                label="In-app reminders"
+                value={settings.registrationReminders.enabled ? "on" : "off"}
                 options={[
                   { value: "on", label: "On" },
                   { value: "off", label: "Off" },
                 ]}
-                onChange={(value) => updateSettings({ registrationReminders: value === "on" })}
+                onChange={(value) => updateRegistrationReminderPreferences({ enabled: value === "on" })}
               />
             </SettingRow>
           </Section>
@@ -800,25 +801,6 @@ export function SettingsClient()
             </div>
           </div>
         </div>
-
-        <Section id="reminders" title="Course Registration Reminders">
-          <SettingRow
-            title="In-app reminders"
-            description="Receive in-app reminders for eCR and Add/Drop before each window opens, while it is active, and before it closes."
-            detail={<ReminderSchedulePopover />}
-            alignControl="start"
-          >
-            <SegmentedControl
-              label="In-app reminders"
-              value={settings.registrationReminders.enabled ? "on" : "off"}
-              options={[
-                { value: "on", label: "On" },
-                { value: "off", label: "Off" },
-              ]}
-              onChange={(value) => updateRegistrationReminderPreferences({ enabled: value === "on" })}
-            />
-          </SettingRow>
-        </Section>
         <span className="sr-only">Current color scheme preference: {settings.colorScheme}</span>
       </div>
 

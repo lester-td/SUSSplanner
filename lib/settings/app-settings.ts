@@ -13,7 +13,6 @@ export type SettingsState = {
   timetableOrientation: TimetableOrientation;
   registrationReminders: RegistrationReminderPreferences;
   timetableStudyMode: TimetableStudyMode;
-  registrationReminders: boolean;
 };
 
 export type ThemeOption = {
@@ -35,7 +34,6 @@ export const DEFAULT_APP_SETTINGS: SettingsState = {
   timetableOrientation: "horizontal",
   registrationReminders: DEFAULT_REGISTRATION_REMINDER_PREFERENCES,
   timetableStudyMode: "full-time",
-  registrationReminders: true,
 };
 
 export const APP_THEME_OPTIONS: ThemeOption[] = [
@@ -97,6 +95,8 @@ export function normalizeRegistrationReminderPreferences(value: unknown): Regist
       ? candidate.enabled
       : getDefaultRegistrationReminderPreferences().enabled,
   };
+}
+
 function isTimetableStudyMode(value: unknown): value is TimetableStudyMode
 {
   return value === "full-time" || value === "part-time";
@@ -135,9 +135,6 @@ export function normalizeAppSettings(value: unknown): SettingsState
     timetableStudyMode: isTimetableStudyMode(candidate.timetableStudyMode)
       ? candidate.timetableStudyMode
       : DEFAULT_APP_SETTINGS.timetableStudyMode,
-    registrationReminders: typeof candidate.registrationReminders === "boolean"
-      ? candidate.registrationReminders
-      : DEFAULT_APP_SETTINGS.registrationReminders,
   };
 }
 
