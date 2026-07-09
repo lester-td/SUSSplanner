@@ -3,6 +3,7 @@
 ## Contents
 
 - [Introduction](#introduction)
+  - [App Stack and Data Storage](#app-stack-and-data-storage)
 - [Getting Started](#getting-started)
 - [Main Features](#main-features)
 - [Planning Courses](#planning-courses)
@@ -20,6 +21,10 @@
   - [Change a Class Group](#change-a-class-group)
   - [Resolve a Timetable Clash](#resolve-a-timetable-clash)
 - [Sharing Timetables](#sharing-timetables)
+- [Managing Settings and Course Registration Reminders](#managing-settings-and-course-registration-reminders)
+  - [Change Timetable Appearance](#change-timetable-appearance)
+  - [Use Course Registration Reminders](#use-course-registration-reminders)
+  - [Snooze a Reminder](#snooze-a-reminder)
 - [Common Workflows](#common-workflows)
 - [Tips and Best Practices](#tips-and-best-practices)
 - [Frequently Asked Questions](#frequently-asked-questions)
@@ -40,16 +45,17 @@ You do not need an account or sign-in.
 | Feature | What It Helps You Do |
 |---|---|
 | **Courses** | Search for courses and review course, assessment, and class information. |
-| **Planner** | Arrange courses across semesters, back up or restore the plan, and download a PDF. |
+| **Planner** | Arrange courses across semesters, back up or restore the plan, download a PDF, and see upcoming registration reminders. |
 | **GPA Calculator** | Calculate current and cumulative GPA and compare a Pass/Fail strategy. |
 | **Timetable** | Build a semester timetable and check for schedule clashes. |
 | **Share** | Send a read-only timetable preview to a friend. |
 | **Download** | Save your timetable as a PNG, PDF, or calendar file. |
+| **Settings** | Change appearance, timetable orientation, and course registration reminder preferences. |
 
 ### Before You Start
 
-SUSSPlanner saves your timetable, semester planner, and GPA Calculator entries in
-your current browser.
+SUSSPlanner saves your timetable, semester planner, GPA Calculator entries,
+settings, and reminder dismissals in your current browser.
 
 - Your plans do not automatically appear on another device or browser.
 - Clearing your browser data may permanently remove your plans.
@@ -57,6 +63,21 @@ your current browser.
   window.
 - There is no account-based or online backup. Export a Planner JSON backup if
   you may need to restore the plan later or move it to another browser.
+
+### App Stack and Data Storage
+
+SUSSPlanner runs as a Next.js and React web app. Course, class, assessment, and
+semester data are loaded from a maintained academic database, while your
+personal planning state stays in your browser.
+
+| Area | What It Means for You |
+|---|---|
+| Web app | Use SUSSPlanner in a browser; no installation or account is required. |
+| Academic data | Course and timetable information is loaded from the app's maintained data source. |
+| Local storage | Timetable, Planner, GPA Calculator, settings, and reminder dismissals stay in this browser only. |
+| Planner backup | Export a Planner JSON file when you want a restorable local backup. |
+| Sharing | Timetable share links are read-only until the receiver imports them. |
+| Registration reminders | Reminder notifications use the registration schedule bundled with SUSSPlanner. |
 
 ## Getting Started
 
@@ -69,7 +90,8 @@ your current browser.
    - **Timetable** for your semester schedule.
    - **Courses** for course search and details.
    - **Planner** for your multi-semester course plan.
-   - **Calculator** for GPA estimates.
+   - **Calculators** for GPA estimates.
+   - **Settings** for appearance and course registration reminder preferences.
 
 No installation is required.
 
@@ -157,7 +179,7 @@ Use **GPA Calculator** to estimate your current-semester GPA, combine it with
 your prior academic record, and compare which current modules to mark
 Pass/Fail.
 
-1. Open **Calculator**.
+1. Open **Calculators**.
 2. Search the full course catalog or switch **Add a Module** to Custom mode.
 3. Add current-semester modules.
 4. Check each module's credits, Grade, and GPV.
@@ -195,6 +217,47 @@ unless they choose to import yours.
 | **PNG** | An image of the timetable or exam view currently on screen. |
 | **PDF** | A PDF of the timetable or exam view currently on screen. |
 | **ICS** | A calendar file that can be opened or imported into a calendar app. |
+
+### Settings
+
+Use **Settings** to adjust local preferences for this browser.
+
+1. Open **Settings**.
+2. Choose **Night mode**: **Auto**, **On**, or **Off**.
+3. Choose a timetable colour theme.
+4. Choose the default timetable orientation: **Horizontal** or **Vertical**.
+5. Adjust **Course Registration Reminders**.
+
+Settings are saved automatically in the current browser. They do not sync to
+other browsers or devices.
+
+### Course Registration Reminders
+
+Course registration reminders appear as top-right notifications when an eCR or
+add-drop window is approaching, open, or closing soon. SUSSPlanner shows one
+registration reminder at a time.
+
+The reminder status uses:
+
+- **Upcoming** when registration starts within the next 7 days.
+- **Open** when registration is open and not yet in its final 24 hours.
+- **Closing Soon** during the final 24 hours before registration ends.
+
+The reminder schedule is:
+
+- **Upcoming:** 7 days, 3 days, 2 days, 1 day, 12 hours, 6 hours, and 1 hour
+  before the window opens.
+- **Open:** when the window opens, then every 24 hours while it remains open.
+- **Closing Soon:** 24 hours, 12 hours, 6 hours, and 1 hour before the window
+  closes.
+
+Closing a notification hides that specific reminder threshold. The same
+threshold will not reappear, but a later threshold may appear as the window gets
+closer, while it remains open, or as it approaches closing.
+
+Reminders and dismissals are local to your browser and are based on the
+registration schedule bundled with SUSSPlanner. Always confirm official dates
+through SUSS before making registration decisions.
 
 ## Planning Courses
 
@@ -582,6 +645,55 @@ Importing replaces your currently saved timetable and cannot be undone.
 The shared semester and classes replace your saved selections. Hidden courses
 are cleared, and the view returns to **All Weeks**.
 
+## Managing Settings and Course Registration Reminders
+
+### Change Timetable Appearance
+
+1. Open **Settings**.
+2. Under **Appearance**, choose the colour scheme for this browser.
+3. Under **Timetable**, choose the default orientation.
+4. Under **Theme**, choose a timetable colour palette.
+5. Use **Reset** if you want to restore all settings on this page to their
+   defaults.
+
+The preview updates as you change settings. Existing timetable selections are
+not removed when you change appearance settings.
+
+### Use Course Registration Reminders
+
+1. Open **Settings**.
+2. Go to **Course Registration Reminders**.
+3. Set **In-app reminders** to **On**.
+4. Open SUSSPlanner near an eCR or add-drop period.
+
+When a reminder is active, a notification appears at the top right of the app.
+SUSSPlanner shows only one active registration reminder at a time. The reminder
+can change from **Upcoming** to **Open** to **Closing Soon** as the registration
+window moves through those phases.
+
+Use **Reminder schedule** beside the setting to see the exact Upcoming, Open,
+and Closing Soon cadence.
+
+Turn **In-app reminders** off to disable all course registration reminders in
+this browser.
+
+### Snooze a Reminder
+
+Use the close button to hide the currently displayed reminder threshold,
+similar to NUSMods CourseReg reminders. This action is stored only in the
+current browser.
+
+A dismissed threshold stays hidden for the matching registration window. A
+reminder can appear again when:
+
+- The next upcoming threshold is crossed.
+- The next 24-hour open interval starts.
+- The next closing-soon threshold is crossed.
+- A later registration window becomes active.
+- The bundled registration schedule changes.
+- Browser storage is cleared.
+- You use another browser or device.
+
 ## Common Workflows
 
 ### Plan Your Entire Degree
@@ -605,6 +717,15 @@ Your degree plan is saved in your current browser.
 5. Add your planned courses.
 6. Review clashes and try alternative class groups.
 7. Share or download the final timetable.
+
+### Prepare for Course Registration
+
+1. Open **Settings** and confirm **Course Registration Reminders** are on.
+2. Open **Planner** to review the modules you intend to register for.
+3. When a reminder notification appears, check the registration window shown in
+   the notification.
+4. Confirm final registration dates and availability through official SUSS
+   channels before taking action.
 
 ### Compare Different Plans
 
@@ -656,6 +777,8 @@ SUSSPlanner keeps one multi-semester course plan at a time. To compare options:
 - Keep possible electives in the **Module Bank** until you decide.
 - Use custom courses as placeholders for future requirements.
 - Check credit units across each semester, not only the total.
+- Keep course registration reminders on if you want notifications near eCR and
+  add-drop periods.
 - Recheck course availability closer to registration because information may
   change.
 
@@ -678,8 +801,8 @@ No. SUSSPlanner does not require an account or sign-in.
 
 ### Where are my plans saved?
 
-Your timetable, semester planner, and GPA Calculator entries are saved in your
-current browser.
+Your timetable, semester planner, GPA Calculator entries, settings, and
+reminder dismissals are saved in your current browser.
 
 ### Will my plans appear on another device?
 
@@ -748,6 +871,19 @@ You can edit custom courses. Listed courses cannot be edited.
 
 You can plan between 1 and 20 semesters.
 
+### Why do I not see a course registration reminder?
+
+A reminder appears only when **In-app reminders** are enabled, the current date
+is within an upcoming, open, or closing-soon reminder threshold, and that exact
+threshold has not already been dismissed in this browser. SUSSPlanner shows at
+most one registration reminder at a time, so a more urgent closing-soon or open
+reminder can take priority over an upcoming one.
+
+### Are course registration reminders official SUSS notices?
+
+No. They are planning reminders based on the schedule bundled with SUSSPlanner.
+Always check official SUSS registration information before registering.
+
 ## Troubleshooting
 
 ### The Timetable Is Not Loading
@@ -801,11 +937,22 @@ restore feature.
 Some courses may not have complete details, schedules, or assessment
 information available in SUSSPlanner.
 
+### A Course Registration Reminder Is Missing
+
+1. Open **Settings**.
+2. Confirm **In-app reminders** is **On**.
+3. Check whether you previously dismissed the current threshold.
+4. Confirm that the registration window is within 7 days of opening, currently
+   open, or in its final 24 hours.
+5. If more than one registration window is active, check whether another window
+   has a more urgent reminder.
+
 ## Limitations
 
 - SUSSPlanner has no accounts, online syncing, or recovery without an exported
   JSON backup.
 - Your plans are saved only in your current browser.
+- Settings and reminder dismissals are also saved only in your current browser.
 - Calculator entries are browser-local and cannot currently be exported,
   imported, shared, or recovered after browser data is cleared.
 - GPA and Pass/Fail results are planning estimates. Confirm official GPA and
@@ -818,6 +965,8 @@ information available in SUSSPlanner.
 - Shared links support up to 50 selected classes.
 - Shared links may become incomplete if classes change or are removed.
 - Course, assessment, and class information may change or be incomplete.
+- Course registration reminders depend on the bundled registration schedule and
+  are not a replacement for official SUSS notices.
 - SUSSPlanner can detect clashes but cannot guarantee a clash-free combination.
 - Organising the Planner is best done on a desktop or laptop.
 

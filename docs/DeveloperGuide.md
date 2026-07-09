@@ -7,7 +7,7 @@ out under [Assumptions / Gaps](#assumptions--gaps).
 
 ## Project Overview
 
-SUSSPlanner is a student-built academic planning platform with four main
+SUSSPlanner is a student-built academic planning platform with five main
 anonymous-user capabilities:
 
 1. Build a semester timetable from SUSS course class groups, inspect clashes,
@@ -19,13 +19,16 @@ anonymous-user capabilities:
    for saving as PDF.
 4. Calculate current and cumulative GPA from catalog or custom modules and
    compare current-semester Pass/Fail strategies.
+5. Configure local appearance/timetable defaults and show in-app course
+   registration reminders for bundled eCR and add-drop windows.
 
-Normal users do not have accounts. Timetable, semester planner, and GPA-calculator
-state are stored in browser `localStorage`. Semester planners can additionally be
-backed up to and restored from a local JSON file, or opened as an A4 print view
-for saving as PDF. A timetable can be shared through a semantic URL that
-contains a semester ID and selected class identifiers. The shared page remains
-read-only until the recipient explicitly imports it into their local timetable.
+Normal users do not have accounts. Timetable, semester planner, GPA-calculator,
+settings, and course-registration reminder interaction state are stored in
+browser `localStorage`. Semester planners can additionally be backed up to and
+restored from a local JSON file, or opened as an A4 print view for saving as
+PDF. A timetable can be shared through a semantic URL that contains a semester
+ID and selected class identifiers. The shared page remains read-only until the
+recipient explicitly imports it into their local timetable.
 
 The repository contains two cooperating workspaces:
 
@@ -46,7 +49,10 @@ flowchart LR
     User["Anonymous student"]
     Maintainer["Maintainer / data operator"]
     Browser["Browser<br/>React client components"]
-    LocalStorage["Browser localStorage<br/>timetable + semester planner + GPA calculator"]
+    LocalStorage["Browser localStorage<br/>timetable + semester planner + GPA calculator + settings"]
+    ReminderState["Reminder interaction state<br/>dismissed threshold keys + legacy records"]
+    RegistrationSchedule["Bundled registration schedule<br/>lib/registration/schedule.ts"]
+    ReminderNotification["Course registration reminder notification<br/>global app overlay"]
     SemesterPlannerBackup["Semester-planner JSON backup<br/>local file"]
     SemesterPlannerPrint["A4 semester-planner print view<br/>Blob URL in new tab"]
     ShareURL["Share URL<br/>sem + semantic class identifiers"]
@@ -63,6 +69,10 @@ flowchart LR
     User --> Browser
     Browser --> LocalStorage
     LocalStorage --> Browser
+    Browser --> ReminderState
+    ReminderState --> Browser
+    RegistrationSchedule --> Browser
+    Browser --> ReminderNotification
     Browser --> SemesterPlannerBackup
     SemesterPlannerBackup --> Browser
     Browser --> SemesterPlannerPrint
@@ -88,7 +98,7 @@ flowchart LR
 
 | Boundary | Responsibilities | Key files |
 |---|---|---|
-| Browser | Interactive timetable, course search UI, semester planner, GPA calculator, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 semester-planner print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/semester-planner-print.ts` |
+| Browser | Interactive timetable, course search UI, semester planner, GPA calculator, settings, in-app registration reminders, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 semester-planner print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `lib/settings/app-settings.ts`, `lib/registration/`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/semester-planner-print.ts` |
 | Next.js server | Server-rendered pages, validation, API route handlers, server-side ICS/PDF endpoints | `app/`, `lib/validation/`, `lib/export/ics.ts`, `lib/export/pdf.ts` |
 | Data access layer | Centralized Drizzle queries, timetable assembly, clash detection, cached lookups | `lib/db/queries.ts`, `lib/db/index.ts`, `lib/timetable/clash-detection.ts` |
 | Postgres | Source of truth for academic catalog, semester, class, event, and assessment data | `scraper/schema.sql`, mirrored by `lib/db/schema.ts` |
@@ -101,6 +111,8 @@ flowchart LR
 - `DATABASE_URL` is read by the server-side database client, Drizzle tooling,
   and the setup validator; maintainers also pass it to `psql`.
 - Anonymous user state is not persisted server-side.
+- App settings and course-registration reminder dismissals are local browser
+  preferences; they are not persisted server-side.
 - Share URLs use semantic class identifiers instead of database `class_id`
   values, making links independent of raw surrogate IDs.
 - The application runtime is read-only with respect to academic tables.
@@ -123,8 +135,11 @@ flowchart LR
 | Validation | Zod 4 |
 | Server PDF generation | `pdf-lib` |
 | Browser image/PDF export | `html-to-image` and `pdf-lib` |
+| Drag and drop | `@dnd-kit/core` in the semester planner |
 | Semester-planner backup and print export | Browser `Blob`/object URLs, native print dialog, and Zod validation |
+| Settings and registration reminders | Browser `localStorage`, validated preference normalization, bundled registration-event data, phase-based reminder thresholds |
 | Icons | `react-icons` |
+| Testing | Vitest 4, TypeScript 5.9 checks, and project validation scripts |
 | Hosting configuration | Vercel, Singapore region (`sin1`) |
 
 ### Scraper
@@ -153,10 +168,11 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 .
 ├── app/                         Next.js pages and API route handlers
 │   ├── api/                     JSON, export, and cache-revalidation routes
-│   ├── calculator/              GPA-calculator page
+│   ├── calculators/             GPA and OCAS calculator page
 │   ├── courses/                 Course search and detail pages
 │   ├── planner/                 Multi-semester semester planner page
 │   ├── share/                   Read-only shared timetable page
+│   ├── settings/                Local app settings page
 │   └── timetable/               Interactive timetable page
 ├── components/
 │   ├── calculator/              GPA calculator client UI and browser-local state
@@ -164,12 +180,16 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 │   ├── layout/                  Shared application shell and navigation
 │   ├── planner/                 Semester planner UI, add button, and shared icons
 │   │   └── semester-planner/    Client, panel, drag/drop, and formatting helpers
+│   ├── registration/            Course-registration reminder notification
+│   ├── settings/                Settings UI and settings provider
 │   ├── timetable/               Timetable, exam, selection, and share UI
 │   └── ui/                      Reusable actions and modal
 ├── lib/
 │   ├── db/                      Drizzle client, schema mirror, and queries
 │   ├── export/                  ICS, server PDF, browser PNG/PDF, and semester-planner print helpers
 │   ├── planner/                 Semester-planner types and local persistence
+│   ├── registration/            Registration schedule, reminder timing, storage, validation, and tests
+│   ├── settings/                App settings defaults, migration, storage, and update event helpers
 │   ├── timetable/               Domain types, URL encoding, storage, utilities
 │   └── validation/              Zod schemas
 ├── drizzle/                     Intentionally empty migration-output directory
@@ -243,9 +263,12 @@ checks. It needs network access when downloading current course synopsis PDFs.
 
 ### Verification Commands
 
-No automated test suite is configured. Available checks are:
+The root app has a Vitest suite for registration reminders and settings
+normalization, plus TypeScript and production-build checks:
 
 ```bash
+npm test
+npm test -- lib/registration/reminders.test.ts
 npm run typecheck
 npm run build
 
@@ -262,6 +285,7 @@ npm run typecheck
 | `npm run validate:build` | Run the validation used automatically before `npm run build`. |
 | `npm run validate:start` | Run the validation used automatically before `npm run start`. |
 | `npm run dev` | Start the Next.js development server. |
+| `npm test` | Run the root Vitest suite. |
 | `npm run typecheck` | Run root TypeScript checks without emitting files. |
 | `npm run build` | Create a production build. |
 | `npm run start` | Run the production build locally. |
@@ -425,12 +449,13 @@ class-group, semester, and optional week information.
 | `/timetable` | Server-loads semesters with classes/weeks, then `PlannerClient` restores local state and fetches timetable/course/class data interactively. |
 | `/planner` | Server-loads semester metadata, then `SemesterPlannerClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
 | `/calculators` | Force-dynamic, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` and `OcasCalculatorClient` manage browser-local GPA calculation and OCAS assessment simulation. |
+| `/settings` | Server-loads semester/week metadata for `AppShell`, then `SettingsClient` manages browser-local colour-scheme, theme, timetable-orientation, and course-registration reminder preferences. |
 | `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` fetches the full catalog, caches it in memory for return navigation, refreshes stale cached data after 15 minutes, filters/searches the cached catalog client-side, and paginates results at 10 courses per page. |
 | `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
 | `/share?sem=...&classes=...` | Validates and resolves the shared timetable on the server, then renders a read-only `ShareClient` with explicit import. Missing or malformed parameters get explanatory UI. |
 
 The shared `AppShell` provides navigation to Home, Timetable, Courses, Planner,
-and Calculators. `/share` is reached through a share URL.
+Calculators, and Settings. `/share` is reached through a share URL.
 
 ## API and Backend Routes
 
@@ -524,6 +549,8 @@ flowchart LR
         Search["Search and inspect courses"]
         Study["Build multi-semester course plan"]
         GPA["Calculate GPA and compare Pass/Fail strategy"]
+        Settings["Configure local settings and timetable defaults"]
+        Reminders["Receive and dismiss course registration reminders"]
         Backup["Export or import semester-planner JSON backup"]
         Print["Open A4 semester-planner print/PDF view"]
         Share["Create shared timetable URL"]
@@ -544,6 +571,8 @@ flowchart LR
     Student --> Search
     Student --> Study
     Student --> GPA
+    Student --> Settings
+    Student --> Reminders
     Student --> Backup
     Student --> Print
     Student --> Share
@@ -702,6 +731,56 @@ The planner header provides these data-protection and presentation actions:
 - **Reset Planner** still requires confirmation and replaces the plan with the
   default state.
 
+### Course Registration Reminder Flow Diagram
+
+```mermaid
+flowchart TD
+    Settings["Open /settings"]
+    Preferences["Set in-app reminders<br/>enabled or disabled"]
+    SaveSettings["Persist normalized settings<br/>to sussplanner:settings"]
+    NotifySettings["Dispatch sussplanner:settings-updated"]
+    AppPage["Open any app page"]
+    Hydrate["Read settings and reminder interaction state"]
+    Tick["Refresh reminder clock and storage<br/>on mount, storage events, and 60s interval"]
+    Schedule["REGISTRATION_EVENTS<br/>validated bundled schedule"]
+    Phase["Resolve current phase<br/>upcoming, open, or closing"]
+    Threshold["Build current threshold key<br/>or hide when outside reminder range"]
+    Filter["Filter disabled or dismissed<br/>matching interval keys"]
+    Urgent["Select one active reminder<br/>for the global notification"]
+    Notification{"Any active reminder?"}
+    Render["Render RegistrationReminderBanner"]
+    Hidden["Render no notification"]
+    Close["Close notification"]
+    Dismiss["Dismiss current interval key<br/>for matching eventVersion"]
+    SaveInteraction["Persist to<br/>sussplanner:registration-reminders"]
+
+    Settings --> Preferences --> SaveSettings --> NotifySettings
+    AppPage --> Hydrate --> Tick
+    NotifySettings --> Hydrate
+    Tick --> Schedule --> Phase --> Threshold --> Filter --> Urgent --> Notification
+    Notification -->|Yes| Render
+    Notification -->|No| Hidden
+    Render --> Close --> Dismiss --> SaveInteraction --> Tick
+```
+
+Registration reminder banners are intentionally in-app only today. User
+settings expose only the in-app banner toggle.
+
+The UI integration points are:
+
+- `components/settings/settings-client.tsx` for reminder preference controls.
+- `components/registration/global-registration-reminders.tsx` for computing
+  active reminders and handling close-to-dismiss actions.
+- `components/registration/registration-reminder-banner.tsx` for the rendered
+  notification.
+- `lib/registration/schedule.ts` for the bundled eCR/add-drop events.
+- `lib/registration/reminders.ts` for active phase/threshold selection,
+  filtering, and one-banner selection.
+- `lib/registration/reminder-storage.ts` for local dismissal persistence,
+  legacy snooze compatibility, and stale-record pruning.
+- `lib/settings/app-settings.ts` for settings defaults, migration, and
+  normalization.
+
 ### GPA Calculator Flow Diagram
 
 ```mermaid
@@ -809,6 +888,19 @@ Persisted fields:
 - `semesterStates`, a record of per-semester planner slices with the same
   fields as the active semester state
 
+Related local keys and events:
+
+- `sussplanner:timetable-updated` is the custom event used after timetable
+  writes in this browser.
+- `sussplanner.timetable.study-mode.v1` stores the global FT/PT study mode as
+  `full-time` or `part-time`.
+- `sussplanner:timetable-study-mode-updated` is dispatched after study-mode
+  changes so mounted timetable controls can refresh without a page reload.
+- `sussplanner.timetable-alerts.info-dismissal.v1` stores the signature for the
+  currently dismissed informational timetable alert. It is component-local to
+  `components/timetable/timetable-alerts.tsx` and is cleared when the relevant
+  exceptional-class/event signature changes.
+
 The active semester state is mirrored at the top level for compatibility. Each
 semester keeps its own timetable selection, hidden block list, colors, and week
 selection. Switching semesters loads the matching slice; reset clears only the
@@ -863,8 +955,134 @@ Importing a shared timetable:
   initially uses class view.
 - Leaves other saved semesters untouched.
 
-Resetting the planner clears only the selected semester state. It does not
+Resetting the timetable clears only the selected semester state. It does not
 touch other saved semesters.
+
+### App Settings State
+
+Storage key: `sussplanner:settings`
+
+Persisted fields:
+
+- `colorScheme`: `system`, `light`, or `dark`
+- `themeId`
+- `timetableOrientation`: `horizontal` or `vertical`
+- `registrationReminders`
+
+`registrationReminders` contains:
+
+- `enabled`
+
+`lib/settings/app-settings.ts` normalizes reminder settings into the simplified
+`{ enabled }` shape, then dispatches `sussplanner:settings-updated` after
+saves. The `SettingsProvider` listens for that event and browser `storage`
+events to apply the resolved light/dark colour scheme to the document root.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Hydrating
+    Hydrating --> Defaults: no valid settings JSON
+    Hydrating --> NormalizedSettings: saved settings JSON
+    Defaults --> Ready
+    NormalizedSettings --> Ready
+
+    Ready --> Ready: change colour scheme, theme, or orientation
+    Ready --> Ready: change registration reminder preferences
+    Ready --> Persisted: save normalized settings
+    Persisted --> Broadcast: dispatch sussplanner:settings-updated
+    Broadcast --> Ready
+    Ready --> Defaults: confirm reset settings
+```
+
+### Course Registration Reminder State
+
+Reminder interaction storage key: `sussplanner:registration-reminders`
+
+Persisted fields:
+
+- `dismissedIntervals`, keyed by registration window and reminder interval
+- Per-interval `eventVersion`
+- `dismissedReminders`, legacy reminder-ID dismissals kept for compatibility
+- `snoozedEvents`, legacy event-level snoozes kept for compatibility
+
+Active in-app reminder interval keys use:
+
+```text
+registrationReminder:<registration-event-id>:<phase>:<interval>
+```
+
+Examples:
+
+```text
+registrationReminder:add-drop-2026-07:upcoming:168h
+registrationReminder:add-drop-2026-07:upcoming:24h
+registrationReminder:add-drop-2026-07:open:day-0
+registrationReminder:add-drop-2026-07:closing:6h
+```
+
+`eventVersion` is either an explicit schedule version from
+`lib/registration/schedule.ts` or a derived string from `startsAt`, `endsAt`,
+and `sourceUpdatedAt`. This lets stale dismissals be ignored when the bundled
+registration schedule changes.
+
+Default offset reminders still exist for compatibility and non-floating
+candidate generation:
+
+| Offset minutes | Label |
+|---:|---|
+| `10080` | 7 days before |
+| `1440` | 1 day before |
+| `0` | At opening time |
+
+Current bundled registration events in `REGISTRATION_EVENTS` are:
+
+| Event ID | Title | Starts | Ends | Schedule version |
+|---|---|---|---|---|
+| `ecr-2026-03` | eCR Period | `2026-03-17T00:00:00+08:00` | `2026-03-24T23:59:59+08:00` | `ecr-2026-03-v1` |
+| `ecr-2026-10` | eCR Period | `2026-10-12T00:00:00+08:00` | `2026-10-23T23:59:59+08:00` | `ecr-2026-10-v1` |
+| `add-drop-2026-07` | Add-Drop Period | `2026-07-03T00:00:00+08:00` | `2026-07-28T23:59:59+08:00` | `add-drop-2026-07-v1` |
+| `add-drop-2026-12` | Add-Drop Period | `2026-12-18T00:00:00+08:00` | `2026-12-29T23:59:59+08:00` | `add-drop-2026-12-v1` |
+
+The active floating in-app reminder path uses these rules:
+
+- Hide windows that have ended.
+- Hide windows that start more than 7 days from `now`.
+- Use amber `upcoming` reminders within 7 days before start, with threshold
+  intervals `168h`, `72h`, `48h`, `24h`, `12h`, `6h`, and `1h`.
+- Use green `open` reminders from the start time until the final 24 hours, with
+  daily intervals such as `day-0` and `day-1`.
+- Use red `closing` reminders only during the final 24 hours before end, with
+  threshold intervals `24h`, `12h`, `6h`, and `1h`.
+- Hide the current interval if its `dismissedIntervals` entry matches the
+  current `eventVersion`.
+- Return at most one active in-app registration reminder globally, so stacked
+  banners are not rendered.
+- Prefer closing reminders over open reminders, and open reminders over
+  upcoming reminders when more than one event is eligible.
+
+The floating notification follows NUSMods' CourseReg-reminder style: closing it
+dismisses the current threshold for the matching event version. The same
+threshold stays hidden, but a later threshold or next 24-hour open interval can
+appear. The storage layer still normalizes older dismissed-reminder and
+snoozed-event records for compatibility.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Expired: event ended
+    Idle --> Hidden: starts > 7 days away
+    Idle --> Upcoming: start is within 7 days
+    Idle --> Open: start <= now < final 24h
+    Idle --> Closing: final 24h before end
+    Upcoming --> Active: current upcoming threshold not dismissed
+    Open --> Active: current open day not dismissed
+    Closing --> Active: current closing threshold not dismissed
+    Active --> Dismissed: close notification
+    Dismissed --> Hidden: same interval key and eventVersion
+    Hidden --> Active: next threshold or open day
+    Hidden --> Active: eventVersion changes
+    Expired --> Pruned: storage prune removes stale record
+```
 
 ### Semester Planner State
 
@@ -1121,6 +1339,47 @@ sequenceDiagram
     end
 ```
 
+### Show and Dismiss a Registration Reminder
+
+```mermaid
+sequenceDiagram
+    actor Student
+    participant Settings as SettingsClient
+    participant AppSettings as lib/settings/app-settings.ts
+    participant ReminderHost as GlobalRegistrationReminders
+    participant Schedule as lib/registration/schedule.ts
+    participant Reminders as lib/registration/reminders.ts
+    participant ReminderStore as lib/registration/reminder-storage.ts
+    participant Notification as RegistrationReminderBanner
+    participant Browser as localStorage
+
+    Student->>Settings: Toggle in-app reminders
+    Settings->>AppSettings: normalizeRegistrationReminderPreferences(...)
+    AppSettings->>Browser: Save sussplanner:settings
+    AppSettings-->>ReminderHost: sussplanner:settings-updated event
+
+    Student->>ReminderHost: Open any app page
+    ReminderHost->>AppSettings: readAppSettings()
+    ReminderHost->>ReminderStore: readLocalRegistrationReminderState(events, now)
+    ReminderStore->>Browser: Read sussplanner:registration-reminders
+    ReminderStore-->>ReminderHost: Pruned dismissedIntervals and legacy records
+    ReminderHost->>Schedule: REGISTRATION_EVENTS
+    ReminderHost->>Reminders: getActiveInAppRegistrationReminders(...)
+    Reminders-->>ReminderHost: One active phase/threshold reminder
+    ReminderHost-->>Notification: reminders + close handler
+    Notification-->>Student: Show reminder notification
+
+    alt Student closes the notification
+        Student->>Notification: Close
+        Notification->>ReminderHost: Handler(reminder)
+        ReminderHost->>ReminderStore: dismissLocalRegistrationReminderInterval(...)
+        ReminderStore->>Browser: Save dismissed interval record
+        ReminderStore-->>ReminderHost: Updated interaction state
+        ReminderHost->>Reminders: Recompute active reminders
+        Reminders-->>ReminderHost: Hidden current threshold or next active threshold
+    end
+```
+
 ### Maintainer Data Refresh
 
 ```mermaid
@@ -1221,7 +1480,10 @@ does not currently set shared-cache headers.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently
   optional and unused by runtime code.
 - `/timetable`, `/planner`, and `/calculators` are force-dynamic.
-- `/calculators` sets `robots.index` and `robots.follow` to `false`.
+- `/settings` uses the shared app shell's server-loaded semester context and
+  applies browser-local preferences on the client.
+- `/calculators` and `/settings` set `robots.index` and `robots.follow` to
+  `false`.
 - API route handlers require the Node.js runtime, not the Edge runtime.
 - Database connection limits are intentionally small in production (`max: 3`).
 - The scraper is designed to run on a maintainer's machine, not inside Vercel.
@@ -1243,6 +1505,8 @@ does not currently set shared-cache headers.
 | Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/db/queries.ts`; do not accidentally add semester/class filters. |
 | Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, and this guide. Preserve support for existing public versions or reject them with a clear notice. |
 | Change semester-planner print output | Update `lib/export/semester-planner-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
+| Change app settings | Update `lib/settings/app-settings.ts`, `components/settings/settings-client.tsx`, `components/settings/settings-provider.tsx`, and tests that cover normalization/migration. |
+| Change course registration reminders | Update `lib/registration/schedule.ts`, `lib/registration/reminders.ts`, `lib/registration/reminder-storage.ts`, `components/registration/global-registration-reminders.tsx`, `components/registration/registration-reminder-banner.tsx`, settings controls, tests, and both guides. Verify timing boundaries around each changed event. |
 | Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and optionally revalidate caches afterward. |
 
 ## Known Limitations
@@ -1267,9 +1531,17 @@ does not currently set shared-cache headers.
   orientation, or view mode.
 - Prompt academic-data refresh depends on maintainers running the local scraper,
   reviewing/importing generated artifacts, and revalidating caches.
+- Course registration reminders depend on the bundled static schedule in
+  `lib/registration/schedule.ts`; they are not fetched from an official live
+  registration feed.
+- Reminder dismissal state is local-only and does not sync across browsers or
+  devices.
+- Browser push notifications are not exposed as a production feature.
 - Assessment components represent the latest strategy by course and schedule
   type, not historical semester-specific assessments.
-- The codebase has no configured automated test suite.
+- The root automated test coverage is currently focused on registration
+  reminders, reminder storage, settings normalization, and validation; broader
+  UI flows still rely on typecheck/build and manual browser verification.
 - The scraper relies on external PDF formats and includes warning/issue reports
   because extraction can be incomplete or malformed.
 - No in-app admin interface exists.

@@ -3,10 +3,15 @@ import type { TimetableOrientation, TimetableStudyMode } from "@/lib/timetable/t
 
 export type ColorSchemePreference = "system" | "light" | "dark";
 
+export type RegistrationReminderPreferences = {
+  enabled: boolean;
+};
+
 export type SettingsState = {
   colorScheme: ColorSchemePreference;
   themeId: string;
   timetableOrientation: TimetableOrientation;
+  registrationReminders: RegistrationReminderPreferences;
   timetableStudyMode: TimetableStudyMode;
   registrationReminders: boolean;
 };
@@ -20,10 +25,15 @@ export type ThemeOption = {
 export const APP_SETTINGS_STORAGE_KEY = "sussplanner:settings";
 export const APP_SETTINGS_UPDATED_EVENT = "sussplanner:settings-updated";
 
+export const DEFAULT_REGISTRATION_REMINDER_PREFERENCES: RegistrationReminderPreferences = {
+  enabled: true,
+};
+
 export const DEFAULT_APP_SETTINGS: SettingsState = {
   colorScheme: "system",
   themeId: "current-timetable",
   timetableOrientation: "horizontal",
+  registrationReminders: DEFAULT_REGISTRATION_REMINDER_PREFERENCES,
   timetableStudyMode: "full-time",
   registrationReminders: true,
 };
@@ -66,6 +76,27 @@ function isTimetableOrientation(value: unknown): value is TimetableOrientation
   return value === "horizontal" || value === "vertical";
 }
 
+function getDefaultRegistrationReminderPreferences(): RegistrationReminderPreferences
+{
+  return {
+    ...DEFAULT_REGISTRATION_REMINDER_PREFERENCES,
+  };
+}
+
+export function normalizeRegistrationReminderPreferences(value: unknown): RegistrationReminderPreferences
+{
+  if (!value || typeof value !== "object")
+  {
+    return getDefaultRegistrationReminderPreferences();
+  }
+
+  const candidate = value as Partial<RegistrationReminderPreferences>;
+
+  return {
+    enabled: typeof candidate.enabled === "boolean"
+      ? candidate.enabled
+      : getDefaultRegistrationReminderPreferences().enabled,
+  };
 function isTimetableStudyMode(value: unknown): value is TimetableStudyMode
 {
   return value === "full-time" || value === "part-time";
@@ -100,6 +131,7 @@ export function normalizeAppSettings(value: unknown): SettingsState
     timetableOrientation: isTimetableOrientation(candidate.timetableOrientation)
       ? candidate.timetableOrientation
       : DEFAULT_APP_SETTINGS.timetableOrientation,
+    registrationReminders: normalizeRegistrationReminderPreferences(candidate.registrationReminders),
     timetableStudyMode: isTimetableStudyMode(candidate.timetableStudyMode)
       ? candidate.timetableStudyMode
       : DEFAULT_APP_SETTINGS.timetableStudyMode,

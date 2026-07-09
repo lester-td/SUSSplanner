@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { GlobalRegistrationReminders } from "@/components/registration/global-registration-reminders";
 import { SettingsProvider } from "@/components/settings/settings-provider";
 import { APP_SETTINGS_STORAGE_KEY } from "@/lib/settings/app-settings";
 import "./globals.css";
@@ -44,7 +45,10 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <script dangerouslySetInnerHTML={{ __html: settingsBootstrapScript }} />
       </head>
       <body>
-        <SettingsProvider>{children}</SettingsProvider>
+        <SettingsProvider>
+          {children}
+          <GlobalRegistrationReminders />
+        </SettingsProvider>
       </body>
     </html>
   );

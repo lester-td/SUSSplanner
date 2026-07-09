@@ -16,6 +16,7 @@
     "build": "next build",
     "prestart": "npm run validate:start",
     "start": "next start",
+    "test": "vitest run",
     "quotes:build": "tsx scripts/build-quotes.ts",
     "quotes:test": "tsx scripts/test-build-quotes.ts",
     "typecheck": "tsc --noEmit",
@@ -40,7 +41,8 @@
     "drizzle-kit": "^0.31.4",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.12",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.9"
+    "tsx": "^4.21.0"
   }
 }

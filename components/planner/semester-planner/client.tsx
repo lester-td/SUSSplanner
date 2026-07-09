@@ -274,7 +274,6 @@ export function SemesterPlannerClient({
     () => sortedCourses.find((course) => course.id === draggedCourseId) ?? null,
     [draggedCourseId, sortedCourses],
   );
-
   useEffect(() => {
     if (!editingCourse)
     {
