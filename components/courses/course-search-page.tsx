@@ -124,6 +124,90 @@ function formatCourseLevel(courseLevel: string | null)
   return levelNumber === null ? courseLevel : `Level ${levelNumber}`;
 }
 
+function readRuntimeString(record: object, ...keys: string[])
+{
+  const source = record as Record<string, unknown>;
+
+  for (const key of keys)
+  {
+    const value = source[key];
+    if (typeof value === "string" && value.trim())
+    {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function uniqueSortedText(values: Array<string | null>)
+{
+  return [...new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))]
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function isLikelyCourseLevelFacet(value: string)
+{
+  const normalized = value.trim().toLowerCase();
+  return /^(?:level\s*)?[1-6](?:00|xx|xxx)?$/.test(normalized);
+}
+
+function mostlyLooksLikeCourseLevels(values: string[])
+{
+  return values.length > 0
+    && values.filter(isLikelyCourseLevelFacet).length >= Math.ceil(values.length * 0.75);
+}
+
+function mostlyLooksLikeSchools(values: string[])
+{
+  return values.length > 0
+    && values.filter((value) => !isLikelyCourseLevelFacet(value)).length >= Math.ceil(values.length * 0.75);
+}
+
+function normalizeCourseSearchFacets({
+  schools,
+  courseLevels,
+  courses,
+}: {
+  schools: string[];
+  courseLevels: string[];
+  courses: CourseSearchResult[];
+})
+{
+  let normalizedSchools = schools;
+  let normalizedCourseLevels = courseLevels;
+
+  if (mostlyLooksLikeCourseLevels(schools) && mostlyLooksLikeSchools(courseLevels))
+  {
+    normalizedSchools = courseLevels;
+    normalizedCourseLevels = schools;
+  }
+
+  if (mostlyLooksLikeCourseLevels(normalizedSchools))
+  {
+    normalizedSchools = uniqueSortedText(courses.map((course) => course.schoolName));
+  }
+
+  if (mostlyLooksLikeSchools(normalizedCourseLevels))
+  {
+    normalizedCourseLevels = uniqueSortedText(courses.map((course) => course.courseLevel));
+  }
+
+  return {
+    schools: normalizedSchools,
+    courseLevels: normalizedCourseLevels,
+  };
+}
+
+function formatSemesterFilterLabel(semester: SemesterRecord)
+{
+  const semesterName = readRuntimeString(semester, "semesterName", "semester_name")
+    ?? `Semester ${semester.semesterNo}`;
+  const academicYear = readRuntimeString(semester, "academicYear", "academic_year");
+
+  return academicYear ? `${semesterName} (${academicYear})` : semesterName;
+}
+
 function buildSemesterIndicators(course: CourseSearchResult)
 {
   const bySemesterNo = new Map<number, string>();
@@ -415,7 +499,11 @@ export function CourseSearchPage({
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const pageShellRef = useRef<HTMLDivElement | null>(null);
   const shouldJumpToPageTopRef = useRef(false);
-  const levelOptions = useMemo(() => buildLevelOptions(courseLevels), [courseLevels]);
+  const normalizedFacets = useMemo(
+    () => normalizeCourseSearchFacets({ schools, courseLevels, courses: allCourses }),
+    [allCourses, courseLevels, schools],
+  );
+  const levelOptions = useMemo(() => buildLevelOptions(normalizedFacets.courseLevels), [normalizedFacets.courseLevels]);
   const filteredCourses = useMemo(() => filterCourses(allCourses, filters), [allCourses, filters]);
 
   useLayoutEffect(() => {
@@ -439,19 +527,6 @@ export function CourseSearchPage({
       observer.disconnect();
     };
   }, []);
-
-  useEffect(() => {
-    const pageShell = pageShellRef.current;
-    if (!pageShell)
-    {
-      return;
-    }
-
-    pageShell.style.setProperty(
-      "--course-search-navbar-gap",
-      isMobileSearchHeaderCompact ? "0.5rem" : "1rem",
-    );
-  }, [isMobileSearchHeaderCompact]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 767px)");
@@ -644,7 +719,7 @@ export function CourseSearchPage({
   {
     return (
       <>
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2 md:sticky md:top-0 md:z-20 md:bg-[var(--surface-container-lowest)] md:pt-2">
+        <div className="course-search-filter-header sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2 pt-2">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
             <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
@@ -664,7 +739,7 @@ export function CourseSearchPage({
             {semesters.map((semester) => (
               <CheckboxRow
                 key={semester.semesterId}
-                label={`${semester.semesterName} (${semester.academicYear})`}
+                label={formatSemesterFilterLabel(semester)}
                 checked={filters.semesterIds.includes(semester.semesterId)}
                 onChange={() => setFilters((current) => ({
                   ...current,
@@ -763,7 +838,7 @@ export function CourseSearchPage({
               </button>
             )}
           >
-            {schools.map((school) => (
+            {normalizedFacets.schools.map((school) => (
               <CheckboxRow
                 key={school}
                 label={school}
@@ -781,25 +856,27 @@ export function CourseSearchPage({
   }
 
   return (
-    <div ref={pageShellRef} className="course-search-page px-1.5 pb-24 md:px-[16px] md:pb-3">
+    <div ref={pageShellRef} className="course-search-page">
       <div className="mx-auto grid max-w-7xl gap-2.5 md:grid-cols-[minmax(0,1fr)_21rem]">
-        <section className="course-search-results-column space-y-2.5 md:pr-4">
-          <div className={`course-search-sticky-header sticky z-30 -mx-1.5 border-b border-[var(--brand-divider)] px-4 transition-[padding-top,padding-bottom,background-color] duration-200 ${isMobileSearchHeaderCompact ? "pb-2" : "pb-3"} md:mx-0 md:px-0 md:pb-3`}>
-            <div
-              aria-hidden={isMobileSearchHeaderCompact}
-              className={`overflow-hidden transition-[max-height,opacity] duration-200 ${isMobileSearchHeaderCompact ? "max-h-0 opacity-0" : "max-h-20 opacity-100"} md:max-h-none md:opacity-100`}
-            >
-              <div className="flex items-baseline justify-between gap-2 md:items-end md:gap-3">
-                <div className="min-w-0">
-                  <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.02em] text-[var(--on-surface)] md:text-[28px] md:leading-9">Course Search</h1>
-                </div>
-                <div className="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
-                  {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
-                </div>
+        <section className="course-search-results-column space-y-1.5 md:space-y-2.5 md:pr-4">
+          <div
+            aria-hidden={isMobileSearchHeaderCompact}
+            className={`overflow-hidden transition-[max-height,opacity] duration-200 ${isMobileSearchHeaderCompact ? "max-h-0 opacity-0" : "max-h-20 opacity-100"} md:max-h-none md:opacity-100`}
+          >
+            <div className="flex items-baseline justify-between gap-2 md:items-end md:gap-3">
+              <div className="min-w-0">
+                <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.02em] text-[var(--on-surface)] md:text-[28px] md:leading-9">Course Search</h1>
+              </div>
+              <div className="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
+                {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
               </div>
             </div>
+          </div>
 
-            <label className={`relative block transition-[margin-top] duration-200 ${isMobileSearchHeaderCompact ? "mt-0" : "mt-4"} md:mt-4`}>
+          <div className={`course-search-sticky-header sticky z-30 border-b border-[var(--brand-divider)] transition-[padding-bottom,background-color] duration-200 ${isMobileSearchHeaderCompact ? "pb-2" : "pb-3"} md:pb-3`}>
+            <div
+              className={`relative block transition-[margin-top] duration-200 ${isMobileViewport ? (isMobileSearchHeaderCompact ? "mt-0" : "mt-2") : isMobileSearchHeaderCompact ? "mt-0" : "mt-4"} md:mt-4`}
+            >
               <SearchIcon className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] transition-[left,width,height] duration-200 ${isMobileViewport ? "left-3 h-4 w-4" : isMobileSearchHeaderCompact ? "left-3 h-4 w-4" : "left-3.5 h-5 w-5"} md:left-4 md:h-5 md:w-5`} />
               <input
                 type="search"
@@ -808,7 +885,7 @@ export function CourseSearchPage({
                 placeholder={isMobileViewport ? "Course code, title, or description" : "Search by course code, course title, or descriptions"}
                 className={`elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] pr-4 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-[border-color,box-shadow,padding,font-size] duration-200 ${isMobileViewport ? "py-2.5 pl-10 text-[16px]" : isMobileSearchHeaderCompact ? "py-2.5 pl-10 text-[14px]" : "py-3 pl-11 text-[15px]"} md:py-3 md:pl-12 md:text-[15px]`}
               />
-            </label>
+            </div>
           </div>
 
           {hasActiveCourseFilters(filters) && filteredCourses.length === 0 && !loading ? (
@@ -900,7 +977,7 @@ export function CourseSearchPage({
           ) : null}
         </section>
 
-        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-150px)] md:self-start md:overflow-y-auto md:overscroll-contain md:pr-1">
+        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-150px)] md:self-start md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:pr-1">
           {renderFilterSettings()}
         </aside>
       </div>
@@ -921,7 +998,7 @@ export function CourseSearchPage({
           filtersOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
       >
-        <div className="max-h-[min(78dvh,42rem)] overflow-y-auto px-4 pb-24 pt-4">
+        <div className="max-h-[min(78dvh,42rem)] overflow-x-hidden overflow-y-auto px-4 pb-24 pt-4">
           {filtersOpen ? renderFilterSettings() : null}
         </div>
       </div>
@@ -1156,14 +1233,14 @@ function CheckboxRow({
 })
 {
   return (
-    <label className="flex cursor-pointer items-start gap-1.5 rounded-[0.5rem] px-1.5 py-0.5 transition-colors hover:bg-[var(--brand-chip-bg)]">
+    <label className="flex min-w-0 cursor-pointer items-start gap-1.5 rounded-[0.5rem] px-1.5 py-0.5 transition-colors hover:bg-[var(--brand-chip-bg)]">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="mt-[1px] h-3.5 w-3.5 rounded border border-[var(--outline-variant)] accent-[var(--primary)]"
+        className="mt-[1px] h-3.5 w-3.5 shrink-0 rounded border border-[var(--outline-variant)] accent-[var(--primary)]"
       />
-      <span className="text-[12px] leading-4 text-[var(--on-surface)]">{label}</span>
+      <span className="min-w-0 break-words text-[12px] leading-4 text-[var(--on-surface)]">{label}</span>
     </label>
   );
 }

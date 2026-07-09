@@ -423,24 +423,16 @@ export function OcasCalculatorClient()
   }
 
   return (
-    <section className="calculator-page calculator-section calculator-section--ocas w-full pb-8">
-      <div className="calculator-section-header mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h2 className="text-[28px] font-semibold leading-9 tracking-[-0.03em] text-[var(--on-surface)]">
-            OCAS Calculator
-          </h2>
-        </div>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <section className="calculator-page calculator-section calculator-section--ocas w-full pb-6">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section className="min-w-0">
-          <div ref={searchContainerRef} className="relative z-20 mb-4">
-            <div className="calculator-panel calculator-major-panel rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-5 py-5">
+          <div ref={searchContainerRef} className="relative z-20 mb-3">
+            <div className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-2.5 sm:py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <CalculatorIcon className="h-7 w-7 text-[var(--primary)]" />
-                  <h3 className="text-[24px] font-medium leading-8 tracking-[-0.02em] text-[var(--on-surface)]">
-                    Choose a course
+                  <CalculatorIcon className="h-5 w-5 text-[var(--primary)]" />
+                  <h3 className="text-[16px] font-bold leading-6 text-[var(--on-surface)]">
+                    Choose course
                   </h3>
                 </div>
                 {selectedCourse ? (
@@ -459,7 +451,7 @@ export function OcasCalculatorClient()
               </div>
 
               {selectedCourse ? (
-                <div className="calculator-panel calculator-inner-panel mt-4 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-4">
+                <div className="calculator-panel calculator-inner-panel mt-3 rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-[13px] font-bold text-[var(--primary)]">{selectedCourse.courseCode}</p>
@@ -485,15 +477,15 @@ export function OcasCalculatorClient()
                 </div>
               ) : (
                 <>
-                  <div className="relative mt-3 h-[42px]">
+                  <div className="relative mt-3 h-[40px]">
                     <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                     <input
                       type="search"
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Search by Module Code or Title..."
+                      placeholder="Search by module code or title..."
                       autoComplete="off"
-                      className="h-full w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                      className="h-full w-full rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                     />
                     {searchQuery ? (
                       <button
@@ -527,7 +519,7 @@ export function OcasCalculatorClient()
                                       setSearchQuery("");
                                       setSearchResults([]);
                                     }}
-                                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-container-low)] disabled:cursor-not-allowed disabled:opacity-45"
+                                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-container-low)] disabled:cursor-not-allowed disabled:opacity-45"
                                   >
                                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[var(--primary)]">
                                       <CalculatorIcon className="h-4 w-4" />
@@ -557,8 +549,8 @@ export function OcasCalculatorClient()
             </div>
           </div>
 
-          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] elev-1">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-3.5">
+          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 sm:px-4 sm:py-3.5">
               <div>
                 <h3 className="text-[15px] font-bold text-[var(--on-surface)]">Assessment strategy</h3>
                 <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">
@@ -580,19 +572,19 @@ export function OcasCalculatorClient()
             </div>
 
             {detailLoading ? (
-              <div className="px-5 py-12 text-center">
+              <div className="px-4 py-10 text-center">
                 <p className="text-[15px] font-bold text-[var(--on-surface)]">Loading course details...</p>
                 <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)]">
                   Pulling the assessment strategy from the course page.
                 </p>
               </div>
             ) : detailError ? (
-              <div className="px-5 py-12 text-center">
+              <div className="px-4 py-10 text-center">
                 <p className="text-[15px] font-bold text-[var(--on-surface)]">Unable to load course details</p>
                 <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)]">{detailError}</p>
               </div>
             ) : selectedCourse && visibleAssessments.length === 0 ? (
-              <div className="px-5 py-12 text-center">
+              <div className="px-4 py-10 text-center">
                 <p className="text-[15px] font-bold text-[var(--on-surface)]">No assessment data available</p>
                 <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)]">
                   This course does not currently have a machine-readable assessment strategy.
@@ -601,7 +593,7 @@ export function OcasCalculatorClient()
             ) : selectedCourse ? (
               <div className="divide-y divide-[var(--brand-divider)]">
                 {assessmentScheduleTypes.length > 1 && !sharedAssessmentSet ? (
-                  <div className="flex flex-wrap items-center gap-2 px-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2 px-3 py-3 sm:px-4 sm:py-4">
                     <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
                       Schedule
                     </span>
@@ -641,7 +633,7 @@ export function OcasCalculatorClient()
 
                     return (
                       <section key={group} className="border-b border-[var(--brand-divider)] lg:border-b-0 lg:border-r lg:last:border-r-0">
-                        <div className="border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-4 py-3">
+                        <div className="border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-2.5 sm:px-4 sm:py-3">
                           <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-[var(--primary)]">
                             {group}
                           </p>
@@ -656,7 +648,7 @@ export function OcasCalculatorClient()
                             const isPercentageMode = currentInput.mode === "percentage";
 
                             return (
-                              <div key={component.componentId} className="px-4 py-4">
+                              <div key={component.componentId} className="px-3 py-2.5">
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
                                     <p className="truncate text-[14px] font-bold text-[var(--on-surface)]">
@@ -722,9 +714,9 @@ export function OcasCalculatorClient()
                                           percentage: event.target.value,
                                         }))}
                                         placeholder="Enter percentage"
-                                        className="h-10 min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                        className="h-10 min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                                       />
-                                      <div className="flex h-10 items-center justify-center rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[12px] font-semibold text-[var(--on-surface-variant)]">
+                                      <div className="flex h-10 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[12px] font-semibold text-[var(--on-surface-variant)]">
                                         %
                                       </div>
                                     </div>
@@ -741,7 +733,7 @@ export function OcasCalculatorClient()
                                           rawScore: event.target.value,
                                         }))}
                                         placeholder="Score"
-                                        className="h-10 min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                        className="h-10 min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                                       />
                                       <input
                                         type="number"
@@ -754,7 +746,7 @@ export function OcasCalculatorClient()
                                           rawMax: event.target.value,
                                         }))}
                                         placeholder="Out of"
-                                        className="h-10 min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                        className="h-10 min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                                       />
                                     </div>
                                   )}
@@ -769,7 +761,7 @@ export function OcasCalculatorClient()
                 </div>
               </div>
             ) : (
-              <div className="px-5 py-12 text-center">
+              <div className="px-4 py-10 text-center">
                 <p className="text-[15px] font-bold text-[var(--on-surface)]">No course selected</p>
                 <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)]">
                   Search above to load a course and its assessment strategy.
@@ -780,26 +772,26 @@ export function OcasCalculatorClient()
         </section>
 
         <aside className="space-y-4">
-          <section className="calculator-panel calculator-major-panel rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 elev-1">
-            <div className="space-y-4">
-              <div className="grid gap-0 divide-y divide-[var(--brand-divider)] sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                <div className="pb-4 sm:pr-4">
+          <section className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:p-3">
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-0 sm:divide-x sm:divide-y-0">
+                <div className="rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:pr-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
                     Projected score
                   </p>
-                  <p className="mt-1 text-[32px] font-bold leading-10 tracking-[-0.04em] text-[var(--on-surface)]">
+                  <p className="mt-1 text-[28px] font-bold leading-9 tracking-[-0.04em] text-[var(--on-surface)]">
                     {formatPercent(estimatedScore)}
                   </p>
                 </div>
-                <div className="pt-4 sm:pl-4 sm:pt-0">
+                <div className="rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:pl-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
                     Likely grade
                   </p>
                   <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[var(--on-surface)]">
-                    <span className="text-[32px] font-bold leading-10 tracking-[-0.04em]">
+                    <span className="text-[28px] font-bold leading-9 tracking-[-0.04em]">
                       {estimatedGrade}
                     </span>
-                    <span className="text-[16px] font-semibold leading-6 tracking-[-0.01em] text-[var(--on-surface-variant)]">
+                    <span className="text-[14px] font-semibold leading-5 tracking-[-0.01em] text-[var(--on-surface-variant)]">
                       GPV {formatGradePointValue(getEstimatedGradePointValue(estimatedGrade))}
                     </span>
                   </div>
@@ -810,11 +802,11 @@ export function OcasCalculatorClient()
                 This is only your likely grade and may be subject to moderation.
               </p>
 
-              <div className="border-t border-[var(--brand-divider)] pt-4">
+              <div className="border-t border-[var(--brand-divider)] pt-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
                   Completed weight
                 </p>
-                <p className="mt-1 text-[24px] font-bold leading-8 tracking-[-0.03em] text-[var(--on-surface)]">
+                <p className="mt-1 text-[22px] font-bold leading-7 tracking-[-0.03em] text-[var(--on-surface)]">
                   {formatCompletedWeight(completedWeight)}
                   <span className="ml-1 text-[14px] font-normal leading-6 tracking-normal text-[var(--on-surface-variant)]">
                     out of 100%

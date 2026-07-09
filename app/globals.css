@@ -282,7 +282,7 @@
 
 .course-search-page {
   --course-search-navbar-height: 49px;
-  --course-search-navbar-gap: 1rem;
+  --course-search-sticky-header-padding-top: 0.002rem;
 }
 
 .course-search-results-column {
@@ -291,8 +291,27 @@
 
 .course-search-sticky-header {
   top: var(--course-search-navbar-height);
-  padding-top: var(--course-search-navbar-gap);
+  padding-top: var(--course-search-sticky-header-padding-top);
   background: var(--surface-container-lowest);
+}
+
+.course-search-filter-header {
+  isolation: isolate;
+  background: var(--surface-container-lowest);
+}
+
+.course-search-filter-header::before {
+  content: "";
+  position: absolute;
+  inset: -0.25rem -1rem 0;
+  z-index: -1;
+  background: inherit;
+}
+
+@media (max-width: 767px) {
+  .course-search-page {
+    --course-search-sticky-header-padding-top: 0.375rem;
+  }
 }
 
 .course-pagination-active {
@@ -345,6 +364,19 @@
 
 .app-nav-label {
   display: inline;
+}
+
+.app-navbar {
+  border-color: color-mix(in srgb, var(--header-divider), var(--header-surface) 42%);
+  background:
+    radial-gradient(120% 180% at 0% 0%, rgb(var(--suss-light-blue-rgb) / 0.12), transparent 52%),
+    radial-gradient(120% 180% at 100% 0%, rgb(var(--suss-red-rgb) / 0.06), transparent 50%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--header-surface), #ffffff 14%),
+      color-mix(in srgb, var(--header-surface), #ffffff 6%)
+    );
+  box-shadow: var(--shadow-elev-1);
 }
 
 @media (max-width: 1199px) {
@@ -482,7 +514,15 @@
   background: var(--background);
 }
 
+:root[data-color-scheme="dark"] .app-content-surface--planner-full-bleed {
+  background: var(--surface-container-lowest);
+}
+
 :root[data-color-scheme="dark"] .course-search-sticky-header {
+  background: var(--background);
+}
+
+:root[data-color-scheme="dark"] .course-search-filter-header {
   background: var(--background);
 }
 
@@ -494,7 +534,7 @@
 
 :root[data-color-scheme="dark"] .elev-3,
 :root[data-color-scheme="dark"] .app-modal-surface {
-  background: var(--surface-variant);
+  background: var(--surface-container-low);
   box-shadow: var(--shadow-elev-3);
 }
 
@@ -520,34 +560,20 @@
   color: var(--muted);
 }
 
-:root[data-color-scheme="dark"] .gpa-summary-card {
-  padding: 1.25rem;
-  box-shadow: var(--shadow-elev-1);
+:root[data-color-scheme="dark"] .dark-neutral-accent-card {
+  border-left-color: var(--outline-variant);
 }
 
-:root[data-color-scheme="dark"] .gpa-summary-row {
-  border: 1px solid var(--section-border);
+:root[data-color-scheme="dark"] .share-view-banner {
   background: var(--surface-container-low);
-  padding: 0.75rem;
 }
 
-:root[data-color-scheme="dark"] .gpa-summary-row .gpa-summary-card {
-  border-color: var(--section-border);
-  background: var(--surface-container-nested);
-}
-
-:root[data-color-scheme="dark"] .gpa-summary-card--emphasized {
-  border-color: var(--section-border);
-  background: var(--surface-container-nested);
+:root[data-color-scheme="dark"] .share-view-banner__text {
   color: var(--on-surface);
 }
 
-:root[data-color-scheme="dark"] .gpa-summary-card--emphasized .gpa-summary-card__meta {
-  color: var(--on-surface-variant);
-}
-
-:root[data-color-scheme="dark"] .dark-neutral-accent-card {
-  border-left-color: var(--outline-variant);
+:root[data-color-scheme="dark"] .class-schedule-summary-card {
+  background: var(--surface-container);
 }
 
 :root[data-color-scheme="dark"] .app-navbar {
@@ -622,7 +648,6 @@
 
 :root[data-color-scheme="dark"] .home-feature-card,
 :root[data-color-scheme="dark"] .home-shortcut-card,
-:root[data-color-scheme="dark"] .calculator-panel,
 :root[data-color-scheme="dark"] .timetable-toolbar,
 :root[data-color-scheme="dark"] .timetable-side-panel {
   border-color: var(--brand-divider);
@@ -649,23 +674,9 @@
 
 :root[data-color-scheme="dark"] .home-feature-icon,
 :root[data-color-scheme="dark"] .home-shortcut-icon,
-:root[data-color-scheme="dark"] .calculator-chip,
-:root[data-color-scheme="dark"] .timetable-chip {
+:root[data-color-scheme="dark"] .calculator-chip {
   background: var(--brand-chip-bg);
   color: var(--primary);
-}
-
-:root[data-color-scheme="dark"] .calculator-panel {
-  padding: 1.25rem;
-}
-
-:root[data-color-scheme="dark"] .calculators-stack {
-  row-gap: 3rem;
-}
-
-:root[data-color-scheme="dark"] .calculator-section + .calculator-section {
-  border-top: 1px solid var(--section-border);
-  padding-top: 2.25rem;
 }
 
 :root[data-color-scheme="dark"] .calculator-major-panel {
@@ -677,11 +688,6 @@
 :root[data-color-scheme="dark"] .calculator-nested-panel {
   border-color: var(--brand-divider);
   background: var(--surface-container-nested);
-}
-
-:root[data-color-scheme="dark"] .calculator-section-header {
-  border-bottom: 1px solid var(--brand-divider);
-  padding-bottom: 0.75rem;
 }
 
 :root[data-color-scheme="dark"] .calculator-segmented-control {
@@ -715,9 +721,12 @@
 }
 
 :root[data-color-scheme="dark"] .planner-drop-zone--active {
-  border-color: var(--primary);
-  background: var(--primary-fixed);
-  box-shadow: 0 0 0 1px var(--primary-ring-soft);
+  border-color: rgb(var(--suss-light-blue-rgb) / 0.52);
+  background: color-mix(in srgb, var(--surface-container), var(--suss-light-blue) 9%);
+  box-shadow:
+    0 0 0 1px rgb(var(--suss-light-blue-rgb) / 0.24),
+    0 14px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 :root[data-color-scheme="dark"] .planner-course-card,
@@ -726,6 +735,17 @@
   border-color: var(--brand-divider);
   background: var(--surface-container);
   box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .planner-course-card:not(.planner-course-card--active):hover {
+  border-color: rgb(var(--suss-light-blue-rgb) / 0.46);
+  background: #1A2942;
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.58),
+    0 8px 18px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgb(var(--suss-light-blue-rgb) / 0.22),
+    0 0 24px rgb(var(--suss-light-blue-rgb) / 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 :root[data-color-scheme="dark"] .planner-course-card--active,
@@ -739,6 +759,22 @@
 :root[data-color-scheme="dark"] .planner-empty-state {
   border-color: var(--outline-variant);
   background: var(--input-surface);
+}
+
+.planner-continuation-card {
+  --planner-continuation-border: rgb(var(--suss-blue-rgb) / 0.18);
+  --planner-continuation-bg: color-mix(in srgb, var(--surface-container-lowest), var(--suss-grey) 18%);
+  --planner-continuation-accent: rgb(var(--suss-blue-rgb) / 0.22);
+
+  border-color: var(--planner-continuation-border);
+  background: var(--planner-continuation-bg);
+  box-shadow: inset 3px 0 0 var(--planner-continuation-accent);
+}
+
+:root[data-color-scheme="dark"] .planner-continuation-card {
+  --planner-continuation-border: rgb(var(--suss-light-blue-rgb) / 0.28);
+  --planner-continuation-bg: color-mix(in srgb, var(--surface-container), #000 8%);
+  --planner-continuation-accent: rgb(var(--suss-light-blue-rgb) / 0.35);
 }
 
 :root[data-color-scheme="dark"] .planner-notice {
@@ -795,7 +831,7 @@
 :root[data-color-scheme="dark"] .timetable-canvas-shell,
 :root[data-color-scheme="dark"] .timetable-notice-stack,
 :root[data-color-scheme="dark"] .timetable-alerts-shell {
-  background: var(--background);
+  background: var(--surface-container-lowest);
 }
 
 :root[data-color-scheme="dark"] .timetable-toolbar,
@@ -898,6 +934,62 @@
     font-size: 0.66rem;
     line-height: 0.82rem;
   }
+
+  .exam-calendar {
+    --exam-calendar-day-text-size: 12px;
+  }
+
+  .exam-calendar .timetable-cell {
+    font-size: 0.66rem;
+    line-height: 0.82rem;
+  }
+
+  .exam-calendar .timetable-cell .timetable-cell__module {
+    font-size: 0.74rem;
+    line-height: 0.88rem;
+  }
+
+  .exam-calendar .timetable-cell .timetable-cell__time {
+    font-size: 0.66rem;
+    line-height: 0.82rem;
+  }
+
+  .exam-calendar__window {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .exam-calendar__day-label-grid,
+  .exam-calendar__day-grid {
+    gap: 0.0625rem;
+  }
+
+  .exam-calendar__day-label {
+    padding: 0.05rem 0.15rem;
+    border-radius: 0;
+    letter-spacing: 0.005em;
+  }
+
+  .exam-calendar__day {
+    min-height: 5.25rem;
+    padding: 0.05rem;
+    border-radius: 0;
+  }
+
+  .exam-calendar__day-date {
+    line-height: 1.1;
+  }
+
+  .exam-calendar__card.timetable-cell {
+    padding: 0.05rem 0.08rem;
+  }
+
+  .exam-calendar__card .timetable-cell__content {
+    gap: 0;
+  }
 }
 
 .timetable-grid__time-label {
@@ -922,6 +1014,29 @@
   line-height: 1.1;
   text-transform: none;
   color: color-mix(in srgb, var(--on-surface-variant), #fff 10%);
+}
+
+.exam-calendar {
+  --exam-calendar-day-text-size: 14px;
+}
+
+.exam-calendar__day-label {
+  font-size: var(--exam-calendar-day-text-size);
+  line-height: 1.1;
+  background-color: var(--surface-container-low);
+}
+
+.exam-calendar__day-date {
+  font-size: var(--exam-calendar-day-text-size);
+  line-height: 1.1;
+}
+
+.exam-calendar__day-grid > :nth-child(odd) {
+  background-color: var(--timetable-stripe-a);
+}
+
+.exam-calendar__day-grid > :nth-child(even) {
+  background-color: var(--timetable-stripe-b);
 }
 
 /* Timetable blocks and block text lines. */

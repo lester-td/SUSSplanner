@@ -98,7 +98,7 @@ export function ExamCalendar({
   if (cards.length === 0)
   {
     return (
-      <div className="rounded-[0.5rem] border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-6 text-center text-[14px] leading-5 text-[var(--on-surface-variant)]">
+      <div className="rounded-none border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-6 text-center text-[14px] leading-5 text-[var(--on-surface-variant)]">
         No exam events for selected courses.
       </div>
     );
@@ -137,72 +137,92 @@ export function ExamCalendar({
   }
 
   return (
-    <div className="space-y-3">
-      {windows.map((window) => (
-        <section key={`${toDateKey(window.start)}-${toDateKey(window.end)}`} className="elev-1 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
-          <div className="pb-0.5">
-            <div className="w-full">
-              <div className="grid grid-cols-6 gap-0.5">
-                {dayLabels.map((label) => (
-                  <div key={label} className="rounded-[0.35rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-1 py-0.5 text-center text-[clamp(10px,2.1vw,15px)] font-semibold uppercase tracking-tight text-[var(--on-surface-variant)]">
-                    {label}
-                  </div>
-                ))}
-              </div>
+    <div className="exam-calendar space-y-3">
+      {windows.map((window) => {
+        const showSaturday = window.days.some((date) => {
+          if (date.getDay() !== 6)
+          {
+            return false;
+          }
 
-              <div className="mt-0.5 grid grid-cols-6 gap-0.5">
-                {window.days.filter((date) => date.getDay() !== 0).map((date) => {
-                  const dateKey = toDateKey(date);
-                  const dateCards = cardsByDate.get(dateKey) ?? [];
-                  const hasExams = dateCards.length > 0;
+          const dateKey = toDateKey(date);
+          return (cardsByDate.get(dateKey)?.length ?? 0) > 0;
+        });
+        const visibleDayLabels = showSaturday ? dayLabels : dayLabels.slice(0, 5);
+        const visibleDays = window.days.filter((date) => date.getDay() !== 0 && (showSaturday || date.getDay() !== 6));
 
-                  return (
-                    <div
-                      key={dateKey}
-                      className={`min-h-[7rem] rounded-[0.45rem] border p-0.5 ${
-                        hasExams
-                          ? "border-[var(--primary)]/25 bg-[var(--surface-container-low)]"
-                          : "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
-                      }`}
-                    >
-                      <div className="text-[clamp(10px,2vw,15px)] font-semibold leading-[1.3] text-[var(--on-surface-variant)]">
-                        {dayFormatter.format(date)}
-                      </div>
-
-                      <div className="mt-0.5 space-y-0.5">
-                        {dateCards.map((card) => {
-                          const examColor = colorByShareKey.get(card.shareKey) ?? getCourseColor(card.courseCode);
-                          const examStyle: CSSProperties = {
-                            ["--block-bg" as string]: examColor,
-                            ["--block-border" as string]: examColor,
-                            ["--block-text" as string]: getContrastingTextColorFromHex(examColor),
-                          };
-                          return (
-                            <article
-                              key={card.id}
-                              className="timetable-cell"
-                              style={examStyle}
-                            >
-                              <div className="timetable-cell__content">
-                                <div className="timetable-cell__module">{card.courseCode}</div>
-                                <div className="timetable-cell__meta">{formatClassGroupLabel(card.groupCode)}</div>
-                                <div className="timetable-cell__time">{formatTimeRange(card.startTime, card.endTime)}</div>
-                                {card.examMode ? (
-                                  <div className="timetable-cell__mode">{card.examMode}</div>
-                                ) : null}
-                              </div>
-                            </article>
-                          );
-                        })}
-                      </div>
+        return (
+          <section key={`${toDateKey(window.start)}-${toDateKey(window.end)}`} className="exam-calendar__window elev-1 rounded-none border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
+            <div className="pb-0.5">
+              <div className="w-full">
+                <div
+                  className="exam-calendar__day-label-grid grid gap-0.5"
+                  style={{ gridTemplateColumns: `repeat(${visibleDayLabels.length}, minmax(0, 1fr))` }}
+                >
+                  {visibleDayLabels.map((label) => (
+                    <div key={label} className="exam-calendar__day-label rounded-none border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-1 py-0.5 text-center font-semibold uppercase tracking-tight text-[var(--on-surface-variant)]">
+                      {label}
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+
+                <div
+                  className="exam-calendar__day-grid mt-0.5 grid gap-0.5"
+                  style={{ gridTemplateColumns: `repeat(${visibleDayLabels.length}, minmax(0, 1fr))` }}
+                >
+                  {visibleDays.map((date) => {
+                    const dateKey = toDateKey(date);
+                    const dateCards = cardsByDate.get(dateKey) ?? [];
+                    const hasExams = dateCards.length > 0;
+
+                    return (
+                      <div
+                        key={dateKey}
+                        className={`exam-calendar__day min-h-[7rem] rounded-none border p-0.5 ${
+                          hasExams
+                            ? "border-[var(--primary)]/25"
+                            : "border-[var(--outline-variant)]"
+                        }`}
+                      >
+                        <div className="exam-calendar__day-date font-semibold leading-[1.3] text-[var(--on-surface-variant)]">
+                          {dayFormatter.format(date)}
+                        </div>
+
+                        <div className="mt-0.5 space-y-0.5">
+                          {dateCards.map((card) => {
+                            const examColor = colorByShareKey.get(card.shareKey) ?? getCourseColor(card.courseCode);
+                            const examStyle: CSSProperties = {
+                              ["--block-bg" as string]: examColor,
+                              ["--block-border" as string]: examColor,
+                              ["--block-text" as string]: getContrastingTextColorFromHex(examColor),
+                            };
+                            return (
+                              <article
+                                key={card.id}
+                                className="exam-calendar__card timetable-cell"
+                                style={examStyle}
+                              >
+                                <div className="timetable-cell__content">
+                                  <div className="timetable-cell__module">{card.courseCode}</div>
+                                  <div className="timetable-cell__meta">{formatClassGroupLabel(card.groupCode)}</div>
+                                  <div className="timetable-cell__time">{formatTimeRange(card.startTime, card.endTime)}</div>
+                                  {card.examMode ? (
+                                    <div className="timetable-cell__mode">{card.examMode}</div>
+                                  ) : null}
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      ))}
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -216,10 +236,10 @@ export function ExamCalendarOverviewRail({
   return (
     <div className="border-t border-[var(--outline-variant)]/25 bg-[var(--rail-week-bg)] px-2.5 py-1.5 text-center sm:px-3 sm:py-2">
       <div className="flex min-w-0 flex-col items-center justify-center gap-0">
-        <div className="text-[11px] font-bold leading-4 text-[var(--primary)] sm:text-[12px]">
+        <div className="text-[13px] font-bold leading-4 text-[var(--primary)] sm:text-[14px]">
           Exam Calendar
         </div>
-        <div className="whitespace-nowrap text-[9px] leading-3 text-[var(--on-surface-variant)] sm:text-[10px] sm:leading-[13px]">
+        <div className="whitespace-nowrap text-[11px] leading-3 text-[var(--on-surface-variant)] sm:text-[12px] sm:leading-[14px]">
           {subtitle}
         </div>
       </div>

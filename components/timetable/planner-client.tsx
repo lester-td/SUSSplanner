@@ -44,15 +44,10 @@ import {
 } from "@/lib/timetable/date-utils";
 import {
   TIMETABLE_STORAGE_KEY,
-  TIMETABLE_STUDY_MODE_STORAGE_KEY,
-  TIMETABLE_STUDY_MODE_UPDATED_EVENT,
   TIMETABLE_UPDATED_EVENT,
   loadSavedTimetable,
   getSavedSemesterState,
-  readTimetableStudyMode,
   saveTimetableToLocalStorage,
-  saveTimetableStudyMode,
-  type TimetableStudyMode,
 } from "@/lib/timetable/local-storage";
 import {
   buildSharedClassIdentifier,
@@ -97,6 +92,7 @@ type ClassCountsResponse = {
 };
 
 type ClassPickerCourse = Pick<CourseSearchResult, "courseCode" | "courseName">;
+type SortMode = "code" | "credit" | "exam";
 
 function buildShareQuery(semesterId: number, selectedClasses: SharedClassIdentifier[])
 {
@@ -278,7 +274,7 @@ function buildDayDateByDay(week: SemesterWeekRecord | null)
 
 function sortSelectedCards(
   cards: ReturnType<typeof buildSelectedCourseCards>,
-  sortMode: "code" | "exam" | "credit",
+  sortMode: SortMode,
 )
 {
   return [...cards].sort((left, right) => {
@@ -378,9 +374,8 @@ export function PlannerClient({
   const [semesterId, setSemesterId] = useState<number>(currentSemesterId);
   const [orientation, setOrientation] = useState<TimetableOrientation>(DEFAULT_APP_SETTINGS.timetableOrientation);
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
-  const [sortMode, setSortMode] = useState<"code" | "exam" | "credit">("code");
+  const [sortMode, setSortMode] = useState<SortMode>("code");
   const [searchInput, setSearchInput] = useState("");
-  const [studyMode, setStudyMode] = useState<TimetableStudyMode>("full-time");
   const [selectedClasses, setSelectedClasses] = useState<SharedClassIdentifier[]>([]);
   const [hiddenClasses, setHiddenClasses] = useState<string[]>([]);
   const [courseColorsByCourseCode, setCourseColorsByCourseCode] = useState<Record<string, string>>({});
@@ -440,32 +435,23 @@ export function PlannerClient({
     setSelectedWeekId(next.selectedWeekId);
     setOrientation(saved?.orientation ?? settings.timetableOrientation);
     setViewMode(saved?.viewMode ?? "class");
-    setStudyMode(readTimetableStudyMode());
     setReady(true);
   }, [currentSemesterId, currentWeekId, semesters]);
 
   useEffect(() => {
     const refreshSettings = () => setAppSettings(readAppSettings());
-    const refreshStudyMode = () => setStudyMode(readTimetableStudyMode());
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === APP_SETTINGS_STORAGE_KEY)
       {
         refreshSettings();
       }
-
-      if (event.key === TIMETABLE_STUDY_MODE_STORAGE_KEY)
-      {
-        refreshStudyMode();
-      }
     };
 
     window.addEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
-    window.addEventListener(TIMETABLE_STUDY_MODE_UPDATED_EVENT, refreshStudyMode);
     window.addEventListener("storage", handleStorageChange);
 
     return () => {
       window.removeEventListener(APP_SETTINGS_UPDATED_EVENT, refreshSettings);
-      window.removeEventListener(TIMETABLE_STUDY_MODE_UPDATED_EVENT, refreshStudyMode);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
@@ -830,15 +816,6 @@ export function PlannerClient({
       : [...current, shareKey]);
   }
 
-  function toggleStudyMode()
-  {
-    setStudyMode((current) => {
-      const next = current === "full-time" ? "part-time" : "full-time";
-      saveTimetableStudyMode(next);
-      return next;
-    });
-  }
-
   function removeClass(shareKey: string)
   {
     setSelectedClasses((current) => current.filter((value) => `${value.courseCode}:${value.scheduleType}:${value.groupCodeType}:${value.groupCode}` !== shareKey));
@@ -954,7 +931,7 @@ export function PlannerClient({
         throw new Error("Unable to load class groups.");
       }
       const payload = await response.json() as ClassesResponse;
-      const preferredGroupType = studyMode === "full-time" ? "TG" : "CRN";
+      const preferredGroupType = appSettings.timetableStudyMode === "full-time" ? "TG" : "CRN";
       const firstClass = pickPreferredClass(payload.classes, preferredGroupType, visibleEvents);
 
       if (!firstClass)
@@ -1206,33 +1183,10 @@ export function PlannerClient({
               <h3 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)] sm:text-[18px] sm:leading-6">My Courses</h3>
               <p className="text-[10px] leading-[13px] text-[var(--on-surface-variant)] sm:text-[11px] sm:leading-[14px]">{selectedSemester ? getCurrentWeekChip(selectedSemester, semesterWeeks.find((week) => week.weekId === selectedWeekId) ?? null) : ""}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <span className="text-[9px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[10px]">FT</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={studyMode === "part-time"}
-                  aria-label="Toggle study mode"
-                  className="relative h-5 w-9 rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-low)] transition-colors"
-                  onClick={toggleStudyMode}
-                >
-                  <span
-                    className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-[var(--primary)] transition-all ${
-                      studyMode === "part-time" ? "left-[18px]" : "left-0.5"
-                    }`}
-                  />
-                </button>
-                <span className="text-[9px] font-semibold leading-4 text-[var(--on-surface-variant)] sm:text-[10px]">PT</span>
-              </div>
-              <span className="timetable-chip rounded-[0.75rem] bg-[var(--brand-chip-bg)] px-1.5 py-0.5 text-[10px] font-medium leading-[13px] text-[var(--primary)] sm:px-2 sm:text-[11px] sm:leading-[14px]">
-                {selectedCards.length} Selected
-              </span>
-            </div>
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 py-1.5 sm:px-3">
-            <label className="relative z-40 block">
+            <label className="relative z-20 block">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
               <input
                 className="elev-1 w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] py-1.5 pl-10 pr-4 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:py-2 sm:text-[14px]"
@@ -1242,7 +1196,7 @@ export function PlannerClient({
               />
 
               {searchInput ? (
-                <div className="elev-3 absolute left-0 right-0 top-full z-50 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
+                <div className="elev-3 absolute left-0 right-0 top-full z-30 mt-1.5 max-h-72 overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                   {searchResults.map((record) => (
                     <button
                       key={record.courseCode}
@@ -1279,8 +1233,8 @@ export function PlannerClient({
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3">
-            <div className="space-y-1">
-              <div className="grid grid-cols-3 gap-1">
+            <div className={orientation === "horizontal" ? "space-y-1 md:grid md:grid-flow-col md:auto-cols-fr md:gap-1 md:space-y-0" : "space-y-1"}>
+              <div className={`grid grid-cols-3 gap-1 ${orientation === "horizontal" ? "md:contents" : ""}`}>
                 <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share" onClick={handleShare} stretch />
                 <div className="relative" data-download-popover-root>
                   <ActionButton
@@ -1306,7 +1260,7 @@ export function PlannerClient({
                 </div>
                 <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} stretch />
               </div>
-              <div className="grid grid-cols-2 gap-1">
+              <div className={`grid grid-cols-2 gap-1 ${orientation === "horizontal" ? "md:contents" : ""}`}>
                 <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} stretch />
                 <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} stretch />
               </div>
@@ -1347,7 +1301,7 @@ export function PlannerClient({
                     <div className="pl-1.5 pr-12">
                       <div className="min-w-0">
                         <div className="flex items-start gap-2">
-                          <div className="relative z-30 mt-0.5" data-color-popover-root>
+                          <div className="relative z-10 mt-0.5" data-color-popover-root>
                             <button
                               type="button"
                               aria-label={`Change ${record.courseCode} color`}
@@ -1438,18 +1392,24 @@ export function PlannerClient({
             </div>
 
             <div className={`border-t border-[var(--brand-divider)] pt-3 ${orientation === "horizontal" ? "mt-2.5" : "mt-2"}`}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
-                  <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
-                  <div className="mt-1 text-[16px] font-bold leading-6 text-[var(--primary)] sm:text-[18px]">{totalCredits.toFixed(1)} CU</div>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
+                    <div className="text-[var(--on-surface-variant)]">Total Credit Units</div>
+                    <div className="mt-1 text-[16px] font-bold leading-6 text-[var(--primary)] sm:text-[18px]">{totalCredits.toFixed(1)} CU</div>
+                  </div>
+                  <div aria-hidden="true" className="h-10 w-px bg-[var(--brand-divider)]" />
+                  <div className="min-w-0 text-left text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
+                    <div className="text-[var(--on-surface-variant)]">Total Courses</div>
+                    <div className="mt-1 text-[16px] font-bold leading-6 tabular-nums text-[var(--primary)] sm:text-[18px]">{selectedCards.length}</div>
+                  </div>
                 </div>
-                <div className="relative w-[8.75rem] shrink-0 sm:w-[9.75rem]">
-                  <ListIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
+                <div className="relative shrink-0 w-[8.75rem] sm:w-[9.75rem]">
                   <select
                     value={sortMode}
                     aria-label="Order selected courses"
-                    onChange={(event) => setSortMode(event.target.value as "code" | "exam" | "credit")}
-                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-7 py-1 text-center text-[13px] font-medium leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:px-8 sm:py-1.5 sm:text-[14px]"
+                    onChange={(event) => setSortMode(event.target.value as SortMode)}
+                    className="w-full rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container)] px-3 py-1 text-left text-[13px] font-medium leading-4 text-[var(--on-surface)] outline-none transition-colors hover:bg-[var(--surface-container-high)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:py-1.5 sm:text-[14px]"
                   >
                     <option value="code">Order by Code</option>
                     <option value="exam">Order by Exam</option>

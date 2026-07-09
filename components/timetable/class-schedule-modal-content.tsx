@@ -66,11 +66,11 @@ export function ClassScheduleModalContent({
             <span className="text-[22px] font-semibold leading-[1.08] tracking-[-0.02em] text-[var(--on-surface)]">{courseName ?? "Untitled course"}</span>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
-            <div className="dark-neutral-accent-card border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2">
+            <div className="class-schedule-summary-card dark-neutral-accent-card border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Class Group</p>
               <p className="mt-1 text-[16px] font-semibold leading-6 text-[var(--on-surface)]">{classGroupLabel}</p>
             </div>
-            <div className="dark-neutral-accent-card border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2">
+            <div className="class-schedule-summary-card dark-neutral-accent-card border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-3 py-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Sessions</p>
               <p className="mt-1 text-[16px] font-semibold leading-6 text-[var(--on-surface)]">
                 {classEvents.length} {classEvents.length === 1 ? "session" : "sessions"}
