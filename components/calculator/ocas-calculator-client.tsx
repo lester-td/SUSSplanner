@@ -825,10 +825,47 @@ export function OcasCalculatorClient()
               </div>
             </div>
           </section>
+
+          <section className="calculator-panel calculator-nested-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-2.5 sm:p-3">
+            <h2 className="text-[13px] font-bold text-[var(--on-surface)]">SUSS grade scale</h2>
+            <div className="mt-3 grid grid-cols-[auto_1fr_auto] gap-x-3 gap-y-1.5 text-[12px]">
+              <span className="font-semibold text-[var(--on-surface-variant)]">Grade</span>
+              <span className="font-semibold text-[var(--on-surface-variant)]">Mark</span>
+              <span className="text-right font-semibold text-[var(--on-surface-variant)]">GPV</span>
+              {GRADE_BANDS.map((band, index) => (
+                <div key={band.grade} className="col-span-3 grid grid-cols-subgrid items-center">
+                  <span className="font-semibold text-[var(--on-surface)]">{band.grade}</span>
+                  <span className="text-[var(--on-surface-variant)]">
+                    {formatGradeRange(index)}
+                  </span>
+                  <span className="text-right text-[var(--on-surface-variant)]">
+                    {GRADE_POINT_VALUES[band.grade].toFixed(1)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
         </aside>
       </div>
     </section>
   );
+}
+
+function formatGradeRange(index: number)
+{
+  const band = GRADE_BANDS[index];
+
+  if (index === 0)
+  {
+    return `${band.minimum}–100%`;
+  }
+
+  if (index === GRADE_BANDS.length - 1)
+  {
+    return `0–${GRADE_BANDS[index - 1].minimum - 1}%`;
+  }
+
+  return `${band.minimum}–${GRADE_BANDS[index - 1].minimum - 1}%`;
 }
 
 function formatCompletedWeight(value: number)

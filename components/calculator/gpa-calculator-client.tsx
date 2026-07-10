@@ -323,7 +323,7 @@ export function GpaCalculatorClient()
 
   return (
     <div className="calculator-page calculator-section calculator-section--gpa w-full pb-6">
-      <section className="mb-2 rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-2 shadow-sm md:mb-3 md:px-4 md:py-3">
+      <section className="mb-2 md:mb-3">
         <div className="grid gap-1.5 md:hidden">
           <div className="grid grid-cols-3 gap-1.5">
             <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" compact />
@@ -335,14 +335,14 @@ export function GpaCalculatorClient()
             <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} tone="all-time" compact />
           </div>
         </div>
-          <div className="hidden md:grid md:grid-cols-[repeat(3,minmax(0,1fr))_1px_repeat(2,minmax(0,1fr))] md:items-stretch md:gap-3">
-            <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" />
-            <StatItem label="Courses" value={String(modules.length)} tone="semester" />
-            <StatItem label="Credit Units" value={currentCredits.toFixed(1)} tone="semester" />
+        <div className="hidden md:grid md:grid-cols-[repeat(3,minmax(0,1fr))_1px_repeat(2,minmax(0,1fr))] md:items-stretch md:gap-3">
+          <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" />
+          <StatItem label="Courses" value={String(modules.length)} tone="semester" />
+          <StatItem label="Credit Units" value={currentCredits.toFixed(1)} tone="semester" />
           <div className="hidden self-stretch justify-self-center bg-[var(--outline-variant)] md:block md:w-px" aria-hidden="true" />
-            <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} tone="all-time" />
-            <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} tone="all-time" />
-          </div>
+          <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} tone="all-time" />
+          <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} tone="all-time" />
+        </div>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
