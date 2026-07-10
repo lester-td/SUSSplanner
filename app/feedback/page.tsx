@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function FeedbackPage()
 {
   const [semesterTree, latestDataUpdatedAt] = await Promise.all([
