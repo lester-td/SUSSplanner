@@ -76,6 +76,7 @@ Thumbs.db
 
 # Misc
 *.local
+app/quotes.json
 scraper/data/input/course-pdfs/
 scraper/data/output/
 venv/
