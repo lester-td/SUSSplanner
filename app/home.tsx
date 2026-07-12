@@ -315,13 +315,23 @@ export default async function HomePage()
       </div>
     </section>
   );
-  const quickLinksSection = (
+  function renderQuickLinksSection({
+    className = "",
+    headingId = "quick-links",
+    sectionId = "portal-links",
+  }: {
+    className?: string;
+    headingId?: string;
+    sectionId?: string;
+  } = {})
+  {
+    return (
     <section
-      id="portal-links"
-      aria-labelledby="quick-links"
-      className="order-first rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm lg:order-none"
+      id={sectionId}
+      aria-labelledby={headingId}
+      className={`rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm ${className}`}
     >
-      <h2 id="quick-links" className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
+      <h2 id={headingId} className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
         Quick Links
       </h2>
 
@@ -369,12 +379,22 @@ export default async function HomePage()
         })}
       </div>
     </section>
-  );
-  const upcomingDatesSection = (
-    <section aria-labelledby="upcoming-dates">
+    );
+  }
+
+  function renderUpcomingDatesSection({
+    className = "",
+    headingId = "upcoming-dates",
+  }: {
+    className?: string;
+    headingId?: string;
+  } = {})
+  {
+    return (
+    <section className={className} aria-labelledby={headingId}>
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 id="upcoming-dates" className="text-[17px] font-bold leading-6 tracking-[-0.03em] text-[var(--on-surface)] sm:text-[24px] sm:leading-7 sm:tracking-[-0.035em]">
+          <h2 id={headingId} className="text-[17px] font-bold leading-6 tracking-[-0.03em] text-[var(--on-surface)] sm:text-[24px] sm:leading-7 sm:tracking-[-0.035em]">
             Upcoming Dates
           </h2>
         </div>
@@ -414,7 +434,8 @@ export default async function HomePage()
         )}
       </div>
     </section>
-  );
+    );
+  }
 
   return (
     <AppShell
@@ -445,14 +466,26 @@ export default async function HomePage()
               </div>
             </section>
 
-            <div className="mt-6 sm:mt-8">
-              {upcomingDatesSection}
+            <div className="mt-6 sm:mt-8 lg:hidden">
+              {renderQuickLinksSection({
+                headingId: "quick-links-mobile",
+                sectionId: "portal-links-mobile",
+              })}
+            </div>
+            <div className="mt-6 hidden sm:mt-8 lg:block">
+              {renderUpcomingDatesSection()}
             </div>
           </div>
 
           <aside className="grid gap-4 lg:sticky lg:top-24" aria-label="Home page utilities">
+            {renderUpcomingDatesSection({
+              className: "order-first lg:hidden",
+              headingId: "upcoming-dates-mobile",
+            })}
             {disclaimerSection}
-            {quickLinksSection}
+            <div className="hidden lg:block">
+              {renderQuickLinksSection()}
+            </div>
 
             <section className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm" aria-labelledby="feedback-cta">
               <div className="flex items-start gap-3">
