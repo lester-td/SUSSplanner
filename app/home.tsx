@@ -344,7 +344,7 @@ export default async function HomePage()
     <section
       id="portal-links"
       aria-labelledby="quick-links"
-      className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm"
+      className="order-first rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm lg:order-none"
     >
       <h2 id="quick-links" className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
         Quick Links
