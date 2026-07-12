@@ -6,11 +6,9 @@ import { HomeSearch, type HomeSearchItem } from "@/components/layout/home-search
 import {
   ArrowUpRightIcon,
   BookIcon,
-  CalculatorIcon,
   CalendarWeekIcon,
   EditIcon,
   HomeIcon,
-  LayersIcon,
   MailIcon,
 } from "@/components/planner/icons";
 import {
@@ -66,29 +64,6 @@ const appSearchItems = [
     keywords: ["theme", "appearance", "preferences"],
   },
 ] as const satisfies readonly HomeSearchItem[];
-
-const heroQuickActions = [
-  {
-    label: "Plan Timetable",
-    href: "/timetable",
-    icon: CalendarWeekIcon,
-  },
-  {
-    label: "Find Courses",
-    href: "/courses",
-    icon: BookIcon,
-  },
-  {
-    label: "Calculate GPA",
-    href: "/calculators",
-    icon: CalculatorIcon,
-  },
-  {
-    label: "Open Planner",
-    href: "/planner",
-    icon: LayersIcon,
-  },
-] as const;
 
 const homeQuickResourceIcons: Record<string, typeof BookIcon> = {
   "suss-portal": HomeIcon,
@@ -458,24 +433,6 @@ export default async function HomePage()
                 <p className="mt-2 max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:mt-3 sm:text-[18px] sm:leading-7">
                   Find courses, timetable slots, calculators, portals, and key dates in one place.
                 </p>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-1.5 sm:mt-5 sm:gap-2" aria-label="Quick actions">
-                {heroQuickActions.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <Link
-                      key={item.href}
-                      prefetch
-                      href={item.href}
-                      className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[11px] font-bold leading-4 text-[var(--on-surface)] shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)] sm:min-h-10 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-[12px]"
-                    >
-                      <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
               </div>
 
               <div className="mt-3 max-w-4xl sm:mt-4">
