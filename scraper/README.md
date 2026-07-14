@@ -24,6 +24,7 @@ This scraper/import workflow uses:
 | Package manager | npm | Installs dependencies and runs scripts |
 | TS runner | tsx | Runs TypeScript CLI scripts without a manual build step |
 | PDF extraction | Python 3 + pdfplumber + pypdf + fontTools | Extracts tables/text from schedule PDFs and course synopsis PDFs, including embedded-font repair for Tamil PDFs |
+| OCR fallback | OCRmyPDF + Tesseract | Rebuilds text for pages whose embedded fonts still leave unresolved Tamil CID glyphs |
 | Database | Supabase Postgres | Stores courses, semesters, timetable events, and assessment data |
 | DB import tool | psql | Imports generated SQL files into Supabase reliably |
 | Frontend hosting | Vercel | Hosts the deployed web app; scraping is done locally, not inside Vercel |
@@ -86,11 +87,21 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+For the optional Tamil OCR fallback on Ubuntu/WSL, install its system dependencies and optional Python requirements:
+
+```bash
+sudo apt update
+sudo apt install ghostscript tesseract-ocr-eng tesseract-ocr-tam fonts-noto-core
+pip install -r requirements-ocr.txt
+```
+
 If `requirements.txt` is missing, install manually:
 
 ```bash
-pip install pdfplumber
+pip install pdfplumber pypdf fonttools
 ```
+
+Add `ocrmypdf` to that command only when the optional OCR fallback is needed.
 
 ---
 
@@ -296,6 +307,36 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/semester-weeks-import.sql
 
 ## 7. Scrape schedule PDFs
 
+### Filter by course code
+
+All scraper commands that read or produce course data accept the same case-insensitive filters:
+
+```text
+--codes TLL101,TLL201       exact course codes, separated by commas or spaces
+--codes-file path/to/codes  exact course codes read from a file
+--code-prefix TLL           every course code beginning with the prefix
+```
+
+Multiple prefixes can be comma-separated, for example `--code-prefix TLL,TSL`. On conversion
+commands, multiple selectors use union semantics: a course is included when it matches any
+exact code or prefix.
+
+For example, generate schedule JSON and SQL containing only `TLL` courses:
+
+```bash
+npm run scrape:all -- \
+  --manifest data/input/schedule-manifest.json \
+  --code-prefix TLL \
+  --out data/output/tll-schedules-import.sql \
+  --json data/output/tll-schedules-parsed.json \
+  --course-codes-out data/output/tll-course-codes.txt
+```
+
+The filters are supported by `scrape:schedule`, `scrape:all`, `download:courses`,
+`parse:courses`, `courses-json-to-sql`, and `schedule-json-to-sql`. Commands that load
+course codes for downloading use `data/output/course-codes.txt` as the prefix-search
+universe unless another `--codes-file` is supplied; inline `--codes` are added to that universe.
+
 Run:
 
 ```bash
@@ -408,6 +449,56 @@ npm run parse:courses -- \
   --json data/output/course-details-parsed.json \
   --issues-out data/output/course-parse-issues.tsv
 ```
+
+### Automatically OCR unresolved Tamil CID glyphs
+
+Add `--ocr-on-cid` to inspect the initial extraction and OCR only pages that still contain
+unresolved CID placeholders. The source PDFs are never overwritten; corrected copies are
+saved under `--ocr-pdf-dir`.
+
+```bash
+npm run parse:courses -- \
+  --pdf-dir data/input/course-pdfs \
+  --code-prefix TLL \
+  --ocr-on-cid \
+  --ocr-languages eng,tam \
+  --ocr-pdf-dir data/output/course-pdfs-ocr \
+  --out data/output/tll-course-details-import.sql \
+  --json data/output/tll-course-details-parsed.json \
+  --issues-out data/output/tll-course-parse-issues.tsv
+```
+
+The raw extraction JSON records which pages were OCR processed. Any CID placeholders that
+remain after OCR are included in the issues TSV. Verify that none remain before importing:
+
+```bash
+rg '\(cid:' data/output/tll-course-details-parsed.json
+```
+
+No output means no unresolved CID placeholders were written to the parsed JSON.
+
+The OCR parser performs a dependency preflight before reading any PDFs. For Tamil OCR it
+requires the `Noto Sans Tamil` font supplied by Ubuntu's `fonts-noto-core` package. Verify it with:
+
+```bash
+fc-list ':family=Noto Sans Tamil' file
+```
+
+### Preprocess OCR PDFs separately
+
+The same Python OCR implementation can create corrected copies as a separate step:
+
+```bash
+npm run ocr:courses -- \
+  --input-dir data/input/course-pdfs \
+  --output-dir data/output/course-pdfs-ocr \
+  --code-prefix TLL \
+  --pages 1 \
+  --languages eng,tam
+```
+
+Existing OCR copies are skipped unless `--force` is supplied. Parse the copies by passing
+`--pdf-dir data/output/course-pdfs-ocr` to `parse:courses`; do not add `--ocr-on-cid` again.
 
 Outputs:
 

@@ -3,24 +3,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { parseArgs, optionalBool, optionalString } from "../lib/args.js";
+import { resolveInputCourseCodes } from "../lib/courseCodeFilter.js";
 import { downloadPdf } from "../lib/pdf.js";
 import type { CourseDetailParseResult } from "../lib/types.js";
 import { buildCourseDetailPdfUrl, parseCourseDetailText } from "../parsers/courseDetailPdf.js";
 import { generateSql } from "../sql/generateSql.js";
 
 const execFileAsync = promisify(execFile);
-
-async function readCodes(args: Record<string, string | boolean>): Promise<string[]> {
-  const codesInline = optionalString(args, "codes");
-  const codesFile = optionalString(args, "codes-file") ?? "data/output/course-codes.txt";
-
-  if (codesInline) {
-    return codesInline.split(",").map(code => code.trim().toUpperCase()).filter(Boolean);
-  }
-
-  const content = await fs.readFile(codesFile, "utf8");
-  return content.split(/[,\n\r\t ]+/).map(code => code.trim().toUpperCase()).filter(Boolean);
-}
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -64,7 +53,7 @@ async function main(): Promise<void> {
   await fs.mkdir(path.dirname(outJson), { recursive: true });
   await fs.mkdir(pdfDir, { recursive: true });
 
-  const courseCodes = [...new Set(await readCodes(args))].sort();
+  const courseCodes = await resolveInputCourseCodes(args, "data/output/course-codes.txt");
   const results: CourseDetailParseResult[] = [];
 
   for (const courseCode of courseCodes) {

@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { parseArgs, requireString, optionalString } from "../lib/args.js";
+import { filterScheduleResult, loadCourseCodeFilter } from "../lib/courseCodeFilter.js";
 import type { ClassEventRecord, ClassRecord, CourseRecord, ScheduleParseResult, SemesterKey } from "../lib/types.js";
 import { generateSql } from "../sql/generateSql.js";
 
@@ -129,7 +130,8 @@ async function main(): Promise<void> {
   const courseCodesOut = optionalString(args, "course-codes-out");
 
   const raw = JSON.parse(await fs.readFile(jsonPath, "utf8"));
-  const parsed = normalizeScheduleJson(raw);
+  const courseCodeFilter = await loadCourseCodeFilter(args);
+  const parsed = filterScheduleResult(normalizeScheduleJson(raw), courseCodeFilter);
 
   const sql = generateSql({
     semesters: parsed.semesters,

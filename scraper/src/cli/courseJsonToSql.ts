@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { parseArgs, optionalString, requireString } from "../lib/args.js";
+import { loadCourseCodeFilter, matchesCourseCode } from "../lib/courseCodeFilter.js";
 import type { AssessmentComponentRecord, CourseDetailParseResult, CourseRecord, ScheduleType } from "../lib/types.js";
 import { generateSql } from "../sql/generateSql.js";
 
@@ -95,7 +96,10 @@ async function main(): Promise<void> {
 
   const raw = await fs.readFile(jsonPath, "utf8");
   const parsed = JSON.parse(raw) as unknown;
-  const results = asCourseDetailResults(parsed);
+  const courseCodeFilter = await loadCourseCodeFilter(args);
+  const results = asCourseDetailResults(parsed).filter(result =>
+    !hasUsableCourse(result.course) || matchesCourseCode(result.course.courseCode, courseCodeFilter)
+  );
 
   const courses: CourseRecord[] = [];
   const assessments: AssessmentComponentRecord[] = [];

@@ -4,6 +4,8 @@ interface CourseDetailOptions {
   courseCode: string;
   sourceUrl: string;
   scheduleType?: ScheduleType;
+  expectedTopicCount?: number;
+  recoverUnbulletedTopics?: boolean;
 }
 
 
@@ -137,29 +139,69 @@ function extractAssessmentSection(text: string): string | null {
   return extractSection(text, ["Assessment Strategies", "Assessment Strategy", "Assessment Components", "Assessment"]);
 }
 
-function parseBulletSection(section: string | null): string[] | null {
+function parseBulletSection(
+  section: string | null,
+  options: { unbulletedLinesAreItems?: boolean; expectedItemCount?: number } = {}
+): string[] | null {
   if (!section) return null;
 
-  const lines = cleanPdfArtifacts(section)
+  const sourceLines = cleanPdfArtifacts(section)
     .split(/\r?\n/)
     .map(line => line.trim())
     .filter(Boolean)
     .filter(line => !isPageMarker(line))
     .filter(line => !isPageNumberLine(line));
 
+  // Tamil OCR sometimes recognizes the round bullet as a standalone Tamil "உ"
+  // or as ©/°. Treat these as bullets when they recur across the section.
+  const tamilOcrBulletPattern = /^(?:உ|©|°)\s+(.+)$/u;
+  const tamilOcrBulletCount = sourceLines.filter(line => tamilOcrBulletPattern.test(line)).length;
+  const normalizedSourceLines = tamilOcrBulletCount >= 2
+    ? sourceLines.map(line => line.replace(tamilOcrBulletPattern, "● $1"))
+    : sourceLines.map(line => line.replace(/^உ\s+(.+)$/u, "$1"));
+
+  // Some PDF extractors place several visible bullets on one text line.
+  const lines = normalizedSourceLines.flatMap(line =>
+    line.split(/(?=[●•]\s*)/).map(part => part.trim()).filter(Boolean)
+  );
+  const bulletPattern = /^(?:[●•*]\s*|-\s+|\d+[.)]\s*|[a-z][.)]\s*)(.+)$/i;
+  const hasBulletMarkers = lines.some(line => bulletPattern.test(line));
+
   const items: string[] = [];
+  let sawBulletMarker = false;
+  let previousSourceLine: string | null = null;
+  const preserveEveryUnbulletedLine = !hasBulletMarkers
+    && options.expectedItemCount !== undefined
+    && options.expectedItemCount === lines.length;
 
   for (const line of lines) {
-    const bulletMatch = line.match(/^(?:[●•\-*]|\d+[.)]|[a-z][.)])\s*(.+)$/i);
+    const bulletMatch = line.match(bulletPattern);
 
     if (bulletMatch) {
       items.push(bulletMatch[1].trim());
+      sawBulletMarker = true;
+    } else if (options.unbulletedLinesAreItems && (!hasBulletMarkers || !sawBulletMarker)) {
+      // OCR commonly recognizes the text of a visual bullet list but omits the
+      // bullet glyph. Preserve one-topic-per-line layout, while joining obvious
+      // wrapped lines after punctuation that signals a continuation.
+      const previous = items[items.length - 1];
+      const looksLikeWrappedLine = Boolean(previousSourceLine)
+        && !preserveEveryUnbulletedLine
+        && (/[,:;–—-]\s*$/u.test(previousSourceLine!)
+          || (previousSourceLine!.length >= 55 && line.length <= 40));
+      if (previous && looksLikeWrappedLine) {
+        items[items.length - 1] += ` ${line}`;
+      } else {
+        items.push(line);
+      }
     } else if (items.length > 0) {
       // A line without a bullet is usually a PDF line-wrap continuation.
       items[items.length - 1] += ` ${line}`;
     } else {
       items.push(line);
     }
+
+    previousSourceLine = bulletMatch ? bulletMatch[1].trim() : line;
   }
 
   const cleaned = items
@@ -502,7 +544,10 @@ export function parseCourseDetailText(text: string, opts: CourseDetailOptions): 
     assessments = [];
   }
 
-  const topics = parseBulletSection(courseTopicsSection);
+  const topics = parseBulletSection(courseTopicsSection, {
+    unbulletedLinesAreItems: opts.recoverUnbulletedTopics,
+    expectedItemCount: opts.expectedTopicCount
+  });
   const learningOutcomes = parseBulletSection(learningOutcomesSection);
   if (!topics || topics.length === 0) warnings.push(`Course topics not found for ${courseCode} (${scheduleType}).`);
   if (!learningOutcomes || learningOutcomes.length === 0) warnings.push(`Learning outcomes not found for ${courseCode} (${scheduleType}).`);

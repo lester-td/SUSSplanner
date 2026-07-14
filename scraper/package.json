@@ -10,6 +10,7 @@
     "generate:weeks": "tsx src/cli/generateSemesterWeeksSql.ts",
     "download:courses": "tsx src/cli/downloadCoursePdfs.ts",
     "parse:courses": "tsx src/cli/parseCoursePdfs.ts",
+    "ocr:courses": "python3 tools/ocr_course_pdfs.py",
     "scrape:courses": "node -e \"console.log('Use: npm run download:courses, then npm run parse:courses')\"",
     "typecheck": "tsc --noEmit",
     "extract:pdf-table": "python3 tools/pdf_table_to_csv.py",

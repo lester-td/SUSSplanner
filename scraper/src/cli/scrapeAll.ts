@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { parseArgs, requireString } from "../lib/args.js";
+import { filterScheduleResult, loadCourseCodeFilter } from "../lib/courseCodeFilter.js";
 import type { ScheduleParseResult, ScheduleType } from "../lib/types.js";
 import { parseScheduleCsv } from "../parsers/scheduleCsv.js";
 import { generateSql } from "../sql/generateSql.js";
@@ -101,7 +102,8 @@ async function main(): Promise<void> {
     results.push(parseScheduleCsv(csvText, item.scheduleType));
   }
 
-  const merged = mergeResults(results);
+  const courseCodeFilter = await loadCourseCodeFilter(args);
+  const merged = filterScheduleResult(mergeResults(results), courseCodeFilter);
   const sql = generateSql({
     semesters: merged.semesters,
     courses: merged.courses,
