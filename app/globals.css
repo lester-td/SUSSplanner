@@ -263,6 +263,26 @@
   color: #4B5563;
 }
 
+.upcoming-date-dot--default {
+  background: var(--surface-container-lowest);
+  color: var(--primary);
+}
+
+.upcoming-date-dot--open {
+  background: rgba(46, 125, 50, 0.14);
+  color: #2E7D32;
+}
+
+.upcoming-date-dot--upcoming {
+  background: rgba(250, 204, 21, 0.18);
+  color: #D29A00;
+}
+
+.upcoming-date-dot--closing {
+  background: rgba(180, 35, 24, 0.12);
+  color: #B42318;
+}
+
 :root[data-color-scheme="dark"] .registration-reminder-status--open {
   background: rgba(34, 197, 94, 0.14);
   border-color: rgba(34, 197, 94, 0.45);
@@ -285,6 +305,21 @@
   background: rgba(148, 163, 184, 0.12);
   border-color: rgba(148, 163, 184, 0.35);
   color: #CBD5E1;
+}
+
+:root[data-color-scheme="dark"] .upcoming-date-dot--open {
+  background: rgba(34, 197, 94, 0.11);
+  color: #57C982;
+}
+
+:root[data-color-scheme="dark"] .upcoming-date-dot--upcoming {
+  background: rgba(250, 204, 21, 0.12);
+  color: #E0B84A;
+}
+
+:root[data-color-scheme="dark"] .upcoming-date-dot--closing {
+  background: rgba(239, 68, 68, 0.11);
+  color: #DC7A7A;
 }
 
 .course-search-page {

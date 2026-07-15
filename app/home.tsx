@@ -18,6 +18,7 @@ import {
   type AcademicCalendarEventRecord,
 } from "@/lib/db/queries";
 import { homeQuickResources, studentResources } from "@/lib/student-resources";
+import type { RegistrationReminderWindowState } from "@/lib/registration/reminder-status";
 import {
   buildWeekLabel,
   formatCompactDate,
@@ -104,6 +105,10 @@ const audienceLabels: Record<AcademicCalendarEventRecord["audience"], string> = 
   GRAD: "Graduate",
 };
 const audienceSortOrder = new Map(Object.values(audienceLabels).map((label, index) => [label, index]));
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const UPCOMING_DATE_NOTICE_WINDOW_MS = 7 * DAY_IN_MS;
+
+type UpcomingDateDotState = Exclude<RegistrationReminderWindowState, "ended"> | "default";
 
 type UpcomingDateItem = {
   label: string;
@@ -111,7 +116,15 @@ type UpcomingDateItem = {
   date: string;
   startDate: string;
   endDate: string;
+  dotState: UpcomingDateDotState;
   audiences?: string[];
+};
+
+const upcomingDateDotClassNames: Record<UpcomingDateDotState, string> = {
+  default: "upcoming-date-dot--default",
+  upcoming: "upcoming-date-dot--upcoming",
+  open: "upcoming-date-dot--open",
+  closing: "upcoming-date-dot--closing",
 };
 
 function formatUpcomingCalendarDate(event: Pick<AcademicCalendarEventRecord, "startDate" | "endDate">)
@@ -122,6 +135,44 @@ function formatUpcomingCalendarDate(event: Pick<AcademicCalendarEventRecord, "st
   }
 
   return formatDateRange(event.startDate, event.endDate);
+}
+
+function parseSingaporeDateStart(date: string)
+{
+  const timestamp = Date.parse(`${date}T00:00:00+08:00`);
+
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function getUpcomingDateDotState(startDate: string, endDate: string, now: Date): UpcomingDateDotState
+{
+  const startTimestamp = parseSingaporeDateStart(startDate);
+  const endTimestamp = parseSingaporeDateStart(endDate);
+
+  if (startTimestamp === null || endTimestamp === null)
+  {
+    return "default";
+  }
+
+  const nowTimestamp = now.getTime();
+  const endExclusiveTimestamp = endTimestamp + DAY_IN_MS;
+
+  if (nowTimestamp < startTimestamp - UPCOMING_DATE_NOTICE_WINDOW_MS || nowTimestamp >= endExclusiveTimestamp)
+  {
+    return "default";
+  }
+
+  if (nowTimestamp < startTimestamp)
+  {
+    return "upcoming";
+  }
+
+  if (startDate === endDate)
+  {
+    return "open";
+  }
+
+  return endExclusiveTimestamp - nowTimestamp <= DAY_IN_MS ? "closing" : "open";
 }
 
 function getSemesterScopeLabel(event: AcademicCalendarEventRecord)
@@ -140,6 +191,7 @@ function getSemesterScopeLabel(event: AcademicCalendarEventRecord)
 function getUpcomingCalendarDates(
   calendarEvents: AcademicCalendarEventRecord[],
   today = getSingaporeDateString(),
+  now = new Date(),
 ): UpcomingDateItem[]
 {
   const groups = new Map<string, {
@@ -200,6 +252,7 @@ function getUpcomingCalendarDates(
         date: formatUpcomingCalendarDate(group),
         startDate: group.startDate,
         endDate: group.endDate,
+        dotState: getUpcomingDateDotState(group.startDate, group.endDate, now),
         audiences,
       };
     });
@@ -209,18 +262,13 @@ function getUpcomingSemesterDates(
   semesterTree: Array<SemesterRecord & { weeks: SemesterWeekRecord[] }>,
   currentSemesterContext: CurrentSemesterContext,
   today = getSingaporeDateString(),
+  now = new Date(),
 ): UpcomingDateItem[]
 {
   const allWeeks = semesterTree
     .flatMap((semester) => semester.weeks.map((week) => ({ semester, week })))
     .sort((left, right) => left.week.startDate.localeCompare(right.week.startDate));
-  const items: Array<{
-    label: string;
-    detail: string;
-    date: string;
-    startDate: string;
-    endDate: string;
-  }> = [];
+  const items: UpcomingDateItem[] = [];
 
   if (currentSemesterContext.semester && currentSemesterContext.week && today <= currentSemesterContext.week.endDate)
   {
@@ -230,6 +278,7 @@ function getUpcomingSemesterDates(
       date: formatCompactDate(currentSemesterContext.week.endDate),
       startDate: currentSemesterContext.week.endDate,
       endDate: currentSemesterContext.week.endDate,
+      dotState: getUpcomingDateDotState(currentSemesterContext.week.endDate, currentSemesterContext.week.endDate, now),
     });
   }
 
@@ -247,6 +296,7 @@ function getUpcomingSemesterDates(
       date: formatCompactDate(week.startDate),
       startDate: week.startDate,
       endDate: week.startDate,
+      dotState: getUpcomingDateDotState(week.startDate, week.startDate, now),
     });
 
     if (items.length >= 6)
@@ -263,13 +313,14 @@ function getUpcomingDates(
   semesterTree: Array<SemesterRecord & { weeks: SemesterWeekRecord[] }>,
   currentSemesterContext: CurrentSemesterContext,
   today = getSingaporeDateString(),
+  now = new Date(),
 ): UpcomingDateItem[]
 {
-  const calendarDates = getUpcomingCalendarDates(calendarEvents, today);
+  const calendarDates = getUpcomingCalendarDates(calendarEvents, today, now);
 
   return calendarDates.length > 0
     ? calendarDates
-    : getUpcomingSemesterDates(semesterTree, currentSemesterContext, today);
+    : getUpcomingSemesterDates(semesterTree, currentSemesterContext, today, now);
 }
 
 export default async function HomePage()
@@ -300,7 +351,7 @@ export default async function HomePage()
       ],
     })),
   ] satisfies HomeSearchItem[];
-  const upcomingDates = getUpcomingDates(academicCalendarEvents, semesterTree, currentSemesterContext, today);
+  const upcomingDates = getUpcomingDates(academicCalendarEvents, semesterTree, currentSemesterContext, today, now);
   const disclaimerSection = (
     <section
       className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm"
@@ -412,8 +463,11 @@ export default async function HomePage()
           <ol className="relative divide-y divide-[color-mix(in_srgb,var(--on-surface),transparent_94%)] before:absolute before:bottom-1.5 before:left-2 before:top-1.5 before:hidden before:w-px before:bg-[color-mix(in_srgb,var(--brand-divider),transparent_60%)] sm:space-y-5 sm:divide-y-0 sm:before:block sm:before:bottom-2 sm:before:left-[0.625rem] sm:before:top-2">
             {upcomingDates.map((item) => (
               <li key={`${item.label}-${item.detail}-${item.date}`} className="relative py-3 first:pt-0 last:pb-0 sm:py-0 sm:pl-9">
-                <span className="absolute left-0 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--surface-container-lowest)] sm:flex sm:h-5 sm:w-5">
-                  <span className="h-2 w-2 rounded-full bg-[var(--primary)] sm:h-2.5 sm:w-2.5" />
+                <span className={`absolute left-0 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full sm:flex sm:h-5 sm:w-5 ${upcomingDateDotClassNames[item.dotState]}`}>
+                  <span
+                    className="h-2 w-2 rounded-full sm:h-2.5 sm:w-2.5"
+                    style={{ backgroundColor: "currentColor" }}
+                  />
                 </span>
 
                 <div className="sm:border-b sm:border-[color-mix(in_srgb,var(--outline-variant),transparent_65%)] sm:pb-5 sm:last:border-b-0 sm:last:pb-0">
