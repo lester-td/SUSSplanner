@@ -18,9 +18,28 @@ const feedbackRequestSchema = z.object({
   website: z.string().trim().max(0).optional(),
 }).strict();
 
-const rateLimitWindowMs = 60 * 1000;
-const rateLimitMaxAttempts = 3;
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+type RateLimitEntry = { count: number; resetAt: number };
+type RateLimitPolicy = {
+  windowMs: number;
+  maxAttempts: number;
+  store: Map<string, RateLimitEntry>;
+  error: string;
+};
+
+const rateLimitPolicies: RateLimitPolicy[] = [
+  {
+    windowMs: 10 * 60 * 1000,
+    maxAttempts: 3,
+    store: new Map<string, RateLimitEntry>(),
+    error: "Please wait before sending more feedback.",
+  },
+  {
+    windowMs: 24 * 60 * 60 * 1000,
+    maxAttempts: 10,
+    store: new Map<string, RateLimitEntry>(),
+    error: "Daily feedback limit reached. Please try again tomorrow.",
+  },
+];
 
 function getFeedbackRecipients()
 {
@@ -37,27 +56,35 @@ function getClientKey(request: NextRequest)
     ?? "unknown";
 }
 
-function isRateLimited(clientKey: string)
+function checkRateLimit(clientKey: string)
 {
   const now = Date.now();
-  const current = rateLimitStore.get(clientKey);
 
-  if (!current || current.resetAt <= now)
+  for (const policy of rateLimitPolicies)
   {
-    rateLimitStore.set(clientKey, {
-      count: 1,
-      resetAt: now + rateLimitWindowMs,
-    });
-    return false;
+    const current = policy.store.get(clientKey);
+    if (current && current.resetAt > now && current.count >= policy.maxAttempts)
+    {
+      return { limited: true, error: policy.error };
+    }
   }
 
-  if (current.count >= rateLimitMaxAttempts)
+  for (const policy of rateLimitPolicies)
   {
-    return true;
+    const current = policy.store.get(clientKey);
+    if (!current || current.resetAt <= now)
+    {
+      policy.store.set(clientKey, {
+        count: 1,
+        resetAt: now + policy.windowMs,
+      });
+      continue;
+    }
+
+    current.count += 1;
   }
 
-  current.count += 1;
-  return false;
+  return { limited: false, error: null };
 }
 
 function escapeHtml(value: string)
@@ -221,9 +248,10 @@ async function sendFeedbackEmail({
 export async function POST(request: NextRequest)
 {
   const clientKey = getClientKey(request);
-  if (isRateLimited(clientKey))
+  const rateLimit = checkRateLimit(clientKey);
+  if (rateLimit.limited)
   {
-    return NextResponse.json({ error: "Please wait before sending more feedback." }, { status: 429 });
+    return NextResponse.json({ error: rateLimit.error }, { status: 429 });
   }
 
   let body: unknown;
