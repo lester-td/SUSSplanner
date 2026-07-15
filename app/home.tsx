@@ -509,7 +509,7 @@ export default async function HomePage()
           <div className="min-w-0">
             <section className="pt-1 sm:pt-2" aria-labelledby="home-hero-title">
               <div className="max-w-4xl">
-                <h1 id="home-hero-title" className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[42px] sm:leading-[1.08] sm:tracking-[-0.045em] lg:text-[52px]">
+                <h1 id="home-hero-title" className="text-[22px] font-bold leading-[1.15] tracking-[-0.03em] text-[var(--on-surface)] sm:text-[32px] sm:leading-[1.12] sm:tracking-[-0.035em] lg:text-[34px]">
                   Welcome to SUSS Planner.
                 </h1>
                 <p className="mt-2 max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:mt-3 sm:text-[18px] sm:leading-7">
