@@ -23,6 +23,7 @@ import {
   formatCompactDate,
   formatDateRange,
   getCurrentSemesterContext,
+  getSingaporeDateString,
   type CurrentSemesterContext,
 } from "@/lib/timetable/date-utils";
 import type { SemesterRecord, SemesterWeekRecord } from "@/lib/timetable/types";
@@ -136,9 +137,11 @@ function getSemesterScopeLabel(event: AcademicCalendarEventRecord)
     .join(", ");
 }
 
-function getUpcomingCalendarDates(calendarEvents: AcademicCalendarEventRecord[]): UpcomingDateItem[]
+function getUpcomingCalendarDates(
+  calendarEvents: AcademicCalendarEventRecord[],
+  today = getSingaporeDateString(),
+): UpcomingDateItem[]
 {
-  const today = new Date().toISOString().slice(0, 10);
   const groups = new Map<string, {
     label: string;
     startDate: string;
@@ -205,9 +208,9 @@ function getUpcomingCalendarDates(calendarEvents: AcademicCalendarEventRecord[])
 function getUpcomingSemesterDates(
   semesterTree: Array<SemesterRecord & { weeks: SemesterWeekRecord[] }>,
   currentSemesterContext: CurrentSemesterContext,
+  today = getSingaporeDateString(),
 ): UpcomingDateItem[]
 {
-  const today = new Date().toISOString().slice(0, 10);
   const allWeeks = semesterTree
     .flatMap((semester) => semester.weeks.map((week) => ({ semester, week })))
     .sort((left, right) => left.week.startDate.localeCompare(right.week.startDate));
@@ -259,25 +262,29 @@ function getUpcomingDates(
   calendarEvents: AcademicCalendarEventRecord[],
   semesterTree: Array<SemesterRecord & { weeks: SemesterWeekRecord[] }>,
   currentSemesterContext: CurrentSemesterContext,
+  today = getSingaporeDateString(),
 ): UpcomingDateItem[]
 {
-  const calendarDates = getUpcomingCalendarDates(calendarEvents);
+  const calendarDates = getUpcomingCalendarDates(calendarEvents, today);
 
   return calendarDates.length > 0
     ? calendarDates
-    : getUpcomingSemesterDates(semesterTree, currentSemesterContext);
+    : getUpcomingSemesterDates(semesterTree, currentSemesterContext, today);
 }
 
 export default async function HomePage()
 {
+  const now = new Date();
+  const today = getSingaporeDateString(now);
   const [semesterTree, latestDataUpdatedAt, academicCalendarEvents] = await Promise.all([
     getSemestersWithWeeks(),
     getLatestDataUpdatedAt(),
-    getUpcomingAcademicCalendarEvents(),
+    getUpcomingAcademicCalendarEvents(today),
   ]);
   const currentSemesterContext = getCurrentSemesterContext(
     semesterTree.map(({ weeks, ...semesterData }) => semesterData),
     semesterTree.flatMap((item) => item.weeks),
+    now,
   );
   const searchItems = [
     ...appSearchItems,
@@ -293,7 +300,7 @@ export default async function HomePage()
       ],
     })),
   ] satisfies HomeSearchItem[];
-  const upcomingDates = getUpcomingDates(academicCalendarEvents, semesterTree, currentSemesterContext);
+  const upcomingDates = getUpcomingDates(academicCalendarEvents, semesterTree, currentSemesterContext, today);
   const disclaimerSection = (
     <section
       className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm"

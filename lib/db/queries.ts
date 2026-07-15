@@ -18,6 +18,7 @@ import { unstable_cache } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { CourseSearchFilters } from "@/lib/timetable/course-search";
 import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
+import { getSingaporeDateString } from "@/lib/timetable/date-utils";
 import { buildSharedClassIdentifier } from "@/lib/timetable/share-url";
 import type {
   AssessmentComponentRecord,
@@ -321,7 +322,7 @@ const getUpcomingAcademicCalendarEventsCached = unstable_cache(
   },
 );
 
-export async function getUpcomingAcademicCalendarEvents(today = new Date().toISOString().slice(0, 10))
+export async function getUpcomingAcademicCalendarEvents(today = getSingaporeDateString())
 {
   return getUpcomingAcademicCalendarEventsCached(today);
 }

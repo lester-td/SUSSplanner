@@ -1,9 +1,24 @@
 import type { EventKind, SemesterRecord, SemesterWeekRecord } from "./types";
 
+const SINGAPORE_TIME_ZONE = "Asia/Singapore";
+
 export const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const START_MINUTES = 8 * 60 + 30;
 export const DEFAULT_END_MINUTES = 18 * 60 + 30;
 export const MAX_END_MINUTES = 22 * 60;
+
+export function getSingaporeDateString(date = new Date())
+{
+  const parts = new Intl.DateTimeFormat("en-SG", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: SINGAPORE_TIME_ZONE,
+    year: "numeric",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
 
 export function formatDate(date: string, options?: Intl.DateTimeFormatOptions)
 {
@@ -166,7 +181,7 @@ export function getCurrentSemesterContext(
   now = new Date(),
 ): CurrentSemesterContext
 {
-  const today = now.toISOString().slice(0, 10);
+  const today = getSingaporeDateString(now);
   const matchingWeek = semesterWeeks.find(
     (week) => week.startDate <= today && today <= week.endDate,
   );
