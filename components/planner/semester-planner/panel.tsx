@@ -27,7 +27,7 @@ export function SemesterPlannerPanel({
 })
 {
   return (
-    <aside className={`space-y-4 lg:sticky lg:top-[90px] lg:max-h-[calc(100vh-110px)] lg:self-start lg:pr-1 ${
+    <aside className={`space-y-3 md:space-y-4 lg:sticky lg:top-[90px] lg:max-h-[calc(100vh-110px)] lg:self-start lg:pr-1 ${
       draggedCourseId ? "lg:overflow-visible" : "lg:overflow-y-auto"
     }`}>
       <DroppableDiv
@@ -52,7 +52,7 @@ export function SemesterPlannerPanel({
           </button>
         </div>
 
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 space-y-2 md:mt-4">
           {bankCourses.length === 0 ? (
             <p className="planner-empty-state rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)]">
               {showAllModules ? "No modules added yet." : "All courses have been assigned."}
@@ -75,7 +75,7 @@ export function SemesterPlannerPanel({
 
       <DroppableDiv
         id={TRASH_DROP_ID}
-        className={(isOver) => `rounded-[1rem] border-2 border-dashed px-4 py-5 text-center transition-all ${
+        className={(isOver) => `rounded-[1rem] border-2 border-dashed px-3 py-4 text-center transition-all md:px-4 md:py-5 ${
           isOver
             ? "scale-[1.03] border-red-500 bg-red-500/10 text-red-400 shadow-[0_12px_30px_rgba(239,68,68,0.15)]"
             : draggedCourseId

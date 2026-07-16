@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 
@@ -16,6 +16,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "SUSS Planner",
   description: "Academic planning hub for SUSS timetables, courses, semester planners, and GPA estimates.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 const settingsBootstrapScript = `

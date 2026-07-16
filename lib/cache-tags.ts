@@ -1,6 +1,7 @@
 export const CACHE_TAGS = {
   semesters: "semesters",
   semesterWeeks: "semester-weeks",
+  academicCalendarEvents: "academic-calendar-events",
   classes: "classes",
   courses: "courses",
   assessments: "assessments",

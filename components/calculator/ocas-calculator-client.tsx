@@ -172,6 +172,24 @@ function parseAssessmentScore(input?: AssessmentScoreInput)
     : parseRawScore(input.rawScore, input.rawMax);
 }
 
+function calculateAssessmentGroupProgress(
+  components: AssessmentComponentRecord[],
+  scoreInputs: Record<number, AssessmentScoreInput>,
+)
+{
+  const totalWeight = components.reduce((total, component) => total + component.weightPercentage, 0);
+  const earnedWeight = components.reduce((total, component) => {
+    const score = parseAssessmentScore(scoreInputs[component.componentId]);
+    return score === null ? total : total + ((score / 100) * component.weightPercentage);
+  }, 0);
+
+  return {
+    earnedWeight,
+    totalWeight,
+    scoredPercent: totalWeight > 0 ? (earnedWeight / totalWeight) * 100 : 0,
+  };
+}
+
 export function OcasCalculatorClient()
 {
   const [searchQuery, setSearchQuery] = useState("");
@@ -389,10 +407,6 @@ export function OcasCalculatorClient()
     () => ocasAssessments.reduce((total, component) => total + component.weightPercentage, 0),
     [ocasAssessments],
   );
-  const oesWeight = useMemo(
-    () => oesAssessments.reduce((total, component) => total + component.weightPercentage, 0),
-    [oesAssessments],
-  );
   const estimatedOcasScore = useMemo(() => {
     if (ocasAssessments.length === 0 || ocasWeight <= 0)
     {
@@ -424,10 +438,10 @@ export function OcasCalculatorClient()
 
   return (
     <section className="calculator-page calculator-section calculator-section--ocas w-full pb-6">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="grid gap-2 sm:gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section className="min-w-0">
           <div ref={searchContainerRef} className="relative z-20 mb-3">
-            <div className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-2.5 sm:py-3">
+            <div className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-2.5 py-2 sm:px-3 sm:py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <CalculatorIcon className="h-5 w-5 text-[var(--primary)]" />
@@ -451,7 +465,7 @@ export function OcasCalculatorClient()
               </div>
 
               {selectedCourse ? (
-                <div className="calculator-panel calculator-inner-panel mt-3 rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5">
+                <div className="calculator-panel calculator-inner-panel mt-2.5 rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 sm:mt-3 sm:px-3 sm:py-2.5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-[13px] font-bold text-[var(--primary)]">{selectedCourse.courseCode}</p>
@@ -462,17 +476,16 @@ export function OcasCalculatorClient()
                         {selectedCourse.creditUnits ?? 0} CU
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        window.location.href = `/courses/${selectedCourse.courseCode}`;
-                      }}
+                    <a
+                      href={`/courses/${selectedCourse.courseCode}`}
+                      target="_blank"
+                      rel="noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-[0.6rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                     >
                       <BookIcon className="h-4 w-4" />
                       Course page
                       <ArrowUpRightIcon className="h-4 w-4" />
-                    </button>
+                    </a>
                   </div>
                 </div>
               ) : (
@@ -550,7 +563,7 @@ export function OcasCalculatorClient()
           </div>
 
           <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 sm:px-4 sm:py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-2.5 py-2.5 sm:gap-3 sm:px-4 sm:py-3.5">
               <div>
                 <h3 className="text-[15px] font-bold text-[var(--on-surface)]">Assessment strategy</h3>
                 <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">
@@ -559,16 +572,6 @@ export function OcasCalculatorClient()
                     : "Search for a course to load its assessment breakdown."}
                 </p>
               </div>
-              {courseDetail && visibleAssessments.length > 0 ? (
-                <div className="flex flex-wrap gap-2 text-[12px] font-semibold text-[var(--on-surface-variant)]">
-                  <span className="calculator-chip rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[var(--primary)]">
-                    OCAS {formatPercent(ocasWeight)}
-                  </span>
-                  <span className="calculator-chip rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[var(--primary)]">
-                    OES {formatPercent(oesWeight)}
-                  </span>
-                </div>
-              ) : null}
             </div>
 
             {detailLoading ? (
@@ -593,7 +596,7 @@ export function OcasCalculatorClient()
             ) : selectedCourse ? (
               <div className="divide-y divide-[var(--brand-divider)]">
                 {assessmentScheduleTypes.length > 1 && !sharedAssessmentSet ? (
-                  <div className="flex flex-wrap items-center gap-2 px-3 py-3 sm:px-4 sm:py-4">
+                  <div className="flex flex-wrap items-center gap-2 px-2.5 py-2.5 sm:px-4 sm:py-4">
                     <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
                       Schedule
                     </span>
@@ -614,17 +617,10 @@ export function OcasCalculatorClient()
                   </div>
                 ) : null}
 
-                {examEligibilityWarning ? (
-                  <div className="px-4 py-4">
-                    <div className="rounded-[0.75rem] border border-[var(--error)]/30 bg-[var(--error-container)] px-3 py-2 text-[12px] font-medium leading-5 text-[var(--error)]">
-                      The exam cannot be taken until OCAS reaches at least 40%.
-                    </div>
-                  </div>
-                ) : null}
-
                 <div className="grid gap-0 lg:grid-cols-2">
                   {(["OCAS", "OES"] as const).map((group) => {
                     const items = groupedAssessments[group];
+                    const groupProgress = calculateAssessmentGroupProgress(items, scoreInputs);
 
                     if (items.length === 0)
                     {
@@ -633,41 +629,53 @@ export function OcasCalculatorClient()
 
                     return (
                       <section key={group} className="border-b border-[var(--brand-divider)] lg:border-b-0 lg:border-r lg:last:border-r-0">
-                        <div className="border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-2.5 sm:px-4 sm:py-3">
-                          <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-[var(--primary)]">
-                            {group}
-                          </p>
-                          <p className="mt-1 text-[13px] text-[var(--on-surface-variant)]">
-                            {group === "OCAS" ? "Coursework components" : "Examinable components"}
-                          </p>
+                        <div className="border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-2.5 py-2 sm:px-4 sm:py-3">
+                          <div className="flex items-center gap-2">
+                            <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--primary)]">
+                              {group}
+                              <span className="shrink-0 text-[13px] font-semibold tracking-normal text-[var(--on-surface-variant)]">
+                                {formatPercent(groupProgress.earnedWeight)} / {formatPercent(groupProgress.totalWeight)}
+                              </span>
+                            </p>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between gap-3">
+                            <p className="text-[13px] text-[var(--on-surface-variant)]">
+                              {group === "OCAS" ? "Coursework Components" : "Examinable Components"}
+                            </p>
+                            <span className="shrink-0 text-[13px] font-semibold text-[var(--on-surface-variant)]">
+                              {formatPercent(groupProgress.scoredPercent)}
+                            </span>
+                          </div>
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+                            <div
+                              className="h-full rounded-full bg-[var(--primary)] transition-[width]"
+                              style={{ width: `${Math.min(100, Math.max(0, groupProgress.scoredPercent))}%` }}
+                            />
+                          </div>
                         </div>
 
                         <div className="divide-y divide-[var(--brand-divider)]">
+                          {group === "OES" && examEligibilityWarning ? (
+                            <div className="px-2.5 py-2 text-[12px] font-medium leading-5 text-[var(--error)] sm:px-3">
+                              The exam cannot be taken until OCAS reaches at least 40%.
+                            </div>
+                          ) : null}
                           {items.map((component) => {
                             const currentInput = scoreInputs[component.componentId] ?? EMPTY_SCORE_INPUT;
                             const isPercentageMode = currentInput.mode === "percentage";
 
                             return (
-                              <div key={component.componentId} className="px-3 py-2.5">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <p className="truncate text-[14px] font-bold text-[var(--on-surface)]">
+                              <div key={component.componentId} className="px-2.5 py-2 sm:px-3 sm:py-2.5">
+                                <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                                  <div className="flex min-w-0 items-baseline gap-1.5 sm:flex-1 sm:gap-2">
+                                    <p className="min-w-0 truncate text-[14px] font-bold leading-5 text-[var(--on-surface)]">
                                       {component.componentName}
                                     </p>
-                                    <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">
-                                      {component.assessmentMode ?? "Assessment"} • Weight {component.weightPercentage.toFixed(1)}%
-                                    </p>
+                                    <span className="shrink-0 text-[13px] font-semibold leading-5 text-[var(--on-surface-variant)]">
+                                      {component.weightPercentage.toFixed(1)}%
+                                    </span>
                                   </div>
-                                  <span className="calculator-chip rounded-full bg-[var(--brand-chip-bg)] px-2.5 py-1 text-[12px] font-semibold text-[var(--primary)]">
-                                    {component.weightPercentage.toFixed(1)}%
-                                  </span>
-                                </div>
-
-                                <div className="mt-3 space-y-2">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
-                                      {isPercentageMode ? "Percentage score" : "Raw score"}
-                                    </p>
+                                  <div className="flex min-w-0 items-center justify-start sm:shrink-0 sm:justify-end">
                                     <div className="inline-flex rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-0.5 text-[11px] font-semibold leading-4">
                                       <button
                                         type="button"
@@ -675,7 +683,7 @@ export function OcasCalculatorClient()
                                           ...current,
                                           mode: "percentage",
                                         }))}
-                                        className={`rounded-full px-2.5 py-1 transition-colors ${
+                                        className={`rounded-full px-1.5 py-1 transition-colors sm:px-2.5 ${
                                           isPercentageMode
                                             ? "calculator-primary-action bg-[var(--primary)] text-on-primary"
                                             : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
@@ -689,7 +697,7 @@ export function OcasCalculatorClient()
                                           ...current,
                                           mode: "raw",
                                         }))}
-                                        className={`rounded-full px-2.5 py-1 transition-colors ${
+                                        className={`rounded-full px-1.5 py-1 transition-colors sm:px-2.5 ${
                                           isPercentageMode
                                             ? "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
                                             : "calculator-primary-action bg-[var(--primary)] text-on-primary"
@@ -699,9 +707,11 @@ export function OcasCalculatorClient()
                                       </button>
                                     </div>
                                   </div>
+                                </div>
 
+                                <div className="mt-2 sm:mt-3">
                                   {isPercentageMode ? (
-                                    <div className="grid grid-cols-[minmax(0,1fr)_4.5rem] gap-2 sm:grid-cols-[minmax(0,1fr)_5rem]">
+                                    <div className="flex min-w-0 gap-1.5 sm:gap-2">
                                       <input
                                         type="number"
                                         min="0"
@@ -714,14 +724,14 @@ export function OcasCalculatorClient()
                                           percentage: event.target.value,
                                         }))}
                                         placeholder="Enter percentage"
-                                        className="h-10 min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                        className="h-9 min-w-0 flex-1 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:h-10 sm:px-3"
                                       />
-                                      <div className="flex h-10 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[12px] font-semibold text-[var(--on-surface-variant)]">
+                                      <div className="flex h-9 w-12 shrink-0 items-center justify-center rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] text-[12px] font-semibold text-[var(--on-surface-variant)] sm:h-10 sm:w-20">
                                         %
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                                       <input
                                         type="number"
                                         min="0"
@@ -733,7 +743,7 @@ export function OcasCalculatorClient()
                                           rawScore: event.target.value,
                                         }))}
                                         placeholder="Score"
-                                        className="h-10 min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                        className="h-9 min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:h-10 sm:px-3"
                                       />
                                       <input
                                         type="number"
@@ -746,7 +756,7 @@ export function OcasCalculatorClient()
                                           rawMax: event.target.value,
                                         }))}
                                         placeholder="Out of"
-                                        className="h-10 min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                                        className="h-9 min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:h-10 sm:px-3"
                                       />
                                     </div>
                                   )}
@@ -771,7 +781,7 @@ export function OcasCalculatorClient()
           </div>
         </section>
 
-        <aside className="space-y-4">
+        <aside className="space-y-3 sm:space-y-4">
           <section className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:p-3">
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2 sm:gap-0 sm:divide-x sm:divide-y-0">
@@ -815,10 +825,47 @@ export function OcasCalculatorClient()
               </div>
             </div>
           </section>
+
+          <section className="calculator-panel calculator-nested-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-2.5 sm:p-3">
+            <h2 className="text-[13px] font-bold text-[var(--on-surface)]">SUSS grade scale</h2>
+            <div className="mt-3 grid grid-cols-[auto_1fr_auto] gap-x-3 gap-y-1.5 text-[12px]">
+              <span className="font-semibold text-[var(--on-surface-variant)]">Grade</span>
+              <span className="font-semibold text-[var(--on-surface-variant)]">Mark</span>
+              <span className="text-right font-semibold text-[var(--on-surface-variant)]">GPV</span>
+              {GRADE_BANDS.map((band, index) => (
+                <div key={band.grade} className="col-span-3 grid grid-cols-subgrid items-center">
+                  <span className="font-semibold text-[var(--on-surface)]">{band.grade}</span>
+                  <span className="text-[var(--on-surface-variant)]">
+                    {formatGradeRange(index)}
+                  </span>
+                  <span className="text-right text-[var(--on-surface-variant)]">
+                    {GRADE_POINT_VALUES[band.grade].toFixed(1)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
         </aside>
       </div>
     </section>
   );
+}
+
+function formatGradeRange(index: number)
+{
+  const band = GRADE_BANDS[index];
+
+  if (index === 0)
+  {
+    return `${band.minimum}–100%`;
+  }
+
+  if (index === GRADE_BANDS.length - 1)
+  {
+    return `0–${GRADE_BANDS[index - 1].minimum - 1}%`;
+  }
+
+  return `${band.minimum}–${GRADE_BANDS[index - 1].minimum - 1}%`;
 }
 
 function formatCompletedWeight(value: number)

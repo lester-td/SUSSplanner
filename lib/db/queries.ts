@@ -6,6 +6,7 @@ import {
   desc,
   eq,
   exists,
+  gte,
   ilike,
   inArray,
   isNull,
@@ -17,6 +18,7 @@ import { unstable_cache } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { CourseSearchFilters } from "@/lib/timetable/course-search";
 import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
+import { getSingaporeDateString } from "@/lib/timetable/date-utils";
 import { buildSharedClassIdentifier } from "@/lib/timetable/share-url";
 import type {
   AssessmentComponentRecord,
@@ -34,6 +36,8 @@ import type {
 } from "@/lib/timetable/types";
 import { db } from "./index";
 import {
+  academicCalendarEvents,
+  academicCalendarEventSemesters,
   assessmentComponents,
   classes,
   classEvents,
@@ -44,6 +48,21 @@ import {
 } from "./schema";
 
 const LOOKUP_REVALIDATE_SECONDS = 600;
+
+export type AcademicCalendarEventRecord = {
+  eventId: number;
+  calendarYear: number;
+  audience: "FTUG" | "PTUG" | "LAW" | "GRAD";
+  eventTitle: string;
+  eventCategory: string;
+  startDate: string;
+  endDate: string;
+  status: "confirmed" | "tentative" | "cancelled";
+  sourceUrl: string | null;
+  remarks: string | null;
+  sortOrder: number;
+  semesters: SemesterRecord[];
+};
 
 function normalizeCourseCode(courseCode: string)
 {
@@ -221,6 +240,180 @@ const getSemestersWithWeeksCached = unstable_cache(
 export async function getSemestersWithWeeks()
 {
   return getSemestersWithWeeksCached();
+}
+
+const getUpcomingAcademicCalendarEventsCached = unstable_cache(
+  async (today: string) => {
+    const rows = await db
+      .select({
+        eventId: academicCalendarEvents.eventId,
+        calendarYear: academicCalendarEvents.calendarYear,
+        audience: academicCalendarEvents.audience,
+        eventTitle: academicCalendarEvents.eventTitle,
+        eventCategory: academicCalendarEvents.eventCategory,
+        startDate: academicCalendarEvents.startDate,
+        endDate: academicCalendarEvents.endDate,
+        status: academicCalendarEvents.status,
+        sourceUrl: academicCalendarEvents.sourceUrl,
+        remarks: academicCalendarEvents.remarks,
+        sortOrder: academicCalendarEvents.sortOrder,
+        semesterId: semesters.semesterId,
+        academicYear: semesters.academicYear,
+        semesterNo: semesters.semesterNo,
+        semesterName: semesters.semesterName,
+      })
+      .from(academicCalendarEvents)
+      .leftJoin(academicCalendarEventSemesters, eq(academicCalendarEventSemesters.eventId, academicCalendarEvents.eventId))
+      .leftJoin(semesters, eq(semesters.semesterId, academicCalendarEventSemesters.semesterId))
+      .where(and(
+        gte(academicCalendarEvents.endDate, today),
+        inArray(academicCalendarEvents.status, ["confirmed", "tentative"]),
+      ))
+      .orderBy(
+        asc(academicCalendarEvents.startDate),
+        asc(academicCalendarEvents.sortOrder),
+        asc(academicCalendarEvents.eventTitle),
+        asc(academicCalendarEvents.audience),
+        asc(semesters.academicYear),
+        asc(semesters.semesterNo),
+      );
+
+    const eventsById = new Map<number, AcademicCalendarEventRecord>();
+
+    for (const row of rows)
+    {
+      let event = eventsById.get(row.eventId);
+      if (!event)
+      {
+        event = {
+          eventId: row.eventId,
+          calendarYear: row.calendarYear,
+          audience: row.audience as AcademicCalendarEventRecord["audience"],
+          eventTitle: row.eventTitle,
+          eventCategory: row.eventCategory,
+          startDate: row.startDate,
+          endDate: row.endDate,
+          status: row.status as AcademicCalendarEventRecord["status"],
+          sourceUrl: row.sourceUrl,
+          remarks: row.remarks,
+          sortOrder: row.sortOrder,
+          semesters: [],
+        };
+        eventsById.set(row.eventId, event);
+      }
+
+      if (row.semesterId !== null && row.academicYear !== null && row.semesterNo !== null && row.semesterName !== null)
+      {
+        event.semesters.push({
+          semesterId: row.semesterId,
+          academicYear: row.academicYear,
+          semesterNo: row.semesterNo as SemesterRecord["semesterNo"],
+          semesterName: row.semesterName,
+        });
+      }
+    }
+
+    return [...eventsById.values()];
+  },
+  ["db:getUpcomingAcademicCalendarEvents"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [CACHE_TAGS.academicCalendarEvents, CACHE_TAGS.semesters],
+  },
+);
+
+export async function getUpcomingAcademicCalendarEvents(today = getSingaporeDateString())
+{
+  return getUpcomingAcademicCalendarEventsCached(today);
+}
+
+const getLatestDataUpdatedAtCached = unstable_cache(
+  async () => {
+    const rows = await Promise.all([
+      db.select({ value: sql<Date | string | null>`max(${courses.lastUpdated})` }).from(courses),
+      db.select({ value: sql<Date | string | null>`max(${semesters.lastUpdated})` }).from(semesters),
+      db.select({ value: sql<Date | string | null>`max(${semesterWeeks.lastUpdated})` }).from(semesterWeeks),
+      db.select({ value: sql<Date | string | null>`max(${academicCalendarEvents.lastUpdated})` }).from(academicCalendarEvents),
+      db.select({ value: sql<Date | string | null>`max(${classes.lastUpdated})` }).from(classes),
+      db.select({ value: sql<Date | string | null>`max(${classEvents.lastUpdated})` }).from(classEvents),
+      db.select({ value: sql<Date | string | null>`max(${assessmentComponents.lastUpdated})` }).from(assessmentComponents),
+    ]);
+
+    const timestamps = rows
+      .map(([row]) => row?.value)
+      .map((value) => {
+        if (!value)
+        {
+          return null;
+        }
+
+        const date = value instanceof Date ? value : new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+      })
+      .filter((value): value is Date => value !== null);
+
+    if (timestamps.length === 0)
+    {
+      return null;
+    }
+
+    return new Date(Math.max(...timestamps.map((value) => value.getTime()))).toISOString();
+  },
+  ["db:getLatestDataUpdatedAt"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [
+      CACHE_TAGS.courses,
+      CACHE_TAGS.semesters,
+      CACHE_TAGS.semesterWeeks,
+      CACHE_TAGS.academicCalendarEvents,
+      CACHE_TAGS.classes,
+      CACHE_TAGS.assessments,
+    ],
+  },
+);
+
+export async function getLatestDataUpdatedAt()
+{
+  return getLatestDataUpdatedAtCached();
+}
+
+const getHomePageDataCoverageCached = unstable_cache(
+  async () => {
+    const [
+      courseRows,
+      classRows,
+      semesterRows,
+      assessmentRows,
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(courses),
+      db.select({ count: sql<number>`count(*)::int` }).from(classes),
+      db.select({ count: sql<number>`count(*)::int` }).from(semesters),
+      db.select({ count: sql<number>`count(*)::int` }).from(assessmentComponents),
+    ]);
+
+    return {
+      courseCount: courseRows[0]?.count ?? 0,
+      classCount: classRows[0]?.count ?? 0,
+      semesterCount: semesterRows[0]?.count ?? 0,
+      assessmentCount: assessmentRows[0]?.count ?? 0,
+    };
+  },
+  ["db:getHomePageDataCoverage"],
+  {
+    revalidate: LOOKUP_REVALIDATE_SECONDS,
+    tags: [
+      CACHE_TAGS.courses,
+      CACHE_TAGS.semesters,
+      CACHE_TAGS.classes,
+      CACHE_TAGS.assessments,
+    ],
+  },
+);
+
+export async function getHomePageDataCoverage()
+{
+  return getHomePageDataCoverageCached();
 }
 
 const getSemestersWithClassesAndWeeksCached = unstable_cache(

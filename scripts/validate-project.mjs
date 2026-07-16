@@ -52,6 +52,7 @@ function runChecks()
   checkDatabaseUrl();
   checkSupabaseEnv();
   checkRevalidateSecret();
+  checkFeedbackEmailEnv();
   checkAllowedDevOrigins();
 }
 
@@ -256,6 +257,51 @@ function checkRevalidateSecret()
   collectedChecks.push("CACHE_REVALIDATE_SECRET is configured.");
 }
 
+function checkFeedbackEmailEnv()
+{
+  const resendApiKey = resolvedEnv.RESEND_API_KEY?.trim();
+  const from = resolvedEnv.FEEDBACK_EMAIL_FROM?.trim();
+  const to = resolvedEnv.FEEDBACK_EMAIL_TO?.trim();
+  const values = [resendApiKey, from, to];
+
+  if (values.every((value) => !value))
+  {
+    warnings.push("Feedback email variables are unset. `/feedback` will render, but submissions need RESEND_API_KEY, FEEDBACK_EMAIL_FROM, and FEEDBACK_EMAIL_TO.");
+    return;
+  }
+
+  if (values.some((value) => !value))
+  {
+    warnings.push("Only some feedback email variables are set. Configure RESEND_API_KEY, FEEDBACK_EMAIL_FROM, and FEEDBACK_EMAIL_TO together.");
+    return;
+  }
+
+  if ((resendApiKey && containsPlaceholder(resendApiKey)) || (to && containsPlaceholder(to)))
+  {
+    warnings.push("Feedback email variables still contain placeholder text.");
+    return;
+  }
+
+  const recipients = to
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+
+  if (recipients.length === 0 || recipients.some((email) => !isLikelyEmail(email)))
+  {
+    warnings.push("FEEDBACK_EMAIL_TO should contain one email address, or comma-separated email addresses.");
+    return;
+  }
+
+  if (!from.includes("@"))
+  {
+    warnings.push("FEEDBACK_EMAIL_FROM should be a sender address from your verified Resend domain.");
+    return;
+  }
+
+  collectedChecks.push("Feedback email variables are configured.");
+}
+
 function checkAllowedDevOrigins()
 {
   const rawOrigins = resolvedEnv.NEXT_ALLOWED_DEV_ORIGINS?.trim();
@@ -283,6 +329,11 @@ function checkAllowedDevOrigins()
 function containsPlaceholder(value)
 {
   return /<[^>]+>/.test(value);
+}
+
+function isLikelyEmail(value)
+{
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function isValidAllowedOrigin(origin)

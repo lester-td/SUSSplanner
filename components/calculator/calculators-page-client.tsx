@@ -19,7 +19,7 @@ export function CalculatorsPageClient()
   return (
     <div className="calculators-page w-full">
       <div className="mb-5 flex flex-col gap-3">
-        <h1 className="text-[30px] font-semibold leading-10 text-[var(--on-surface)]">
+        <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[32px] sm:leading-10 sm:tracking-normal">
           Calculators
         </h1>
         <div

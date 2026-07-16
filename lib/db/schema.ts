@@ -48,6 +48,26 @@ export const semesterWeeks = pgTable("semester_weeks", {
   lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
 });
 
+export const academicCalendarEvents = pgTable("academic_calendar_events", {
+  eventId: bigint("event_id", { mode: "number" }).primaryKey(),
+  calendarYear: smallint("calendar_year").notNull(),
+  audience: varchar("audience", { length: 20 }).notNull(),
+  eventTitle: varchar("event_title", { length: 255 }).notNull(),
+  eventCategory: varchar("event_category", { length: 50 }).notNull(),
+  startDate: date("start_date", { mode: "string" }).notNull(),
+  endDate: date("end_date", { mode: "string" }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(),
+  sourceUrl: text("source_url"),
+  remarks: text("remarks"),
+  sortOrder: integer("sort_order").notNull(),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
+});
+
+export const academicCalendarEventSemesters = pgTable("academic_calendar_event_semesters", {
+  eventId: bigint("event_id", { mode: "number" }).notNull(),
+  semesterId: bigint("semester_id", { mode: "number" }).notNull(),
+});
+
 export const classes = pgTable("classes", {
   classId: bigint("class_id", { mode: "number" }).primaryKey(),
   courseCode: varchar("course_code", { length: 20 }).notNull(),

@@ -865,7 +865,7 @@ export function CourseSearchPage({
           >
             <div className="flex items-baseline justify-between gap-2 md:items-end md:gap-3">
               <div className="min-w-0">
-                <h1 className="text-[24px] font-semibold leading-8 tracking-[-0.02em] text-[var(--on-surface)] md:text-[28px] md:leading-9">Course Search</h1>
+                <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[32px] sm:leading-10 sm:tracking-normal">Course Search</h1>
               </div>
               <div className="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)]">
                 {loading ? "Loading courses..." : `${filteredCourses.length} courses found`}
@@ -875,7 +875,7 @@ export function CourseSearchPage({
 
           <div className={`course-search-sticky-header sticky z-30 border-b border-[var(--brand-divider)] transition-[padding-bottom,background-color] duration-200 ${isMobileSearchHeaderCompact ? "pb-2" : "pb-3"} md:pb-3`}>
             <div
-              className={`relative block transition-[margin-top] duration-200 ${isMobileViewport ? (isMobileSearchHeaderCompact ? "mt-0" : "mt-2") : isMobileSearchHeaderCompact ? "mt-0" : "mt-4"} md:mt-4`}
+              className={`relative block transition-[margin-top] duration-200 ${isMobileViewport ? (isMobileSearchHeaderCompact ? "mt-0" : "mt-0.5") : isMobileSearchHeaderCompact ? "mt-0" : "mt-4"} md:mt-4`}
             >
               <SearchIcon className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] transition-[left,width,height] duration-200 ${isMobileViewport ? "left-3 h-4 w-4" : isMobileSearchHeaderCompact ? "left-3 h-4 w-4" : "left-3.5 h-5 w-5"} md:left-4 md:h-5 md:w-5`} />
               <input
@@ -883,7 +883,7 @@ export function CourseSearchPage({
                 value={filters.q}
                 onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
                 placeholder={isMobileViewport ? "Course code, title, or description" : "Search by course code, course title, or descriptions"}
-                className={`elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] pr-4 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-[border-color,box-shadow,padding,font-size] duration-200 ${isMobileViewport ? "py-2.5 pl-10 text-[16px]" : isMobileSearchHeaderCompact ? "py-2.5 pl-10 text-[14px]" : "py-3 pl-11 text-[15px]"} md:py-3 md:pl-12 md:text-[15px]`}
+                className={`elev-1 w-full rounded-[0.8rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] pr-4 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-[border-color,box-shadow,padding,font-size] duration-200 ${isMobileViewport ? "py-2.5 pl-10 text-[14px]" : isMobileSearchHeaderCompact ? "py-2.5 pl-10 text-[14px]" : "py-3 pl-11 text-[15px]"} md:py-3 md:pl-12 md:text-[15px]`}
               />
             </div>
           </div>
@@ -898,7 +898,7 @@ export function CourseSearchPage({
                 const semesterIndicators = buildSemesterIndicators(course);
 
                 return (
-                <article key={course.courseCode} className="px-2.5 py-3 md:px-4">
+                <article key={course.courseCode} className="px-0.5 py-3 md:px-4">
                   <div className="flex flex-col gap-2">
                     <h2 className="min-w-0 text-[18px] font-bold leading-7 tracking-[-0.02em]">
                       <Link
@@ -1052,7 +1052,7 @@ function CoursePagination({
   return (
     <nav
       aria-label="Courses pagination"
-      className="px-2.5 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] md:px-4"
+      className="px-0.5 pt-2 text-[12px] leading-4 text-[var(--on-surface-variant)] md:px-4"
     >
       <div className="flex items-center gap-3 md:hidden">
         <div className="min-w-0 font-medium">

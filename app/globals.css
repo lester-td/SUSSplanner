@@ -169,6 +169,13 @@
 
   html {
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+  }
+
+  @supports not (scrollbar-gutter: stable) {
+    html {
+      overflow-y: scroll;
+    }
   }
 
   body {
@@ -256,6 +263,26 @@
   color: #4B5563;
 }
 
+.upcoming-date-dot--default {
+  background: var(--surface-container-lowest);
+  color: var(--primary);
+}
+
+.upcoming-date-dot--open {
+  background: rgba(46, 125, 50, 0.14);
+  color: #2E7D32;
+}
+
+.upcoming-date-dot--upcoming {
+  background: rgba(250, 204, 21, 0.18);
+  color: #D29A00;
+}
+
+.upcoming-date-dot--closing {
+  background: rgba(180, 35, 24, 0.12);
+  color: #B42318;
+}
+
 :root[data-color-scheme="dark"] .registration-reminder-status--open {
   background: rgba(34, 197, 94, 0.14);
   border-color: rgba(34, 197, 94, 0.45);
@@ -278,6 +305,21 @@
   background: rgba(148, 163, 184, 0.12);
   border-color: rgba(148, 163, 184, 0.35);
   color: #CBD5E1;
+}
+
+:root[data-color-scheme="dark"] .upcoming-date-dot--open {
+  background: rgba(34, 197, 94, 0.11);
+  color: #57C982;
+}
+
+:root[data-color-scheme="dark"] .upcoming-date-dot--upcoming {
+  background: rgba(250, 204, 21, 0.12);
+  color: #E0B84A;
+}
+
+:root[data-color-scheme="dark"] .upcoming-date-dot--closing {
+  background: rgba(239, 68, 68, 0.11);
+  color: #DC7A7A;
 }
 
 .course-search-page {
@@ -408,21 +450,15 @@
   }
 
   .app-navbar__mobile-nav {
-    display: flex;
+    display: grid;
     align-items: stretch;
-    flex-wrap: nowrap;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0.5rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .app-navbar__mobile-nav::-webkit-scrollbar {
-    display: none;
+    width: 100%;
   }
 
   .app-navbar__mobile-nav .app-nav-link {
-    flex: 0 0 auto;
+    width: 100%;
     min-height: 3rem;
     padding: 0.75rem 0.5rem;
     border-radius: 1rem;
@@ -440,14 +476,14 @@
 
 @media (min-width: 768px) and (max-width: 1199px) {
   .app-navbar__mobile-nav {
-    gap: 0.45rem;
+    gap: 0.35rem;
   }
 
   .app-navbar__mobile-nav .app-nav-link {
     justify-content: center;
-    gap: 0.55rem;
+    gap: 0.4rem;
     min-height: 2.75rem;
-    padding: 0.6rem 0.8rem;
+    padding: 0.6rem 0.45rem;
   }
 
   .app-navbar__mobile-nav .app-nav-label {
@@ -472,12 +508,8 @@
   }
 
   .app-navbar__mobile-nav {
-    display: grid;
-    width: 100%;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
     justify-items: center;
     gap: 0.35rem;
-    overflow: visible;
   }
 
   .app-navbar__mobile-nav .app-nav-link {

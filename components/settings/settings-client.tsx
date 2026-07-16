@@ -245,10 +245,11 @@ function SettingRow({
   }
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1.5">
-      <div className="min-w-0 flex flex-col gap-1.5">
+    <div className="flow-root sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-x-4 sm:gap-y-1.5">
+      <div className="float-right mb-1 ml-3 sm:col-start-2 sm:row-start-1 sm:float-none sm:mb-0 sm:ml-0 sm:justify-self-end md:self-start">{children}</div>
+      <div className="min-w-0 sm:col-start-1 sm:row-start-1">
         <h3 className="text-[16px] font-bold leading-6 text-[var(--on-surface)] sm:text-[17px]">{title}</h3>
-        <p className="text-[14px] leading-6 text-[var(--on-surface-variant)]">
+        <p className="mt-1.5 text-[14px] leading-6 text-[var(--on-surface-variant)]">
           {description}
         </p>
         {detail ? (
@@ -257,7 +258,6 @@ function SettingRow({
           </div>
         ) : null}
       </div>
-      <div className="justify-self-end md:self-start">{children}</div>
     </div>
   );
 }
@@ -689,16 +689,16 @@ export function SettingsClient()
       <div className="flex flex-col gap-5 sm:gap-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[28px] font-bold leading-8 text-[var(--on-surface)] sm:text-[32px] sm:leading-10">
+            <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[32px] sm:leading-10 sm:tracking-normal">
               Settings
             </h1>
-            <p className="mt-1.5 max-w-3xl text-[14px] leading-6 text-[var(--on-surface-variant)] sm:mt-2 sm:text-[15px] sm:leading-7">
+            <p className="mt-2 max-w-3xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[15px] sm:leading-7">
               Customise how SUSS Planner looks and behaves on this browser.
             </p>
           </div>
         </div>
 
-        <div className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-4 shadow-sm sm:px-6 sm:py-6">
+        <div className="-mx-3 border-y border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-4 sm:mx-0 sm:rounded-lg sm:border sm:px-6 sm:py-6 sm:shadow-sm">
           <Section id="appearance" title="Appearance">
             <SettingRow
               title="Night mode"

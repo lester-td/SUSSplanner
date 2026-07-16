@@ -2,6 +2,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { CourseSearchPage } from "@/components/courses/course-search-page";
 import {
   getCourseSearchFacets,
+  getLatestDataUpdatedAt,
   getSemesters,
   getSemestersWithWeeks,
 } from "@/lib/db/queries";
@@ -14,10 +15,11 @@ export default async function CoursesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 })
 {
-  const [allSemesters, semesterTree, facets, rawSearchParams] = await Promise.all([
+  const [allSemesters, semesterTree, facets, latestDataUpdatedAt, rawSearchParams] = await Promise.all([
     getSemesters(),
     getSemestersWithWeeks(),
     getCourseSearchFacets(),
+    getLatestDataUpdatedAt(),
     searchParams,
   ]);
 
@@ -32,6 +34,7 @@ export default async function CoursesPage({
     <AppShell
       activeSection="courses"
       currentSemesterContext={currentSemesterContext}
+      dataUpdatedAt={latestDataUpdatedAt}
     >
       <CourseSearchPage
         semesters={allSemesters}
