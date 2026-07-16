@@ -27,8 +27,8 @@ export function SemesterPlannerPanel({
 })
 {
   return (
-    <aside className={`space-y-3 md:space-y-4 lg:sticky lg:top-[90px] lg:max-h-[calc(100vh-110px)] lg:self-start lg:pr-1 ${
-      draggedCourseId ? "lg:overflow-visible" : "lg:overflow-y-auto"
+    <aside className={`space-y-3 md:sticky md:top-[90px] md:max-h-[calc(100vh-110px)] md:self-start md:space-y-4 md:pr-1 ${
+      draggedCourseId ? "md:overflow-visible" : "md:overflow-y-auto"
     }`}>
       <DroppableDiv
         id={COURSE_BANK_DROP_ID}

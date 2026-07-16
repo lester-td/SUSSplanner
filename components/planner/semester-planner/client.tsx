@@ -827,8 +827,8 @@ export function SemesterPlannerClient({
           </div>
         </div>
 
-        <section className="grid gap-3 lg:grid-cols-2">
-          <div className="planner-control-card order-2 rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:px-5 md:py-5 lg:order-1">
+        <section className="grid gap-3 md:grid-cols-2">
+          <div className="planner-control-card order-2 rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:order-1 md:px-5 md:py-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 {isCustomCourse ? (
@@ -984,8 +984,8 @@ export function SemesterPlannerClient({
             )}
           </div>
 
-          <div className="planner-control-card order-1 rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:px-5 md:py-5 lg:order-2">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="planner-control-card order-1 rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:order-2 md:px-5 md:py-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="flex items-center gap-2 md:hidden">
                   <ListIcon className="h-6 w-6 text-[var(--primary)]" />
@@ -997,8 +997,8 @@ export function SemesterPlannerClient({
                 </p>
               </div>
 
-              <div className="hidden flex-col items-start gap-1.5 self-start md:flex md:items-end">
-                <div className="flex gap-2 md:justify-end">
+              <div className="hidden flex-col items-start gap-1.5 self-start md:flex lg:items-end">
+                <div className="flex gap-2 lg:justify-end">
                   <button
                     type="button"
                     onClick={openPlanPdf}
@@ -1154,7 +1154,7 @@ export function SemesterPlannerClient({
           onDragEnd={handleCourseDragEnd}
           onDragCancel={handleCourseDragCancel}
         >
-        <section className="grid gap-3 md:gap-4 xl:grid-cols-[21rem_minmax(0,1fr)]">
+        <section className="grid gap-3 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-4">
           <SemesterPlannerPanel
             bankCourses={bankCourses}
             draggedCourseId={draggedCourseId}
@@ -1164,7 +1164,7 @@ export function SemesterPlannerClient({
             onToggleShowAllModules={() => setShowAllModules((current) => !current)}
           />
 
-          <section className="space-y-3 md:space-y-4">
+          <section className="min-w-0 space-y-3 md:space-y-4">
             <div className="space-y-3">
               {semesterIndexes.map((semesterIndex) => {
                 const startingCourses = sortedCourses.filter((course) => course.assignedSemester === semesterIndex);
@@ -1204,7 +1204,7 @@ export function SemesterPlannerClient({
                     </div>
 
                     {continuedCourses.length > 0 ? (
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      <div className="planner-semester-course-grid mt-3 grid gap-2">
                         {continuedCourses.map((course) => (
                           <div
                             key={`${course.id}-continued-${semesterIndex}`}
@@ -1224,9 +1224,9 @@ export function SemesterPlannerClient({
                       </div>
                     ) : null}
 
-                    <div className="mt-3 grid gap-2 md:mt-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="planner-semester-course-grid mt-3 grid gap-2 md:mt-4">
                       {startingCourses.length === 0 && continuedCourses.length === 0 ? (
-                        <p className="planner-empty-state rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)] md:py-5 sm:col-span-2 xl:col-span-3">
+                        <p className="planner-empty-state col-span-full rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)] md:py-5">
                           {draggedCourseId ? "Drop module here." : "Move modules here from the planner bank."}
                         </p>
                       ) : null}

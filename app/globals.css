@@ -803,6 +803,16 @@
   box-shadow: inset 3px 0 0 var(--planner-continuation-accent);
 }
 
+.planner-semester-course-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 640px) {
+  .planner-semester-course-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+}
+
 :root[data-color-scheme="dark"] .planner-continuation-card {
   --planner-continuation-border: rgb(var(--suss-light-blue-rgb) / 0.28);
   --planner-continuation-bg: color-mix(in srgb, var(--surface-container), #000 8%);
