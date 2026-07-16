@@ -76,6 +76,49 @@ function clampNumber(value: number, minimum: number, maximum: number)
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+function priorNumberToInputValue(value: number, maximum?: number)
+{
+  const parsedValue = maximum === undefined
+    ? Math.max(0, Number(value) || 0)
+    : clampNumber(Number(value), 0, maximum);
+
+  return parsedValue > 0 ? String(parsedValue) : "";
+}
+
+function priorInputToNumber(value: string, maximum?: number)
+{
+  if (value.trim() === "")
+  {
+    return 0;
+  }
+
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue))
+  {
+    return 0;
+  }
+
+  return maximum === undefined
+    ? Math.max(0, parsedValue)
+    : clampNumber(parsedValue, 0, maximum);
+}
+
+function nextPriorGpaInputValue(value: string)
+{
+  if (value.trim() === "")
+  {
+    return "";
+  }
+
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue))
+  {
+    return value;
+  }
+
+  return parsedValue > 5 ? "5" : value;
+}
+
 function formatGpa(value: number | null)
 {
   return value === null ? "—" : value.toFixed(2);
@@ -117,8 +160,8 @@ function useDebouncedValue(value: string, delayMs: number)
 export function GpaCalculatorClient()
 {
   const [modules, setModules] = useState<CalculatorModule[]>([]);
-  const [priorGpa, setPriorGpa] = useState(0);
-  const [priorCredits, setPriorCredits] = useState(0);
+  const [priorGpaInput, setPriorGpaInput] = useState("");
+  const [priorCreditsInput, setPriorCreditsInput] = useState("");
   const [isCustomModule, setIsCustomModule] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<CalculatorCourseSearchResult[]>([]);
@@ -130,6 +173,8 @@ export function GpaCalculatorClient()
   const [ready, setReady] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebouncedValue(searchQuery, 250);
+  const priorGpa = useMemo(() => priorInputToNumber(priorGpaInput, 5), [priorGpaInput]);
+  const priorCredits = useMemo(() => priorInputToNumber(priorCreditsInput), [priorCreditsInput]);
 
   useEffect(() => {
     try
@@ -143,8 +188,8 @@ export function GpaCalculatorClient()
           priorCredits?: number;
         };
         setModules(Array.isArray(parsed.modules) ? parsed.modules : []);
-        setPriorGpa(clampNumber(Number(parsed.priorGpa), 0, 5));
-        setPriorCredits(Math.max(0, Number(parsed.priorCredits) || 0));
+        setPriorGpaInput(priorNumberToInputValue(Number(parsed.priorGpa), 5));
+        setPriorCreditsInput(priorNumberToInputValue(Number(parsed.priorCredits)));
       }
     }
     catch
@@ -754,18 +799,18 @@ export function GpaCalculatorClient()
                   min="0"
                   max="5"
                   step="0.01"
-                  value={priorGpa}
-                  onChange={(event) => setPriorGpa(clampNumber(Number(event.target.value), 0, 5))}
+                  value={priorGpaInput}
+                  onChange={(event) => setPriorGpaInput(nextPriorGpaInputValue(event.target.value))}
                   className="w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-[14px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                 />
               </CalculatorField>
               <CalculatorField label="Previously completed CUs">
-                <input
+                  <input
                   type="number"
                   min="0"
-                  step="0.5"
-                  value={priorCredits}
-                  onChange={(event) => setPriorCredits(Math.max(0, Number(event.target.value) || 0))}
+                  step="2.5"
+                  value={priorCreditsInput}
+                  onChange={(event) => setPriorCreditsInput(event.target.value)}
                   className="w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-[14px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                 />
               </CalculatorField>
