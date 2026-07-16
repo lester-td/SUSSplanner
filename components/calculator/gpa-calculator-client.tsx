@@ -119,6 +119,22 @@ function nextPriorGpaInputValue(value: string)
   return parsedValue > 5 ? "5" : value;
 }
 
+function capInputToMaximum(value: string, maximum: number)
+{
+  if (value.trim() === "")
+  {
+    return "";
+  }
+
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue))
+  {
+    return value;
+  }
+
+  return parsedValue > maximum ? String(maximum) : value;
+}
+
 function formatGpa(value: number | null)
 {
   return value === null ? "—" : value.toFixed(2);
@@ -162,6 +178,7 @@ export function GpaCalculatorClient()
   const [modules, setModules] = useState<CalculatorModule[]>([]);
   const [priorGpaInput, setPriorGpaInput] = useState("");
   const [priorCreditsInput, setPriorCreditsInput] = useState("");
+  const [priorPassFailCreditsInput, setPriorPassFailCreditsInput] = useState("");
   const [isCustomModule, setIsCustomModule] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<CalculatorCourseSearchResult[]>([]);
@@ -175,6 +192,11 @@ export function GpaCalculatorClient()
   const debouncedQuery = useDebouncedValue(searchQuery, 250);
   const priorGpa = useMemo(() => priorInputToNumber(priorGpaInput, 5), [priorGpaInput]);
   const priorCredits = useMemo(() => priorInputToNumber(priorCreditsInput), [priorCreditsInput]);
+  const priorPassFailCredits = useMemo(
+    () => Math.min(priorInputToNumber(priorPassFailCreditsInput), priorCredits),
+    [priorCredits, priorPassFailCreditsInput],
+  );
+  const priorGpaCredits = Math.max(0, priorCredits - priorPassFailCredits);
 
   useEffect(() => {
     try
@@ -186,10 +208,12 @@ export function GpaCalculatorClient()
           modules?: CalculatorModule[];
           priorGpa?: number;
           priorCredits?: number;
+          priorPassFailCredits?: number;
         };
         setModules(Array.isArray(parsed.modules) ? parsed.modules : []);
         setPriorGpaInput(priorNumberToInputValue(Number(parsed.priorGpa), 5));
         setPriorCreditsInput(priorNumberToInputValue(Number(parsed.priorCredits)));
+        setPriorPassFailCreditsInput(priorNumberToInputValue(Number(parsed.priorPassFailCredits)));
       }
     }
     catch
@@ -212,8 +236,13 @@ export function GpaCalculatorClient()
       modules,
       priorGpa,
       priorCredits,
+      priorPassFailCredits,
     }));
-  }, [modules, priorCredits, priorGpa, ready]);
+  }, [modules, priorCredits, priorGpa, priorPassFailCredits, ready]);
+
+  useEffect(() => {
+    setPriorPassFailCreditsInput((currentValue) => capInputToMaximum(currentValue, priorCredits));
+  }, [priorCredits]);
 
   useEffect(() => {
     const query = debouncedQuery.trim();
@@ -284,12 +313,14 @@ export function GpaCalculatorClient()
       (total, module) => total + (module.isPassFail ? 0 : module.creditUnits * module.gradePoint),
       0,
     );
-    const totalCredits = priorCredits + currentGpaCredits;
+    const totalGpaCredits = priorGpaCredits + currentGpaCredits;
 
-    return totalCredits > 0
-      ? ((priorGpa * priorCredits) + currentPoints) / totalCredits
+    return totalGpaCredits > 0
+      ? ((priorGpa * priorGpaCredits) + currentPoints) / totalGpaCredits
       : null;
-  }, [currentGpaCredits, modules, priorCredits, priorGpa]);
+  }, [currentGpaCredits, modules, priorGpa, priorGpaCredits]);
+  const totalCompletedCredits = priorCredits + currentCredits;
+  const totalGpaCredits = priorGpaCredits + currentGpaCredits;
 
   function addModule(course: CalculatorCourseSearchResult)
   {
@@ -370,23 +401,27 @@ export function GpaCalculatorClient()
     <div className="calculator-page calculator-section calculator-section--gpa w-full pb-6">
       <section className="mb-2 md:mb-3">
         <div className="grid gap-1.5 md:hidden">
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
             <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" compact />
             <StatItem label="Courses" value={String(modules.length)} tone="semester" compact />
             <StatItem label="Credit Units" value={currentCredits.toFixed(1)} tone="semester" compact />
+            <StatItem label="GPA Credits" value={currentGpaCredits.toFixed(1)} tone="semester" compact />
           </div>
           <div className="grid grid-cols-2 gap-1.5">
             <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} tone="all-time" compact />
-            <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} tone="all-time" compact />
+            <StatItem label="Total GPA Credits" value={totalGpaCredits.toFixed(1)} tone="all-time" compact />
+            <StatItem label="Total Credit Units" value={totalCompletedCredits.toFixed(1)} tone="all-time" compact />
           </div>
         </div>
-        <div className="hidden md:grid md:grid-cols-[repeat(3,minmax(0,1fr))_1px_repeat(2,minmax(0,1fr))] md:items-stretch md:gap-3">
+        <div className="hidden md:grid md:grid-cols-[repeat(4,minmax(0,1fr))_1px_repeat(3,minmax(0,1fr))] md:items-stretch md:gap-3">
           <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" />
           <StatItem label="Courses" value={String(modules.length)} tone="semester" />
           <StatItem label="Credit Units" value={currentCredits.toFixed(1)} tone="semester" />
+          <StatItem label="GPA Credits" value={currentGpaCredits.toFixed(1)} tone="semester" />
           <div className="hidden self-stretch justify-self-center bg-[var(--outline-variant)] md:block md:w-px" aria-hidden="true" />
           <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} tone="all-time" />
-          <StatItem label="Total Credit Units" value={(priorCredits + currentGpaCredits).toFixed(1)} tone="all-time" />
+          <StatItem label="Total GPA Credits" value={totalGpaCredits.toFixed(1)} tone="all-time" />
+          <StatItem label="Total Credit Units" value={totalCompletedCredits.toFixed(1)} tone="all-time" />
         </div>
       </section>
 
@@ -785,7 +820,7 @@ export function GpaCalculatorClient()
                 className="calculator-primary-popover pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-64 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-on-primary shadow-[var(--shadow-elev-2)] group-hover:block group-focus-within:block"
               >
                 <span className="mb-0.5 block font-bold">Calculating completed CUs</span>
-                Exclude credit units from pass/fail modules.
+                Completed CUs include graded, pass/fail, and automatically pass/fail courses such as external certification modules. GPA credits exclude pass/fail CUs.
               </div>
             </div>
             <h2 className="pr-10 text-[15px] font-bold text-[var(--on-surface)]">Prior academic record</h2>
@@ -805,12 +840,22 @@ export function GpaCalculatorClient()
                 />
               </CalculatorField>
               <CalculatorField label="Previously completed CUs">
-                  <input
+                <input
                   type="number"
                   min="0"
                   step="2.5"
                   value={priorCreditsInput}
                   onChange={(event) => setPriorCreditsInput(event.target.value)}
+                  className="w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-[14px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                />
+              </CalculatorField>
+              <CalculatorField label="Previous pass/fail CUs">
+                <input
+                  type="number"
+                  min="0"
+                  step="2.5"
+                  value={priorPassFailCreditsInput}
+                  onChange={(event) => setPriorPassFailCreditsInput(capInputToMaximum(event.target.value, priorCredits))}
                   className="w-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-[14px] font-semibold outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                 />
               </CalculatorField>
