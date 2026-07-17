@@ -492,22 +492,26 @@ calculator request and returns the minimum catalog fields needed by the UI.
 Each class identifier is:
 
 ```text
-COURSECODE:scheduleType:groupCodeType:groupCode
+COURSECODE:groupCode
 ```
 
 Example:
 
 ```text
-/share?sem=1&classes=ICT133:evening:TG:T01,ANL252:daytime:CRN:12345
+/share?sem=3&classes=ANL303:TG01,ICT233:CRN01
 ```
+
+Share links infer daytime classes from `TG` group codes and evening classes
+from `CRN` group codes. Encoders place TG classes first, followed by CRN
+classes, and sort each group by course code and group code. The resolved
+timetable is cached for one hour with the standard timetable-data cache tags.
 
 Zod validation in `lib/validation/timetable.ts` enforces:
 
 - Positive integer semester ID.
 - Course code containing 3-20 uppercase alphanumeric characters.
-- `daytime` or `evening` schedule type.
-- `TG` or `CRN` group-code type.
-- Group code with no `:` or `,`.
+- Group code in `TG01` or `CRN01` form.
+- Daytime schedule type for TG classes and evening schedule type for CRN classes.
 - At most 50 selected classes.
 
 ## Authentication and Authorization

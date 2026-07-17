@@ -50,6 +50,7 @@ import {
 import { traceDbOperation } from "./tracing";
 
 const LOOKUP_REVALIDATE_SECONDS = 600;
+const TIMETABLE_REVALIDATE_SECONDS = 3600;
 
 export type AcademicCalendarEventRecord = {
   eventId: number;
@@ -1277,7 +1278,7 @@ export async function getTimetableDataFromClassIds(classIds: number[])
   );
 }
 
-export async function getTimetableDataFromClassIdentifiers(
+async function getTimetableDataFromClassIdentifiersUncached(
   selectedClasses: SharedClassIdentifier[],
   semesterId: number,
 )
@@ -1346,4 +1347,34 @@ export async function getTimetableDataFromClassIdentifiers(
       } satisfies TimetableData;
     },
   );
+}
+
+const getTimetableDataFromClassIdentifiersCached = unstable_cache(
+  getTimetableDataFromClassIdentifiersUncached,
+  ["db:getTimetableDataFromClassIdentifiers"],
+  {
+    revalidate: TIMETABLE_REVALIDATE_SECONDS,
+    tags: [
+      CACHE_TAGS.classes,
+      CACHE_TAGS.courses,
+      CACHE_TAGS.semesters,
+      CACHE_TAGS.semesterWeeks,
+      CACHE_TAGS.assessments,
+    ],
+  },
+);
+
+export async function getTimetableDataFromClassIdentifiers(
+  selectedClasses: SharedClassIdentifier[],
+  semesterId: number,
+)
+{
+  const uniqueClassesByKey = new Map(
+    selectedClasses.map((selectedClass) => [buildSharedClassIdentifier(selectedClass), selectedClass]),
+  );
+  const normalizedSelectedClasses = [...uniqueClassesByKey.entries()]
+    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+    .map(([, selectedClass]) => selectedClass);
+
+  return getTimetableDataFromClassIdentifiersCached(normalizedSelectedClasses, semesterId);
 }
