@@ -7,6 +7,28 @@ export const START_MINUTES = 8 * 60 + 30;
 export const DEFAULT_END_MINUTES = 18 * 60 + 30;
 export const MAX_END_MINUTES = 22 * 60;
 
+export function formatDataUpdatedValue(value: Date | string | null)
+{
+  if (!value)
+  {
+    return "Unavailable";
+  }
+
+  const updatedAt = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(updatedAt.getTime()))
+  {
+    return "Unavailable";
+  }
+
+  const formattedDate = new Intl.DateTimeFormat("en-SG", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: SINGAPORE_TIME_ZONE,
+  }).format(updatedAt);
+
+  return `${formattedDate} SGT`;
+}
+
 export function getSingaporeDateString(date = new Date())
 {
   const parts = new Intl.DateTimeFormat("en-SG", {

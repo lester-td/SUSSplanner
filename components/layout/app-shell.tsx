@@ -14,6 +14,7 @@ import {
   SettingsIcon,
 } from "@/components/planner/icons";
 import {
+  formatDataUpdatedValue,
   formatCurrentWeekChipForMobile,
   getCurrentWeekChip,
   type CurrentSemesterContext,
@@ -22,28 +23,6 @@ import type { PlannerSection } from "@/lib/timetable/types";
 
 type AppSection = "home" | PlannerSection | "calculator" | "settings" | "feedback";
 type AppShellContentLayout = "framed" | "full-bleed";
-
-function formatDataUpdatedValue(value: Date | string | null)
-{
-  if (!value)
-  {
-    return "Unavailable";
-  }
-
-  const updatedAt = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(updatedAt.getTime()))
-  {
-    return "Unavailable";
-  }
-
-  const formattedDate = new Intl.DateTimeFormat("en-SG", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Singapore",
-  }).format(updatedAt);
-
-  return `${formattedDate} SGT`;
-}
 
 const navItems = [
   {

@@ -10,6 +10,7 @@ import {
   ilike,
   inArray,
   isNull,
+  lte,
   or,
   sql,
 } from "drizzle-orm";
@@ -342,13 +343,13 @@ export async function getUpcomingAcademicCalendarEvents(today = getSingaporeDate
 const getLatestDataUpdatedAtCached = unstable_cache(
   async () => {
     const rows = await Promise.all([
-      db.select({ value: sql<Date | string | null>`max(${courses.lastUpdated})` }).from(courses),
-      db.select({ value: sql<Date | string | null>`max(${semesters.lastUpdated})` }).from(semesters),
-      db.select({ value: sql<Date | string | null>`max(${semesterWeeks.lastUpdated})` }).from(semesterWeeks),
-      db.select({ value: sql<Date | string | null>`max(${academicCalendarEvents.lastUpdated})` }).from(academicCalendarEvents),
-      db.select({ value: sql<Date | string | null>`max(${classes.lastUpdated})` }).from(classes),
-      db.select({ value: sql<Date | string | null>`max(${classEvents.lastUpdated})` }).from(classEvents),
-      db.select({ value: sql<Date | string | null>`max(${assessmentComponents.lastUpdated})` }).from(assessmentComponents),
+      db.select({ value: sql<Date | string | null>`max(${courses.lastUpdated})` }).from(courses).where(lte(courses.lastUpdated, sql`CURRENT_TIMESTAMP`)),
+      db.select({ value: sql<Date | string | null>`max(${semesters.lastUpdated})` }).from(semesters).where(lte(semesters.lastUpdated, sql`CURRENT_TIMESTAMP`)),
+      db.select({ value: sql<Date | string | null>`max(${semesterWeeks.lastUpdated})` }).from(semesterWeeks).where(lte(semesterWeeks.lastUpdated, sql`CURRENT_TIMESTAMP`)),
+      db.select({ value: sql<Date | string | null>`max(${academicCalendarEvents.lastUpdated})` }).from(academicCalendarEvents).where(lte(academicCalendarEvents.lastUpdated, sql`CURRENT_TIMESTAMP`)),
+      db.select({ value: sql<Date | string | null>`max(${classes.lastUpdated})` }).from(classes).where(lte(classes.lastUpdated, sql`CURRENT_TIMESTAMP`)),
+      db.select({ value: sql<Date | string | null>`max(${classEvents.lastUpdated})` }).from(classEvents).where(lte(classEvents.lastUpdated, sql`CURRENT_TIMESTAMP`)),
+      db.select({ value: sql<Date | string | null>`max(${assessmentComponents.lastUpdated})` }).from(assessmentComponents).where(lte(assessmentComponents.lastUpdated, sql`CURRENT_TIMESTAMP`)),
     ]);
 
     const timestamps = rows
@@ -371,7 +372,7 @@ const getLatestDataUpdatedAtCached = unstable_cache(
 
     return new Date(Math.max(...timestamps.map((value) => value.getTime()))).toISOString();
   },
-  ["db:getLatestDataUpdatedAt"],
+  ["db:getLatestDataUpdatedAt:v4"],
   {
     revalidate: LOOKUP_REVALIDATE_SECONDS,
     tags: [

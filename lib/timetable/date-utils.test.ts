@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatDataUpdatedValue,
   getCurrentSemesterContext,
   getSingaporeDateString,
 } from "./date-utils";
@@ -26,6 +27,13 @@ const SEMESTER_WEEKS: SemesterWeekRecord[] = [
 ];
 
 describe("Singapore calendar dates", () => {
+  it("formats an absolute UTC instant in Singapore time", () => {
+    const timestamp = "2039-01-01T00:00:00.000Z";
+
+    expect(formatDataUpdatedValue(timestamp)).toBe("1 Jan 2039, 8:00 am SGT");
+    expect(new Date(timestamp).toISOString()).toBe(timestamp);
+  });
+
   it("formats early Singapore hours as the Singapore calendar day", () => {
     expect(getSingaporeDateString(new Date("2026-07-14T16:30:00.000Z"))).toBe("2026-07-15");
   });
