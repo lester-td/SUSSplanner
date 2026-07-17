@@ -22,6 +22,7 @@ import type { RegistrationReminderWindowState } from "@/lib/registration/reminde
 import {
   buildWeekLabel,
   formatCompactDate,
+  formatDataUpdatedValue,
   formatDateRange,
   getCurrentSemesterContext,
   getSingaporeDateString,
@@ -75,28 +76,6 @@ const homeQuickResourceIcons: Record<string, typeof BookIcon> = {
   "exam-timetable": CalendarWeekIcon,
   "discussion-room-booking": BookIcon,
 } as const;
-
-function formatDataUpdatedValue(value: Date | string | null)
-{
-  if (!value)
-  {
-    return "Unavailable";
-  }
-
-  const updatedAt = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(updatedAt.getTime()))
-  {
-    return "Unavailable";
-  }
-
-  const formattedDate = new Intl.DateTimeFormat("en-SG", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Singapore",
-  }).format(updatedAt);
-
-  return `${formattedDate} SGT`;
-}
 
 const audienceLabels: Record<AcademicCalendarEventRecord["audience"], string> = {
   FTUG: "Full-time UG",
