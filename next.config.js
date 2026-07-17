@@ -1,3 +1,5 @@
+const { withBotId } = require("botid/next/config");
+
 const envOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
@@ -8,4 +10,4 @@ const nextConfig = {
   allowedDevOrigins: ["localhost", "127.0.0.1", ...envOrigins],
 };
 
-module.exports = nextConfig;
+module.exports = withBotId(nextConfig);

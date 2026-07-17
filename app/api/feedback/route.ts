@@ -1,3 +1,4 @@
+import { checkBotId } from "botid/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -247,6 +248,16 @@ async function sendFeedbackEmail({
 
 export async function POST(request: NextRequest)
 {
+  const botVerification = await checkBotId({
+    advancedOptions: {
+      checkLevel: "basic",
+    },
+  });
+  if (botVerification.isBot)
+  {
+    return NextResponse.json({ error: "Access denied." }, { status: 403 });
+  }
+
   const clientKey = getClientKey(request);
   const rateLimit = checkRateLimit(clientKey);
   if (rateLimit.limited)
