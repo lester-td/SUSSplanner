@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { GlobalRegistrationReminders } from "@/components/registration/global-registration-reminders";
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           {children}
           <GlobalRegistrationReminders />
         </SettingsProvider>
+        <Analytics />
         <SpeedInsights />
       </body>
     </html>
