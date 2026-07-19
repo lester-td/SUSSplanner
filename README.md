@@ -77,6 +77,11 @@ application. `CACHE_REVALIDATE_SECRET` enables authenticated on-demand cache
 invalidation. The `NEXT_PUBLIC_SUPABASE_*` variables are currently optional and
 unused by runtime application code. Never commit real credentials.
 
+For Vercel deployments backed by Supabase, use the transaction-pooler
+connection string (`pooler.supabase.com:6543`) for `DATABASE_URL`. The session
+pooler on port `5432` holds a database connection for each serverless function
+session and can cause intermittent page failures when connections are exhausted.
+
 ### Important Architecture Notes
 
 - Normal users do not sign in. Timetable and semester planner state is stored in

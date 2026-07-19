@@ -181,6 +181,13 @@ function checkDatabaseUrl()
   }
 
   collectedChecks.push("DATABASE_URL is present and has a valid Postgres URL shape.");
+
+  if (parsedUrl.hostname.endsWith(".pooler.supabase.com") && (parsedUrl.port || "5432") === "5432")
+  {
+    warnings.push(
+      "DATABASE_URL uses the Supabase session pooler on port 5432. Use the transaction pooler on port 6543 for Vercel/serverless deployments to avoid exhausting database connections."
+    );
+  }
 }
 
 function checkSupabaseEnv()

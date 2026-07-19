@@ -343,35 +343,25 @@ export async function getUpcomingAcademicCalendarEvents(today = getSingaporeDate
 
 const getLatestDataUpdatedAtCached = unstable_cache(
   async () => {
-    const rows = await Promise.all([
-      db.select({ value: sql<Date | string | null>`max(${courses.lastUpdated})` }).from(courses).where(lte(courses.lastUpdated, sql`CURRENT_TIMESTAMP`)),
-      db.select({ value: sql<Date | string | null>`max(${semesters.lastUpdated})` }).from(semesters).where(lte(semesters.lastUpdated, sql`CURRENT_TIMESTAMP`)),
-      db.select({ value: sql<Date | string | null>`max(${semesterWeeks.lastUpdated})` }).from(semesterWeeks).where(lte(semesterWeeks.lastUpdated, sql`CURRENT_TIMESTAMP`)),
-      db.select({ value: sql<Date | string | null>`max(${academicCalendarEvents.lastUpdated})` }).from(academicCalendarEvents).where(lte(academicCalendarEvents.lastUpdated, sql`CURRENT_TIMESTAMP`)),
-      db.select({ value: sql<Date | string | null>`max(${classes.lastUpdated})` }).from(classes).where(lte(classes.lastUpdated, sql`CURRENT_TIMESTAMP`)),
-      db.select({ value: sql<Date | string | null>`max(${classEvents.lastUpdated})` }).from(classEvents).where(lte(classEvents.lastUpdated, sql`CURRENT_TIMESTAMP`)),
-      db.select({ value: sql<Date | string | null>`max(${assessmentComponents.lastUpdated})` }).from(assessmentComponents).where(lte(assessmentComponents.lastUpdated, sql`CURRENT_TIMESTAMP`)),
-    ]);
+    const [row] = await db.select({
+      value: sql<Date | string | null>`greatest(
+        (select max(${courses.lastUpdated}) from ${courses} where ${courses.lastUpdated} <= current_timestamp),
+        (select max(${semesters.lastUpdated}) from ${semesters} where ${semesters.lastUpdated} <= current_timestamp),
+        (select max(${semesterWeeks.lastUpdated}) from ${semesterWeeks} where ${semesterWeeks.lastUpdated} <= current_timestamp),
+        (select max(${academicCalendarEvents.lastUpdated}) from ${academicCalendarEvents} where ${academicCalendarEvents.lastUpdated} <= current_timestamp),
+        (select max(${classes.lastUpdated}) from ${classes} where ${classes.lastUpdated} <= current_timestamp),
+        (select max(${classEvents.lastUpdated}) from ${classEvents} where ${classEvents.lastUpdated} <= current_timestamp),
+        (select max(${assessmentComponents.lastUpdated}) from ${assessmentComponents} where ${assessmentComponents.lastUpdated} <= current_timestamp)
+      )`,
+    }).from(sql`(select 1) as latest_data_source`);
 
-    const timestamps = rows
-      .map(([row]) => row?.value)
-      .map((value) => {
-        if (!value)
-        {
-          return null;
-        }
-
-        const date = value instanceof Date ? value : new Date(value);
-        return Number.isNaN(date.getTime()) ? null : date;
-      })
-      .filter((value): value is Date => value !== null);
-
-    if (timestamps.length === 0)
+    if (!row?.value)
     {
       return null;
     }
 
-    return new Date(Math.max(...timestamps.map((value) => value.getTime()))).toISOString();
+    const latestTimestamp = row.value instanceof Date ? row.value : new Date(row.value);
+    return Number.isNaN(latestTimestamp.getTime()) ? null : latestTimestamp.toISOString();
   },
   ["db:getLatestDataUpdatedAt:v4"],
   {

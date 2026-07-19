@@ -1480,6 +1480,8 @@ does not currently set shared-cache headers.
 
 - `vercel.json` pins the Vercel region to Singapore: `sin1`.
 - The deployed application requires `DATABASE_URL`.
+- Supabase-backed Vercel deployments should use the transaction-pooler
+  connection string on port `6543`, not the session pooler on port `5432`.
 - Configure `CACHE_REVALIDATE_SECRET` if maintainers need on-demand refreshes.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently
   optional and unused by runtime code.
