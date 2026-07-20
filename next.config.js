@@ -8,6 +8,9 @@ const envOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS || "")
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["localhost", "127.0.0.1", ...envOrigins],
+  outputFileTracingIncludes: {
+    "/*": ["./data/snapshots/**/*.json"],
+  },
 };
 
 module.exports = withBotId(nextConfig);
