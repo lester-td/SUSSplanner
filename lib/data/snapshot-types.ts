@@ -8,7 +8,7 @@ import type {
   SemesterWeekRecord,
 } from "@/lib/timetable/types";
 
-export const DATA_SNAPSHOT_FORMAT_VERSION = 3;
+export const DATA_SNAPSHOT_FORMAT_VERSION = 1;
 export const DATA_SNAPSHOT_BUCKET_COUNT = 16;
 
 export function getDataSnapshotBucket(courseCode: string)
