@@ -40,6 +40,7 @@ const projectRoot = process.cwd();
 loadEnvConfig(projectRoot);
 const snapshotRoot = path.join(projectRoot, "data", "snapshots");
 const temporaryRoot = path.join(projectRoot, "data", `.snapshots-${process.pid}-${Date.now()}`);
+const queryTimeoutMs = 30_000;
 
 function getDatabaseUrl()
 {
@@ -141,6 +142,24 @@ async function runWithConcurrency(tasks: Array<() => Promise<void>>, concurrency
   }));
 }
 
+async function loadRows<T>(label: string, query: PromiseLike<T[]>): Promise<T[]>
+{
+  const startedAt = Date.now();
+  console.log(`[snapshot] Loading ${label}...`);
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const rows = await Promise.race([
+    Promise.resolve(query),
+    new Promise<T[]>((_, reject) => {
+      timeout = setTimeout(
+        () => reject(new Error(`Timed out loading ${label} after ${queryTimeoutMs}ms.`)),
+        queryTimeoutMs,
+      );
+    }),
+  ]).finally(() => clearTimeout(timeout));
+  console.log(`[snapshot] Loaded ${label}: ${rows.length} rows in ${Date.now() - startedAt}ms.`);
+  return rows;
+}
+
 async function main()
 {
   const generatedAt = new Date();
@@ -154,25 +173,17 @@ async function main()
 
   try
   {
-    const [
-      courseRows,
-      semesterRows,
-      weekRows,
-      calendarRows,
-      calendarSemesterRows,
-      classRows,
-      eventRows,
-      assessmentRows,
-    ] = await Promise.all([
-      db.select().from(courses),
-      db.select().from(semesters),
-      db.select().from(semesterWeeks),
-      db.select().from(academicCalendarEvents),
+    const courseRows = await loadRows("courses", db.select().from(courses));
+    const semesterRows = await loadRows("semesters", db.select().from(semesters));
+    const weekRows = await loadRows("semester_weeks", db.select().from(semesterWeeks));
+    const calendarRows = await loadRows("academic_calendar_events", db.select().from(academicCalendarEvents));
+    const calendarSemesterRows = await loadRows(
+      "academic_calendar_event_semesters",
       db.select().from(academicCalendarEventSemesters),
-      db.select().from(classes),
-      db.select().from(classEvents),
-      db.select().from(assessmentComponents),
-    ]);
+    );
+    const classRows = await loadRows("classes", db.select().from(classes));
+    const eventRows = await loadRows("class_events", db.select().from(classEvents));
+    const assessmentRows = await loadRows("assessment_components", db.select().from(assessmentComponents));
 
     if (courseRows.length === 0 || semesterRows.length === 0)
     {
@@ -493,7 +504,10 @@ async function main()
       () => writeJson("course-index.json", courseIndex),
       () => writeJson("manifest.json", manifest, true),
     );
+    const writeStartedAt = Date.now();
+    console.log(`[snapshot] Writing ${snapshotWrites.length} files...`);
     await runWithConcurrency(snapshotWrites, 32);
+    console.log(`[snapshot] Wrote ${snapshotWrites.length} files in ${Date.now() - writeStartedAt}ms.`);
 
     await rm(snapshotRoot, { recursive: true, force: true });
     await rename(temporaryRoot, snapshotRoot);
