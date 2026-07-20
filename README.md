@@ -18,7 +18,7 @@ maintaining academic data.
 | Area | Main technologies |
 |---|---|
 | Web application | Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4 |
-| Data and validation | Supabase-compatible Postgres, Drizzle ORM, Zod |
+| Data and validation | Build-time Supabase snapshots, Drizzle ORM, Zod |
 | Exports | `pdf-lib`, `html-to-image`, and ICS generation |
 | Data ingestion | Local Node.js/TypeScript scraper with Python `pdfplumber` helpers |
 
@@ -56,6 +56,7 @@ npm run typecheck       # Run TypeScript checks
 npm run build           # Create a production build
 npm run start           # Run the production build
 npm run validate:setup  # Validate first-run setup
+npm run data:build      # Regenerate read snapshots from Postgres
 ```
 
 ### Primary Routes
@@ -72,15 +73,15 @@ npm run validate:setup  # Validate first-run setup
 
 ### Environment
 
-Copy `.env.example` to `.env.local`. `DATABASE_URL` is required for the
-application. `CACHE_REVALIDATE_SECRET` enables authenticated on-demand cache
-invalidation. The `NEXT_PUBLIC_SUPABASE_*` variables are currently optional and
-unused by runtime application code. Never commit real credentials.
+Copy `.env.example` to `.env.local`. `DATABASE_URL` is required while generating
+the application's read snapshots, including before development and production
+builds. It is not used while serving a completed build. The
+`NEXT_PUBLIC_SUPABASE_*` variables are currently optional and unused by runtime
+application code. Never commit real credentials.
 
 For Vercel deployments backed by Supabase, use the transaction-pooler
-connection string (`pooler.supabase.com:6543`) for `DATABASE_URL`. The session
-pooler on port `5432` holds a database connection for each serverless function
-session and can cause intermittent page failures when connections are exhausted.
+connection string (`pooler.supabase.com:6543`) for `DATABASE_URL` so snapshot
+generation does not reserve a database session for the duration of a build.
 
 ### Important Architecture Notes
 
@@ -89,8 +90,9 @@ session and can cause intermittent page failures when connections are exhausted.
   semester planner was exported as a JSON backup.
 - Shared timetable links are read-only until the recipient explicitly imports
   them.
-- The application reads academic data but does not update academic tables.
-- The academic database schema must already exist before the app can run.
+- Production requests read generated JSON snapshots and never query Postgres.
+- The application build reads academic data but does not update academic tables.
+- The academic database schema must exist before snapshots can be generated.
 - Do not run `drizzle-kit push` against shared or production databases unless
   an intentional schema change has been reviewed.
 
@@ -115,6 +117,8 @@ generation, import order, validation, and troubleshooting.
   workflow
 - [Architecture Summary](./ARCHITECTURE.md): focused runtime and data-flow
   reference
+- [Data Snapshot Operations](./docs/DataSnapshots.md): publish, deploy,
+  validate, and roll back academic-data snapshots
 
 ## License
 
