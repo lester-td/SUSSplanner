@@ -51,7 +51,7 @@ function runChecks()
   checkEnvironmentFiles();
   checkDatabaseUrl();
   checkSupabaseEnv();
-  checkRevalidateSecret();
+  checkSnapshotArtifacts();
   checkFeedbackEmailEnv();
   checkAllowedDevOrigins();
 }
@@ -138,6 +138,12 @@ function checkEnvironmentFiles()
     return;
   }
 
+  if (mode === "start")
+  {
+    collectedChecks.push("No local environment file is required to serve an existing data snapshot.");
+    return;
+  }
+
   errors.push("No environment file was found. Copy `.env.example` to `.env.local` and fill in the required values.");
 }
 
@@ -147,7 +153,13 @@ function checkDatabaseUrl()
 
   if (!databaseUrl)
   {
-    errors.push("DATABASE_URL is required for the app to read timetable and course data.");
+    if (mode === "start")
+    {
+      collectedChecks.push("DATABASE_URL is not required at runtime after snapshots have been generated.");
+      return;
+    }
+
+    errors.push("DATABASE_URL is required to generate timetable and course snapshots.");
     return;
   }
 
@@ -185,7 +197,7 @@ function checkDatabaseUrl()
   if (parsedUrl.hostname.endsWith(".pooler.supabase.com") && (parsedUrl.port || "5432") === "5432")
   {
     warnings.push(
-      "DATABASE_URL uses the Supabase session pooler on port 5432. Use the transaction pooler on port 6543 for Vercel/serverless deployments to avoid exhausting database connections."
+      "DATABASE_URL uses the Supabase session pooler on port 5432. Use the transaction pooler on port 6543 for reliable snapshot generation from Vercel builds."
     );
   }
 }
@@ -239,29 +251,20 @@ function checkSupabaseEnv()
   }
 }
 
-function checkRevalidateSecret()
+function checkSnapshotArtifacts()
 {
-  const secret = resolvedEnv.CACHE_REVALIDATE_SECRET?.trim();
-
-  if (!secret)
+  if (mode !== "start")
   {
-    warnings.push("CACHE_REVALIDATE_SECRET is unset. The `/api/cache/revalidate` endpoint will reject requests until it is configured.");
     return;
   }
 
-  if (containsPlaceholder(secret))
-  {
-    warnings.push("CACHE_REVALIDATE_SECRET still contains placeholder text.");
-    return;
-  }
-
-  if (secret.length < 16)
-  {
-    warnings.push("CACHE_REVALIDATE_SECRET is set but quite short. A longer random secret is safer.");
-    return;
-  }
-
-  collectedChecks.push("CACHE_REVALIDATE_SECRET is configured.");
+  const manifestPath = path.join(projectRoot, "data", "snapshots", "manifest.json");
+  const courseIndexPath = path.join(projectRoot, "data", "snapshots", "course-index.json");
+  addCheck(
+    fs.existsSync(manifestPath) && fs.existsSync(courseIndexPath),
+    "Generated data snapshot artifacts are present.",
+    "Generated data snapshots are missing. Run `npm run data:build` before starting the production server."
+  );
 }
 
 function checkFeedbackEmailEnv()
