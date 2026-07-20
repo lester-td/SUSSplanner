@@ -18,12 +18,14 @@ import {
 } from "../lib/db/schema";
 import {
   DATA_SNAPSHOT_FORMAT_VERSION,
+  getDataSnapshotBucket,
   type AcademicCalendarEventRecord,
   type CourseIndexSnapshotRecord,
   type CourseOfferingSnapshot,
   type CourseSnapshot,
+  type CourseSnapshotBucket,
   type DataSnapshotManifest,
-  type ScheduleSnapshot,
+  type ScheduleSnapshotBucket,
 } from "../lib/data/snapshot-types";
 import type {
   AssessmentComponentRecord,
@@ -52,11 +54,6 @@ function getDatabaseUrl()
 function unique<T>(values: T[])
 {
   return [...new Set(values)];
-}
-
-function courseFileKey(courseCode: string)
-{
-  return Buffer.from(courseCode, "utf8").toString("base64url");
 }
 
 function toIsoString(value: Date | string)
@@ -353,8 +350,8 @@ async function main()
         || left.audience.localeCompare(right.audience)
       ));
 
-    const courseFiles: Record<string, string> = {};
-    const scheduleFiles: Record<string, Record<string, string>> = {};
+    const courseBuckets: Record<string, CourseSnapshotBucket> = {};
+    const scheduleBuckets: Record<string, Record<string, ScheduleSnapshotBucket>> = {};
     const courseIndex: CourseIndexSnapshotRecord[] = [];
     const snapshotWrites: Array<() => Promise<void>> = [];
 
@@ -395,27 +392,23 @@ async function main()
         left.semesterId - right.semesterId || left.scheduleType.localeCompare(right.scheduleType)
       ));
 
-      const fileKey = courseFileKey(courseRow.courseCode);
-      const coursePath = `courses/${fileKey}.json`;
+      const bucket = getDataSnapshotBucket(courseRow.courseCode);
       const courseSnapshot: CourseSnapshot = {
         course: mapCourse(courseRow),
         assessments: courseAssessments,
         offeredSemesters,
       };
-      snapshotWrites.push(() => writeJson(coursePath, courseSnapshot));
-      courseFiles[courseRow.courseCode] = coursePath;
+      courseBuckets[bucket] ??= {};
+      courseBuckets[bucket][courseRow.courseCode] = courseSnapshot;
 
       for (const semesterId of offeredSemesterIds)
       {
-        const schedulePath = `schedules/${semesterId}-${fileKey}.json`;
-        const scheduleSnapshot: ScheduleSnapshot = {
-          semesterId,
-          courseCode: courseRow.courseCode,
-          classes: classesBySemesterAndCourse.get(`${semesterId}:${courseRow.courseCode}`) ?? [],
-        };
-        snapshotWrites.push(() => writeJson(schedulePath, scheduleSnapshot));
-        scheduleFiles[String(semesterId)] ??= {};
-        scheduleFiles[String(semesterId)][courseRow.courseCode] = schedulePath;
+        const semesterKey = String(semesterId);
+        scheduleBuckets[semesterKey] ??= {};
+        scheduleBuckets[semesterKey][bucket] ??= { semesterId, courses: {} };
+        scheduleBuckets[semesterKey][bucket].courses[courseRow.courseCode] = (
+          classesBySemesterAndCourse.get(`${semesterId}:${courseRow.courseCode}`) ?? []
+        );
       }
 
       courseIndex.push({
@@ -435,6 +428,26 @@ async function main()
         assessmentModes: unique(courseAssessments.map((assessment) => assessment.assessmentMode?.trim()).filter((value): value is string => Boolean(value))).sort(),
         offerings,
       });
+    }
+
+    const courseBucketFiles: Record<string, string> = {};
+    for (const [bucket, snapshots] of Object.entries(courseBuckets).sort(([left], [right]) => left.localeCompare(right)))
+    {
+      const relativePath = `courses/${bucket}.json`;
+      courseBucketFiles[bucket] = relativePath;
+      snapshotWrites.push(() => writeJson(relativePath, snapshots));
+    }
+
+    const scheduleBucketFiles: Record<string, Record<string, string>> = {};
+    for (const [semesterId, buckets] of Object.entries(scheduleBuckets).sort(([left], [right]) => Number(left) - Number(right)))
+    {
+      scheduleBucketFiles[semesterId] = {};
+      for (const [bucket, snapshot] of Object.entries(buckets).sort(([left], [right]) => left.localeCompare(right)))
+      {
+        const relativePath = `schedules/${semesterId}-${bucket}.json`;
+        scheduleBucketFiles[semesterId][bucket] = relativePath;
+        snapshotWrites.push(() => writeJson(relativePath, snapshot));
+      }
     }
 
     const generatedAtIso = generatedAt.toISOString();
@@ -472,8 +485,8 @@ async function main()
       },
       semesters: semesterTree,
       academicCalendarEvents: calendarEvents,
-      courseFiles,
-      scheduleFiles,
+      courseBucketFiles,
+      scheduleBucketFiles,
     };
 
     snapshotWrites.push(
@@ -485,12 +498,12 @@ async function main()
     await rm(snapshotRoot, { recursive: true, force: true });
     await rename(temporaryRoot, snapshotRoot);
 
-    const scheduleCount = Object.values(scheduleFiles).reduce(
+    const scheduleBucketCount = Object.values(scheduleBucketFiles).reduce(
       (count, files) => count + Object.keys(files).length,
       0,
     );
     console.log(
-      `Generated snapshot ${generatedAt.toISOString()}: ${courseRows.length} courses, ${classRows.length} classes, ${eventRows.length} events, ${scheduleCount} schedule shards.`,
+      `Generated snapshot ${generatedAt.toISOString()}: ${courseRows.length} courses, ${classRows.length} classes, ${eventRows.length} events, ${Object.keys(courseBucketFiles).length} course buckets, ${scheduleBucketCount} schedule buckets.`,
     );
   }
   catch (error)

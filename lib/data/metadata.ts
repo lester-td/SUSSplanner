@@ -26,7 +26,7 @@ export async function getSemestersWithWeeks()
 export async function getSemestersWithClassesAndWeeks()
 {
   const manifest = await getSnapshotManifest();
-  const semesterIdsWithClasses = new Set(Object.keys(manifest.scheduleFiles).map(Number));
+  const semesterIdsWithClasses = new Set(Object.keys(manifest.scheduleBucketFiles).map(Number));
   return manifest.semesters.filter(
     (semester) => semesterIdsWithClasses.has(semester.semesterId) && semester.weeks.length > 0,
   );

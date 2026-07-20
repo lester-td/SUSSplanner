@@ -8,7 +8,18 @@ import type {
   SemesterWeekRecord,
 } from "@/lib/timetable/types";
 
-export const DATA_SNAPSHOT_FORMAT_VERSION = 2;
+export const DATA_SNAPSHOT_FORMAT_VERSION = 3;
+export const DATA_SNAPSHOT_BUCKET_COUNT = 16;
+
+export function getDataSnapshotBucket(courseCode: string)
+{
+  let hash = 2166136261;
+  for (const character of courseCode.trim().toUpperCase())
+  {
+    hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+  }
+  return ((hash >>> 0) % DATA_SNAPSHOT_BUCKET_COUNT).toString(16).padStart(2, "0");
+}
 
 export type AcademicCalendarEventRecord = {
   eventId: number;
@@ -42,10 +53,17 @@ export type CourseSnapshot = {
   offeredSemesters: SemesterRecord[];
 };
 
+export type CourseSnapshotBucket = Record<string, CourseSnapshot>;
+
 export type ScheduleSnapshot = {
   semesterId: number;
   courseCode: string;
   classes: CourseClassRecord[];
+};
+
+export type ScheduleSnapshotBucket = {
+  semesterId: number;
+  courses: Record<string, CourseClassRecord[]>;
 };
 
 export type DataSnapshotManifest = {
@@ -60,6 +78,6 @@ export type DataSnapshotManifest = {
   };
   semesters: Array<SemesterRecord & { weeks: SemesterWeekRecord[] }>;
   academicCalendarEvents: AcademicCalendarEventRecord[];
-  courseFiles: Record<string, string>;
-  scheduleFiles: Record<string, Record<string, string>>;
+  courseBucketFiles: Record<string, string>;
+  scheduleBucketFiles: Record<string, Record<string, string>>;
 };

@@ -50,10 +50,14 @@ data/snapshots/
 ├── manifest.json
 ├── course-index.json
 ├── courses/
-│   └── <encoded-course-code>.json
+│   └── <bucket-id>.json
 └── schedules/
-    └── <semester-id>-<encoded-course-code>.json
+    └── <semester-id>-<bucket-id>.json
 ```
+
+Course codes are assigned to one of 16 deterministic hash buckets. This keeps
+individual reads small while avoiding thousands of files in Vercel function
+bundles.
 
 The manifest records the snapshot format version, generation time, latest valid
 database update time, row coverage, semester/week data, academic-calendar data,

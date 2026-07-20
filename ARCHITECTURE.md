@@ -59,10 +59,10 @@ Generated files are deliberately split by access pattern:
 - `manifest.json`: format version, timestamps, coverage, semesters, weeks,
   calendar events, and shard paths
 - `course-index.json`: compact searchable course records and offering metadata
-- `courses/<key>.json`: one course's full details, assessments, and offered
-  semesters
-- `schedules/<semesterId>-<key>.json`: one course's classes and dated events
-  for one semester
+- `courses/<bucket>.json`: full details, assessments, and offered semesters for
+  one deterministic course-code bucket
+- `schedules/<semesterId>-<bucket>.json`: classes and dated events for one
+  semester and course-code bucket
 
 `data/snapshots/` is generated and gitignored. A production build regenerates
 it before `next build`; the snapshot reader keeps filesystem paths specific
