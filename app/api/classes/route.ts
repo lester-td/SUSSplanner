@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSnapshotCacheHeaders } from "@/lib/data/cache";
-import {
-  getCourseClasses,
-  getTimetableDataFromClassIdentifiers,
-} from "@/lib/data/queries";
+import { getCourseClasses } from "@/lib/data/course-details";
+import { getTimetableDataFromClassIdentifiers } from "@/lib/data/timetable";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
 import {
   courseCodeSchema,

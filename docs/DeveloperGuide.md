@@ -441,8 +441,8 @@ class-group, semester, and optional week information.
 - `scripts/build-data-snapshots.ts` requires `DATABASE_URL`, opens one
   short-lived connection with prepared statements disabled, and reads each
   academic table once per generation.
-- `lib/data/snapshot-reader.ts` resolves only paths declared by the manifest and
-  memoizes parsed files within each server process.
+- The category-specific readers in `lib/data/` resolve only paths declared by
+  the manifest and memoize parsed files within each server process.
 - Timetable assembly resolves semantic identifiers from schedule shards, loads
   events and semester data, derives ECA markers, detects clashes, and returns
   unresolved identifiers without silently removing them from the response.
@@ -1501,7 +1501,7 @@ secret.
 | Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered snapshot reads behind route handlers. |
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
 | Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, and local-storage format aligned. |
-| Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/data/courses.ts`; do not accidentally add semester/class filters. |
+| Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/data/course-search.ts`; do not accidentally add semester/class filters. |
 | Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, and this guide. Preserve support for existing public versions or reject them with a clear notice. |
 | Change semester-planner print output | Update `lib/export/semester-planner-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
 | Change app settings | Update `lib/settings/app-settings.ts`, `components/settings/settings-client.tsx`, `components/settings/settings-provider.tsx`, and tests that cover normalization/migration. |

@@ -7,9 +7,11 @@ import {
   getCourseByCode,
   getCourseClasses,
   getCourseOfferedSemesters,
+} from "@/lib/data/course-details";
+import {
   getLatestDataUpdatedAt,
   getSemestersWithWeeks,
-} from "@/lib/data/queries";
+} from "@/lib/data/metadata";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 import { optionalSemesterIdSchema } from "@/lib/validation/timetable";
 

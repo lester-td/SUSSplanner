@@ -130,6 +130,20 @@ async function writeJson(relativePath: string, value: unknown, pretty = false)
   await writeFile(destination, `${JSON.stringify(value, null, pretty ? 2 : undefined)}\n`, "utf8");
 }
 
+async function runWithConcurrency(tasks: Array<() => Promise<void>>, concurrency: number)
+{
+  let nextTaskIndex = 0;
+  const workerCount = Math.min(concurrency, tasks.length);
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (nextTaskIndex < tasks.length)
+    {
+      const task = tasks[nextTaskIndex];
+      nextTaskIndex += 1;
+      await task();
+    }
+  }));
+}
+
 async function main()
 {
   const generatedAt = new Date();
@@ -211,7 +225,15 @@ async function main()
       ));
     }
 
-    const classRowsById = new Map(classRows.map((row) => [row.classId, row]));
+    const classRowsById = new Map<number, typeof classRows[number]>();
+    const classRowsByCourseCode = new Map<string, typeof classRows>();
+    for (const row of classRows)
+    {
+      classRowsById.set(row.classId, row);
+      const existing = classRowsByCourseCode.get(row.courseCode);
+      if (existing) existing.push(row);
+      else classRowsByCourseCode.set(row.courseCode, [row]);
+    }
     const eventsByClassId = new Map<number, ClassEventWithWeekRecord[]>();
     for (const row of eventRows)
     {
@@ -334,10 +356,11 @@ async function main()
     const courseFiles: Record<string, string> = {};
     const scheduleFiles: Record<string, Record<string, string>> = {};
     const courseIndex: CourseIndexSnapshotRecord[] = [];
+    const snapshotWrites: Array<() => Promise<void>> = [];
 
     for (const courseRow of [...courseRows].sort((left, right) => left.courseCode.localeCompare(right.courseCode)))
     {
-      const relevantClasses = classRows.filter((row) => row.courseCode === courseRow.courseCode);
+      const relevantClasses = classRowsByCourseCode.get(courseRow.courseCode) ?? [];
       const offeredSemesterIds = unique(relevantClasses.map((row) => row.semesterId));
       const offeredSemesters = offeredSemesterIds
         .map((semesterId) => semestersById.get(semesterId))
@@ -379,18 +402,18 @@ async function main()
         assessments: courseAssessments,
         offeredSemesters,
       };
-      await writeJson(coursePath, courseSnapshot);
+      snapshotWrites.push(() => writeJson(coursePath, courseSnapshot));
       courseFiles[courseRow.courseCode] = coursePath;
 
       for (const semesterId of offeredSemesterIds)
       {
-        const schedulePath = `schedules/${semesterId}/${fileKey}.json`;
+        const schedulePath = `schedules/${semesterId}-${fileKey}.json`;
         const scheduleSnapshot: ScheduleSnapshot = {
           semesterId,
           courseCode: courseRow.courseCode,
           classes: classesBySemesterAndCourse.get(`${semesterId}:${courseRow.courseCode}`) ?? [],
         };
-        await writeJson(schedulePath, scheduleSnapshot);
+        snapshotWrites.push(() => writeJson(schedulePath, scheduleSnapshot));
         scheduleFiles[String(semesterId)] ??= {};
         scheduleFiles[String(semesterId)][courseRow.courseCode] = schedulePath;
       }
@@ -414,23 +437,33 @@ async function main()
       });
     }
 
-    const allLastUpdatedValues = [
-      ...courseRows.map((row) => row.lastUpdated),
-      ...semesterRows.map((row) => row.lastUpdated),
-      ...weekRows.map((row) => row.lastUpdated),
-      ...calendarRows.map((row) => row.lastUpdated),
-      ...classRows.map((row) => row.lastUpdated),
-      ...eventRows.map((row) => row.lastUpdated),
-      ...assessmentRows.map((row) => row.lastUpdated),
-    ]
-      .map(toIsoString)
-      .filter((value) => value <= generatedAt.toISOString())
-      .sort();
+    const generatedAtIso = generatedAt.toISOString();
+    let dataUpdatedAt: string | null = null;
+    const updatedRowGroups = [
+      courseRows,
+      semesterRows,
+      weekRows,
+      calendarRows,
+      classRows,
+      eventRows,
+      assessmentRows,
+    ];
+    for (const rows of updatedRowGroups)
+    {
+      for (const row of rows)
+      {
+        const value = toIsoString(row.lastUpdated);
+        if (value <= generatedAtIso && (!dataUpdatedAt || value > dataUpdatedAt))
+        {
+          dataUpdatedAt = value;
+        }
+      }
+    }
 
     const manifest: DataSnapshotManifest = {
       formatVersion: DATA_SNAPSHOT_FORMAT_VERSION,
-      generatedAt: generatedAt.toISOString(),
-      dataUpdatedAt: allLastUpdatedValues.at(-1) ?? null,
+      generatedAt: generatedAtIso,
+      dataUpdatedAt,
       coverage: {
         courseCount: courseRows.length,
         classCount: classRows.length,
@@ -443,8 +476,11 @@ async function main()
       scheduleFiles,
     };
 
-    await writeJson("course-index.json", courseIndex);
-    await writeJson("manifest.json", manifest, true);
+    snapshotWrites.push(
+      () => writeJson("course-index.json", courseIndex),
+      () => writeJson("manifest.json", manifest, true),
+    );
+    await runWithConcurrency(snapshotWrites, 32);
 
     await rm(snapshotRoot, { recursive: true, force: true });
     await rename(temporaryRoot, snapshotRoot);

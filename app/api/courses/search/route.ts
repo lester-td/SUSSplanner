@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSnapshotCacheHeaders } from "@/lib/data/cache";
-import { searchCourses } from "@/lib/data/queries";
+import { searchCourses } from "@/lib/data/course-search";
 import { parseCourseSearchFilters } from "@/lib/timetable/course-search";
 
 export const runtime = "nodejs";

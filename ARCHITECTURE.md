@@ -61,12 +61,13 @@ Generated files are deliberately split by access pattern:
 - `course-index.json`: compact searchable course records and offering metadata
 - `courses/<key>.json`: one course's full details, assessments, and offered
   semesters
-- `schedules/<semesterId>/<key>.json`: one course's classes and dated events
+- `schedules/<semesterId>-<key>.json`: one course's classes and dated events
   for one semester
 
 `data/snapshots/` is generated and gitignored. A production build regenerates
-it before `next build`; `next.config.js` includes the files in server output
-traces.
+it before `next build`; the snapshot reader keeps filesystem paths specific
+enough for Next.js to trace only the snapshot categories used by each server
+entry.
 
 The snapshot format is versioned by `DATA_SNAPSHOT_FORMAT_VERSION` in
 `lib/data/snapshot-types.ts`. Runtime readers reject an incompatible format.
@@ -75,9 +76,11 @@ The snapshot format is versioned by `DATA_SNAPSHOT_FORMAT_VERSION` in
 
 Primary files:
 
-- `lib/data/snapshot-reader.ts`: safe, memoized JSON file access
+- `lib/data/*-reader.ts` and `lib/data/snapshot-cache.ts`: safe, category-specific,
+  memoized JSON file access
 - `lib/data/metadata.ts`: semesters, weeks, calendar, coverage, update timestamp
-- `lib/data/courses.ts`: course search, details, assessments, classes, counts
+- `lib/data/course-search.ts`: course search, calculator search, and facets
+- `lib/data/course-details.ts`: course details, assessments, classes, and counts
 - `lib/data/timetable.ts`: semantic selection resolution and timetable assembly
 - `lib/data/queries.ts`: compatibility export surface used by pages and APIs
 

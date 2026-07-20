@@ -52,8 +52,7 @@ data/snapshots/
 ├── courses/
 │   └── <encoded-course-code>.json
 └── schedules/
-    └── <semester-id>/
-        └── <encoded-course-code>.json
+    └── <semester-id>-<encoded-course-code>.json
 ```
 
 The manifest records the snapshot format version, generation time, latest valid

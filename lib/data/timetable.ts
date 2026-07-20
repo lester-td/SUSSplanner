@@ -8,8 +8,9 @@ import type {
   TimetableEventRecord,
   TimetableSelectionRecord,
 } from "@/lib/timetable/types";
+import { getCourseSnapshot } from "./course-snapshot-reader";
 import { getSemesterById, getSemesterWeeks } from "./metadata";
-import { getCourseSnapshot, getScheduleSnapshot } from "./snapshot-reader";
+import { getScheduleSnapshot } from "./schedule-snapshot-reader";
 
 function normalizeCourseCode(courseCode: string)
 {

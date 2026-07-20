@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getSnapshotManifest } from "./snapshot-reader";
+import { getSnapshotManifest } from "./manifest-reader";
 
 export type { AcademicCalendarEventRecord } from "./snapshot-types";
 

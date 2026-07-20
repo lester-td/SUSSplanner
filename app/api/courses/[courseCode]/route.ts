@@ -5,7 +5,7 @@ import {
   getAssessmentComponents,
   getCourseByCode,
   getCourseClasses,
-} from "@/lib/data/queries";
+} from "@/lib/data/course-details";
 import { optionalSemesterIdSchema, scheduleTypeSchema } from "@/lib/validation/timetable";
 
 export const runtime = "nodejs";

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSnapshotCacheHeaders } from "@/lib/data/cache";
-import { getClassCountsByCourseCodes } from "@/lib/data/queries";
+import { getClassCountsByCourseCodes } from "@/lib/data/course-details";
 import { semesterIdSchema } from "@/lib/validation/timetable";
 
 export const runtime = "nodejs";
