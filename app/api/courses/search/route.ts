@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { CACHE_TAG_GROUPS, getCacheHeaders } from "@/lib/cache-tags";
-import { searchCourses } from "@/lib/db/queries";
+import { getSnapshotCacheHeaders } from "@/lib/data/cache";
+import { searchCourses } from "@/lib/data/queries";
 import { parseCourseSearchFilters } from "@/lib/timetable/course-search";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest)
   return NextResponse.json(
     { courses },
     {
-      headers: getCacheHeaders("s-maxage=300, stale-while-revalidate=3600", CACHE_TAG_GROUPS.courseSearch),
+      headers: getSnapshotCacheHeaders(),
     },
   );
 }

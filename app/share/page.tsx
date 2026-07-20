@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ShareClient } from "@/components/timetable/share-client";
-import { getLatestDataUpdatedAt, getSemestersWithWeeks, getTimetableDataFromClassIdentifiers } from "@/lib/db/queries";
+import { getLatestDataUpdatedAt, getSemestersWithWeeks, getTimetableDataFromClassIdentifiers } from "@/lib/data/queries";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
 

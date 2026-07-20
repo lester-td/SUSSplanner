@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { SemesterPlannerClient } from "@/components/planner/semester-planner/client";
-import { getLatestDataUpdatedAt, getSemesters, getSemestersWithWeeks } from "@/lib/db/queries";
+import { getLatestDataUpdatedAt, getSemesters, getSemestersWithWeeks } from "@/lib/data/queries";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const dynamic = "force-dynamic";

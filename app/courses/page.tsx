@@ -5,7 +5,7 @@ import {
   getLatestDataUpdatedAt,
   getSemesters,
   getSemestersWithWeeks,
-} from "@/lib/db/queries";
+} from "@/lib/data/queries";
 import { parseCourseSearchFilters } from "@/lib/timetable/course-search";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 

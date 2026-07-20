@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { CACHE_TAG_GROUPS, getCacheHeaders } from "@/lib/cache-tags";
+import { getSnapshotCacheHeaders } from "@/lib/data/cache";
 import {
   getAssessmentComponents,
   getCourseByCode,
   getCourseClasses,
-} from "@/lib/db/queries";
+} from "@/lib/data/queries";
 import { optionalSemesterIdSchema, scheduleTypeSchema } from "@/lib/validation/timetable";
 
 export const runtime = "nodejs";
-const COURSE_DETAIL_CACHE_CONTROL = "s-maxage=3600, stale-while-revalidate=86400";
-
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ courseCode: string }> },
@@ -35,7 +33,7 @@ export async function GET(
   return NextResponse.json(
     { course, classes, assessmentComponents },
     {
-      headers: getCacheHeaders(COURSE_DETAIL_CACHE_CONTROL, CACHE_TAG_GROUPS.courseDetail),
+      headers: getSnapshotCacheHeaders(),
     },
   );
 }

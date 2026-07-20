@@ -16,7 +16,7 @@ import {
   getSemestersWithWeeks,
   getUpcomingAcademicCalendarEvents,
   type AcademicCalendarEventRecord,
-} from "@/lib/db/queries";
+} from "@/lib/data/queries";
 import { homeQuickResources, studentResources } from "@/lib/student-resources";
 import type { RegistrationReminderWindowState } from "@/lib/registration/reminder-status";
 import {
