@@ -21,7 +21,7 @@ function getErrorMessage(error: unknown)
 
 export function FeedbackForm()
 {
-  const [type, setType] = useState<FeedbackType>("Wrong course data");
+  const [type, setType] = useState<FeedbackType>("Bug");
   const [message, setMessage] = useState("");
   const [contact, setContact] = useState("");
   const [website, setWebsite] = useState("");
