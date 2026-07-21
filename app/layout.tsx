@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -49,9 +50,13 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         <meta name="darkreader-lock" />
-        <script dangerouslySetInnerHTML={{ __html: settingsBootstrapScript }} />
       </head>
       <body>
+        <Script
+          id="settings-bootstrap"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: settingsBootstrapScript }}
+        />
         <SettingsProvider>
           {children}
           <GlobalRegistrationReminders />

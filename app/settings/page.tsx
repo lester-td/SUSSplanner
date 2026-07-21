@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { SettingsClient } from "@/components/settings/settings-client";
-import { getLatestDataUpdatedAt, getSemestersWithWeeks } from "@/lib/db/queries";
+import { getLatestDataUpdatedAt, getSemestersWithWeeks } from "@/lib/data/metadata";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const metadata: Metadata = {

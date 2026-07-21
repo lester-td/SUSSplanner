@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { getTimetableDataFromClassIdentifiers } from "@/lib/db/queries";
+import { getTimetableDataFromClassIdentifiers } from "@/lib/data/timetable";
 import { buildTimetablePdf } from "@/lib/export/pdf";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
 

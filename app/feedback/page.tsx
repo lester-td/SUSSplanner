@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { FeedbackForm } from "@/components/feedback/feedback-form";
 import { AppShell } from "@/components/layout/app-shell";
 import { ArrowUpRightIcon } from "@/components/planner/icons";
-import { getLatestDataUpdatedAt, getSemestersWithWeeks } from "@/lib/db/queries";
+import { getLatestDataUpdatedAt, getSemestersWithWeeks } from "@/lib/data/metadata";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const metadata: Metadata = {

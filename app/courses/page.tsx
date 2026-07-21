@@ -1,11 +1,11 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { CourseSearchPage } from "@/components/courses/course-search-page";
+import { getCourseSearchFacets } from "@/lib/data/course-search";
 import {
-  getCourseSearchFacets,
   getLatestDataUpdatedAt,
   getSemesters,
   getSemestersWithWeeks,
-} from "@/lib/db/queries";
+} from "@/lib/data/metadata";
 import { parseCourseSearchFilters } from "@/lib/timetable/course-search";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 

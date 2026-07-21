@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { CACHE_TAG_GROUPS, getCacheHeaders } from "@/lib/cache-tags";
-import {
-  getCourseClasses,
-  getTimetableDataFromClassIdentifiers,
-} from "@/lib/db/queries";
+import { getSnapshotCacheHeaders } from "@/lib/data/cache";
+import { getCourseClasses } from "@/lib/data/course-details";
+import { getTimetableDataFromClassIdentifiers } from "@/lib/data/timetable";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
 import {
   courseCodeSchema,
@@ -13,8 +11,6 @@ import {
 } from "@/lib/validation/timetable";
 
 export const runtime = "nodejs";
-
-const CLASS_RESPONSE_CACHE_CONTROL = "s-maxage=3600, stale-while-revalidate=86400";
 
 export async function GET(request: NextRequest)
 {
@@ -33,7 +29,7 @@ export async function GET(request: NextRequest)
     return NextResponse.json(
       { classes },
       {
-        headers: getCacheHeaders(CLASS_RESPONSE_CACHE_CONTROL, CACHE_TAG_GROUPS.classData),
+        headers: getSnapshotCacheHeaders(),
       },
     );
   }
@@ -43,7 +39,7 @@ export async function GET(request: NextRequest)
   return NextResponse.json(
     { timetable },
     {
-      headers: getCacheHeaders(CLASS_RESPONSE_CACHE_CONTROL, CACHE_TAG_GROUPS.timetableData),
+      headers: getSnapshotCacheHeaders(),
     },
   );
 }

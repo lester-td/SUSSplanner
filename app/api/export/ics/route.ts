@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { buildIcs } from "@/lib/export/ics";
-import { getTimetableDataFromClassIdentifiers } from "@/lib/db/queries";
+import { getTimetableDataFromClassIdentifiers } from "@/lib/data/timetable";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
 
 export const runtime = "nodejs";

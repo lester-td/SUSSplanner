@@ -10,24 +10,110 @@ const feedbackTypes = [
   "Feature request",
   "Other",
 ] as const;
+const feedbackDraftStorageKey = "sussplanner:feedback-draft:v1";
 
 type FeedbackType = typeof feedbackTypes[number];
+const defaultFeedbackType = "Bug" satisfies FeedbackType;
 type FormStatus = "idle" | "submitting" | "success" | "error";
+type FeedbackDraft = {
+  type: FeedbackType;
+  message: string;
+  contact: string;
+};
+
+function isFeedbackType(value: unknown): value is FeedbackType
+{
+  return typeof value === "string" && feedbackTypes.includes(value as FeedbackType);
+}
+
+function canUseLocalStorage()
+{
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
 
 function getErrorMessage(error: unknown)
 {
   return error instanceof Error ? error.message : "Feedback could not be sent right now.";
 }
 
+function readFeedbackDraft()
+{
+  if (!canUseLocalStorage())
+  {
+    return null;
+  }
+
+  try
+  {
+    const raw = window.localStorage.getItem(feedbackDraftStorageKey);
+    if (!raw)
+    {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<FeedbackDraft>;
+    return {
+      type: isFeedbackType(parsed.type) ? parsed.type : defaultFeedbackType,
+      message: typeof parsed.message === "string" ? parsed.message.slice(0, 3000) : "",
+      contact: typeof parsed.contact === "string" ? parsed.contact.slice(0, 320) : "",
+    } satisfies FeedbackDraft;
+  }
+  catch
+  {
+    return null;
+  }
+}
+
+function saveFeedbackDraft(draft: FeedbackDraft)
+{
+  if (!canUseLocalStorage())
+  {
+    return;
+  }
+
+  try
+  {
+    if (draft.type === defaultFeedbackType && !draft.message && !draft.contact)
+    {
+      window.localStorage.removeItem(feedbackDraftStorageKey);
+      return;
+    }
+
+    window.localStorage.setItem(feedbackDraftStorageKey, JSON.stringify(draft));
+  }
+  catch
+  {
+    // Draft persistence should never block the feedback form.
+  }
+}
+
+function clearFeedbackDraft()
+{
+  if (!canUseLocalStorage())
+  {
+    return;
+  }
+
+  try
+  {
+    window.localStorage.removeItem(feedbackDraftStorageKey);
+  }
+  catch
+  {
+    // Ignore storage failures; the submitted feedback has already been handled.
+  }
+}
+
 export function FeedbackForm()
 {
-  const [type, setType] = useState<FeedbackType>("Wrong course data");
+  const [type, setType] = useState<FeedbackType>(defaultFeedbackType);
   const [message, setMessage] = useState("");
   const [contact, setContact] = useState("");
   const [website, setWebsite] = useState("");
   const [pageUrl, setPageUrl] = useState("");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [statusMessage, setStatusMessage] = useState("");
+  const [isClientReady, setIsClientReady] = useState(false);
 
   const messageLength = message.trim().length;
   const canSubmit = useMemo(() => {
@@ -35,8 +121,26 @@ export function FeedbackForm()
   }, [messageLength, status]);
 
   useEffect(() => {
+    const draft = readFeedbackDraft();
+    if (draft)
+    {
+      setType(draft.type);
+      setMessage(draft.message);
+      setContact(draft.contact);
+    }
+
     setPageUrl(window.location.href);
+    setIsClientReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!isClientReady)
+    {
+      return;
+    }
+
+    saveFeedbackDraft({ type, message, contact });
+  }, [contact, isClientReady, message, type]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>)
   {
@@ -73,6 +177,8 @@ export function FeedbackForm()
 
       setStatus("success");
       setStatusMessage("Thanks. Your feedback has been sent.");
+      clearFeedbackDraft();
+      setType(defaultFeedbackType);
       setMessage("");
       setContact("");
       setWebsite("");
@@ -85,7 +191,11 @@ export function FeedbackForm()
   }
 
   return (
-    <form className="grid gap-5" onSubmit={handleSubmit}>
+    <form
+      className={`grid gap-5 ${isClientReady ? "" : "invisible"}`}
+      aria-hidden={!isClientReady}
+      onSubmit={handleSubmit}
+    >
       <div className="grid gap-2">
         <label htmlFor="feedback-type" className="text-[14px] font-bold leading-5 text-[var(--on-surface)]">
           Feedback type

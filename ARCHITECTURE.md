@@ -2,207 +2,116 @@
 
 ## Scope
 
-This repository has two workspaces:
+This repository contains two cooperating workspaces:
 
-- root app: Next.js timetable planner (`app/`, `components/`, `lib/`)
-- scraper pipeline: local data ingestion workflow (`scraper/`)
+- the root Next.js application (`app/`, `components/`, `lib/`)
+- the maintainer-operated ingestion pipeline (`scraper/`)
 
-This document covers the root web app architecture.
+The database is the normalized source of truth, but it is not part of the
+production request path.
 
 ## System Overview
 
-The app has two runtime objectives:
+Academic data moves through four stages:
 
-1. Read timetable/course data from an existing Supabase Postgres schema.
-2. Let anonymous users build, share, and export timetables from URL + local browser state.
+1. The scraper parses source PDFs and generates transactional SQL.
+2. A maintainer imports the reviewed SQL into Supabase Postgres.
+3. `npm run data:build` validates the database and exports versioned read
+   snapshots under `data/snapshots/`.
+4. Next.js pages and route handlers serve those immutable deployment snapshots.
 
-There is no server-side user timetable persistence in this design.
+Anonymous user timetable, planner, calculator, and settings state remains in
+the browser. The application never writes user state to Postgres.
 
-## Runtime Topology
+```mermaid
+flowchart LR
+    Sources["SUSS source PDFs and manifests"] --> Scraper["Local scraper"]
+    Scraper --> SQL["Reviewed transactional SQL"]
+    SQL --> DB["Supabase Postgres source of truth"]
+    DB --> Generator["npm run data:build"]
+    Generator --> Snapshots["Split JSON read snapshots"]
+    Snapshots --> Next["Next.js pages and APIs"]
+    Next --> Browser["Anonymous browser client"]
+    Browser <--> Local["Browser localStorage"]
+```
 
-### Server runtime (Node.js)
+## Database Contract
 
-- Next.js App Router pages and route handlers execute on the server.
-- `DATABASE_URL` is read only on the server.
-- DB reads are performed via Drizzle + `postgres` driver.
-
-### Browser runtime
-
-- `PlannerClient` and `ShareClient` manage interactive state.
-- Planner state persists in `localStorage`.
-- PNG export is client-side DOM capture.
-
-### Database
-
-- Existing Supabase Postgres schema is the source of truth.
-- This rewrite is read-focused for planner runtime operations.
-
-## Data Model Contract
-
-The app expects these relations:
+Snapshot generation reads these existing relations without changing them:
 
 - `courses`
 - `semesters`
 - `semester_weeks`
+- `academic_calendar_events`
+- `academic_calendar_event_semesters`
 - `classes`
 - `class_events`
 - `assessment_components`
-- `v_class_events_with_week` (read-only view used for timetable expansion by week)
 
-Key business identifiers:
+No new table or migration is required for the snapshot architecture.
+`lib/db/schema.ts` remains the Drizzle mapping used by the build-time exporter
+and database tooling.
 
-- course-level identity: `course_code`
-- class-level share identity: `course_code + schedule_type + group_code_type + group_code`
-- timetable URL identity: semantic class identifiers, not raw `class_id`
+## Snapshot Contract
 
-## Data Access Layer
+Generated files are deliberately split by access pattern:
+
+- `manifest.json`: format version, timestamps, coverage, semesters, weeks,
+  calendar events, and shard paths
+- `course-index.json`: compact searchable course records and offering metadata
+- `courses/<bucket>.json`: full details, assessments, and offered semesters for
+  one deterministic course-code bucket
+- `schedules/<semesterId>-<bucket>.json`: classes and dated events for one
+  semester and course-code bucket
+
+`data/snapshots/` is generated and gitignored. A production build regenerates
+it before `next build`; the snapshot reader keeps filesystem paths specific
+enough for Next.js to trace only the snapshot categories used by each server
+entry.
+
+The snapshot format is versioned by `DATA_SNAPSHOT_FORMAT_VERSION` in
+`lib/data/snapshot-types.ts`. Runtime readers reject an incompatible format.
+
+## Runtime Data Access
 
 Primary files:
 
-- `lib/db/index.ts`
-- `lib/db/schema.ts`
-- `lib/db/queries.ts`
+- `lib/data/*-reader.ts` and `lib/data/snapshot-cache.ts`: safe, category-specific,
+  memoized JSON file access
+- `lib/data/metadata.ts`: semesters, weeks, calendar, coverage, update timestamp
+- `lib/data/course-search.ts`: course search, calculator search, and facets
+- `lib/data/course-details.ts`: course details, assessments, classes, and counts
+- `lib/data/timetable.ts`: semantic selection resolution and timetable assembly
+- `lib/data/queries.ts`: compatibility export surface used by pages and APIs
 
-Rules and behaviors:
+Runtime code does not import `postgres`, Drizzle, or `DATABASE_URL`. A cold
+request may read deployment files, but it cannot query the database.
 
-- `lib/db/index.ts` throws immediately if `DATABASE_URL` is missing.
-- A shared `postgres` client is reused in development (`globalThis.__sussplanner_sql_client__`) to avoid connection churn during hot reload.
-- Query functions are centralized in `lib/db/queries.ts`; UI code does not query DB directly.
-- All timetable assembly paths resolve through `getTimetableDataFromClassIdentifiers(...)` or `getTimetableDataFromClassIds(...)`.
-- `v_class_events_with_week` rows are validated for required fields before mapping.
+## Publication and Caching
 
-## Routing And Page Data Flow
+Every deployment contains one internally consistent snapshot. Static snapshot
+files are immutable for that deployment. JSON API responses use a one-year
+shared-cache lifetime; Vercel deployments provide the cache boundary, so a new
+deployment publishes a new data version atomically.
 
-### `/`
+After importing new academic data, trigger a new production deployment. No
+runtime cache-revalidation endpoint or cache secret is required.
 
-- `app/page.tsx` renders the home page with links to Timetable, Courses,
-  Planner, Calculator, and placeholder school portal shortcuts.
+## Routing and User State
 
-### `/timetable`
+- `/timetable` restores semantic class identifiers from `localStorage` and
+  resolves them against snapshot shards.
+- `/courses` searches the generated course index.
+- `/courses/[courseCode]` combines a course-detail shard with optional schedule
+  shards.
+- `/share` resolves URL-contained semantic identifiers without storing them on
+  the server.
+- `/api/export/ics` and `/api/export/pdf` assemble exports from the same
+  snapshots.
 
-- `app/timetable/page.tsx` loads:
-  - `getSemestersWithClassesAndWeeks()`
-  - current semester/week context from date utilities
-- `PlannerClient` then performs client fetches to `/api/classes` using encoded share query state.
-- `app/planner/page.tsx` loads the semester planner UI via `SemesterPlannerClient`.
+Class links use `course_code + schedule_type + group_code_type + group_code`,
+not database surrogate IDs, so refreshed snapshots can resolve existing links
+after database reimports.
 
-### `/calculator`
-
-- `app/calculator/page.tsx` loads semester/week metadata for the shared shell.
-- `GpaCalculatorClient` manages browser-local GPA module state and calculations.
-
-### `/courses`
-
-- Server fetches:
-  - semester list
-  - semester-week tree
-  - search facets (`schools`, `courseLevels`)
-- Initial filter state is parsed from URL query params.
-- `CourseSearchPage` performs live search via `/api/courses/search`.
-
-### `/courses/[courseCode]`
-
-- Server fetches:
-  - course metadata
-  - classes (optional `semesterId`)
-  - assessment components
-  - offered semesters
-- Missing course returns Next.js `notFound()`.
-- Client-side semester dropdown re-fetches class groups via `/api/classes?courseCode=...`.
-
-### `/share`
-
-- If no share params: renders an empty-state explainer.
-- If malformed params: renders invalid-link UI.
-- If valid params:
-  - decode `sem` and `classes`
-  - resolve identifiers to classes/events
-  - render read-only shared timetable in `ShareClient`
-- Importing from this page explicitly overwrites local planner selection state.
-
-## API Surface
-
-All route handlers use `runtime = "nodejs"` and are currently `GET` only.
-
-- `/api/courses/search`
-  - parses multi-value search/filter query params
-  - returns `{ courses }`
-
-- `/api/courses/[courseCode]`
-  - validates optional `semesterId`, `scheduleType`
-  - returns `{ course, classes, assessmentComponents }` or `404`
-
-- `/api/classes`
-  - Mode A: class group lookup by `courseCode`
-  - Mode B: timetable assembly from share payload (`sem`, `classes`)
-  - returns `{ classes }` or `{ timetable }`
-
-- `/api/export/ics`
-  - resolves timetable from share payload
-  - returns downloadable ICS file
-
-- `/api/export/pdf`
-  - resolves timetable from share payload
-  - returns downloadable PDF file
-
-No `/api/export/png` route exists; PNG is generated client-side from rendered UI.
-
-## Share URL Architecture
-
-Share state is stateless and URL-based:
-
-```text
-/share?sem=<semesterId>&classes=<courseCode:scheduleType:groupCodeType:groupCode>,...
-```
-
-Validation is enforced by Zod schemas:
-
-- `semesterId` must be a positive integer
-- `scheduleType` must be `daytime` or `evening`
-- `groupCodeType` must be `TG` or `CRN`
-- max `50` selected classes per shared payload
-
-Resolution flow:
-
-1. Parse and validate URL payload.
-2. Match semantic identifiers to `classes` within selected semester.
-3. Build timetable from matching class IDs.
-4. Return non-matching identifiers in `unresolvedSelections` (do not mutate DB or silently drop in UI).
-
-## Local State Architecture
-
-Storage key:
-
-- `sussplanner.timetable.v1`
-
-Persisted fields:
-
-- `semesterId`
-- `selectedClasses`
-- `hiddenClasses`
-- `selectedWeekId`
-- `orientation`
-- `viewMode`
-
-Import behavior from `/share`:
-
-- selected shared classes replace current selected classes
-- `hiddenClasses` resets to empty
-- orientation/view mode are preserved from existing saved state when present
-
-## Export Architecture
-
-### ICS (`lib/export/ics.ts`)
-
-- Built server-side from resolved timetable events.
-- Emits `VEVENT`s with `Asia/Singapore` timezone in `DTSTART/DTEND`.
-
-### PDF (`lib/export/pdf.ts`)
-
-- Built server-side with `pdf-lib`.
-- Includes semester header, generation timestamp, clash summary, and event list.
-
-### PNG (`lib/export/png.ts`)
-
-- Built client-side with `html-to-image` from current rendered timetable container.
-- Preserves current visual state (orientation, filtered week, selected view).
+For the complete publication workflow, deployment configuration, validation,
+and rollback procedure, see [`docs/DataSnapshots.md`](./docs/DataSnapshots.md).

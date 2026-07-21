@@ -37,8 +37,10 @@ The repository contains two cooperating workspaces:
 - **Data ingestion pipeline:** the local Node.js, TypeScript, and Python scraper
   in `scraper/`, which produces SQL for import into Postgres.
 
-The web application reads academic data from Postgres. It does not write user
-planner state or academic data to the database.
+Supabase Postgres is the normalized source of truth. The build exports it to
+split JSON snapshots, and the deployed web application reads those snapshots.
+Production user requests therefore do not open database connections. The app
+does not write user planner state or academic data to the database.
 
 ## System Architecture
 
@@ -58,13 +60,15 @@ flowchart LR
     ShareURL["Share URL<br/>sem + semantic class identifiers"]
     NextPages["Next.js App Router pages<br/>server components"]
     API["Next.js route handlers<br/>Node.js runtime"]
-    DAL["Data access layer<br/>lib/db/queries.ts"]
-    Cache["Next.js data cache<br/>selected tagged lookups"]
+    DAL["Snapshot data layer<br/>lib/data/*.ts"]
+    Snapshot["Generated JSON snapshots<br/>data/snapshots/"]
+    CDN["Vercel CDN<br/>immutable per deployment"]
     DB["Supabase-compatible Postgres<br/>academic data"]
     Sources["Schedule PDFs + course synopsis PDFs<br/>semester-week JSON"]
     Scraper["Local scraper pipeline<br/>Node.js + TypeScript + Python"]
     SQL["Generated JSON, reports, and SQL"]
-    Revalidate["POST /api/cache/revalidate"]
+    Generator["npm run data:build<br/>build-time exporter"]
+    Deploy["Vercel deployment"]
 
     User --> Browser
     Browser --> LocalStorage
@@ -82,16 +86,17 @@ flowchart LR
     Browser --> API
     NextPages --> DAL
     API --> DAL
-    DAL --> Cache
-    Cache --> DAL
-    DAL --> DB
+    DAL --> Snapshot
+    API --> CDN
 
     Maintainer --> Scraper
     Sources --> Scraper
     Scraper --> SQL
     Maintainer -->|"psql with DATABASE_URL"| DB
-    Maintainer -->|"CACHE_REVALIDATE_SECRET"| Revalidate
-    Revalidate --> Cache
+    DB --> Generator
+    Generator --> Snapshot
+    Maintainer --> Deploy
+    Deploy --> Generator
 ```
 
 ### Runtime Boundaries
@@ -100,16 +105,17 @@ flowchart LR
 |---|---|---|
 | Browser | Interactive timetable, course search UI, semester planner, GPA calculator, settings, in-app registration reminders, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 semester-planner print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `lib/settings/app-settings.ts`, `lib/registration/`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/semester-planner-print.ts` |
 | Next.js server | Server-rendered pages, validation, API route handlers, server-side ICS/PDF endpoints | `app/`, `lib/validation/`, `lib/export/ics.ts`, `lib/export/pdf.ts` |
-| Data access layer | Centralized Drizzle queries, timetable assembly, clash detection, cached lookups | `lib/db/queries.ts`, `lib/db/index.ts`, `lib/timetable/clash-detection.ts` |
+| Snapshot data layer | Reads deployment-local JSON shards, searches catalog data in memory, assembles timetables, and detects clashes | `lib/data/`, `lib/timetable/clash-detection.ts` |
+| Snapshot generator | Reads Postgres during development/build and writes deployable JSON | `scripts/build-data-snapshots.ts`, `lib/db/schema.ts` |
 | Postgres | Source of truth for academic catalog, semester, class, event, and assessment data | `scraper/schema.sql`, mirrored by `lib/db/schema.ts` |
 | Local scraper | Extracts source PDFs, creates review artifacts, and generates transactional SQL | `scraper/src/`, `scraper/tools/` |
 
 ### Architectural Rules Visible in the Code
 
-- UI components do not query Postgres directly; database access is centralized
-  in `lib/db/queries.ts`.
-- `DATABASE_URL` is read by the server-side database client, Drizzle tooling,
-  and the setup validator; maintainers also pass it to `psql`.
+- UI components and production route handlers do not query Postgres. Reads go
+  through `lib/data/queries.ts` and deployment-local snapshot files.
+- `DATABASE_URL` is used by snapshot generation, Drizzle tooling, validation,
+  and maintainer `psql` commands; it is not required by `npm run start`.
 - Anonymous user state is not persisted server-side.
 - App settings and course-registration reminder dismissals are local browser
   preferences; they are not persisted server-side.
@@ -118,8 +124,9 @@ flowchart LR
 - The application runtime is read-only with respect to academic tables.
 - Data updates happen outside the deployed app through generated SQL and
   `psql`.
-- Selected semester/week/facet lookup queries use Next.js `unstable_cache` with a ten-minute
-  revalidation period and cache tags.
+- Snapshot reads are memoized inside a server process. API responses are cached
+  at the CDN for the lifetime of the deployment; a new deployment atomically
+  publishes a new data version.
 
 ## Tech Stack
 
@@ -130,7 +137,7 @@ flowchart LR
 | Framework | Next.js 16 App Router |
 | UI | React 19, TypeScript |
 | Styling | Tailwind CSS 4 through PostCSS, plus CSS variables in `app/globals.css` |
-| Database access | Drizzle ORM 0.44 and `postgres` driver |
+| Data access | Build-time Drizzle/Postgres export; deployment-local JSON at runtime |
 | Database | Supabase-compatible PostgreSQL |
 | Validation | Zod 4 |
 | Server PDF generation | `pdf-lib` |
@@ -167,7 +174,7 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 ```text
 .
 ├── app/                         Next.js pages and API route handlers
-│   ├── api/                     JSON, export, and cache-revalidation routes
+│   ├── api/                     JSON and export routes
 │   ├── calculators/             GPA and OCAS calculator page
 │   ├── courses/                 Course search and detail pages
 │   ├── planner/                 Multi-semester semester planner page
@@ -292,8 +299,8 @@ npm run typecheck
 | `npm run db:generate` | Generate Drizzle migration files after an intentional schema change. |
 
 The setup validator checks supported Node/npm versions, installed dependencies,
-local environment files, and the shape of `DATABASE_URL`. It also warns about
-missing optional Supabase public variables and the cache-revalidation secret.
+local environment files, and the shape of `DATABASE_URL`. Start validation
+checks that generated snapshots exist instead of requiring database access.
 
 The application assumes that the academic database schema already exists. Do
 not run `drizzle-kit push` against a shared or production database unless the
@@ -305,8 +312,7 @@ The root `.env.example` defines the complete documented environment surface:
 
 | Variable | Required | Used by | Notes |
 |---|---:|---|---|
-| `DATABASE_URL` | Yes for app runtime and database tooling | `lib/db/index.ts`, `drizzle.config.ts`, setup validator, maintainer `psql` commands | Must be a `postgres://` or `postgresql://` URL. Keep server-side and secret. |
-| `CACHE_REVALIDATE_SECRET` | Required only to enable cache revalidation endpoint | `app/api/cache/revalidate/route.ts` | Accepted through `x-revalidate-secret` or `Authorization: Bearer ...`. |
+| `DATABASE_URL` | Yes for snapshot generation and database tooling; no at runtime | `scripts/build-data-snapshots.ts`, `drizzle.config.ts`, setup validator, maintainer `psql` commands | Must be a `postgres://` or `postgresql://` URL. Keep server-side and secret. Use Supabase's transaction pooler for Vercel builds. |
 | `NEXT_PUBLIC_SUPABASE_URL` | No | Setup validator only | Present for compatibility/future browser integrations; not used by runtime application code. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No | Setup validator only | Present for compatibility/future browser integrations; not used by runtime application code. |
 | `NEXT_ALLOWED_DEV_ORIGINS` | No | `next.config.js`, setup validator | Comma-separated extra hostnames or HTTP(S) origins allowed during development. |
@@ -317,8 +323,8 @@ environment files except `.env.example`.
 ## Database and Schema
 
 `scraper/schema.sql` is the most complete database definition in the repository.
-`lib/db/schema.ts` manually mirrors the tables and read-only view for Drizzle
-queries. The project does not maintain migrations for the existing academic
+`lib/db/schema.ts` manually mirrors the tables for the snapshot exporter and
+Drizzle tooling. The project does not maintain migrations for the existing academic
 tables; `drizzle/README.md` says the migration directory is intentionally empty.
 
 ### Entity Relationship Diagram
@@ -430,14 +436,14 @@ class-group, semester, and optional week information.
 - `assessment_components` is intentionally not semester-specific because the
   source synopsis endpoint exposes only the latest/current assessment strategy.
 
-### Database Access Behavior
+### Data Access Behavior
 
-- `lib/db/index.ts` fails immediately when `DATABASE_URL` is missing.
-- The `postgres` client uses `prepare: false`, up to 3 connections in
-  production, and up to 10 in development.
-- Development reuses the client through `globalThis` to reduce hot-reload
-  connection churn.
-- Timetable assembly resolves semantic identifiers to matching class IDs, loads
+- `scripts/build-data-snapshots.ts` requires `DATABASE_URL`, opens one
+  short-lived connection with prepared statements disabled, and reads each
+  academic table once per generation.
+- The category-specific readers in `lib/data/` resolve only paths declared by
+  the manifest and memoize parsed files within each server process.
+- Timetable assembly resolves semantic identifiers from schedule shards, loads
   events and semester data, derives ECA markers, detects clashes, and returns
   unresolved identifiers without silently removing them from the response.
 
@@ -471,7 +477,6 @@ All route handlers explicitly use the Node.js runtime.
 | `GET /api/classes/counts` | Required `semesterId`, comma-separated `courseCodes` | `{ counts }`; used to show whether selected courses have alternative class groups. |
 | `GET /api/export/ics` | Required `sem`; optional `classes` list | Downloadable `text/calendar` attachment containing all resolved events in `Asia/Singapore` timezone. |
 | `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable `application/pdf` event-list attachment with clash summary. The current timetable/share UI instead creates its PDF from a browser-rendered PNG. |
-| `POST /api/cache/revalidate` | Secret header; JSON `{ tags?: string[], paths?: string[] }` | Revalidates known cache tags and optional paths. Defaults to all known tags when `tags` is omitted; malformed JSON bodies or empty/invalid `tags` arrays return `400`. |
 
 PNG export is intentionally browser-side so it can preserve the rendered
 timetable view; there is no `/api/export/png` route.
@@ -492,22 +497,26 @@ calculator request and returns the minimum catalog fields needed by the UI.
 Each class identifier is:
 
 ```text
-COURSECODE:scheduleType:groupCodeType:groupCode
+COURSECODE:groupCode
 ```
 
 Example:
 
 ```text
-/share?sem=1&classes=ICT133:evening:TG:T01,ANL252:daytime:CRN:12345
+/share?sem=3&classes=ANL303:TG01,ICT233:CRN01
 ```
+
+Share links infer daytime classes from `TG` group codes and evening classes
+from `CRN` group codes. Encoders place TG classes first, followed by CRN
+classes, and sort each group by course code and group code. The resolved
+timetable reads the same versioned snapshot as the rest of the deployment.
 
 Zod validation in `lib/validation/timetable.ts` enforces:
 
 - Positive integer semester ID.
 - Course code containing 3-20 uppercase alphanumeric characters.
-- `daytime` or `evening` schedule type.
-- `TG` or `CRN` group-code type.
-- Group code with no `:` or `,`.
+- Group code in `TG01` or `CRN01` form.
+- Daytime schedule type for TG classes and evening schedule type for CRN classes.
 - At most 50 selected classes.
 
 ## Authentication and Authorization
@@ -521,13 +530,13 @@ timetable, semester planner, and GPA-calculator data remains in their browser.
 ### Maintainer Controls
 
 There is no admin page, admin session, role table, or login route in this
-repository. The repository shows two operational access gates:
+repository. The operational access gates are:
 
 1. **Database update access:** a maintainer must possess a writable
    `DATABASE_URL` to import generated SQL with `psql`.
-2. **Cache invalidation access:** `POST /api/cache/revalidate` requires an exact
-   match with `CACHE_REVALIDATE_SECRET`, supplied through
-   `x-revalidate-secret` or a Bearer authorization header.
+2. **Publication access:** a maintainer must be able to start a Vercel
+   deployment, directly or through a protected deploy hook. The deployment
+   rebuilds snapshots from the updated database.
 
 The `NEXT_PUBLIC_SUPABASE_*` variables do not implement browser authentication
 and are not used by runtime code.
@@ -847,8 +856,9 @@ flowchart TD
     Fix["Correct input or parser output<br/>and regenerate affected artifacts"]
     ImportCourse["Import course-detail SQL"]
     Verify["Run database count and sample queries"]
-    Revalidate["Optionally POST /api/cache/revalidate<br/>using CACHE_REVALIDATE_SECRET"]
-    Public["Users receive refreshed academic data"]
+    Build["Run npm run data:build<br/>and verify snapshots"]
+    Deploy["Create a Vercel deployment"]
+    Public["Users receive the new snapshot atomically"]
 
     Schema --> ImportWeeks
     Inputs --> Weeks
@@ -866,8 +876,9 @@ flowchart TD
     Fix -->|schedule issue| Schedule
     Fix -->|course issue| Course
     ImportCourse --> Verify
-    Verify --> Revalidate
-    Revalidate --> Public
+    Verify --> Build
+    Build --> Deploy
+    Deploy --> Public
 ```
 
 ## Important State Models
@@ -1275,23 +1286,23 @@ sequenceDiagram
     participant UI as PlannerClient
     participant Search as GET /api/courses/search
     participant Classes as GET /api/classes
-    participant Queries as lib/db/queries.ts
-    participant DB as Postgres
+    participant Queries as lib/data/queries.ts
+    participant Snapshot as JSON snapshots
     participant Storage as localStorage
 
     Student->>UI: Search within selected semester
     UI->>Search: q + semesterIds
     Search->>Queries: searchCourses(filters)
-    Queries->>DB: Search courses and class availability
-    DB-->>Queries: Matching courses
+    Queries->>Snapshot: Search course index
+    Snapshot-->>Queries: Matching courses
     Queries-->>Search: CourseSearchResult[]
     Search-->>UI: { courses }
 
     Student->>UI: Add course / choose class group
     UI->>Classes: courseCode + semesterId
     Classes->>Queries: getCourseClasses(...)
-    Queries->>DB: Load classes and events-with-week view
-    DB-->>Queries: Class groups and dated events
+    Queries->>Snapshot: Load course schedule shard
+    Snapshot-->>Queries: Class groups and dated events
     Queries-->>Classes: Class groups and dated events
     Classes-->>UI: { classes }
     UI->>UI: Auto-pick preferred group or accept chosen alternative
@@ -1299,8 +1310,8 @@ sequenceDiagram
 
     UI->>Classes: sem + selected semantic identifiers
     Classes->>Queries: getTimetableDataFromClassIdentifiers(...)
-    Queries->>DB: Resolve class IDs, events, weeks, assessments
-    DB-->>Queries: Academic rows
+    Queries->>Snapshot: Resolve identifiers, events, weeks, assessments
+    Snapshot-->>Queries: Academic records
     Queries->>Queries: Build selections and detect clashes
     Queries-->>Classes: TimetableData
     Classes-->>UI: { timetable }
@@ -1314,8 +1325,8 @@ sequenceDiagram
     actor Recipient
     participant Page as /share server page
     participant Decoder as share-url + Zod validation
-    participant Queries as lib/db/queries.ts
-    participant DB as Postgres
+    participant Queries as lib/data/queries.ts
+    participant Snapshot as JSON snapshots
     participant Client as ShareClient
     participant Storage as localStorage
     participant Router as Next.js router
@@ -1328,8 +1339,8 @@ sequenceDiagram
     else Valid share state
         Decoder-->>Page: semesterId + selectedClasses
         Page->>Queries: getTimetableDataFromClassIdentifiers(...)
-        Queries->>DB: Resolve semantic identifiers and load events
-        DB-->>Queries: Matching rows
+        Queries->>Snapshot: Resolve semantic identifiers and load events
+        Snapshot-->>Queries: Matching records
         Queries-->>Page: TimetableData + unresolvedSelections
         Page-->>Client: Render read-only preview
         Client-->>Recipient: Preview without changing local planner
@@ -1389,8 +1400,9 @@ sequenceDiagram
     participant Scraper as Local scraper commands
     participant Artifacts as JSON / TSV / SQL artifacts
     participant DB as Postgres
-    participant Revalidate as POST /api/cache/revalidate
-    participant Cache as Next.js tagged data cache
+    participant Build as Snapshot generator
+    participant Snapshot as Split JSON snapshots
+    participant Deploy as Vercel deployment
     participant App as Public application
 
     Maintainer->>Scraper: Run week, schedule, download, and course parse commands
@@ -1400,21 +1412,20 @@ sequenceDiagram
     Maintainer->>Artifacts: Review warnings and generated output
     Maintainer->>DB: psql import using DATABASE_URL
     DB-->>Maintainer: Import result and verification queries
-    Maintainer->>Revalidate: Optionally send secret-authenticated tags/paths request
-    Revalidate->>Cache: revalidateTag / revalidatePath
-    App->>Cache: Next selected cached lookup
-    Cache->>DB: Refresh stale academic data
-    DB-->>Cache: Updated academic data
-    Cache-->>App: Refreshed lookup result
+    Maintainer->>Build: Run npm run data:build (local verification)
+    Build->>DB: Read normalized academic tables
+    Build->>Snapshot: Write manifest, course index, course and schedule shards
+    Maintainer->>Deploy: Trigger production deployment
+    Deploy->>Build: Generate snapshots during build
+    Deploy-->>App: Publish code and data as one deployment
 ```
 
 ## Data Maintenance and Admin Flow
 
 ### Recommended Import Order
 
-For a fresh database, `scraper/README.md` specifies the first six steps below.
-Cache revalidation is a separate application operation implemented by its route
-handler.
+For a fresh database, `scraper/README.md` specifies the database preparation
+steps below. Snapshot publication is the final application operation.
 
 1. Apply `scraper/schema.sql`.
 2. Generate and import semester-week SQL.
@@ -1422,7 +1433,8 @@ handler.
 4. Download course synopsis PDFs.
 5. Parse course synopsis PDFs and import course-detail SQL.
 6. Verify database counts/sample rows.
-7. Optionally revalidate application caches for a prompt refresh.
+7. Run `npm run data:build` from the repository root and review the manifest.
+8. Trigger a new Vercel deployment (a deploy hook is convenient).
 
 Run scraper commands from `scraper/`. The key commands are
 `generate:weeks`, `scrape:all`, `download:courses`, and `parse:courses`; import
@@ -1432,51 +1444,39 @@ See `scraper/README.md` for exact arguments, review queries, and troubleshooting
 Generated scraper output and downloaded course PDFs are gitignored. Generated
 SQL is wrapped in `BEGIN`/`COMMIT` by default.
 
-### Cache Revalidation After Import
+### Publishing After Import
 
-```bash
-curl -X POST https://<deployment>/api/cache/revalidate \
-  -H "x-revalidate-secret: $CACHE_REVALIDATE_SECRET" \
-  -H "content-type: application/json" \
-  -d '{"tags":["semesters","semester-weeks","classes","courses","assessments"],"paths":["/","/timetable","/planner","/courses"]}'
-```
-
-Use an empty JSON object (`{}`), which omits `tags`, to revalidate all known
-tags, or provide only the `tags` and optional `paths` that should be
-invalidated.
-
-Valid tags are:
-
-- `semesters`
-- `semester-weeks`
-- `classes`
-- `courses`
-- `assessments`
+`npm run data:build` is a local validation step. Generated snapshots are
+gitignored, so the production publication step is a fresh Vercel build. That
+build reads the updated database and bundles the resulting files. See
+`docs/DataSnapshots.md` for the complete workflow and rollback procedure.
 
 ## Caching
 
-The application uses two cache layers visible in the repository:
+The application uses two complementary cache layers:
 
-1. **Next.js data cache:** selected lookup functions in `lib/db/queries.ts` use
-   `unstable_cache` with a 600-second revalidation interval and cache tags.
-2. **HTTP shared-cache headers:** API routes set `Cache-Control` and
-   `Vercel-Cache-Tag` headers.
+1. **Process memory:** parsed manifests, indexes, and shards are memoized for
+   the life of each server process.
+2. **Vercel CDN:** read-only API responses use
+   `public, max-age=0, s-maxage=31536000`.
 
 | Route group | Cache-Control |
 |---|---|
-| Course search | `s-maxage=300, stale-while-revalidate=3600` |
-| Classes, class counts, course detail | `s-maxage=3600, stale-while-revalidate=86400` |
+| Course search and calculator search | `public, max-age=0, s-maxage=31536000` |
+| Classes, class counts, course detail | `public, max-age=0, s-maxage=31536000` |
 
-The cache-revalidation route can invalidate both known data tags and explicitly
-provided paths. If `tags` is omitted, it invalidates all known tags. Malformed
-JSON bodies or empty/invalid `tags` arrays return `400`. `GET /api/calculator/courses`
-does not currently set shared-cache headers.
+The long CDN lifetime is safe because a deployment is an immutable data
+version. Vercel invalidates the prior deployment's cache when the new
+deployment is promoted; there is no timer-based data expiry or revalidation
+secret.
 
 ## Deployment Notes
 
 - `vercel.json` pins the Vercel region to Singapore: `sin1`.
-- The deployed application requires `DATABASE_URL`.
-- Configure `CACHE_REVALIDATE_SECRET` if maintainers need on-demand refreshes.
+- `DATABASE_URL` is required while Vercel builds snapshots, but not while the
+  built application serves requests.
+- Supabase-backed Vercel deployments should use the transaction-pooler
+  connection string on port `6543`, not the session pooler on port `5432`.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently
   optional and unused by runtime code.
 - `/timetable`, `/planner`, and `/calculators` are force-dynamic.
@@ -1485,10 +1485,9 @@ does not currently set shared-cache headers.
 - `/calculators` and `/settings` set `robots.index` and `robots.follow` to
   `false`.
 - API route handlers require the Node.js runtime, not the Edge runtime.
-- Database connection limits are intentionally small in production (`max: 3`).
+- Snapshot generation uses one short-lived database connection.
 - The scraper is designed to run on a maintainer's machine, not inside Vercel.
-- Academic tables must already exist before database-backed requests can
-  succeed.
+- Academic tables must already exist before a build can generate snapshots.
 - Do not use `drizzle-kit push` against a shared or production database unless a
   schema change is explicitly intended and reviewed.
 
@@ -1497,17 +1496,17 @@ does not currently set shared-cache headers.
 | Task | Guidance |
 |---|---|
 | Run/check the app | Use `npm run dev`, `npm run typecheck`, and `npm run build`. |
-| Change a query | Keep DB access in `lib/db/queries.ts`; update returned types and cache tags when dependencies change. |
+| Change data retrieval | Keep runtime reads in `lib/data/`; update the generator and snapshot types together when the persisted shape changes. |
 | Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. `drizzle/` is not currently the schema source of truth. |
-| Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered DB reads behind route handlers. |
+| Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered snapshot reads behind route handlers. |
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
 | Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, and local-storage format aligned. |
-| Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/db/queries.ts`; do not accidentally add semester/class filters. |
+| Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/data/course-search.ts`; do not accidentally add semester/class filters. |
 | Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, and this guide. Preserve support for existing public versions or reject them with a clear notice. |
 | Change semester-planner print output | Update `lib/export/semester-planner-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
 | Change app settings | Update `lib/settings/app-settings.ts`, `components/settings/settings-client.tsx`, `components/settings/settings-provider.tsx`, and tests that cover normalization/migration. |
 | Change course registration reminders | Update `lib/registration/schedule.ts`, `lib/registration/reminders.ts`, `lib/registration/reminder-storage.ts`, `components/registration/global-registration-reminders.tsx`, `components/registration/registration-reminder-banner.tsx`, settings controls, tests, and both guides. Verify timing boundaries around each changed event. |
-| Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review issue reports before import and optionally revalidate caches afterward. |
+| Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review/import data, validate snapshots, then deploy. |
 
 ## Known Limitations
 
@@ -1530,7 +1529,7 @@ does not currently set shared-cache headers.
 - Shared links do not preserve hidden classes, custom colors, selected week,
   orientation, or view mode.
 - Prompt academic-data refresh depends on maintainers running the local scraper,
-  reviewing/importing generated artifacts, and revalidating caches.
+  reviewing/importing generated artifacts, and publishing a new deployment.
 - Course registration reminders depend on the bundled static schedule in
   `lib/registration/schedule.ts`; they are not fetched from an official live
   registration feed.
@@ -1558,10 +1557,10 @@ The following details cannot be verified from repository code:
 - **Production admin identity/authentication:** the project context describes
   admin authentication for maintainers, but the repository contains no admin
   account model, sign-in route, middleware, or role checks. The only verifiable
-  controls are possession of `DATABASE_URL` and `CACHE_REVALIDATE_SECRET`.
+  controls are possession of `DATABASE_URL` and permission to deploy the app.
 - **Credential provisioning and rotation:** there is no documented process for
-  granting, rotating, or revoking maintainer database credentials or the cache
-  secret.
+  granting, rotating, or revoking maintainer database credentials or deploy
+  hook access.
 - **Production database policy configuration:** `scraper/schema.sql` defines
   tables, indexes, triggers, and a security-invoker view, but repository code
   does not define Supabase Row Level Security policies or production network

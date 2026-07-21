@@ -554,6 +554,24 @@ npm run parse:courses -- \
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/course-details-import.sql
 ```
 
+### Publish the imported data to the application
+
+The production application serves build-time JSON snapshots and does not query
+Postgres during user requests. After verifying the import, return to the
+repository root and run:
+
+```bash
+cd ..
+npm run data:build
+npm test
+npm run typecheck
+```
+
+Review the generated counts, then trigger a new Vercel deployment. Vercel runs
+the same snapshot generator during `prebuild`, so database-only updates do not
+require committing generated JSON. See `docs/DataSnapshots.md` for the complete
+publication and rollback workflow.
+
 ---
 
 ## 14. Troubleshooting
