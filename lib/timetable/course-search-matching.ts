@@ -5,6 +5,11 @@ export type SearchableCourseRecord = {
   courseSynopsis: string | null;
 };
 
+export type CourseSearchMatch = {
+  matches: boolean;
+  rank: number;
+};
+
 const NO_MATCH_RANK = Number.MAX_SAFE_INTEGER;
 const COURSE_CODE_EXACT_RANK = 0;
 const COURSE_CODE_PREFIX_RANK = 1;
@@ -194,22 +199,43 @@ function getBestTermRank(course: SearchableCourseRecord, term: string)
 
 export function courseMatchesSearchQuery(course: SearchableCourseRecord, rawSearchTerm: string)
 {
-  const terms = getCourseSearchTerms(rawSearchTerm);
-
-  return terms.length === 0
-    || terms.every((term) => getBestTermRank(course, term) < NO_MATCH_RANK);
+  return getCourseSearchMatch(course, rawSearchTerm).matches;
 }
 
-export function getCourseSearchRank(course: SearchableCourseRecord, rawSearchTerm: string)
+export function getCourseSearchMatch(course: SearchableCourseRecord, rawSearchTerm: string): CourseSearchMatch
 {
   const terms = getCourseSearchTerms(rawSearchTerm);
   if (terms.length === 0)
   {
-    return 9;
+    return {
+      matches: true,
+      rank: 9,
+    };
   }
 
-  return terms.reduce((totalRank, term) => {
+  let rank = 0;
+
+  for (const term of terms)
+  {
     const termRank = getBestTermRank(course, term);
-    return termRank >= NO_MATCH_RANK ? NO_MATCH_RANK : totalRank + termRank;
-  }, 0);
+    if (termRank >= NO_MATCH_RANK)
+    {
+      return {
+        matches: false,
+        rank: NO_MATCH_RANK,
+      };
+    }
+
+    rank += termRank;
+  }
+
+  return {
+    matches: true,
+    rank,
+  };
+}
+
+export function getCourseSearchRank(course: SearchableCourseRecord, rawSearchTerm: string)
+{
+  return getCourseSearchMatch(course, rawSearchTerm).rank;
 }

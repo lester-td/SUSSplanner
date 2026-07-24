@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -28,8 +28,8 @@ import {
   type CourseSearchFilters,
 } from "@/lib/timetable/course-search";
 import {
-  courseMatchesSearchQuery,
-  getCourseSearchRank,
+  getCourseSearchMatch,
+  getCourseSearchTerms,
 } from "@/lib/timetable/course-search-matching";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
@@ -46,11 +46,6 @@ let cachedAllCourses: CourseSearchResult[] | null = null;
 let cachedAllCoursesFetchedAt = 0;
 let pendingAllCoursesRequest: Promise<CourseSearchResult[]> | null = null;
 
-function normalizeSearchTerm(term: string)
-{
-  return term.trim();
-}
-
 function escapeRegExp(value: string)
 {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -58,18 +53,19 @@ function escapeRegExp(value: string)
 
 function highlightSearchTerm(text: string, searchTerm: string)
 {
-  const normalizedTerm = normalizeSearchTerm(searchTerm);
-  if (!normalizedTerm)
+  const terms = [...new Set(getCourseSearchTerms(searchTerm))]
+    .sort((left, right) => right.length - left.length);
+  if (terms.length === 0)
   {
     return text;
   }
 
-  const pattern = new RegExp(`(${escapeRegExp(normalizedTerm)})`, "gi");
+  const pattern = new RegExp(`(${terms.map(escapeRegExp).join("|")})`, "gi");
   const segments = text.split(pattern);
-  const lowerTerm = normalizedTerm.toLowerCase();
+  const termSet = new Set(terms);
 
   return segments.map((segment, index) => (
-    segment.toLowerCase() === lowerTerm
+    termSet.has(segment.toLocaleLowerCase("en-SG"))
       ? (
         <u key={`${segment}-${index}`} className="font-bold underline decoration-[1.5px] underline-offset-2">
           {segment}
@@ -311,8 +307,12 @@ function filterCourses(courses: CourseSearchResult[], filters: CourseSearchFilte
   const selectedAssessmentModes = new Set(filters.assessmentModes.map((value) => value.trim()).filter(Boolean));
 
   return courses
-    .filter((course) => {
-      if (searchTerm && !courseMatchesSearchQuery(course, searchTerm))
+    .map((course) => ({
+      course,
+      searchMatch: getCourseSearchMatch(course, searchTerm),
+    }))
+    .filter(({ course, searchMatch }) => {
+      if (searchTerm && !searchMatch.matches)
       {
         return false;
       }
@@ -371,9 +371,10 @@ function filterCourses(courses: CourseSearchResult[], filters: CourseSearchFilte
       return true;
     })
     .sort((left, right) => (
-      getCourseSearchRank(left, searchTerm) - getCourseSearchRank(right, searchTerm)
-      || left.courseCode.localeCompare(right.courseCode)
-    ));
+      left.searchMatch.rank - right.searchMatch.rank
+      || left.course.courseCode.localeCompare(right.course.courseCode)
+    ))
+    .map(({ course }) => course);
 }
 
 async function fetchCourseResults(requestQuery: string, signal?: AbortSignal)
@@ -447,7 +448,29 @@ export function CourseSearchPage({
     [allCourses, courseLevels, schools],
   );
   const levelOptions = useMemo(() => buildLevelOptions(normalizedFacets.courseLevels), [normalizedFacets.courseLevels]);
-  const filteredCourses = useMemo(() => filterCourses(allCourses, filters), [allCourses, filters]);
+  const deferredSearchTerm = useDeferredValue(filters.q);
+  const resultFilters = useMemo(() => ({
+    q: deferredSearchTerm,
+    semesterIds: filters.semesterIds,
+    scheduleTypes: filters.scheduleTypes,
+    undergraduateOnly: filters.undergraduateOnly,
+    postgraduateOnly: filters.postgraduateOnly,
+    availableAsGspOnly: filters.availableAsGspOnly,
+    assessmentModes: filters.assessmentModes,
+    schoolNames: filters.schoolNames,
+    courseLevels: filters.courseLevels,
+  }), [
+    deferredSearchTerm,
+    filters.assessmentModes,
+    filters.availableAsGspOnly,
+    filters.courseLevels,
+    filters.postgraduateOnly,
+    filters.scheduleTypes,
+    filters.schoolNames,
+    filters.semesterIds,
+    filters.undergraduateOnly,
+  ]);
+  const filteredCourses = useMemo(() => filterCourses(allCourses, resultFilters), [allCourses, resultFilters]);
 
   useLayoutEffect(() => {
     const pageShell = pageShellRef.current;
@@ -848,8 +871,8 @@ export function CourseSearchPage({
                         href={`/courses/${course.courseCode}`}
                         className="inline items-baseline break-normal text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                       >
-                        <span>{renderHighlightedText(course.courseCode, filters.q, course.courseCode)}</span>{" "}
-                        <span>{renderHighlightedText(course.courseName, filters.q, "Untitled course")}</span>
+                        <span>{renderHighlightedText(course.courseCode, resultFilters.q, course.courseCode)}</span>{" "}
+                        <span>{renderHighlightedText(course.courseName, resultFilters.q, "Untitled course")}</span>
                       </Link>
                     </h2>
                   </div>
@@ -870,7 +893,7 @@ export function CourseSearchPage({
                       </span>
                       <span className="inline-flex items-center gap-1.5">
                         <SchoolIcon className="h-4 w-4 shrink-0" />
-                        {renderHighlightedText(course.schoolName, filters.q, "School unavailable")}
+                        {renderHighlightedText(course.schoolName, resultFilters.q, "School unavailable")}
                       </span>
                     </div>
                   </div>
@@ -878,7 +901,7 @@ export function CourseSearchPage({
                   <p className="mt-1.5 text-[13px] leading-5 text-[var(--on-surface-variant)]">
                     {renderHighlightedText(
                       truncateWords(course.courseSynopsis, SYNOPSIS_WORD_LIMIT),
-                      filters.q,
+                      resultFilters.q,
                       "No synopsis available.",
                     )}
                   </p>

@@ -1,8 +1,7 @@
 import "server-only";
 
 import {
-  courseMatchesSearchQuery,
-  getCourseSearchRank,
+  getCourseSearchMatch,
   includesCourseSearchText,
 } from "@/lib/timetable/course-search-matching";
 import type { CourseSearchFilters } from "@/lib/timetable/course-search";
@@ -45,8 +44,12 @@ export async function searchCourses({
   );
 
   return records
-    .filter((record) => {
-      if (normalizedSearchTerm && !courseMatchesSearchQuery(record, normalizedSearchTerm))
+    .map((record) => ({
+      record,
+      searchMatch: getCourseSearchMatch(record, normalizedSearchTerm),
+    }))
+    .filter(({ record, searchMatch }) => {
+      if (normalizedSearchTerm && !searchMatch.matches)
       {
         return false;
       }
@@ -83,10 +86,10 @@ export async function searchCourses({
       return !hasClassFilters || record.offerings.some(matchesClassFilters);
     })
     .sort((left, right) => (
-      getCourseSearchRank(left, q) - getCourseSearchRank(right, q)
-      || left.courseCode.localeCompare(right.courseCode)
+      left.searchMatch.rank - right.searchMatch.rank
+      || left.record.courseCode.localeCompare(right.record.courseCode)
     ))
-    .map((record) => {
+    .map(({ record }) => {
       const result = toSearchResult(record);
       if (!hasClassFilters)
       {
@@ -114,16 +117,23 @@ export async function searchCalculatorCourses(searchTerm: string, limit = 8)
 
   const records = await getCourseIndexSnapshot();
   return records
-    .filter((record) => (
-      record.courseCode.toLocaleLowerCase("en-SG").includes(normalizedSearchTerm)
-      || includesCourseSearchText(record.courseName, normalizedSearchTerm)
+    .map((record) => ({
+      record,
+      searchRank: getCourseSearchMatch(record, normalizedSearchTerm),
+    }))
+    .filter(({ record, searchRank }) => (
+      searchRank.matches
+      && (
+        record.courseCode.toLocaleLowerCase("en-SG").includes(normalizedSearchTerm)
+        || includesCourseSearchText(record.courseName, normalizedSearchTerm)
+      )
     ))
     .sort((left, right) => (
-      getCourseSearchRank(left, searchTerm) - getCourseSearchRank(right, searchTerm)
-      || left.courseCode.localeCompare(right.courseCode)
+      left.searchRank.rank - right.searchRank.rank
+      || left.record.courseCode.localeCompare(right.record.courseCode)
     ))
     .slice(0, Math.min(20, Math.max(1, limit)))
-    .map((record) => ({
+    .map(({ record }) => ({
       courseCode: record.courseCode,
       courseName: record.courseName,
       creditUnits: record.creditUnits,
