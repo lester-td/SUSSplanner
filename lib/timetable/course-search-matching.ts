@@ -5,43 +5,211 @@ export type SearchableCourseRecord = {
   courseSynopsis: string | null;
 };
 
+const NO_MATCH_RANK = Number.MAX_SAFE_INTEGER;
+const COURSE_CODE_EXACT_RANK = 0;
+const COURSE_CODE_PREFIX_RANK = 1;
+const COURSE_CODE_CONTAINS_RANK = 2;
+const COURSE_CODE_FUZZY_RANK = 4;
+const COURSE_NAME_EXACT_RANK = 10;
+const COURSE_NAME_PREFIX_RANK = 11;
+const COURSE_NAME_CONTAINS_RANK = 12;
+const COURSE_NAME_FUZZY_RANK = 14;
+const SCHOOL_NAME_EXACT_RANK = 20;
+const SCHOOL_NAME_PREFIX_RANK = 21;
+const SCHOOL_NAME_CONTAINS_RANK = 22;
+const SCHOOL_NAME_FUZZY_RANK = 24;
+const SYNOPSIS_EXACT_RANK = 30;
+const SYNOPSIS_PREFIX_RANK = 31;
+const SYNOPSIS_CONTAINS_RANK = 32;
+const SYNOPSIS_FUZZY_RANK = 34;
+
+function normalizeSearchText(value: string)
+{
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase("en-SG")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function compactSearchText(value: string)
+{
+  return normalizeSearchText(value).replace(/\s/g, "");
+}
+
+export function getCourseSearchTerms(rawSearchTerm: string)
+{
+  return normalizeSearchText(rawSearchTerm)
+    .split(" ")
+    .filter(Boolean);
+}
+
 export function includesCourseSearchText(value: string | null, searchTerm: string)
 {
-  return value?.toLocaleLowerCase("en-SG").includes(searchTerm) ?? false;
+  const normalizedSearchTerm = normalizeSearchText(searchTerm);
+  return Boolean(normalizedSearchTerm && value && normalizeSearchText(value).includes(normalizedSearchTerm));
+}
+
+function getMaxFuzzyDistance(term: string)
+{
+  if (term.length < 4) return 0;
+  if (term.length <= 6) return 1;
+  return 2;
+}
+
+function getLevenshteinDistance(left: string, right: string, maxDistance: number)
+{
+  if (Math.abs(left.length - right.length) > maxDistance)
+  {
+    return maxDistance + 1;
+  }
+
+  let previousRow = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+  for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1)
+  {
+    const currentRow = [leftIndex + 1];
+    let rowMinimum = currentRow[0];
+
+    for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1)
+    {
+      const insertionCost = currentRow[rightIndex] + 1;
+      const deletionCost = previousRow[rightIndex + 1] + 1;
+      const substitutionCost = previousRow[rightIndex] + (left[leftIndex] === right[rightIndex] ? 0 : 1);
+      const nextCost = Math.min(insertionCost, deletionCost, substitutionCost);
+
+      currentRow.push(nextCost);
+      rowMinimum = Math.min(rowMinimum, nextCost);
+    }
+
+    if (rowMinimum > maxDistance)
+    {
+      return maxDistance + 1;
+    }
+
+    previousRow = currentRow;
+  }
+
+  return previousRow[right.length];
+}
+
+function getFuzzyRank(normalizedValue: string, term: string, baseRank: number)
+{
+  const maxDistance = getMaxFuzzyDistance(term);
+  if (maxDistance === 0)
+  {
+    return NO_MATCH_RANK;
+  }
+
+  const candidates = [
+    ...normalizedValue.split(" "),
+    normalizedValue.replace(/\s/g, ""),
+  ].filter((candidate) => candidate.length >= term.length - maxDistance);
+
+  let bestDistance = maxDistance + 1;
+
+  for (const candidate of candidates)
+  {
+    const distance = getLevenshteinDistance(term, candidate, maxDistance);
+    if (distance < bestDistance)
+    {
+      bestDistance = distance;
+    }
+  }
+
+  return bestDistance <= maxDistance ? baseRank + bestDistance : NO_MATCH_RANK;
+}
+
+function getFieldTermRank(
+  value: string | null,
+  term: string,
+  exactRank: number,
+  prefixRank: number,
+  containsRank: number,
+  fuzzyRank: number,
+)
+{
+  if (!value)
+  {
+    return NO_MATCH_RANK;
+  }
+
+  const normalizedValue = normalizeSearchText(value);
+  if (!normalizedValue)
+  {
+    return NO_MATCH_RANK;
+  }
+
+  if (normalizedValue === term) return exactRank;
+  if (normalizedValue.startsWith(term)) return prefixRank;
+  if (normalizedValue.includes(term)) return containsRank;
+
+  const compactValue = compactSearchText(value);
+  if (compactValue === term) return exactRank;
+  if (compactValue.startsWith(term)) return prefixRank;
+  if (compactValue.includes(term)) return containsRank;
+
+  return getFuzzyRank(normalizedValue, term, fuzzyRank);
+}
+
+function getBestTermRank(course: SearchableCourseRecord, term: string)
+{
+  return Math.min(
+    getFieldTermRank(
+      course.courseCode,
+      term,
+      COURSE_CODE_EXACT_RANK,
+      COURSE_CODE_PREFIX_RANK,
+      COURSE_CODE_CONTAINS_RANK,
+      COURSE_CODE_FUZZY_RANK,
+    ),
+    getFieldTermRank(
+      course.courseName,
+      term,
+      COURSE_NAME_EXACT_RANK,
+      COURSE_NAME_PREFIX_RANK,
+      COURSE_NAME_CONTAINS_RANK,
+      COURSE_NAME_FUZZY_RANK,
+    ),
+    getFieldTermRank(
+      course.schoolName,
+      term,
+      SCHOOL_NAME_EXACT_RANK,
+      SCHOOL_NAME_PREFIX_RANK,
+      SCHOOL_NAME_CONTAINS_RANK,
+      SCHOOL_NAME_FUZZY_RANK,
+    ),
+    getFieldTermRank(
+      course.courseSynopsis,
+      term,
+      SYNOPSIS_EXACT_RANK,
+      SYNOPSIS_PREFIX_RANK,
+      SYNOPSIS_CONTAINS_RANK,
+      SYNOPSIS_FUZZY_RANK,
+    ),
+  );
 }
 
 export function courseMatchesSearchQuery(course: SearchableCourseRecord, rawSearchTerm: string)
 {
-  const searchTerm = rawSearchTerm.trim().toLocaleLowerCase("en-SG");
+  const terms = getCourseSearchTerms(rawSearchTerm);
 
-  return !searchTerm
-    || includesCourseSearchText(course.courseCode, searchTerm)
-    || includesCourseSearchText(course.courseName, searchTerm)
-    || includesCourseSearchText(course.schoolName, searchTerm)
-    || includesCourseSearchText(course.courseSynopsis, searchTerm);
+  return terms.length === 0
+    || terms.every((term) => getBestTermRank(course, term) < NO_MATCH_RANK);
 }
 
 export function getCourseSearchRank(course: SearchableCourseRecord, rawSearchTerm: string)
 {
-  if (!rawSearchTerm)
+  const terms = getCourseSearchTerms(rawSearchTerm);
+  if (terms.length === 0)
   {
     return 9;
   }
 
-  const searchTerm = rawSearchTerm.toLocaleLowerCase("en-SG");
-  const courseCode = course.courseCode.toLocaleLowerCase("en-SG");
-  const courseName = course.courseName?.toLocaleLowerCase("en-SG") ?? "";
-  const schoolName = course.schoolName?.toLocaleLowerCase("en-SG") ?? "";
-  const synopsis = course.courseSynopsis?.toLocaleLowerCase("en-SG") ?? "";
-
-  if (courseCode === searchTerm) return 0;
-  if (courseCode.startsWith(searchTerm)) return 1;
-  if (courseCode.includes(searchTerm)) return 2;
-  if (courseName.startsWith(searchTerm)) return 3;
-  if (courseName.includes(searchTerm)) return 4;
-  if (schoolName.startsWith(searchTerm)) return 5;
-  if (schoolName.includes(searchTerm)) return 6;
-  if (synopsis.startsWith(searchTerm)) return 7;
-  if (synopsis.includes(searchTerm)) return 8;
-  return 9;
+  return terms.reduce((totalRank, term) => {
+    const termRank = getBestTermRank(course, term);
+    return termRank >= NO_MATCH_RANK ? NO_MATCH_RANK : totalRank + termRank;
+  }, 0);
 }
