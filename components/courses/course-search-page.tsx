@@ -27,6 +27,10 @@ import {
   extractCourseLevelNumber,
   type CourseSearchFilters,
 } from "@/lib/timetable/course-search";
+import {
+  courseMatchesSearchQuery,
+  getCourseSearchRank,
+} from "@/lib/timetable/course-search-matching";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
 type SearchResponse = {
@@ -301,63 +305,6 @@ function buildPaginationPages(currentPage: number, totalPages: number)
   return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
 }
 
-function includesText(value: string | null, searchTerm: string)
-{
-  return value?.toLowerCase().includes(searchTerm) ?? false;
-}
-
-function getSearchRanking(course: CourseSearchResult, searchTerm: string)
-{
-  if (!searchTerm)
-  {
-    return 9;
-  }
-
-  const courseCode = course.courseCode.toLowerCase();
-  const courseName = course.courseName?.toLowerCase() ?? "";
-  const schoolName = course.schoolName?.toLowerCase() ?? "";
-  const courseSynopsis = course.courseSynopsis?.toLowerCase() ?? "";
-
-  if (courseCode === searchTerm)
-  {
-    return 0;
-  }
-  if (courseCode.startsWith(searchTerm))
-  {
-    return 1;
-  }
-  if (courseCode.includes(searchTerm))
-  {
-    return 2;
-  }
-  if (courseName.startsWith(searchTerm))
-  {
-    return 3;
-  }
-  if (courseName.includes(searchTerm))
-  {
-    return 4;
-  }
-  if (schoolName.startsWith(searchTerm))
-  {
-    return 5;
-  }
-  if (schoolName.includes(searchTerm))
-  {
-    return 6;
-  }
-  if (courseSynopsis.startsWith(searchTerm))
-  {
-    return 7;
-  }
-  if (courseSynopsis.includes(searchTerm))
-  {
-    return 8;
-  }
-
-  return 9;
-}
-
 function filterCourses(courses: CourseSearchResult[], filters: CourseSearchFilters)
 {
   const searchTerm = filters.q.trim().toLowerCase();
@@ -365,11 +312,7 @@ function filterCourses(courses: CourseSearchResult[], filters: CourseSearchFilte
 
   return courses
     .filter((course) => {
-      if (searchTerm
-        && !includesText(course.courseCode, searchTerm)
-        && !includesText(course.courseName, searchTerm)
-        && !includesText(course.schoolName, searchTerm)
-        && !includesText(course.courseSynopsis, searchTerm))
+      if (searchTerm && !courseMatchesSearchQuery(course, searchTerm))
       {
         return false;
       }
@@ -428,7 +371,7 @@ function filterCourses(courses: CourseSearchResult[], filters: CourseSearchFilte
       return true;
     })
     .sort((left, right) => (
-      getSearchRanking(left, searchTerm) - getSearchRanking(right, searchTerm)
+      getCourseSearchRank(left, searchTerm) - getCourseSearchRank(right, searchTerm)
       || left.courseCode.localeCompare(right.courseCode)
     ));
 }

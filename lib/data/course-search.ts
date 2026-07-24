@@ -1,5 +1,10 @@
 import "server-only";
 
+import {
+  courseMatchesSearchQuery,
+  getCourseSearchRank,
+  includesCourseSearchText,
+} from "@/lib/timetable/course-search-matching";
 import type { CourseSearchFilters } from "@/lib/timetable/course-search";
 import type { CourseSearchResult } from "@/lib/timetable/types";
 import { getCourseIndexSnapshot } from "./course-index-reader";
@@ -9,36 +14,6 @@ function toSearchResult(record: CourseIndexSnapshotRecord): CourseSearchResult
 {
   const { offerings: _offerings, ...result } = record;
   return result;
-}
-
-function includesText(value: string | null, searchTerm: string)
-{
-  return value?.toLocaleLowerCase("en-SG").includes(searchTerm) ?? false;
-}
-
-function getSearchRank(record: CourseIndexSnapshotRecord, rawSearchTerm: string)
-{
-  if (!rawSearchTerm)
-  {
-    return 9;
-  }
-
-  const searchTerm = rawSearchTerm.toLocaleLowerCase("en-SG");
-  const courseCode = record.courseCode.toLocaleLowerCase("en-SG");
-  const courseName = record.courseName?.toLocaleLowerCase("en-SG") ?? "";
-  const schoolName = record.schoolName?.toLocaleLowerCase("en-SG") ?? "";
-  const synopsis = record.courseSynopsis?.toLocaleLowerCase("en-SG") ?? "";
-
-  if (courseCode === searchTerm) return 0;
-  if (courseCode.startsWith(searchTerm)) return 1;
-  if (courseCode.includes(searchTerm)) return 2;
-  if (courseName.startsWith(searchTerm)) return 3;
-  if (courseName.includes(searchTerm)) return 4;
-  if (schoolName.startsWith(searchTerm)) return 5;
-  if (schoolName.includes(searchTerm)) return 6;
-  if (synopsis.startsWith(searchTerm)) return 7;
-  if (synopsis.includes(searchTerm)) return 8;
-  return 9;
 }
 
 export async function searchCourses({
@@ -71,13 +46,7 @@ export async function searchCourses({
 
   return records
     .filter((record) => {
-      if (
-        normalizedSearchTerm
-        && !includesText(record.courseCode, normalizedSearchTerm)
-        && !includesText(record.courseName, normalizedSearchTerm)
-        && !includesText(record.schoolName, normalizedSearchTerm)
-        && !includesText(record.courseSynopsis, normalizedSearchTerm)
-      )
+      if (normalizedSearchTerm && !courseMatchesSearchQuery(record, normalizedSearchTerm))
       {
         return false;
       }
@@ -114,7 +83,7 @@ export async function searchCourses({
       return !hasClassFilters || record.offerings.some(matchesClassFilters);
     })
     .sort((left, right) => (
-      getSearchRank(left, q) - getSearchRank(right, q)
+      getCourseSearchRank(left, q) - getCourseSearchRank(right, q)
       || left.courseCode.localeCompare(right.courseCode)
     ))
     .map((record) => {
@@ -147,10 +116,10 @@ export async function searchCalculatorCourses(searchTerm: string, limit = 8)
   return records
     .filter((record) => (
       record.courseCode.toLocaleLowerCase("en-SG").includes(normalizedSearchTerm)
-      || includesText(record.courseName, normalizedSearchTerm)
+      || includesCourseSearchText(record.courseName, normalizedSearchTerm)
     ))
     .sort((left, right) => (
-      getSearchRank(left, searchTerm) - getSearchRank(right, searchTerm)
+      getCourseSearchRank(left, searchTerm) - getCourseSearchRank(right, searchTerm)
       || left.courseCode.localeCompare(right.courseCode)
     ))
     .slice(0, Math.min(20, Math.max(1, limit)))
