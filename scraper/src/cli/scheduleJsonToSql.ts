@@ -126,7 +126,7 @@ function normalizeScheduleJson(raw: any): ScheduleParseResult {
 async function main(): Promise<void> {
   const args = parseArgs();
   const jsonPath = requireString(args, "json");
-  const outPath = optionalString(args, "out") ?? "data/output/schedules-import.sql";
+  const outPath = optionalString(args, "out") ?? "data/output/schedules/schedules.sql";
   const courseCodesOut = optionalString(args, "course-codes-out");
 
   const raw = JSON.parse(await fs.readFile(jsonPath, "utf8"));

@@ -9,6 +9,7 @@ import sys
 import tempfile
 from functools import lru_cache
 from pathlib import Path
+from typing import Sequence
 
 
 def parse_ocr_languages(value: str) -> list[str]:
@@ -121,6 +122,84 @@ def ocr_pdf_pages(
         os.replace(temporary_output, output_pdf)
         if temporary_sidecar is not None and sidecar_output is not None:
             os.replace(temporary_sidecar, sidecar_output)
+
+
+def ocr_pdf_region_text(
+    input_pdf: Path,
+    *,
+    page_number: int,
+    bbox: Sequence[float],
+    languages: list[str],
+    dpi: int = 400,
+    page_segmentation_mode: int = 6,
+) -> str:
+    """OCR one PDF region without changing the source PDF.
+
+    ``bbox`` uses pdfplumber's ``(x0, top, x1, bottom)`` PDF-point
+    coordinates. Rendering and cropping the field first prevents adjacent
+    table columns from being mixed into narrow multilingual cells.
+    """
+    ensure_ocr_environment(tuple(languages))
+    if page_number < 1:
+        raise ValueError("OCR page numbers start at 1.")
+    if len(bbox) != 4:
+        raise ValueError("OCR region must contain x0, top, x1, and bottom.")
+
+    ghostscript = shutil.which("gs") or shutil.which("gswin64c")
+    if ghostscript is None:
+        raise RuntimeError(
+            "OCR setup error: Ghostscript is not installed. On Ubuntu/WSL run "
+            "`sudo apt install ghostscript`."
+        )
+
+    tesseract = shutil.which("tesseract")
+    if tesseract is None:  # Also checked by ensure_ocr_environment; keeps typing simple.
+        raise RuntimeError("OCR setup error: Tesseract is not installed.")
+
+    from PIL import Image
+
+    with tempfile.TemporaryDirectory(prefix="ocr-region-") as temp_dir:
+        rendered_page = Path(temp_dir) / "page.png"
+        cropped_region = Path(temp_dir) / "region.png"
+        subprocess.run(
+            [
+                ghostscript,
+                "-q",
+                "-dSAFER",
+                "-dBATCH",
+                "-dNOPAUSE",
+                "-sDEVICE=pnggray",
+                f"-r{dpi}",
+                f"-dFirstPage={page_number}",
+                f"-dLastPage={page_number}",
+                f"-sOutputFile={rendered_page}",
+                str(input_pdf.expanduser().resolve()),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        scale = dpi / 72
+        crop_box = tuple(round(float(value) * scale) for value in bbox)
+        with Image.open(rendered_page) as image:
+            image.crop(crop_box).save(cropped_region)
+
+        result = subprocess.run(
+            [
+                tesseract,
+                str(cropped_region),
+                "stdout",
+                "-l",
+                "+".join(languages),
+                "--psm",
+                str(page_segmentation_mode),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
 
 
 def main() -> None:

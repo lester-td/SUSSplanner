@@ -33,8 +33,8 @@ This scraper/import workflow uses:
 Recommended local environment:
 
 ```text
-Node.js 18+
-npm 9+
+Node.js 20+
+npm 10+
 Python 3.10+
 PostgreSQL client / psql
 ```
@@ -44,6 +44,67 @@ The scraper is designed to run locally from your development machine.
 ---
 
 # Guide
+
+## Interactive menu
+
+The normal maintainer workflow uses one interactive command from the repository root:
+
+```bash
+npm run scraper
+```
+
+Before displaying the menu, the program checks:
+
+- Node.js and npm versions
+- scraper npm packages
+- `scraper/venv` and its Python version
+- `pdfplumber`, `pypdf`, and `fontTools`
+- Python dependency consistency with `pip check`
+- OCRmyPDF, Tesseract English/Tamil data, Tamil fonts, and Ghostscript
+- optional Simplified Chinese OCR language data
+- semester-week input, the schedule manifest, and referenced schedule files
+- curriculum-plan PDF availability
+
+Missing required environment dependencies stop the program before the menu and print the
+exact setup commands to run. Input and optional Simplified Chinese OCR notices are shown
+before the menu. The preflight never installs software automatically.
+
+The scraper asks which task to run:
+
+```text
+1. All Items
+2. Generate Semester Weeks
+3. Parse Schedule PDFs
+4. Download and Parse Course PDFs
+5. Parse Curriculum Plan PDFs
+6. Exit
+```
+
+Pressing Enter selects **All Items**. It generates semester weeks, parses every schedule
+PDF in the manifest, downloads fresh daytime/evening course PDFs, and parses the course
+details and curriculum plans. It does not upload anything to the database.
+
+For every work item, the menu asks whether to produce JSON, SQL, or both. Schedule and
+course actions also accept an optional course filter. Leave it blank for every course, use
+`TLL*` for a prefix, or enter exact codes such as `TLL101,TLL201`.
+
+The defaults are:
+
+```text
+Semester weeks      scraper/data/input/weeks/semester-weeks.json
+Schedule manifest   scraper/data/input/schedules/manifest.json
+Schedule PDFs       scraper/data/input/schedules/*.pdf
+Course PDFs         scraper/data/input/courses/{daytime,evening}/*.pdf
+Curriculum PDFs     scraper/data/input/curriculum-plans/**/*.pdf
+Generated files     scraper/data/output/{weeks,schedules,courses,curriculum}/
+```
+
+The individual commands documented below remain available for filtered or diagnostic runs,
+but their standard manifest, input, and output paths no longer need to be supplied.
+For those commands, `--format json`, `--format sql`, and `--format both` match the
+interactive format choices.
+
+---
 
 ## 0. What the scraper imports
 
@@ -87,7 +148,8 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-For the optional Tamil OCR fallback on Ubuntu/WSL, install its system dependencies and optional Python requirements:
+The interactive workflow uses Tamil OCR when curriculum PDFs contain broken embedded
+glyphs. On Ubuntu/WSL, install its system dependencies and Python requirements:
 
 ```bash
 sudo apt update
@@ -101,7 +163,7 @@ If `requirements.txt` is missing, install manually:
 pip install pdfplumber pypdf fonttools
 ```
 
-Add `ocrmypdf` to that command only when the optional OCR fallback is needed.
+Add `ocrmypdf` to that command when using the interactive curriculum workflow.
 
 ---
 
@@ -201,26 +263,31 @@ Recommended folder structure:
 ```text
 data/
   input/
+    weeks/
+      semester-weeks.json
     schedules/
+      manifest.json
       daytime-jan26-may26.pdf
       evening-jan26-may26.pdf
       daytime-jul26.pdf
       evening-jul26.pdf
-    course-pdfs/
+    courses/
       daytime/
       evening/
-    semester-weeks.2026.json
-    schedule-manifest.json
   output/
+    weeks/
+    schedules/
+    courses/
 ```
 
 Create folders if needed:
 
 ```bash
 mkdir -p data/input/schedules
-mkdir -p data/input/course-pdfs/daytime
-mkdir -p data/input/course-pdfs/evening
-mkdir -p data/output
+mkdir -p data/input/weeks
+mkdir -p data/input/courses/daytime
+mkdir -p data/input/courses/evening
+mkdir -p data/output/weeks data/output/schedules data/output/courses
 ```
 
 ---
@@ -230,7 +297,7 @@ mkdir -p data/output
 Create or edit:
 
 ```text
-data/input/schedule-manifest.json
+data/input/schedules/manifest.json
 ```
 
 Example:
@@ -293,14 +360,14 @@ Generate SQL:
 
 ```bash
 npm run generate:weeks -- \
-  --input data/input/semester-weeks.2026.json \
-  --out data/output/semester-weeks-import.sql
+  --input data/input/weeks/semester-weeks.json \
+  --out data/output/weeks/semester-weeks.sql
 ```
 
 Import:
 
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/semester-weeks-import.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/weeks/semester-weeks.sql
 ```
 
 ---
@@ -325,7 +392,7 @@ For example, generate schedule JSON and SQL containing only `TLL` courses:
 
 ```bash
 npm run scrape:all -- \
-  --manifest data/input/schedule-manifest.json \
+  --manifest data/input/schedules/manifest.json \
   --code-prefix TLL \
   --out data/output/tll-schedules-import.sql \
   --json data/output/tll-schedules-parsed.json \
@@ -334,40 +401,40 @@ npm run scrape:all -- \
 
 The filters are supported by `scrape:schedule`, `scrape:all`, `download:courses`,
 `parse:courses`, `courses-json-to-sql`, and `schedule-json-to-sql`. Commands that load
-course codes for downloading use `data/output/course-codes.txt` as the prefix-search
+course codes for downloading use `data/output/schedules/course-codes.txt` as the prefix-search
 universe unless another `--codes-file` is supplied; inline `--codes` are added to that universe.
 
 Run:
 
 ```bash
 npm run scrape:all -- \
-  --manifest data/input/schedule-manifest.json \
-  --out data/output/schedules-import.sql \
-  --json data/output/schedules-parsed.json \
-  --course-codes-out data/output/course-codes.txt
+  --manifest data/input/schedules/manifest.json \
+  --out data/output/schedules/schedules.sql \
+  --json data/output/schedules/schedules.json \
+  --course-codes-out data/output/schedules/course-codes.txt
 ```
 
 Outputs:
 
 ```text
-data/output/schedules-import.sql      SQL for semesters/courses/classes/class_events
-data/output/schedules-parsed.json     parsed schedule data
-data/output/course-codes.txt          unique course codes found in schedules
+data/output/schedules/schedules.sql      SQL for semesters/courses/classes/class_events
+data/output/schedules/schedules.json     parsed schedule data
+data/output/schedules/course-codes.txt   unique course codes found in schedules
 ```
 
-If you already have `schedules-parsed.json` and just want to regenerate SQL using the latest schema:
+If you already have `schedules.json` and just want to regenerate SQL using the latest schema:
 
 ```bash
 npm run schedule-json-to-sql -- \
-  --json data/output/schedules-parsed.json \
-  --out data/output/schedules-import.sql \
-  --course-codes-out data/output/course-codes.txt
+  --json data/output/schedules/schedules.json \
+  --out data/output/schedules/schedules.sql \
+  --course-codes-out data/output/schedules/course-codes.txt
 ```
 
 Import schedule SQL:
 
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules-import.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules/schedules.sql
 ```
 
 Quick checks:
@@ -401,19 +468,19 @@ Run:
 
 ```bash
 npm run download:courses -- \
-  --codes-file data/output/course-codes.txt \
-  --out-dir data/input/course-pdfs \
-  --report-out data/output/course-pdf-download-report.tsv \
-  --manifest-out data/output/course-pdf-downloads.json
+  --codes-file data/output/schedules/course-codes.txt \
+  --out-dir data/input/courses \
+  --report-out data/output/courses/download-report.tsv \
+  --manifest-out data/output/courses/downloads.json
 ```
 
 Outputs:
 
 ```text
-data/input/course-pdfs/daytime/*.pdf
-data/input/course-pdfs/evening/*.pdf
-data/output/course-pdf-download-report.tsv
-data/output/course-pdf-downloads.json
+data/input/courses/daytime/*.pdf
+data/input/courses/evening/*.pdf
+data/output/courses/download-report.tsv
+data/output/courses/downloads.json
 ```
 
 The report has three main columns:
@@ -428,10 +495,10 @@ If you need to redownload everything:
 
 ```bash
 npm run download:courses -- \
-  --codes-file data/output/course-codes.txt \
-  --out-dir data/input/course-pdfs \
-  --report-out data/output/course-pdf-download-report.tsv \
-  --manifest-out data/output/course-pdf-downloads.json \
+  --codes-file data/output/schedules/course-codes.txt \
+  --out-dir data/input/courses \
+  --report-out data/output/courses/download-report.tsv \
+  --manifest-out data/output/courses/downloads.json \
   --force
 ```
 
@@ -443,11 +510,11 @@ Run:
 
 ```bash
 npm run parse:courses -- \
-  --pdf-dir data/input/course-pdfs \
-  --codes-file data/output/course-codes.txt \
-  --out data/output/course-details-import.sql \
-  --json data/output/course-details-parsed.json \
-  --issues-out data/output/course-parse-issues.tsv
+  --pdf-dir data/input/courses \
+  --codes-file data/output/schedules/course-codes.txt \
+  --out data/output/courses/course-details.sql \
+  --json data/output/courses/course-details.json \
+  --issues-out data/output/courses/parse-issues.tsv
 ```
 
 ### Automatically OCR unresolved Tamil CID glyphs
@@ -458,11 +525,11 @@ saved under `--ocr-pdf-dir`.
 
 ```bash
 npm run parse:courses -- \
-  --pdf-dir data/input/course-pdfs \
+  --pdf-dir data/input/courses \
   --code-prefix TLL \
   --ocr-on-cid \
   --ocr-languages eng,tam \
-  --ocr-pdf-dir data/output/course-pdfs-ocr \
+  --ocr-pdf-dir data/output/courses/ocr-pdfs \
   --out data/output/tll-course-details-import.sql \
   --json data/output/tll-course-details-parsed.json \
   --issues-out data/output/tll-course-parse-issues.tsv
@@ -490,22 +557,22 @@ The same Python OCR implementation can create corrected copies as a separate ste
 
 ```bash
 npm run ocr:courses -- \
-  --input-dir data/input/course-pdfs \
-  --output-dir data/output/course-pdfs-ocr \
+  --input-dir data/input/courses \
+  --output-dir data/output/courses/ocr-pdfs \
   --code-prefix TLL \
   --pages 1 \
   --languages eng,tam
 ```
 
 Existing OCR copies are skipped unless `--force` is supplied. Parse the copies by passing
-`--pdf-dir data/output/course-pdfs-ocr` to `parse:courses`; do not add `--ocr-on-cid` again.
+`--pdf-dir data/output/courses/ocr-pdfs` to `parse:courses`; do not add `--ocr-on-cid` again.
 
 Outputs:
 
 ```text
-data/output/course-details-import.sql      SQL for courses + assessment_components
-data/output/course-details-parsed.json     parsed course details
-data/output/course-parse-issues.tsv        parser warnings/errors
+data/output/courses/course-details.sql      SQL for courses + assessment_components
+data/output/courses/course-details.json     parsed course details
+data/output/courses/parse-issues.tsv        parser warnings/errors
 ```
 
 The parser skips PDFs whose extracted text says:
@@ -518,19 +585,69 @@ The parser no longer extracts or stores textbooks.
 
 ---
 
+## 9A. Parse curriculum plan PDFs
+
+The first-cut curriculum parser reads every PDF under `data/input/curriculum-plans/` and
+preserves each course row in the context of its programme plan and section. It extracts:
+
+- programme name, category, study mode, and source location
+- section name and section credit-unit requirement
+- course code, title, and credit units
+- prerequisite and excluded-combination source text plus referenced course codes
+- grouping, remarks, timetable text, status, and effective semester
+- every presentation column and the semesters marked `Y`
+- source page/table/row coordinates and extraction warnings
+
+It supports both the current nine-column offering tables and the five-column
+retired/replaced-course tables. Wrapped course titles are joined to the preceding row, and
+long course-code suffixes such as `BUS557Ae` and `CDO303ACI` are retained.
+Chinese text is extracted directly as Unicode, and PDF line-wrap spaces between Chinese
+characters are removed. If embedded-font repair leaves unresolved CID glyphs in a course
+title (currently seen in Tamil rows), the interactive menu OCRs only the affected pages
+and title cells using English and Tamil. It validates the course code before accepting a
+replacement and leaves the source PDFs unchanged. Reviewable OCR copies are written under
+`data/output/curriculum/ocr-pdfs/`.
+
+The current Chinese curriculum PDFs do not need OCR: their Chinese characters are
+extractable Unicode. The parser checks for unresolved CID/replacement glyphs and removes
+spaces introduced where a Chinese title wrapped across PDF lines. The optional Tesseract
+`chi_sim` language pack is only needed if a future Chinese PDF is image-only or has broken
+font encoding.
+
+Run it through menu item **Parse Curriculum Plan PDFs**, or directly:
+
+```bash
+npm run parse:curriculum -- --format both --ocr-on-cid
+```
+
+Outputs:
+
+```text
+data/output/curriculum/curriculum-plans.json
+data/output/curriculum/curriculum-plans.preview.sql
+data/output/curriculum/issues.tsv
+```
+
+The SQL is deliberately marked **PREVIEW ONLY** and targets provisional
+`curriculum_plans` and `curriculum_plan_courses` tables. Those tables do not exist yet.
+Do not import that file until the curriculum schema has been reviewed and approved. This
+first cut does not modify `schema.sql`, Drizzle mappings, migrations, or the database.
+
+---
+
 ## 10. Inspect course parse results before importing
 
 Check the issue report:
 
 ```bash
-less data/output/course-parse-issues.tsv
+less data/output/courses/parse-issues.tsv
 ```
 
 Useful commands:
 
 ```bash
-head -50 data/output/course-parse-issues.tsv
-wc -l data/output/course-parse-issues.tsv
+head -50 data/output/courses/parse-issues.tsv
+wc -l data/output/courses/parse-issues.tsv
 ```
 
 Common warning types:
@@ -553,8 +670,8 @@ If you manually edit `course-details-parsed.json`, regenerate SQL without repars
 
 ```bash
 npm run courses-json-to-sql -- \
-  --json data/output/course-details-parsed.json \
-  --out data/output/course-details-import.sql \
+  --json data/output/courses/course-details.json \
+  --out data/output/courses/course-details.sql \
   --issues-out data/output/course-json-to-sql-issues.tsv
 ```
 
@@ -571,7 +688,7 @@ less data/output/course-json-to-sql-issues.tsv
 Import:
 
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/course-details-import.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/courses/course-details.sql
 ```
 
 Quick checks:
@@ -613,36 +730,48 @@ LIMIT 50;
 
 ## 13. Recommended full import order
 
-For a fresh database:
+For the normal refresh workflow, run the menu from the repository root:
+
+```bash
+npm run scraper
+```
+
+1. Choose **All Items**.
+2. Choose **Both JSON and SQL** unless you only need one representation.
+3. Leave the course filter blank for all courses, or enter a filter such as `TLL*`.
+4. Review `scraper/data/output/`, especially the parsed JSON, download report, and issue TSV.
+5. Import the reviewed SQL using the commands below, validate snapshots, and deploy.
+
+The equivalent low-level sequence for a fresh database is:
 
 ```bash
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
 
 npm run generate:weeks -- \
-  --input data/input/semester-weeks.2026.json \
-  --out data/output/semester-weeks-import.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/semester-weeks-import.sql
+  --input data/input/weeks/semester-weeks.json \
+  --out data/output/weeks/semester-weeks.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/weeks/semester-weeks.sql
 
 npm run scrape:all -- \
-  --manifest data/input/schedule-manifest.json \
-  --out data/output/schedules-import.sql \
-  --json data/output/schedules-parsed.json \
-  --course-codes-out data/output/course-codes.txt
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules-import.sql
+  --manifest data/input/schedules/manifest.json \
+  --out data/output/schedules/schedules.sql \
+  --json data/output/schedules/schedules.json \
+  --course-codes-out data/output/schedules/course-codes.txt
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules/schedules.sql
 
 npm run download:courses -- \
-  --codes-file data/output/course-codes.txt \
-  --out-dir data/input/course-pdfs \
-  --report-out data/output/course-pdf-download-report.tsv \
-  --manifest-out data/output/course-pdf-downloads.json
+  --codes-file data/output/schedules/course-codes.txt \
+  --out-dir data/input/courses \
+  --report-out data/output/courses/download-report.tsv \
+  --manifest-out data/output/courses/downloads.json
 
 npm run parse:courses -- \
-  --pdf-dir data/input/course-pdfs \
-  --codes-file data/output/course-codes.txt \
-  --out data/output/course-details-import.sql \
-  --json data/output/course-details-parsed.json \
-  --issues-out data/output/course-parse-issues.tsv
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/course-details-import.sql
+  --pdf-dir data/input/courses \
+  --codes-file data/output/schedules/course-codes.txt \
+  --out data/output/courses/course-details.sql \
+  --json data/output/courses/course-details.json \
+  --issues-out data/output/courses/parse-issues.tsv
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/courses/course-details.sql
 ```
 
 ### Publish the imported data to the application
@@ -672,7 +801,7 @@ publication and rollback workflow.
 Use `psql`:
 
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules-import.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules/schedules.sql
 ```
 
 Do not paste large 20 MB SQL files into Supabase SQL Editor.

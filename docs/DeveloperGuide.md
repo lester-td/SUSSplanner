@@ -262,8 +262,18 @@ From `scraper/`:
 npm install
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-ocr.txt
 ```
+
+The curriculum parser uses selective English/Tamil OCR for broken embedded glyphs. On
+Ubuntu/WSL, install its system dependencies before starting the interactive scraper:
+
+```bash
+sudo apt install ghostscript tesseract-ocr-eng tesseract-ocr-tam fonts-noto-core
+```
+
+Simplified Chinese OCR (`tesseract-ocr-chi-sim`) is optional; the current Chinese
+curriculum PDFs expose their text as Unicode and do not require OCR.
 
 The scraper needs `psql` only when importing generated SQL or running database
 checks. It needs network access when downloading current course synopsis PDFs.
@@ -1396,7 +1406,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor Maintainer
-    participant Source as SUSS/source PDFs + manifests
+    participant Source as SUSS/source PDFs + manifests + curriculum plans
     participant Scraper as Local scraper commands
     participant Artifacts as JSON / TSV / SQL artifacts
     participant DB as Postgres
@@ -1405,7 +1415,7 @@ sequenceDiagram
     participant Deploy as Vercel deployment
     participant App as Public application
 
-    Maintainer->>Scraper: Run week, schedule, download, and course parse commands
+    Maintainer->>Scraper: Choose a task from npm run scraper
     Scraper->>Source: Read local inputs or request course PDFs
     Source-->>Scraper: Source data
     Scraper->>Artifacts: Write parsed data, issues, and transactional SQL
@@ -1436,13 +1446,17 @@ steps below. Snapshot publication is the final application operation.
 7. Run `npm run data:build` from the repository root and review the manifest.
 8. Trigger a new Vercel deployment (a deploy hook is convenient).
 
-Run scraper commands from `scraper/`. The key commands are
-`generate:weeks`, `scrape:all`, `download:courses`, and `parse:courses`; import
-the generated SQL with `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f <file>`.
-See `scraper/README.md` for exact arguments, review queries, and troubleshooting.
+Run `npm run scraper` from the repository root and choose the required task from
+the interactive menu. **All Items** runs the complete local preparation flow without
+changing the database. The menu then asks for JSON, SQL, or both and accepts optional
+course filters such as `TLL*`. Review generated files before importing SQL manually.
+Curriculum-plan JSON and preview SQL are review artifacts only and are not imported into
+the current schema. The lower-level `generate:weeks`, `scrape:all`, `download:courses`,
+`parse:courses`, and `parse:curriculum` commands remain available for diagnostic runs. See
+`scraper/README.md` for the default paths, review queries, and troubleshooting.
 
-Generated scraper output and downloaded course PDFs are gitignored. Generated
-SQL is wrapped in `BEGIN`/`COMMIT` by default.
+Generated scraper output and downloaded course PDFs are gitignored. Importable generated
+SQL is wrapped in `BEGIN`/`COMMIT`; curriculum SQL remains explicitly preview-only.
 
 ### Publishing After Import
 

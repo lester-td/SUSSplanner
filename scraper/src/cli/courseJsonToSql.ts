@@ -91,7 +91,7 @@ async function main(): Promise<void> {
   const args = parseArgs();
 
   const jsonPath = requireString(args, "json");
-  const outPath = optionalString(args, "out") ?? "data/output/course-details-import.sql";
+  const outPath = optionalString(args, "out") ?? "data/output/courses/course-details.sql";
   const issuesOut = optionalString(args, "issues-out");
 
   const raw = await fs.readFile(jsonPath, "utf8");

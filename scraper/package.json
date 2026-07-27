@@ -3,13 +3,20 @@
   "version": "0.4.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "description": "Local Node/TypeScript scraper that extracts SUSS timetable PDFs and latest course synopsis PDFs into Supabase/Postgres SQL inserts.",
   "scripts": {
+    "start": "tsx src/cli/scraper.ts",
+    "scraper": "tsx src/cli/scraper.ts",
     "scrape:schedule": "tsx src/cli/scrapeSchedule.ts",
     "scrape:all": "tsx src/cli/scrapeAll.ts",
     "generate:weeks": "tsx src/cli/generateSemesterWeeksSql.ts",
     "download:courses": "tsx src/cli/downloadCoursePdfs.ts",
     "parse:courses": "tsx src/cli/parseCoursePdfs.ts",
+    "parse:curriculum": "python3 tools/parse_curriculum_plans.py",
     "ocr:courses": "python3 tools/ocr_course_pdfs.py",
     "scrape:courses": "node -e \"console.log('Use: npm run download:courses, then npm run parse:courses')\"",
     "typecheck": "tsc --noEmit",

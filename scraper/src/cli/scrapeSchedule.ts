@@ -35,8 +35,8 @@ async function extractPdfTableToCsv(pdfPath: string, csvPath: string): Promise<v
 async function main(): Promise<void> {
   const args = parseArgs();
   const scheduleType = validateScheduleType(requireString(args, "schedule-type"));
-  const outSql = typeof args.out === "string" ? args.out : "data/output/schedule-import.sql";
-  const outJson = typeof args.json === "string" ? args.json : "data/output/schedule-parsed.json";
+  const outSql = typeof args.out === "string" ? args.out : "data/output/schedules/schedule.sql";
+  const outJson = typeof args.json === "string" ? args.json : "data/output/schedules/schedule.json";
   const csvPath = typeof args.csv === "string" ? args.csv : null;
   const pdfPath = typeof args.pdf === "string" ? args.pdf : null;
 

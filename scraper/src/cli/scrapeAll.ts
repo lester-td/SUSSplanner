@@ -2,8 +2,9 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { parseArgs, requireString } from "../lib/args.js";
+import { optionalString, parseArgs } from "../lib/args.js";
 import { filterScheduleResult, loadCourseCodeFilter } from "../lib/courseCodeFilter.js";
+import { parseOutputFormat, writesJson, writesSql } from "../lib/outputFormat.js";
 import type { ScheduleParseResult, ScheduleType } from "../lib/types.js";
 import { parseScheduleCsv } from "../parsers/scheduleCsv.js";
 import { generateSql } from "../sql/generateSql.js";
@@ -79,15 +80,16 @@ async function getCsvForManifestItem(item: ScheduleManifestItem, csvDir: string)
 
 async function main(): Promise<void> {
   const args = parseArgs();
-  const manifestPath = requireString(args, "manifest");
-  const outSql = typeof args.out === "string" ? args.out : "data/output/schedule-batch-import.sql";
-  const outJson = typeof args.json === "string" ? args.json : "data/output/schedule-batch-parsed.json";
+  const manifestPath = optionalString(args, "manifest") ?? "data/input/schedules/manifest.json";
+  const outSql = optionalString(args, "out") ?? "data/output/schedules/schedules.sql";
+  const outJson = optionalString(args, "json") ?? "data/output/schedules/schedules.json";
   const courseCodesOut =
-    typeof args["course-codes-out"] === "string" ? args["course-codes-out"] : "data/output/course-codes.txt";
-  const csvDir = typeof args["csv-dir"] === "string" ? args["csv-dir"] : "data/output/extracted-csv";
+    optionalString(args, "course-codes-out") ?? "data/output/schedules/course-codes.txt";
+  const csvDir = optionalString(args, "csv-dir") ?? "data/output/schedules/extracted-csv";
+  const format = parseOutputFormat(args);
 
-  await fs.mkdir(path.dirname(outSql), { recursive: true });
-  await fs.mkdir(path.dirname(outJson), { recursive: true });
+  if (writesSql(format)) await fs.mkdir(path.dirname(outSql), { recursive: true });
+  if (writesJson(format)) await fs.mkdir(path.dirname(outJson), { recursive: true });
   await fs.mkdir(path.dirname(courseCodesOut), { recursive: true });
   await fs.mkdir(csvDir, { recursive: true });
 
@@ -104,22 +106,24 @@ async function main(): Promise<void> {
 
   const courseCodeFilter = await loadCourseCodeFilter(args);
   const merged = filterScheduleResult(mergeResults(results), courseCodeFilter);
-  const sql = generateSql({
-    semesters: merged.semesters,
-    courses: merged.courses,
-    classes: merged.classes,
-    classEvents: merged.classEvents
-  });
-
-  await fs.writeFile(outJson, JSON.stringify(merged, null, 2), "utf8");
-  await fs.writeFile(outSql, sql, "utf8");
+  if (writesJson(format)) await fs.writeFile(outJson, JSON.stringify(merged, null, 2) + "\n", "utf8");
+  if (writesSql(format)) {
+    const sql = generateSql({
+      semesters: merged.semesters,
+      courses: merged.courses,
+      classes: merged.classes,
+      classEvents: merged.classEvents
+    });
+    await fs.writeFile(outSql, sql, "utf8");
+  }
   await fs.writeFile(courseCodesOut, merged.courses.map(course => course.courseCode).sort().join("\n") + "\n", "utf8");
 
   console.log(`Parsed semesters: ${merged.semesters.length}`);
   console.log(`Parsed courses: ${merged.courses.length}`);
   console.log(`Parsed classes: ${merged.classes.length}`);
   console.log(`Parsed class events: ${merged.classEvents.length}`);
-  console.log(`SQL written to: ${outSql}`);
+  if (writesSql(format)) console.log(`SQL written to: ${outSql}`);
+  if (writesJson(format)) console.log(`JSON written to: ${outJson}`);
   console.log(`Course codes written to: ${courseCodesOut}`);
   console.log(`Extracted CSV files written to: ${csvDir}`);
 

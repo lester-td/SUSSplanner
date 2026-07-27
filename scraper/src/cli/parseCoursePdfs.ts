@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { parseArgs, optionalBool, optionalString } from "../lib/args.js";
 import { loadCourseCodeFilter, matchesCourseCode, type CourseCodeFilter } from "../lib/courseCodeFilter.js";
+import { parseOutputFormat, writesJson, writesSql } from "../lib/outputFormat.js";
 import type { CourseDetailParseResult, ScheduleType } from "../lib/types.js";
 import { buildCourseDetailPdfUrl, isNoRecordFoundText, isftForScheduleType, parseCourseDetailText } from "../parsers/courseDetailPdf.js";
 import { generateSql } from "../sql/generateSql.js";
@@ -141,7 +142,7 @@ async function listCoursePdfFiles(
     }
   }
 
-  // Backwards compatibility for older flat data/input/course-pdfs/CODE.pdf layout.
+  // Backwards compatibility for a flat data/input/courses/CODE.pdf layout.
   // Use --schedule-type to tell the parser what those flat PDFs represent.
   const flatEntries = await fs.readdir(pdfDir, { withFileTypes: true }).catch(() => []);
   for (const entry of flatEntries) {
@@ -238,15 +239,16 @@ async function validateOcrEnvironment(languages: string): Promise<void> {
 
 async function main(): Promise<void> {
   const args = parseArgs();
-  const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/course-pdfs";
-  const outSql = optionalString(args, "out") ?? "data/output/course-details-import.sql";
-  const outJson = optionalString(args, "json") ?? "data/output/course-details-parsed.json";
-  const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/course-raw-text";
-  const rawJsonDir = optionalString(args, "raw-json-dir") ?? "data/output/course-pdf-json";
+  const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/courses";
+  const outSql = optionalString(args, "out") ?? "data/output/courses/course-details.sql";
+  const outJson = optionalString(args, "json") ?? "data/output/courses/course-details.json";
+  const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/courses/raw-text";
+  const rawJsonDir = optionalString(args, "raw-json-dir") ?? "data/output/courses/pdf-json";
   const ocrOnCid = optionalBool(args, "ocr-on-cid");
-  const ocrPdfDir = optionalString(args, "ocr-pdf-dir") ?? "data/output/course-pdfs-ocr";
+  const ocrPdfDir = optionalString(args, "ocr-pdf-dir") ?? "data/output/courses/ocr-pdfs";
   const ocrLanguages = optionalString(args, "ocr-languages") ?? "eng,tam";
-  const issuesOut = optionalString(args, "issues-out") ?? "data/output/course-parse-issues.tsv";
+  const issuesOut = optionalString(args, "issues-out") ?? "data/output/courses/parse-issues.tsv";
+  const format = parseOutputFormat(args);
   const fallbackScheduleTypeRaw = optionalString(args, "schedule-type") ?? "evening";
   const fallbackScheduleType: ScheduleType = isScheduleType(fallbackScheduleTypeRaw)
     ? fallbackScheduleTypeRaw
@@ -254,8 +256,8 @@ async function main(): Promise<void> {
 
   if (ocrOnCid) await validateOcrEnvironment(ocrLanguages);
 
-  await fs.mkdir(path.dirname(outSql), { recursive: true });
-  await fs.mkdir(path.dirname(outJson), { recursive: true });
+  if (writesSql(format)) await fs.mkdir(path.dirname(outSql), { recursive: true });
+  if (writesJson(format)) await fs.mkdir(path.dirname(outJson), { recursive: true });
   await fs.mkdir(path.dirname(issuesOut), { recursive: true });
 
   const courseCodeFilter = await loadCourseCodeFilter(args);
@@ -326,13 +328,14 @@ async function main(): Promise<void> {
 
   enrichCourseFieldsAcrossScheduleVariants(results);
 
-  const sql = generateSql({
-    courses: results.map(result => result.course),
-    assessments: results.flatMap(result => result.assessments)
-  });
-
-  await fs.writeFile(outJson, JSON.stringify(results, null, 2), "utf8");
-  await fs.writeFile(outSql, sql, "utf8");
+  if (writesJson(format)) await fs.writeFile(outJson, JSON.stringify(results, null, 2) + "\n", "utf8");
+  if (writesSql(format)) {
+    const sql = generateSql({
+      courses: results.map(result => result.course),
+      assessments: results.flatMap(result => result.assessments)
+    });
+    await fs.writeFile(outSql, sql, "utf8");
+  }
 
   const issueLines = ["course_code\tschedule_type\tseverity\tissue"];
   for (const result of results) {
@@ -359,8 +362,8 @@ async function main(): Promise<void> {
   console.log(`Failed parses: ${failedCount}`);
   console.log(`Parsed assessment components: ${assessmentCount}`);
   if (ocrOnCid) console.log(`OCR-corrected PDF copies written to: ${ocrPdfDir}`);
-  console.log(`SQL written to: ${outSql}`);
-  console.log(`JSON written to: ${outJson}`);
+  if (writesSql(format)) console.log(`SQL written to: ${outSql}`);
+  if (writesJson(format)) console.log(`JSON written to: ${outJson}`);
   console.log(`Issue report written to: ${issuesOut}`);
 }
 

@@ -12,8 +12,8 @@ def parse_prefixes(value: str) -> tuple[str, ...]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create OCR-corrected copies of downloaded course PDFs.")
-    parser.add_argument("--input-dir", type=Path, default=Path("data/input/course-pdfs"))
-    parser.add_argument("--output-dir", type=Path, default=Path("data/output/course-pdfs-ocr"))
+    parser.add_argument("--input-dir", type=Path, default=Path("data/input/courses"))
+    parser.add_argument("--output-dir", type=Path, default=Path("data/output/courses/ocr-pdfs"))
     parser.add_argument("--code-prefix", default="", help="Optional comma-separated course-code prefixes")
     parser.add_argument("--pages", default="1", help="OCRmyPDF page selection; defaults to page 1")
     parser.add_argument("--languages", default="eng,tam", help="Comma-separated Tesseract language codes")

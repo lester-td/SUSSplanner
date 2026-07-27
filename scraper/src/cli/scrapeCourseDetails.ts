@@ -41,11 +41,11 @@ async function extractPdfWithPdfplumber(pdfPath: string, textPath: string, jsonP
 
 async function main(): Promise<void> {
   const args = parseArgs();
-  const outSql = optionalString(args, "out") ?? "data/output/course-details-import.sql";
-  const outJson = optionalString(args, "json") ?? "data/output/course-details-parsed.json";
-  const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/course-pdfs";
-  const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/course-raw-text";
-  const rawJsonDir = optionalString(args, "raw-json-dir") ?? "data/output/course-pdf-json";
+  const outSql = optionalString(args, "out") ?? "data/output/courses/course-details.sql";
+  const outJson = optionalString(args, "json") ?? "data/output/courses/course-details.json";
+  const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/courses";
+  const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/courses/raw-text";
+  const rawJsonDir = optionalString(args, "raw-json-dir") ?? "data/output/courses/pdf-json";
   const force = optionalBool(args, "force");
   const delayMs = Number(optionalString(args, "delay-ms") ?? "250");
 
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
   await fs.mkdir(path.dirname(outJson), { recursive: true });
   await fs.mkdir(pdfDir, { recursive: true });
 
-  const courseCodes = await resolveInputCourseCodes(args, "data/output/course-codes.txt");
+  const courseCodes = await resolveInputCourseCodes(args, "data/output/schedules/course-codes.txt");
   const results: CourseDetailParseResult[] = [];
 
   for (const courseCode of courseCodes) {

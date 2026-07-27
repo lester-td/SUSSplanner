@@ -20,6 +20,7 @@
     "quotes:build": "tsx scripts/build-quotes.ts",
     "quotes:test": "tsx scripts/test-build-quotes.ts",
     "data:build": "tsx scripts/build-data-snapshots.ts",
+    "scraper": "npm --prefix scraper run start --",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate"
   },
