@@ -1,5 +1,9 @@
 import "server-only";
 
+import {
+  getCourseSearchMatch,
+  includesCourseSearchText,
+} from "@/lib/timetable/course-search-matching";
 import type { CourseSearchFilters } from "@/lib/timetable/course-search";
 import type { CourseSearchResult } from "@/lib/timetable/types";
 import { getCourseIndexSnapshot } from "./course-index-reader";
@@ -9,36 +13,6 @@ function toSearchResult(record: CourseIndexSnapshotRecord): CourseSearchResult
 {
   const { offerings: _offerings, ...result } = record;
   return result;
-}
-
-function includesText(value: string | null, searchTerm: string)
-{
-  return value?.toLocaleLowerCase("en-SG").includes(searchTerm) ?? false;
-}
-
-function getSearchRank(record: CourseIndexSnapshotRecord, rawSearchTerm: string)
-{
-  if (!rawSearchTerm)
-  {
-    return 9;
-  }
-
-  const searchTerm = rawSearchTerm.toLocaleLowerCase("en-SG");
-  const courseCode = record.courseCode.toLocaleLowerCase("en-SG");
-  const courseName = record.courseName?.toLocaleLowerCase("en-SG") ?? "";
-  const schoolName = record.schoolName?.toLocaleLowerCase("en-SG") ?? "";
-  const synopsis = record.courseSynopsis?.toLocaleLowerCase("en-SG") ?? "";
-
-  if (courseCode === searchTerm) return 0;
-  if (courseCode.startsWith(searchTerm)) return 1;
-  if (courseCode.includes(searchTerm)) return 2;
-  if (courseName.startsWith(searchTerm)) return 3;
-  if (courseName.includes(searchTerm)) return 4;
-  if (schoolName.startsWith(searchTerm)) return 5;
-  if (schoolName.includes(searchTerm)) return 6;
-  if (synopsis.startsWith(searchTerm)) return 7;
-  if (synopsis.includes(searchTerm)) return 8;
-  return 9;
 }
 
 export async function searchCourses({
@@ -70,14 +44,12 @@ export async function searchCourses({
   );
 
   return records
-    .filter((record) => {
-      if (
-        normalizedSearchTerm
-        && !includesText(record.courseCode, normalizedSearchTerm)
-        && !includesText(record.courseName, normalizedSearchTerm)
-        && !includesText(record.schoolName, normalizedSearchTerm)
-        && !includesText(record.courseSynopsis, normalizedSearchTerm)
-      )
+    .map((record) => ({
+      record,
+      searchMatch: getCourseSearchMatch(record, normalizedSearchTerm),
+    }))
+    .filter(({ record, searchMatch }) => {
+      if (normalizedSearchTerm && !searchMatch.matches)
       {
         return false;
       }
@@ -114,10 +86,10 @@ export async function searchCourses({
       return !hasClassFilters || record.offerings.some(matchesClassFilters);
     })
     .sort((left, right) => (
-      getSearchRank(left, q) - getSearchRank(right, q)
-      || left.courseCode.localeCompare(right.courseCode)
+      left.searchMatch.rank - right.searchMatch.rank
+      || left.record.courseCode.localeCompare(right.record.courseCode)
     ))
-    .map((record) => {
+    .map(({ record }) => {
       const result = toSearchResult(record);
       if (!hasClassFilters)
       {
@@ -145,16 +117,23 @@ export async function searchCalculatorCourses(searchTerm: string, limit = 8)
 
   const records = await getCourseIndexSnapshot();
   return records
-    .filter((record) => (
-      record.courseCode.toLocaleLowerCase("en-SG").includes(normalizedSearchTerm)
-      || includesText(record.courseName, normalizedSearchTerm)
+    .map((record) => ({
+      record,
+      searchRank: getCourseSearchMatch(record, normalizedSearchTerm),
+    }))
+    .filter(({ record, searchRank }) => (
+      searchRank.matches
+      && (
+        record.courseCode.toLocaleLowerCase("en-SG").includes(normalizedSearchTerm)
+        || includesCourseSearchText(record.courseName, normalizedSearchTerm)
+      )
     ))
     .sort((left, right) => (
-      getSearchRank(left, searchTerm) - getSearchRank(right, searchTerm)
-      || left.courseCode.localeCompare(right.courseCode)
+      left.searchRank.rank - right.searchRank.rank
+      || left.record.courseCode.localeCompare(right.record.courseCode)
     ))
     .slice(0, Math.min(20, Math.max(1, limit)))
-    .map((record) => ({
+    .map(({ record }) => ({
       courseCode: record.courseCode,
       courseName: record.courseName,
       creditUnits: record.creditUnits,
