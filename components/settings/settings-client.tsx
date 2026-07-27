@@ -12,6 +12,8 @@ import { Modal } from "@/components/ui/modal";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { REGISTRATION_REMINDER_SCHEDULE_DISPLAY_ITEMS } from "@/lib/registration/reminder-schedule-display";
 import {
+  APP_SETTINGS_STORAGE_KEY,
+  APP_SETTINGS_UPDATED_EVENT,
   APP_THEME_OPTIONS,
   DEFAULT_APP_SETTINGS,
   announceAppSettingsUpdated,
@@ -94,6 +96,15 @@ const PREVIEW_SAMPLE_COURSES = [
     venue: "SR 1.4",
   },
 ] as const;
+
+function settingsAreEqual(left: SettingsState, right: SettingsState)
+{
+  return left.colorScheme === right.colorScheme
+    && left.themeId === right.themeId
+    && left.timetableOrientation === right.timetableOrientation
+    && left.registrationReminders.enabled === right.registrationReminders.enabled
+    && left.timetableStudyMode === right.timetableStudyMode;
+}
 
 const PREVIEW_DAYS = [1, 2, 3, 4, 5] as const;
 const PREVIEW_START_TIMES = [8 * 60 + 30, 12 * 60, 15 * 60 + 30] as const;
@@ -644,6 +655,36 @@ export function SettingsClient()
     setSettings(readAppSettings());
     setReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!ready)
+    {
+      return;
+    }
+
+    const syncSettings = () => {
+      const nextSettings = readAppSettings();
+      setSettings((currentSettings) => (
+        settingsAreEqual(currentSettings, nextSettings)
+          ? currentSettings
+          : nextSettings
+      ));
+    };
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === APP_SETTINGS_STORAGE_KEY)
+      {
+        syncSettings();
+      }
+    };
+
+    window.addEventListener(APP_SETTINGS_UPDATED_EVENT, syncSettings);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener(APP_SETTINGS_UPDATED_EVENT, syncSettings);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [ready]);
 
   useEffect(() => {
     if (!ready)
