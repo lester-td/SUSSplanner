@@ -53,36 +53,39 @@ The normal maintainer workflow uses one interactive command from the repository 
 npm run scraper
 ```
 
-Before displaying the menu, the program checks:
+Before displaying the menu, the program checks the core environment and input files:
 
 - Node.js and npm versions
 - scraper npm packages
 - `scraper/venv` and its Python version
 - `pdfplumber`, `pypdf`, and `fontTools`
 - Python dependency consistency with `pip check`
-- OCRmyPDF, Tesseract English/Tamil data, Tamil fonts, and Ghostscript
 - optional Simplified Chinese OCR language data
 - semester-week input, the schedule manifest, and referenced schedule files
 - curriculum-plan PDF availability
 
-Missing required environment dependencies stop the program before the menu and print the
-exact setup commands to run. Input and optional Simplified Chinese OCR notices are shown
-before the menu. The preflight never installs software automatically.
+After a task and course filter are selected, the program warns when the selection includes
+TLL content and checks OCRmyPDF, Tesseract English/Tamil data, Tamil fonts, and Ghostscript.
+This applies to **All Items**, curriculum-plan parsing, and course parsing when the filter is
+blank or can match `TLL*`. Missing required dependencies stop the program before any task
+runs and print the exact setup commands. The preflight never installs software automatically.
 
 The scraper asks which task to run:
 
 ```text
-1. All Items
+1. All Items (requires Tamil OCR dependencies)
 2. Generate Semester Weeks
 3. Parse Schedule PDFs
-4. Download and Parse Course PDFs
-5. Parse Curriculum Plan PDFs
+4. Download and Parse Course PDFs (TLL requires Tamil OCR dependencies)
+5. Parse Curriculum Plan PDFs (requires Tamil OCR dependencies)
 6. Exit
 ```
 
 Pressing Enter selects **All Items**. It generates semester weeks, parses every schedule
 PDF in the manifest, downloads fresh daytime/evening course PDFs, and parses the course
-details and curriculum plans. It does not upload anything to the database.
+details and curriculum plans. TLL course synopsis pages and curriculum title cells that
+retain unresolved CID glyphs after font repair are OCRed automatically with English and
+Tamil. It does not upload anything to the database.
 
 For every work item, the menu asks whether to produce JSON, SQL, or both. Schedule and
 course actions also accept an optional course filter. Leave it blank for every course, use
@@ -148,8 +151,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-The interactive workflow uses Tamil OCR when curriculum PDFs contain broken embedded
-glyphs. On Ubuntu/WSL, install its system dependencies and Python requirements:
+The interactive workflow uses Tamil OCR for TLL course synopsis and curriculum-plan PDFs
+when embedded-font repair leaves broken glyphs. **All Items and any TLL-inclusive course or
+curriculum selection require these dependencies.** On Ubuntu/WSL, install:
 
 ```bash
 sudo apt update
@@ -163,7 +167,7 @@ If `requirements.txt` is missing, install manually:
 pip install pdfplumber pypdf fonttools
 ```
 
-Add `ocrmypdf` to that command when using the interactive curriculum workflow.
+Add `ocrmypdf` to that command when processing TLL content.
 
 ---
 
@@ -519,15 +523,15 @@ npm run parse:courses -- \
 
 ### Automatically OCR unresolved Tamil CID glyphs
 
-Add `--ocr-on-cid` to inspect the initial extraction and OCR only pages that still contain
-unresolved CID placeholders. The source PDFs are never overwritten; corrected copies are
-saved under `--ocr-pdf-dir`.
+Course codes beginning with `TLL` automatically inspect the initial extraction and OCR
+only pages that still contain unresolved CID placeholders. No OCR flag is needed for TLL.
+The source PDFs are never overwritten; corrected copies are saved under `--ocr-pdf-dir`.
+Use `--ocr-on-cid` only to enable the same fallback for non-TLL course PDFs.
 
 ```bash
 npm run parse:courses -- \
   --pdf-dir data/input/courses \
   --code-prefix TLL \
-  --ocr-on-cid \
   --ocr-languages eng,tam \
   --ocr-pdf-dir data/output/courses/ocr-pdfs \
   --out data/output/tll-course-details-import.sql \
@@ -602,10 +606,10 @@ It supports both the current nine-column offering tables and the five-column
 retired/replaced-course tables. Wrapped course titles are joined to the preceding row, and
 long course-code suffixes such as `BUS557Ae` and `CDO303ACI` are retained.
 Chinese text is extracted directly as Unicode, and PDF line-wrap spaces between Chinese
-characters are removed. If embedded-font repair leaves unresolved CID glyphs in a course
-title (currently seen in Tamil rows), the interactive menu OCRs only the affected pages
-and title cells using English and Tamil. It validates the course code before accepting a
-replacement and leaves the source PDFs unchanged. Reviewable OCR copies are written under
+characters are removed. If embedded-font repair leaves unresolved CID glyphs in a TLL
+course title, the parser automatically OCRs only the affected pages and title cells using
+English and Tamil. It validates the course code before accepting a replacement and leaves
+the source PDFs unchanged. Reviewable OCR copies are written under
 `data/output/curriculum/ocr-pdfs/`.
 
 The current Chinese curriculum PDFs do not need OCR: their Chinese characters are
@@ -617,8 +621,11 @@ font encoding.
 Run it through menu item **Parse Curriculum Plan PDFs**, or directly:
 
 ```bash
-npm run parse:curriculum -- --format both --ocr-on-cid
+npm run parse:curriculum -- --format both
 ```
+
+TLL OCR is automatic. Add `--ocr-on-cid` only when unresolved title glyphs from other
+course prefixes should also use the OCR fallback.
 
 Outputs:
 

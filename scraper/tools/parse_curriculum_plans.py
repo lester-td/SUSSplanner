@@ -44,6 +44,7 @@ SECTION_NAME_RE = re.compile(
 MONTHS = {"Jan": "January", "May": "May", "Jul": "July"}
 EMPTY_VALUES = {"", "-", "none", "nil", "n/a", "na"}
 CJK_CHAR_CLASS = "\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff"
+TAMIL_COURSE_PREFIXES = ("TLL",)
 
 
 def clean(value: object) -> str:
@@ -277,10 +278,15 @@ def apply_cid_ocr(
     *,
     ocr_output_root: Path,
     languages: list[str],
+    course_prefixes: tuple[str, ...] | None = None,
 ) -> None:
     affected = [
         entry for entry in entries
-        if any(has_cid_tokens(entry.get(field) or "") for field in (
+        if (
+            course_prefixes is None
+            or any(clean(entry.get("courseCode")).upper().startswith(prefix) for prefix in course_prefixes)
+        )
+        and any(has_cid_tokens(entry.get(field) or "") for field in (
             "courseTitle", "prerequisite", "excludedCombination", "grouping", "remarks"
         ))
     ]
@@ -346,6 +352,7 @@ def parse_plan(
     ocr_on_cid: bool = False,
     ocr_output_root: Path | None = None,
     ocr_languages: list[str] | None = None,
+    ocr_course_prefixes: tuple[str, ...] = (),
 ) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
     relative_path = pdf_path.relative_to(input_root)
     parts = relative_path.parts
@@ -463,7 +470,7 @@ def parse_plan(
                     finalise_entry(active_entry)
                     entries.append(active_entry)
 
-    if ocr_on_cid:
+    if ocr_on_cid or ocr_course_prefixes:
         if ocr_output_root is None or not ocr_languages:
             raise ValueError("OCR output directory and languages are required when CID OCR is enabled.")
         apply_cid_ocr(
@@ -473,6 +480,7 @@ def parse_plan(
             entries,
             ocr_output_root=ocr_output_root,
             languages=ocr_languages,
+            course_prefixes=None if ocr_on_cid else ocr_course_prefixes,
         )
 
     for entry in entries:
@@ -574,7 +582,7 @@ def main() -> None:
     parser.add_argument(
         "--ocr-on-cid",
         action="store_true",
-        help="OCR only title cells on pages that still contain unresolved CID glyphs",
+        help="OCR unresolved title cells for every course prefix, not only automatic TLL entries",
     )
     parser.add_argument(
         "--ocr-output-dir",
@@ -589,8 +597,10 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    print("TLL curriculum entries use selective English/Tamil CID OCR automatically.")
+
     ocr_languages = parse_ocr_languages(args.ocr_languages)
-    if args.ocr_on_cid and not ocr_languages:
+    if not ocr_languages:
         raise ValueError("At least one OCR language is required.")
 
     pdf_paths = sorted(args.input_dir.rglob("*.pdf"))
@@ -608,6 +618,7 @@ def main() -> None:
             ocr_on_cid=args.ocr_on_cid,
             ocr_output_root=args.ocr_output_dir,
             ocr_languages=ocr_languages,
+            ocr_course_prefixes=TAMIL_COURSE_PREFIXES,
         )
         plans.append(plan)
         entries.extend(plan_entries)

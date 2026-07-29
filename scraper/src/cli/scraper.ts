@@ -15,6 +15,7 @@ const virtualEnvironmentPython = path.join(
   virtualEnvironmentBin,
   process.platform === "win32" ? "python.exe" : "python3"
 );
+const TAMIL_COURSE_PREFIX = "TLL";
 
 interface PreflightResult {
   passed: boolean;
@@ -138,7 +139,23 @@ function checkEnvironmentPrerequisites(): PreflightResult {
         ? "Run `cd scraper && venv\\Scripts\\python -m pip install -r requirements.txt`, then `venv\\Scripts\\python -m pip check`."
         : "Run `cd scraper && venv/bin/python -m pip install -r requirements.txt`, then `venv/bin/python -m pip check`.");
     }
+  }
 
+  return { passed: fixes.length === 0, fixes };
+}
+
+function checkTamilOcrPrerequisites(reason: string): PreflightResult {
+  printHeader("Tamil OCR requirements");
+  console.log(`${reason} TLL PDF content requires selective English/Tamil OCR.`);
+  console.log("Required: requirements-ocr.txt, OCRmyPDF, Tesseract eng+tam, Noto Sans Tamil, and Ghostscript.");
+
+  const fixes: string[] = [];
+  if (!fs.existsSync(virtualEnvironmentPython)) {
+    printCheck(false, "English and Tamil OCR", "Python virtual environment is missing");
+    fixes.push(process.platform === "win32"
+      ? "Create `scraper\\venv`, then install `requirements-ocr.txt`."
+      : "Run `cd scraper && python3 -m venv venv && venv/bin/python -m pip install -r requirements-ocr.txt`.");
+  } else {
     const ocrValidation = spawnSync(virtualEnvironmentPython, [
       "tools/pdf_ocr.py",
       "--languages",
@@ -156,16 +173,56 @@ function checkEnvironmentPrerequisites(): PreflightResult {
     if (!ocrLanguagePassed) fixes.push(process.platform === "win32"
       ? "Install `requirements-ocr.txt`, Tesseract English/Tamil data, and Noto Sans Tamil."
       : "Run `cd scraper && venv/bin/python -m pip install -r requirements-ocr.txt`, then `sudo apt install tesseract-ocr-eng tesseract-ocr-tam fonts-noto-core`.");
-
-    const ghostscriptVersion = commandVersion(process.platform === "win32" ? "gswin64c" : "gs", ["--version"]);
-    const ghostscriptPassed = Boolean(ghostscriptVersion);
-    printCheck(ghostscriptPassed, "Ghostscript for OCR", ghostscriptVersion ?? "not found");
-    if (!ghostscriptPassed) fixes.push(process.platform === "win32"
-      ? "Install Ghostscript and ensure `gswin64c` is available on PATH."
-      : "Run `sudo apt install ghostscript`.");
   }
 
+  const ghostscriptVersion = commandVersion(process.platform === "win32" ? "gswin64c" : "gs", ["--version"]);
+  const ghostscriptPassed = Boolean(ghostscriptVersion);
+  printCheck(ghostscriptPassed, "Ghostscript for OCR", ghostscriptVersion ?? "not found");
+  if (!ghostscriptPassed) fixes.push(process.platform === "win32"
+    ? "Install Ghostscript and ensure `gswin64c` is available on PATH."
+    : "Run `sudo apt install ghostscript`.");
+
   return { passed: fixes.length === 0, fixes };
+}
+
+function optionValues(args: string[], option: string): string[] {
+  const values: string[] = [];
+  for (let index = 0; index < args.length - 1; index += 1) {
+    if (args[index] === option) values.push(...args[index + 1].split(","));
+  }
+  return values.map(value => value.trim().toUpperCase()).filter(Boolean);
+}
+
+function courseFilterIncludesTamil(courseFilterArgs: string[]): boolean {
+  const exactCodes = optionValues(courseFilterArgs, "--codes");
+  const prefixes = optionValues(courseFilterArgs, "--code-prefix");
+  if (exactCodes.length === 0 && prefixes.length === 0) return true;
+  if (exactCodes.some(code => code.startsWith(TAMIL_COURSE_PREFIX))) return true;
+  return prefixes.some(prefix =>
+    TAMIL_COURSE_PREFIX.startsWith(prefix) || prefix.startsWith(TAMIL_COURSE_PREFIX)
+  );
+}
+
+function tamilOcrReason(action: Action, courseFilterArgs: string[]): string | null {
+  if (action === "all") return "All Items includes TLL course synopses and curriculum entries.";
+  if (action === "curriculum") return "Curriculum-plan parsing includes TLL entries.";
+  if (action === "courses" && courseFilterIncludesTamil(courseFilterArgs)) {
+    return "The selected course filter includes TLL course synopses.";
+  }
+  return null;
+}
+
+function requireTamilOcr(reason: string): void {
+  const result = checkTamilOcrPrerequisites(reason);
+  if (result.passed) {
+    console.log("Tamil OCR dependencies are ready.");
+    return;
+  }
+
+  console.error("\nTamil OCR setup is required for this selection:");
+  for (const fix of [...new Set(result.fixes)]) console.error(`- ${fix}`);
+  console.error("\nComplete the steps above, then run `npm run scraper` again.");
+  throw new Error("Tamil OCR prerequisite checks failed; no scraper tasks were run.");
 }
 
 function printOptionalCapabilities(): void {
@@ -250,7 +307,7 @@ function runPreflight(): void {
   printOptionalCapabilities();
   printInputReadiness();
   if (result.passed) {
-    console.log("\nAll required environment checks passed. Review any optional/input notices above.");
+    console.log("\nCore environment checks passed. OCR requirements are checked after you choose a task and filter.");
     return;
   }
 
@@ -275,7 +332,8 @@ function printHelp(): void {
 Usage:
   npm start                  Open the interactive task menu
 
-All Items generates files only; it never changes the database.`);
+All Items generates files only; it never changes the database.
+All Items and TLL-inclusive PDF parsing require the English/Tamil OCR dependencies.`);
   printDefaults();
 }
 
@@ -330,7 +388,7 @@ async function refreshCourses(format: OutputFormat, courseFilterArgs: string[]):
 
 async function parseCurriculumPlans(format: OutputFormat): Promise<void> {
   printHeader("Parsing curriculum-plan PDFs");
-  await runNpmScript("parse:curriculum", [...formatArgs(format), "--ocr-on-cid"]);
+  await runNpmScript("parse:curriculum", formatArgs(format));
 }
 
 async function runScheduleFlow(format: OutputFormat, courseFilterArgs: string[]): Promise<void> {
@@ -408,11 +466,11 @@ async function interactiveMenu(): Promise<void> {
   const readline = createInterface({ input: process.stdin, output: process.stdout });
   try {
     console.log(`\nSUSS scraper — what would you like to do?
-  1. All Items
+  1. All Items (requires Tamil OCR dependencies)
   2. Generate Semester Weeks
   3. Parse Schedule PDFs
-  4. Download and Parse Course PDFs
-  5. Parse Curriculum Plan PDFs
+  4. Download and Parse Course PDFs (TLL requires Tamil OCR dependencies)
+  5. Parse Curriculum Plan PDFs (requires Tamil OCR dependencies)
   6. Exit`);
 
     const answer = (await readline.question("\nChoose an option [1]: ")).trim();
@@ -424,6 +482,8 @@ async function interactiveMenu(): Promise<void> {
     const courseFilterArgs = action === "all" || action === "schedules" || action === "courses"
       ? await promptCourseFilter(readline)
       : [];
+    const ocrReason = tamilOcrReason(action, courseFilterArgs);
+    if (ocrReason) requireTamilOcr(ocrReason);
     await executeAction(action, format, courseFilterArgs);
   } finally {
     readline.close();

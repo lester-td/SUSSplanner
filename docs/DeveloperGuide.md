@@ -265,8 +265,9 @@ source venv/bin/activate
 pip install -r requirements-ocr.txt
 ```
 
-The curriculum parser uses selective English/Tamil OCR for broken embedded glyphs. On
-Ubuntu/WSL, install its system dependencies before starting the interactive scraper:
+TLL course synopsis and curriculum-plan parsing uses selective English/Tamil OCR for broken
+embedded glyphs. **All Items and TLL-inclusive course or curriculum selections require the
+OCR dependencies.** On Ubuntu/WSL, install them before starting the interactive scraper:
 
 ```bash
 sudo apt install ghostscript tesseract-ocr-eng tesseract-ocr-tam fonts-noto-core
@@ -1449,7 +1450,10 @@ steps below. Snapshot publication is the final application operation.
 Run `npm run scraper` from the repository root and choose the required task from
 the interactive menu. **All Items** runs the complete local preparation flow without
 changing the database. The menu then asks for JSON, SQL, or both and accepts optional
-course filters such as `TLL*`. Review generated files before importing SQL manually.
+course filters such as `TLL*`. TLL course and curriculum records automatically use
+selective English/Tamil OCR when unresolved CID glyphs remain; the menu warns about and
+validates the required dependencies before running a TLL-inclusive selection. Review
+generated files before importing SQL manually.
 Curriculum-plan JSON and preview SQL are review artifacts only and are not imported into
 the current schema. The lower-level `generate:weeks`, `scrape:all`, `download:courses`,
 `parse:courses`, and `parse:curriculum` commands remain available for diagnostic runs. See

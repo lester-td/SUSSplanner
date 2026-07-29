@@ -11,6 +11,7 @@ import { generateSql } from "../sql/generateSql.js";
 
 const execFileAsync = promisify(execFile);
 const SCHEDULE_TYPES: ScheduleType[] = ["daytime", "evening"];
+const TAMIL_COURSE_PREFIX = "TLL";
 
 interface ParseIssue {
   courseCode: string;
@@ -104,6 +105,10 @@ async function pathExists(filePath: string): Promise<boolean> {
 
 function isScheduleType(value: string): value is ScheduleType {
   return value === "daytime" || value === "evening";
+}
+
+function isTamilCourseCode(courseCode: string): boolean {
+  return courseCode.trim().toUpperCase().startsWith(TAMIL_COURSE_PREFIX);
 }
 
 async function listPdfFilesInDir(
@@ -254,8 +259,6 @@ async function main(): Promise<void> {
     ? fallbackScheduleTypeRaw
     : "evening";
 
-  if (ocrOnCid) await validateOcrEnvironment(ocrLanguages);
-
   if (writesSql(format)) await fs.mkdir(path.dirname(outSql), { recursive: true });
   if (writesJson(format)) await fs.mkdir(path.dirname(outJson), { recursive: true });
   await fs.mkdir(path.dirname(issuesOut), { recursive: true });
@@ -267,21 +270,31 @@ async function main(): Promise<void> {
     throw new Error(`No course PDFs found in ${pdfDir}${courseCodeFilter.active ? " matching the course-code filters" : ""}.`);
   }
 
+  const tamilPdfCount = pdfs.filter(pdf => isTamilCourseCode(pdf.courseCode)).length;
+  const ocrRequired = ocrOnCid || tamilPdfCount > 0;
+  if (ocrRequired) {
+    if (tamilPdfCount > 0) {
+      console.log(`TLL course PDFs detected (${tamilPdfCount}); selective English/Tamil CID OCR is enabled automatically.`);
+    }
+    await validateOcrEnvironment(ocrLanguages);
+  }
+
   const results: CourseDetailParseResult[] = [];
   const skippedIssues: ParseIssue[] = [];
 
   for (const { courseCode, scheduleType, pdfPath } of pdfs) {
+    const useOcr = ocrOnCid || isTamilCourseCode(courseCode);
     const sourceUrl = buildCourseDetailPdfUrl(courseCode, isftForScheduleType(scheduleType));
     const textPath = path.join(rawTextDir, scheduleType, `${courseCode}.txt`);
     const jsonDumpPath = path.join(rawJsonDir, scheduleType, `${courseCode}.json`);
-    const ocrOutputPath = ocrOnCid ? path.join(ocrPdfDir, scheduleType, `${courseCode}.pdf`) : undefined;
+    const ocrOutputPath = useOcr ? path.join(ocrPdfDir, scheduleType, `${courseCode}.pdf`) : undefined;
 
     console.log(`Parsing ${courseCode} (${scheduleType}) from ${pdfPath}`);
 
     try {
       const extraction = await extractPdfWithPdfplumber(pdfPath, textPath, {
         jsonPath: jsonDumpPath,
-        ocrOnCid,
+        ocrOnCid: useOcr,
         ocrOutputPath,
         ocrLanguages
       });
@@ -311,7 +324,7 @@ async function main(): Promise<void> {
       }
     } catch (error) {
       const message = (error as Error).message;
-      if (ocrOnCid && message.includes("OCR validation error:")) {
+      if (useOcr && message.includes("OCR validation error:")) {
         throw new Error(`${courseCode} (${scheduleType}): ${message}`);
       }
       console.error(`Failed to parse ${courseCode} (${scheduleType}): ${message}`);
@@ -361,7 +374,7 @@ async function main(): Promise<void> {
   console.log(`Evening PDFs parsed: ${eveningCount}`);
   console.log(`Failed parses: ${failedCount}`);
   console.log(`Parsed assessment components: ${assessmentCount}`);
-  if (ocrOnCid) console.log(`OCR-corrected PDF copies written to: ${ocrPdfDir}`);
+  if (ocrRequired) console.log(`OCR-corrected PDF copies written to: ${ocrPdfDir}`);
   if (writesSql(format)) console.log(`SQL written to: ${outSql}`);
   if (writesJson(format)) console.log(`JSON written to: ${outJson}`);
   console.log(`Issue report written to: ${issuesOut}`);
