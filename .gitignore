@@ -80,7 +80,9 @@ app/quotes.json
 data/snapshots/
 data/.snapshots-*/
 scraper/data/input/course-pdfs/
+scraper/data/input/courses/
 scraper/data/output/
+scraper/data/db-backup/
 venv/
 .DS_Store
 next-env.d.ts
