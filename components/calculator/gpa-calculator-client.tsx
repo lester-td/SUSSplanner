@@ -7,9 +7,15 @@ import {
   PlusIcon,
   SearchIcon,
   TrashIcon,
+  UploadIcon,
   XIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
+import {
+  SEMESTER_PLANNER_UPDATED_EVENT,
+  loadSemesterPlannerState,
+} from "@/lib/planner/storage";
+import type { SemesterPlannerCourse } from "@/lib/planner/types";
 
 type Grade = "A+" | "A" | "A-" | "B+" | "B" | "B-" | "C+" | "C" | "D+" | "D" | "F";
 
@@ -32,6 +38,8 @@ type CalculatorCourseSearchResult = {
   courseName: string | null;
   creditUnits: number | null;
 };
+
+type PlannerImportStatus = "available" | "added" | "duplicate";
 
 const STORAGE_KEY = "sussplanner:gpa-calculator";
 
@@ -135,6 +143,11 @@ function capInputToMaximum(value: string, maximum: number)
   return parsedValue > maximum ? String(maximum) : value;
 }
 
+function normalizeCalculatorCourseCode(courseCode: string)
+{
+  return courseCode.trim().toUpperCase();
+}
+
 function formatGpa(value: number | null)
 {
   return value === null ? "—" : value.toFixed(2);
@@ -143,6 +156,37 @@ function formatGpa(value: number | null)
 function formatCreditUnits(value: number | null)
 {
   return value === null ? "CU unavailable" : `${value.toFixed(1)} CU`;
+}
+
+function formatPlannerAssignment(course: SemesterPlannerCourse)
+{
+  if (course.assignedSemester === null)
+  {
+    return "Unassigned";
+  }
+
+  const startSemester = course.assignedSemester + 1;
+  if (course.semesterSpan <= 1)
+  {
+    return `Semester ${startSemester}`;
+  }
+
+  return `Semester ${startSemester}-${startSemester + course.semesterSpan - 1}`;
+}
+
+function toCalculatorModule(course: SemesterPlannerCourse): CalculatorModule
+{
+  const courseCode = normalizeCalculatorCourseCode(course.courseCode);
+
+  return {
+    courseCode,
+    courseName: course.courseName.trim() || courseCode,
+    creditUnits: course.creditUnits,
+    creditUnitsEditable: course.source === "manual",
+    grade: DEFAULT_GRADE,
+    gradePoint: DEFAULT_GRADE_POINT,
+    isPassFail: false,
+  };
 }
 
 function calculateWeightedGpa(modules: CalculatorModule[])
@@ -186,6 +230,10 @@ export function GpaCalculatorClient()
   const [customModuleLabel, setCustomModuleLabel] = useState("");
   const [customModuleCredits, setCustomModuleCredits] = useState("");
   const [customModuleNotice, setCustomModuleNotice] = useState("");
+  const [plannerImportNotice, setPlannerImportNotice] = useState("");
+  const [plannerImportOpen, setPlannerImportOpen] = useState(false);
+  const [plannerImportCourses, setPlannerImportCourses] = useState<SemesterPlannerCourse[]>([]);
+  const [selectedPlannerCourseIds, setSelectedPlannerCourseIds] = useState<string[]>([]);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [priorRecordExpanded, setPriorRecordExpanded] = useState(false);
   const [ready, setReady] = useState(false);
@@ -244,6 +292,21 @@ export function GpaCalculatorClient()
   useEffect(() => {
     setPriorPassFailCreditsInput((currentValue) => capInputToMaximum(currentValue, priorCredits));
   }, [priorCredits]);
+
+  useEffect(() => {
+    const syncPlannerCourses = () => {
+      setPlannerImportCourses(loadSemesterPlannerState()?.courses ?? []);
+    };
+
+    syncPlannerCourses();
+    window.addEventListener("storage", syncPlannerCourses);
+    window.addEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncPlannerCourses);
+
+    return () => {
+      window.removeEventListener("storage", syncPlannerCourses);
+      window.removeEventListener(SEMESTER_PLANNER_UPDATED_EVENT, syncPlannerCourses);
+    };
+  }, []);
 
   useEffect(() => {
     const query = debouncedQuery.trim();
@@ -322,10 +385,129 @@ export function GpaCalculatorClient()
   }, [currentGpaCredits, modules, priorGpa, priorGpaCredits]);
   const totalCompletedCredits = priorCredits + currentCredits;
   const totalGpaCredits = priorGpaCredits + currentGpaCredits;
+  const addedCourseCodes = useMemo(
+    () => new Set(modules.map((module) => normalizeCalculatorCourseCode(module.courseCode))),
+    [modules],
+  );
+  const plannerImportStatusById = useMemo(() => {
+    const seenCourseCodes = new Set(addedCourseCodes);
+    const statuses: Record<string, PlannerImportStatus> = {};
+
+    for (const course of plannerImportCourses)
+    {
+      const courseCode = normalizeCalculatorCourseCode(course.courseCode);
+      if (addedCourseCodes.has(courseCode))
+      {
+        statuses[course.id] = "added";
+        continue;
+      }
+
+      if (seenCourseCodes.has(courseCode))
+      {
+        statuses[course.id] = "duplicate";
+        continue;
+      }
+
+      seenCourseCodes.add(courseCode);
+      statuses[course.id] = "available";
+    }
+
+    return statuses;
+  }, [addedCourseCodes, plannerImportCourses]);
+  const availablePlannerCourseIds = useMemo(
+    () => plannerImportCourses
+      .filter((course) => plannerImportStatusById[course.id] === "available")
+      .map((course) => course.id),
+    [plannerImportCourses, plannerImportStatusById],
+  );
+  const selectedImportCount = selectedPlannerCourseIds.filter((courseId) => (
+    plannerImportStatusById[courseId] === "available"
+  )).length;
+
+  function openPlannerImport()
+  {
+    const courses = loadSemesterPlannerState()?.courses ?? [];
+    const seenCourseCodes = new Set(addedCourseCodes);
+    const selectableCourseIds: string[] = [];
+
+    for (const course of courses)
+    {
+      const courseCode = normalizeCalculatorCourseCode(course.courseCode);
+      if (!seenCourseCodes.has(courseCode))
+      {
+        seenCourseCodes.add(courseCode);
+        selectableCourseIds.push(course.id);
+      }
+    }
+
+    setPlannerImportCourses(courses);
+    setSelectedPlannerCourseIds(selectableCourseIds);
+    setPlannerImportNotice("");
+    setPlannerImportOpen(true);
+  }
+
+  function togglePlannerCourseSelection(courseId: string, selected: boolean)
+  {
+    if (plannerImportStatusById[courseId] !== "available")
+    {
+      return;
+    }
+
+    setSelectedPlannerCourseIds((current) => {
+      if (selected)
+      {
+        return current.includes(courseId) ? current : [...current, courseId];
+      }
+
+      return current.filter((item) => item !== courseId);
+    });
+  }
+
+  function importSelectedPlannerCourses()
+  {
+    const selectedIds = new Set(selectedPlannerCourseIds);
+    const seenCourseCodes = new Set(modules.map((module) => normalizeCalculatorCourseCode(module.courseCode)));
+    const importedModules: CalculatorModule[] = [];
+    let skippedCount = 0;
+
+    for (const course of plannerImportCourses)
+    {
+      if (!selectedIds.has(course.id))
+      {
+        continue;
+      }
+
+      const courseCode = normalizeCalculatorCourseCode(course.courseCode);
+      if (seenCourseCodes.has(courseCode))
+      {
+        skippedCount += 1;
+        continue;
+      }
+
+      seenCourseCodes.add(courseCode);
+      importedModules.push(toCalculatorModule(course));
+    }
+
+    if (importedModules.length > 0)
+    {
+      setModules((current) => [...current, ...importedModules]);
+    }
+
+    const importedText = importedModules.length === 1
+      ? "Imported 1 module from planner."
+      : `Imported ${importedModules.length} modules from planner.`;
+    const skippedText = skippedCount > 0
+      ? ` Skipped ${skippedCount} duplicate ${skippedCount === 1 ? "module" : "modules"}.`
+      : "";
+
+    setPlannerImportNotice(`${importedText}${skippedText}`);
+    setSelectedPlannerCourseIds([]);
+    setPlannerImportOpen(false);
+  }
 
   function addModule(course: CalculatorCourseSearchResult)
   {
-    if (modules.some((module) => module.courseCode === course.courseCode))
+    if (addedCourseCodes.has(normalizeCalculatorCourseCode(course.courseCode)))
     {
       setSearchQuery("");
       setSearchResults([]);
@@ -354,7 +536,7 @@ export function GpaCalculatorClient()
     const creditUnits = customModuleCredits.trim() === ""
       ? 0
       : Number.parseFloat(customModuleCredits);
-    const courseCode = label.toUpperCase();
+    const courseCode = normalizeCalculatorCourseCode(label);
 
     if (!label)
     {
@@ -368,7 +550,7 @@ export function GpaCalculatorClient()
       return;
     }
 
-    if (modules.some((module) => module.courseCode.toUpperCase() === courseCode))
+    if (addedCourseCodes.has(courseCode))
     {
       setCustomModuleNotice(`${courseCode} has already been added.`);
       return;
@@ -434,7 +616,7 @@ export function GpaCalculatorClient()
         <section className="min-w-0">
           <div ref={searchContainerRef} className="relative z-20 mb-3">
             <div className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-2.5 sm:py-3">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-center gap-3">
                   {isCustomModule ? (
                     <BookIcon className="h-5 w-5 text-[var(--primary)]" />
@@ -445,36 +627,52 @@ export function GpaCalculatorClient()
                     Add courses
                   </h2>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCustomModule((current) => !current);
-                    setSearchQuery("");
-                    setSearchResults([]);
-                    setCustomModuleNotice("");
-                  }}
-                  className="calculator-segmented-control relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
-                  aria-pressed={isCustomModule}
-                  aria-label={`Add module mode: ${isCustomModule ? "Custom" : "Search"}. Click to toggle.`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`calculator-segmented-control__thumb absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomModule ? "translate-x-full" : "translate-x-0"}`}
-                  />
-                  <span
-                    aria-hidden="true"
-                    className={`calculator-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomModule ? "calculator-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={openPlannerImport}
+                    className="inline-flex h-[34px] items-center justify-center gap-1.5 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
                   >
-                    Search
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className={`calculator-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomModule ? "calculator-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                    <UploadIcon className="h-4 w-4" />
+                    <span>Planner</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomModule((current) => !current);
+                      setSearchQuery("");
+                      setSearchResults([]);
+                      setCustomModuleNotice("");
+                    }}
+                    className="calculator-segmented-control relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
+                    aria-pressed={isCustomModule}
+                    aria-label={`Add module mode: ${isCustomModule ? "Custom" : "Search"}. Click to toggle.`}
                   >
-                    Custom
-                  </span>
-                </button>
+                    <span
+                      aria-hidden="true"
+                      className={`calculator-segmented-control__thumb absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomModule ? "translate-x-full" : "translate-x-0"}`}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className={`calculator-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomModule ? "calculator-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                    >
+                      Search
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className={`calculator-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomModule ? "calculator-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
+                    >
+                      Custom
+                    </span>
+                  </button>
+                </div>
               </div>
+
+              {plannerImportNotice ? (
+                <p className="mt-3 rounded-[0.6rem] border border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] px-3 py-2 text-[12px] font-semibold leading-5 text-[var(--primary)]">
+                  {plannerImportNotice}
+                </p>
+              ) : null}
 
               {isCustomModule ? (
                 <form
@@ -902,6 +1100,116 @@ export function GpaCalculatorClient()
           </section>
         </aside>
       </div>
+
+      <Modal
+        open={plannerImportOpen}
+        title="Import From Planner"
+        description="Select planner modules to add to this GPA calculation."
+        onClose={() => setPlannerImportOpen(false)}
+        maxWidthClassName="max-w-3xl"
+        footer={(
+          <>
+            <button
+              type="button"
+              onClick={() => setPlannerImportOpen(false)}
+              className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={selectedImportCount === 0}
+              onClick={importSelectedPlannerCourses}
+              className="calculator-primary-action rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              Import Selected
+            </button>
+          </>
+        )}
+      >
+        {plannerImportCourses.length === 0 ? (
+          <div className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-6 text-center">
+            <p className="text-[14px] font-bold text-[var(--on-surface)]">No planner modules yet</p>
+            <a
+              href="/planner"
+              className="mt-3 inline-flex items-center justify-center rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)]"
+            >
+              Open Semester Planner
+            </a>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[12px] font-semibold leading-5 text-[var(--on-surface-variant)]">
+                {availablePlannerCourseIds.length} available · {selectedImportCount} selected
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={availablePlannerCourseIds.length === 0}
+                  onClick={() => setSelectedPlannerCourseIds(availablePlannerCourseIds)}
+                  className="rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Select all
+                </button>
+                <button
+                  type="button"
+                  disabled={selectedImportCount === 0}
+                  onClick={() => setSelectedPlannerCourseIds([])}
+                  className="rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+              <div className="max-h-[24rem] divide-y divide-[var(--brand-divider)] overflow-y-auto">
+                {plannerImportCourses.map((course) => {
+                  const status = plannerImportStatusById[course.id] ?? "duplicate";
+                  const disabled = status !== "available";
+                  const checked = selectedPlannerCourseIds.includes(course.id) && !disabled;
+                  const sourceLabel = course.source === "manual" ? "Custom" : "Catalog";
+
+                  return (
+                    <label
+                      key={course.id}
+                      className={`grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 transition-colors ${
+                        disabled
+                          ? "cursor-not-allowed bg-[var(--surface-container-low)] opacity-60"
+                          : "cursor-pointer hover:bg-[var(--surface-container-low)]"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={disabled}
+                        onChange={(event) => togglePlannerCourseSelection(course.id, event.target.checked)}
+                        className="h-4 w-4 shrink-0 accent-[var(--primary)]"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-[13px] font-extrabold text-[var(--primary)]">{course.courseCode}</span>
+                        <span className="mt-0.5 block truncate text-[12px] text-[var(--on-surface-variant)]">{course.courseName}</span>
+                        <span className="mt-1 flex flex-wrap gap-1.5 text-[10px] font-bold uppercase leading-3 text-[var(--on-surface-variant)]">
+                          <span>{sourceLabel}</span>
+                          <span>{formatPlannerAssignment(course)}</span>
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-right text-[12px] font-semibold text-[var(--on-surface-variant)]">
+                        {status === "added"
+                          ? "Added"
+                          : status === "duplicate"
+                            ? "Duplicate"
+                            : formatCreditUnits(course.creditUnits)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={clearConfirmOpen}
