@@ -40,6 +40,7 @@ type CalculatorCourseSearchResult = {
 };
 
 type PlannerImportStatus = "available" | "added" | "duplicate";
+type PlannerImportSortMode = "name" | "semester";
 
 const STORAGE_KEY = "sussplanner:gpa-calculator";
 
@@ -61,6 +62,11 @@ const POINT_OPTIONS = [...new Set(GRADE_OPTIONS.map((option) => option.point))];
 
 const DEFAULT_GRADE: Grade = "A";
 const DEFAULT_GRADE_POINT = 5;
+
+const PLANNER_IMPORT_SORT_OPTIONS: Array<{ value: PlannerImportSortMode; label: string }> = [
+  { value: "name", label: "Name (A-Z)" },
+  { value: "semester", label: "Semester" },
+];
 
 function gradeToPoint(grade: Grade)
 {
@@ -174,6 +180,26 @@ function formatPlannerAssignment(course: SemesterPlannerCourse)
   return `Semester ${startSemester}-${startSemester + course.semesterSpan - 1}`;
 }
 
+function comparePlannerCoursesByName(left: SemesterPlannerCourse, right: SemesterPlannerCourse)
+{
+  return left.courseName.localeCompare(right.courseName, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  }) || left.courseCode.localeCompare(right.courseCode, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function comparePlannerCoursesBySemester(left: SemesterPlannerCourse, right: SemesterPlannerCourse)
+{
+  const leftSemester = left.assignedSemester ?? Number.MAX_SAFE_INTEGER;
+  const rightSemester = right.assignedSemester ?? Number.MAX_SAFE_INTEGER;
+
+  return leftSemester - rightSemester
+    || comparePlannerCoursesByName(left, right);
+}
+
 function toCalculatorModule(course: SemesterPlannerCourse): CalculatorModule
 {
   const courseCode = normalizeCalculatorCourseCode(course.courseCode);
@@ -233,6 +259,8 @@ export function GpaCalculatorClient()
   const [plannerImportNotice, setPlannerImportNotice] = useState("");
   const [plannerImportOpen, setPlannerImportOpen] = useState(false);
   const [plannerImportCourses, setPlannerImportCourses] = useState<SemesterPlannerCourse[]>([]);
+  const [plannerImportSortMode, setPlannerImportSortMode] = useState<PlannerImportSortMode>("name");
+  const [includeCustomPlannerModules, setIncludeCustomPlannerModules] = useState(true);
   const [selectedPlannerCourseIds, setSelectedPlannerCourseIds] = useState<string[]>([]);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [priorRecordExpanded, setPriorRecordExpanded] = useState(false);
@@ -414,14 +442,34 @@ export function GpaCalculatorClient()
 
     return statuses;
   }, [addedCourseCodes, plannerImportCourses]);
+  const visiblePlannerImportCourses = useMemo(
+    () => includeCustomPlannerModules
+      ? plannerImportCourses
+      : plannerImportCourses.filter((course) => course.source !== "manual"),
+    [includeCustomPlannerModules, plannerImportCourses],
+  );
   const availablePlannerCourseIds = useMemo(
-    () => plannerImportCourses
+    () => visiblePlannerImportCourses
       .filter((course) => plannerImportStatusById[course.id] === "available")
       .map((course) => course.id),
-    [plannerImportCourses, plannerImportStatusById],
+    [plannerImportStatusById, visiblePlannerImportCourses],
+  );
+  const sortedPlannerImportCourses = useMemo(() => {
+    const sortedCourses = [...visiblePlannerImportCourses];
+
+    if (plannerImportSortMode === "semester")
+    {
+      return sortedCourses.sort(comparePlannerCoursesBySemester);
+    }
+
+    return sortedCourses.sort(comparePlannerCoursesByName);
+  }, [plannerImportSortMode, visiblePlannerImportCourses]);
+  const availablePlannerCourseIdSet = useMemo(
+    () => new Set(availablePlannerCourseIds),
+    [availablePlannerCourseIds],
   );
   const selectedImportCount = selectedPlannerCourseIds.filter((courseId) => (
-    plannerImportStatusById[courseId] === "available"
+    availablePlannerCourseIdSet.has(courseId)
   )).length;
 
   function openPlannerImport()
@@ -465,12 +513,12 @@ export function GpaCalculatorClient()
 
   function importSelectedPlannerCourses()
   {
-    const selectedIds = new Set(selectedPlannerCourseIds);
+    const selectedIds = new Set(selectedPlannerCourseIds.filter((courseId) => availablePlannerCourseIdSet.has(courseId)));
     const seenCourseCodes = new Set(modules.map((module) => normalizeCalculatorCourseCode(module.courseCode)));
     const importedModules: CalculatorModule[] = [];
     let skippedCount = 0;
 
-    for (const course of plannerImportCourses)
+    for (const course of sortedPlannerImportCourses)
     {
       if (!selectedIds.has(course.id))
       {
@@ -1143,7 +1191,29 @@ export function GpaCalculatorClient()
               <p className="text-[12px] font-semibold leading-5 text-[var(--on-surface-variant)]">
                 {availablePlannerCourseIds.length} available · {selectedImportCount} selected
               </p>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <label className="inline-flex h-[31px] items-center gap-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)]">
+                  <span>Sort by:</span>
+                  <select
+                    value={plannerImportSortMode}
+                    onChange={(event) => setPlannerImportSortMode(event.target.value as PlannerImportSortMode)}
+                    aria-label="Sort planner modules"
+                    className="h-full rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] outline-none transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  >
+                    {PLANNER_IMPORT_SORT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="inline-flex h-[31px] items-center gap-1.5 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]">
+                  <input
+                    type="checkbox"
+                    checked={includeCustomPlannerModules}
+                    onChange={(event) => setIncludeCustomPlannerModules(event.target.checked)}
+                    className="h-3.5 w-3.5 shrink-0 accent-[var(--primary)]"
+                  />
+                  <span>Include custom modules</span>
+                </label>
                 <button
                   type="button"
                   disabled={availablePlannerCourseIds.length === 0}
@@ -1165,11 +1235,10 @@ export function GpaCalculatorClient()
 
             <div className="overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
               <div className="max-h-[24rem] divide-y divide-[var(--brand-divider)] overflow-y-auto">
-                {plannerImportCourses.map((course) => {
+                {sortedPlannerImportCourses.map((course) => {
                   const status = plannerImportStatusById[course.id] ?? "duplicate";
                   const disabled = status !== "available";
                   const checked = selectedPlannerCourseIds.includes(course.id) && !disabled;
-                  const sourceLabel = course.source === "manual" ? "Custom" : "Catalog";
 
                   return (
                     <label
@@ -1191,7 +1260,6 @@ export function GpaCalculatorClient()
                         <span className="block text-[13px] font-extrabold text-[var(--primary)]">{course.courseCode}</span>
                         <span className="mt-0.5 block truncate text-[12px] text-[var(--on-surface-variant)]">{course.courseName}</span>
                         <span className="mt-1 flex flex-wrap gap-1.5 text-[10px] font-bold uppercase leading-3 text-[var(--on-surface-variant)]">
-                          <span>{sourceLabel}</span>
                           <span>{formatPlannerAssignment(course)}</span>
                         </span>
                       </span>
