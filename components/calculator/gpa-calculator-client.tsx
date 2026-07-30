@@ -182,10 +182,10 @@ function formatPlannerAssignment(course: SemesterPlannerCourse)
 
 function comparePlannerCoursesByName(left: SemesterPlannerCourse, right: SemesterPlannerCourse)
 {
-  return left.courseName.localeCompare(right.courseName, undefined, {
+  return left.courseCode.localeCompare(right.courseCode, undefined, {
     numeric: true,
     sensitivity: "base",
-  }) || left.courseCode.localeCompare(right.courseCode, undefined, {
+  }) || left.courseName.localeCompare(right.courseName, undefined, {
     numeric: true,
     sensitivity: "base",
   });
