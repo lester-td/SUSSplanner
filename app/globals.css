@@ -213,6 +213,28 @@
   }
 }
 
+/* iOS Safari zooms the page when a text-entry control below 16px receives focus. */
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+    input:not([type]),
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="email"],
+    input[type="month"],
+    input[type="number"],
+    input[type="password"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="text"],
+    input[type="time"],
+    input[type="url"],
+    input[type="week"],
+    textarea {
+      font-size: 16px;
+    }
+  }
+}
+
 @keyframes timetable-pop {
   0% {
     transform: scale(0.72);
