@@ -167,7 +167,7 @@ The root `package.json` declares:
 - npm `>=10`
 
 The setup validator rejects Node.js below 20 but only warns for npm below 10.
-The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
+The scraper README recommends Node.js 20+, npm 10+, Python 3.10+, and `psql`.
 
 ## Repository Structure
 

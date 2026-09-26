@@ -102,6 +102,38 @@ Curriculum PDFs     scraper/data/input/curriculum-plans/**/*.pdf
 Generated files     scraper/data/output/{weeks,schedules,courses,curriculum}/
 ```
 
+### Complete interactive sequence
+
+1. Complete the dependency installation in section 1.
+2. Prepare the semester-week file, schedule manifest, referenced schedule PDFs, and
+   curriculum-plan PDFs as described in sections 4 and 5.
+3. From the repository root, run `npm run scraper`.
+4. Resolve any failed preflight checks, then rerun the command. The preflight reports
+   missing packages or inputs but never installs or changes anything automatically.
+5. Choose a task from the menu. Pressing Enter chooses **All Items**.
+6. Choose **Both JSON and SQL** unless only one format is needed. Pressing Enter chooses
+   both formats.
+7. For **All Items**, **Parse Schedule PDFs**, or **Download and Parse Course PDFs**, enter
+   a course filter or press Enter for all courses. Curriculum parsing always processes every
+   PDF under `data/input/curriculum-plans/`.
+8. Wait for every selected stage to finish. The scraper only writes local input/output
+   artifacts; it never imports SQL automatically.
+9. Review the generated JSON, download reports, and issue TSVs before considering any SQL
+   import.
+10. Import only the regular week, schedule, and course SQL when intended. Curriculum SQL
+    follows the separate disposable-database process in section 9A.
+
+The menu choices behave as follows:
+
+| Choice | Requirements | Actions and outputs |
+|---|---|---|
+| **All Items** | All week, schedule, curriculum, and Tamil OCR prerequisites | Generates weeks, parses schedules, force-downloads fresh course PDFs, parses course details, then parses curriculum plans. |
+| **Generate Semester Weeks** | Valid `data/input/weeks/semester-weeks.json` | Writes files under `data/output/weeks/`. |
+| **Parse Schedule PDFs** | Valid manifest and referenced schedule files | Writes schedule JSON/SQL and `data/output/schedules/course-codes.txt`. Run this before course downloading when that code list does not exist. |
+| **Download and Parse Course PDFs** | `course-codes.txt` from schedule parsing; Tamil OCR dependencies if the filter can include `TLL` | Downloads both daytime and evening variants with `--force`, then writes course JSON/SQL, reports, issues, and corrected OCR copies. |
+| **Parse Curriculum Plan PDFs** | PDFs under `data/input/curriculum-plans/` and Tamil OCR dependencies | Parses every curriculum PDF and writes preliminary JSON/SQL, issues, and corrected OCR copies. Course filters do not apply. |
+| **Exit** | None | Closes the menu without running a task. |
+
 The individual commands documented below remain available for filtered or diagnostic runs,
 but their standard manifest, input, and output paths no longer need to be supplied.
 For those commands, `--format json`, `--format sql`, and `--format both` match the
@@ -149,11 +181,24 @@ semesters, classes, class events, or timetable data.
 
 ## 1. Install dependencies
 
-From the scraper project root:
+Install the root project dependencies first, then the scraper dependencies:
 
 ```bash
-cd ~/Git/SUSSplanner/scraper
+cd ~/Git/SUSSplanner
 npm install
+cd scraper
+npm install
+```
+
+Unless a later section explicitly says to return to the repository root, commands in
+sections 1 through 12 run from `~/Git/SUSSplanner/scraper`.
+
+On Ubuntu or WSL, install the base Python, database-client, and review tools if they are not
+already available:
+
+```bash
+sudo apt update
+sudo apt install python3-venv postgresql-client ripgrep jq
 ```
 
 Python is needed because the scraper uses `pdfplumber` for PDF table/text extraction, plus `pypdf` and `fontTools` to repair embedded-font PDFs when Unicode maps are missing.
@@ -176,6 +221,24 @@ sudo apt install ghostscript tesseract-ocr-eng tesseract-ocr-tam fonts-noto-core
 pip install -r requirements-ocr.txt
 ```
 
+Verify the complete environment before leaving the `scraper` directory:
+
+```bash
+node --version
+npm --version
+python --version
+python -m pip check
+python -c "import pdfplumber, pypdf; from fontTools.ttLib import TTFont"
+tesseract --list-langs
+gs --version
+fc-list ':family=Noto Sans Tamil' file
+python tools/pdf_ocr.py --languages eng,tam
+```
+
+Node.js must be 20 or newer, npm must be 10 or newer, and Python must be 3.10 or
+newer. The Tesseract language list must contain `eng` and `tam`, and the font command must
+find Noto Sans Tamil. The final command validates OCRmyPDF and the required OCR resources.
+
 If `requirements.txt` is missing, install manually:
 
 ```bash
@@ -187,6 +250,10 @@ Add `ocrmypdf` to that command when processing TLL content.
 ---
 
 ## 2. Prepare Supabase database
+
+Skip sections 2 and 3 when only generating and reviewing local artifacts. A database
+connection is required only when the reviewed regular SQL files are intentionally imported,
+or when the preliminary curriculum model is evaluated in a disposable database.
 
 ### Option A: fresh reset of public schema
 
@@ -293,10 +360,19 @@ data/
     courses/
       daytime/
       evening/
+    curriculum-plans/
+      full-time/
+      part-time/
+      graduate_certificate/
+      graduate_studies/
+      law_programmes/
   output/
     weeks/
     schedules/
     courses/
+      ocr-pdfs/
+    curriculum/
+      ocr-pdfs/
 ```
 
 Create folders if needed:
@@ -306,8 +382,17 @@ mkdir -p data/input/schedules
 mkdir -p data/input/weeks
 mkdir -p data/input/courses/daytime
 mkdir -p data/input/courses/evening
-mkdir -p data/output/weeks data/output/schedules data/output/courses
+mkdir -p data/input/curriculum-plans
+mkdir -p data/output/weeks data/output/schedules
+mkdir -p data/output/courses/ocr-pdfs
+mkdir -p data/output/curriculum/ocr-pdfs
 ```
+
+Course PDF directories are populated by the downloader. Place curriculum PDFs anywhere
+under `data/input/curriculum-plans/`; nested directories are scanned recursively. A
+`full-time` or `part-time` path segment becomes the plan's study mode, and the first path
+segment becomes its category. Keep category directory names stable because the relative
+path is also used to build the plan key.
 
 ---
 
@@ -468,6 +553,11 @@ psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM class_events;"
 
 ## 8. Download online course synopsis PDFs
 
+Run schedule parsing first so `data/output/schedules/course-codes.txt` contains the course
+universe to download. The interactive **Download and Parse Course PDFs** action passes
+`--force`, so it fetches fresh daytime and evening copies before parsing. The direct command
+below skips existing valid PDFs unless `--force` is added.
+
 The course synopsis URL pattern is:
 
 ```text
@@ -509,6 +599,12 @@ course_code    daytime    evening
 ```
 
 A tick/check means that version was downloaded.
+
+Review it before parsing or importing course data:
+
+```bash
+less data/output/courses/download-report.tsv
+```
 
 If you need to redownload everything:
 
@@ -656,6 +752,21 @@ data/output/curriculum/issues.tsv
 Review the normalized records and issue report. Mixed `AND`/`OR` prerequisite rules and
 non-course conditions use a review status and retain their source text.
 
+Inspect the issue report and check for unresolved CID placeholders:
+
+```bash
+less data/output/curriculum/issues.tsv
+rg '\(cid:' data/output/curriculum/curriculum-plans.json
+```
+
+No `rg` output means no unresolved CID placeholders were written to the curriculum JSON.
+Also inspect records whose prerequisite `parseStatus` is `review_required` or `unparsed`:
+
+```bash
+jq '[.prerequisiteRules[] | select(.parseStatus != "parsed")]' \
+  data/output/curriculum/curriculum-plans.json
+```
+
 The curriculum tables are a preliminary, optional schema extension. They are not part of
 `schema.sql`, are not represented in the active Drizzle schema, and have not been deployed
 to the application database. `curriculum-schema-extension.sql` is not a migration. Do not
@@ -686,7 +797,10 @@ Useful commands:
 ```bash
 head -50 data/output/courses/parse-issues.tsv
 wc -l data/output/courses/parse-issues.tsv
+rg '\(cid:' data/output/courses/course-details.json
 ```
+
+No `rg` output means no unresolved CID placeholders were written to the parsed course JSON.
 
 Common warning types:
 
@@ -704,7 +818,7 @@ If assessment total is not 100, the scraper should skip assessment inserts for t
 
 ## 11. Regenerate SQL from course JSON only
 
-If you manually edit `course-details-parsed.json`, regenerate SQL without reparsing PDFs:
+If you manually edit `course-details.json`, regenerate SQL without reparsing PDFs:
 
 ```bash
 npm run courses-json-to-sql -- \
@@ -783,6 +897,7 @@ npm run scraper
 The equivalent low-level sequence for a fresh database is:
 
 ```bash
+cd scraper
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
 
 npm run generate:weeks -- \
@@ -812,6 +927,11 @@ npm run parse:courses -- \
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/courses/course-details.sql
 ```
 
+This is the normal application import path. It deliberately excludes
+`curriculum-schema-extension.sql` and `curriculum-plans.sql`. Use the isolated evaluation
+steps in section 9A for curriculum data; do not add those files to the shared or production
+import sequence while the model remains preliminary.
+
 ### Publish the imported data to the application
 
 The production application serves build-time JSON snapshots and does not query
@@ -832,7 +952,26 @@ publication and rollback workflow.
 
 ---
 
-## 14. Troubleshooting
+## 14. Validate scraper changes
+
+From the repository root, validate TypeScript, Python syntax, dependency consistency, and
+the working-tree diff:
+
+```bash
+npm run typecheck
+scraper/venv/bin/python -m py_compile scraper/tools/parse_curriculum_plans.py
+scraper/venv/bin/python -m pip check
+git diff --check
+```
+
+For a data refresh, validation also includes reviewing all generated JSON and TSV files,
+checking TLL and curriculum JSON for unresolved CID placeholders, and sampling the imported
+database rows with the queries in sections 7 and 12. These checks do not replace manual
+review of complex prerequisite rules or OCR-corrected titles.
+
+---
+
+## 15. Troubleshooting
 
 ### SQL file too large for Supabase SQL Editor
 
@@ -858,7 +997,7 @@ Usually caused by PDF table extraction artifacts or page breaks. The improved pa
 
 ---
 
-## 15. Data model
+## 16. Data model
 
 The latest schema intentionally separates data this way:
 
