@@ -130,6 +130,21 @@ The course synopsis scraper populates or updates:
 
 The online synopsis URL only gives the latest/current course synopsis, so assessment data is not treated as historical by semester.
 
+### From curriculum plan PDFs
+
+The curriculum parser populates:
+
+- `curriculum_plans` and `curriculum_requirements`
+- `curriculum_plan_courses`
+- `curriculum_prerequisite_rules` and `curriculum_prerequisites`
+- `curriculum_course_exclusions`
+- `curriculum_course_presentations`
+- `curriculum_course_lifecycle_events`
+- `curriculum_course_replacements`
+
+Curriculum presentations describe published course availability. They do not create
+semesters, classes, class events, or timetable data.
+
 ---
 
 ## 1. Install dependencies
@@ -591,25 +606,28 @@ The parser no longer extracts or stores textbooks.
 
 ## 9A. Parse curriculum plan PDFs
 
-The first-cut curriculum parser reads every PDF under `data/input/curriculum-plans/` and
-preserves each course row in the context of its programme plan and section. It extracts:
+The curriculum parser reads every PDF under `data/input/curriculum-plans/`. It produces
+normalized product records for:
 
-- programme name, category, study mode, and source location
-- section name and section credit-unit requirement
-- course code, title, and credit units
-- prerequisite and excluded-combination source text plus referenced course codes
-- grouping, remarks, timetable text, status, and effective semester
-- every presentation column and the semesters marked `Y`
-- source page/table/row coordinates and extraction warnings
+- plans, requirement sections, credit-unit ranges, and selection rules
+- active courses that can be added from a curriculum plan
+- prerequisite rules with source text, course-code edges, and parse status
+- excluded course combinations
+- January, May, and July presentation records without timetable records
+- retired and replaced course lifecycle events
+- one-to-many course replacement relationships
+
+The JSON keeps raw PDF rows, source coordinates, OCR metadata, and extraction warnings
+under `review`. The SQL imports only the normalized product records.
 
 It supports both the current nine-column offering tables and the five-column
 retired/replaced-course tables. Wrapped course titles are joined to the preceding row, and
 long course-code suffixes such as `BUS557Ae` and `CDO303ACI` are retained.
 Chinese text is extracted directly as Unicode, and PDF line-wrap spaces between Chinese
-characters are removed. If embedded-font repair leaves unresolved CID glyphs in a TLL
-course title, the parser automatically OCRs only the affected pages and title cells using
-English and Tamil. It validates the course code before accepting a replacement and leaves
-the source PDFs unchanged. Reviewable OCR copies are written under
+characters are removed. If embedded-font repair leaves unresolved CID glyphs in a Tamil
+programme course title, the parser OCRs only the affected pages and title cells using
+English and Tamil. It validates the course code before accepting a title and leaves the
+source PDFs unchanged. Reviewable OCR copies are written under
 `data/output/curriculum/ocr-pdfs/`.
 
 The current Chinese curriculum PDFs do not need OCR: their Chinese characters are
@@ -624,21 +642,34 @@ Run it through menu item **Parse Curriculum Plan PDFs**, or directly:
 npm run parse:curriculum -- --format both
 ```
 
-TLL OCR is automatic. Add `--ocr-on-cid` only when unresolved title glyphs from other
-course prefixes should also use the OCR fallback.
+Tamil programme title OCR is automatic. Add `--ocr-on-cid` to enable the same fallback
+for unresolved title glyphs in other curriculum plans.
 
 Outputs:
 
 ```text
 data/output/curriculum/curriculum-plans.json
-data/output/curriculum/curriculum-plans.preview.sql
+data/output/curriculum/curriculum-plans.sql
 data/output/curriculum/issues.tsv
 ```
 
-The SQL is deliberately marked **PREVIEW ONLY** and targets provisional
-`curriculum_plans` and `curriculum_plan_courses` tables. Those tables do not exist yet.
-Do not import that file until the curriculum schema has been reviewed and approved. This
-first cut does not modify `schema.sql`, Drizzle mappings, migrations, or the database.
+Review the normalized records and issue report. Mixed `AND`/`OR` prerequisite rules and
+non-course conditions use a review status and retain their source text.
+
+The curriculum tables are a preliminary, optional schema extension. They are not part of
+`schema.sql`, are not represented in the active Drizzle schema, and have not been deployed
+to the application database. `curriculum-schema-extension.sql` is not a migration. Do not
+apply either it or the generated curriculum import to a shared or production database while
+this work is paused.
+
+To evaluate the model in a disposable database, apply the normal schema first, followed by
+the extension and the reviewed generated SQL:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f curriculum-schema-extension.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/curriculum/curriculum-plans.sql
+```
 
 ---
 

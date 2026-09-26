@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import unicodedata
@@ -79,7 +80,10 @@ def plan_key(relative_path: Path) -> str:
 def course_codes(value: str | None) -> list[str]:
     if not value:
         return []
-    return list(dict.fromkeys(match.group(0) for match in COURSE_CODE_IN_TEXT_RE.finditer(value)))
+    # PDF extraction can insert a space inside a course prefix, for example
+    # "HB C105". Repair that narrow pattern before finding course codes.
+    repaired = re.sub(r"\b([A-Z]{2,5})\s+([A-Z]\d{3}[A-Za-z0-9]*)\b", r"\1\2", value)
+    return list(dict.fromkeys(match.group(0) for match in COURSE_CODE_IN_TEXT_RE.finditer(repaired)))
 
 
 def parse_presentation_periods(header: str) -> list[dict[str, Any]]:
@@ -365,6 +369,7 @@ def parse_plan(
         "category": category,
         "studyMode": study_mode,
         "sourcePath": relative_path.as_posix(),
+        "sourceHash": hashlib.sha256(pdf_path.read_bytes()).hexdigest(),
     }
     entries: list[dict[str, Any]] = []
     issues: list[dict[str, Any]] = []
@@ -512,6 +517,327 @@ def parse_plan(
     return plan, entries, issues
 
 
+def parse_credit_unit_range(section: str | None) -> tuple[float | None, float | None]:
+    if not section:
+        return None, None
+    match = re.search(
+        r"(?:-|–)\s*([0-9]+(?:\.[0-9]+)?)\s*(?:to\s*([0-9]+(?:\.[0-9]+)?))?\s*cu\b",
+        section,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return None, None
+    minimum = float(match.group(1))
+    maximum = float(match.group(2)) if match.group(2) else minimum
+    return minimum, maximum
+
+
+def parse_required_course_count(section: str | None) -> int | None:
+    if not section:
+        return None
+    patterns = (
+        r"\bcomplete\s+([0-9]+)\s+courses?\b",
+        r"\bchoose\s+(?:any\s+)?([0-9]+)\b(?:\s+of\s+the\s+[0-9]+)?\s+(?:courses?|electives?)\b",
+        r"\bminimum\s+([0-9]+)\s+courses?\b",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, section, flags=re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+    return None
+
+
+def requirement_type(section: str | None) -> str:
+    value = clean(section).lower()
+    if "specialisation elective" in value or "specialization elective" in value:
+        return "specialisation_elective"
+    if "restricted elective" in value:
+        return "restricted_elective"
+    if "free elective" in value or "unrestricted elective" in value:
+        return "free_elective"
+    if "elective" in value:
+        return "elective"
+    if "compulsory" in value or "core" in value:
+        return "compulsory"
+    return "other"
+
+
+def requirement_name(section: str | None) -> str:
+    value = clean(section) or "Unsectioned courses"
+    return re.split(r"\s+(?:-|–)\s+[0-9]", value, maxsplit=1)[0].strip()
+
+
+def requirement_selection_rule(
+    section: str | None,
+    kind: str,
+    minimum_credit_units: float | None,
+    maximum_credit_units: float | None,
+    required_course_count: int | None,
+) -> str:
+    value = clean(section).lower()
+    if required_course_count is not None:
+        return "choose_courses"
+    if kind in {"elective", "free_elective", "restricted_elective", "specialisation_elective"}:
+        return "choose_credit_units" if maximum_credit_units is not None else "review_required"
+    if kind == "compulsory":
+        if minimum_credit_units != maximum_credit_units or "from the list" in value:
+            return "choose_credit_units"
+        return "all"
+    return "review_required"
+
+
+def parse_effective_term(value: str | None) -> tuple[int | None, str | None]:
+    if not value:
+        return None, None
+    match = re.search(r"\b(20\d{2})[/-](01|05|07)\b", value)
+    if not match:
+        return None, None
+    period = {"01": "January", "05": "May", "07": "July"}[match.group(2)]
+    return int(match.group(1)), period
+
+
+def prerequisite_rule(raw_text: str, codes: list[str]) -> tuple[str, str, dict[str, Any]]:
+    has_and = re.search(r"\band\b|&", raw_text, flags=re.IGNORECASE) is not None
+    has_or = re.search(r"\bor\b", raw_text, flags=re.IGNORECASE) is not None
+    if not codes:
+        return "condition", "unparsed", {"type": "condition", "text": raw_text}
+    if has_and and has_or:
+        return "mixed", "review_required", {
+            "type": "unparsed",
+            "text": raw_text,
+            "courseCodes": codes,
+        }
+    operator = "any" if has_or else "all" if has_and or len(codes) > 1 else "single"
+    node_type = "any" if operator == "any" else "all"
+    return operator, "parsed", {
+        "type": node_type,
+        "children": [{"type": "course", "courseCode": code} for code in codes],
+    }
+
+
+def active_replacement_pairs(current_course_code: str, remarks: str | None) -> list[tuple[str, str]]:
+    if not remarks:
+        return []
+    pairs: list[tuple[str, str]] = []
+    for sentence in re.split(r"(?<=[.])\s+", remarks):
+        match = re.search(r"(.+?)\b(?:replaces?|replacing)\b(.+)", sentence, flags=re.IGNORECASE)
+        if not match:
+            continue
+        new_codes = course_codes(match.group(1)) or [current_course_code]
+        old_codes = course_codes(match.group(2))
+        for old_code in old_codes:
+            for new_code in new_codes:
+                if old_code != new_code:
+                    pairs.append((old_code, new_code))
+    return list(dict.fromkeys(pairs))
+
+
+def build_product_models(
+    plans: list[dict[str, Any]],
+    entries: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    product_plans = [
+        {
+            "planKey": plan["planKey"],
+            "programmeName": plan["programmeName"],
+            "programmeCode": None,
+            "category": plan["category"],
+            "studyMode": plan["studyMode"],
+            "curriculumVersion": None,
+            "effectiveFrom": None,
+            "totalCreditUnits": None,
+            "sourcePath": plan["sourcePath"],
+            "sourceHash": plan["sourceHash"],
+        }
+        for plan in plans
+    ]
+
+    requirements: list[dict[str, Any]] = []
+    requirement_by_section: dict[tuple[str, str], dict[str, Any]] = {}
+    requirement_count_by_plan: dict[str, int] = {}
+    plan_courses: list[dict[str, Any]] = []
+    prerequisite_rules: list[dict[str, Any]] = []
+    prerequisites: list[dict[str, Any]] = []
+    exclusions: list[dict[str, Any]] = []
+    presentations_by_key: dict[tuple[str, str, int, str], dict[str, Any]] = {}
+    lifecycle_events: list[dict[str, Any]] = []
+    replacements_by_key: dict[tuple[str, str, str, int | None, str | None], dict[str, Any]] = {}
+    course_count_by_requirement: dict[str, int] = {}
+    duplicate_plan_course_counts: dict[str, int] = {}
+
+    for entry in entries:
+        plan_key_value = entry["planKey"]
+        course_code = clean(entry["courseCode"])
+        record_type = entry["recordType"]
+        effective_year, effective_period = parse_effective_term(entry.get("effectiveFromSemester"))
+
+        if record_type == "historical":
+            status = clean(entry.get("status")).lower()
+            if status in {"retired", "replaced"}:
+                lifecycle_key = ":".join(filter(None, (
+                    plan_key_value,
+                    course_code.lower(),
+                    status,
+                    str(effective_year or "unknown"),
+                    (effective_period or "unknown").lower(),
+                )))
+                lifecycle_events.append({
+                    "lifecycleEventKey": lifecycle_key,
+                    "planKey": plan_key_value,
+                    "courseCode": course_code,
+                    "sourceCourseTitle": entry["courseTitle"],
+                    "status": status,
+                    "effectiveYear": effective_year,
+                    "effectivePeriod": effective_period,
+                    "rawEffectiveTerm": entry.get("effectiveFromSemester"),
+                    "rawRemarks": entry.get("remarks"),
+                })
+                if status == "replaced":
+                    for replacement_code in course_codes(entry.get("remarks")):
+                        if replacement_code == course_code:
+                            continue
+                        key = (plan_key_value, course_code, replacement_code, effective_year, effective_period)
+                        replacements_by_key[key] = {
+                            "replacementKey": ":".join((
+                                plan_key_value,
+                                course_code.lower(),
+                                replacement_code.lower(),
+                                str(effective_year or "unknown"),
+                                (effective_period or "unknown").lower(),
+                            )),
+                            "planKey": plan_key_value,
+                            "oldCourseCode": course_code,
+                            "newCourseCode": replacement_code,
+                            "effectiveYear": effective_year,
+                            "effectivePeriod": effective_period,
+                            "rawText": entry.get("remarks"),
+                        }
+            continue
+
+        section = clean(entry.get("section")) or "Unsectioned courses"
+        section_key = (plan_key_value, section)
+        requirement = requirement_by_section.get(section_key)
+        if requirement is None:
+            sort_order = requirement_count_by_plan.get(plan_key_value, 0) + 1
+            requirement_count_by_plan[plan_key_value] = sort_order
+            minimum_credit_units, maximum_credit_units = parse_credit_unit_range(section)
+            required_course_count = parse_required_course_count(section)
+            kind = requirement_type(section)
+            requirement = {
+                "requirementKey": f"{plan_key_value}:requirement:{sort_order}",
+                "planKey": plan_key_value,
+                "parentRequirementKey": None,
+                "name": requirement_name(section),
+                "requirementType": kind,
+                "minimumCreditUnits": minimum_credit_units,
+                "maximumCreditUnits": maximum_credit_units,
+                "requiredCourseCount": required_course_count,
+                "selectionRule": requirement_selection_rule(
+                    section,
+                    kind,
+                    minimum_credit_units,
+                    maximum_credit_units,
+                    required_course_count,
+                ),
+                "ruleText": section,
+                "sortOrder": sort_order,
+            }
+            requirement_by_section[section_key] = requirement
+            requirements.append(requirement)
+
+        requirement_key = requirement["requirementKey"]
+        course_sort_order = course_count_by_requirement.get(requirement_key, 0) + 1
+        course_count_by_requirement[requirement_key] = course_sort_order
+        base_plan_course_key = f"{requirement_key}:{course_code.lower()}"
+        duplicate_count = duplicate_plan_course_counts.get(base_plan_course_key, 0) + 1
+        duplicate_plan_course_counts[base_plan_course_key] = duplicate_count
+        plan_course_key = base_plan_course_key if duplicate_count == 1 else f"{base_plan_course_key}:{duplicate_count}"
+        plan_courses.append({
+            "planCourseKey": plan_course_key,
+            "planKey": plan_key_value,
+            "requirementKey": requirement_key,
+            "courseCode": course_code,
+            "sourceCourseTitle": entry["courseTitle"],
+            "sourceCreditUnits": entry.get("creditUnits"),
+            "status": "active",
+            "sortOrder": course_sort_order,
+        })
+
+        raw_prerequisite = entry.get("prerequisite")
+        if raw_prerequisite:
+            codes = course_codes(raw_prerequisite)
+            operator, parse_status, rule_json = prerequisite_rule(raw_prerequisite, codes)
+            rule_key = f"{plan_course_key}:prerequisite"
+            prerequisite_rules.append({
+                "ruleKey": rule_key,
+                "planKey": plan_key_value,
+                "courseCode": course_code,
+                "operator": operator,
+                "rawText": raw_prerequisite,
+                "rule": rule_json,
+                "parseStatus": parse_status,
+            })
+            prerequisites.extend({
+                "ruleKey": rule_key,
+                "prerequisiteCourseCode": prerequisite_code,
+                "sortOrder": index,
+            } for index, prerequisite_code in enumerate(codes, start=1))
+
+        raw_exclusion = entry.get("excludedCombination")
+        for excluded_code in course_codes(raw_exclusion):
+            if excluded_code == course_code:
+                continue
+            exclusions.append({
+                "planKey": plan_key_value,
+                "courseCode": course_code,
+                "excludedCourseCode": excluded_code,
+                "rawText": raw_exclusion,
+            })
+
+        for presentation in entry.get("presentations", []):
+            key = (plan_key_value, course_code, int(presentation["year"]), presentation["term"])
+            presentations_by_key[key] = {
+                "planKey": plan_key_value,
+                "courseCode": course_code,
+                "presentationYear": int(presentation["year"]),
+                "presentationPeriod": presentation["term"],
+                "status": presentation["status"],
+            }
+
+        remarks = entry.get("remarks")
+        if effective_year is None:
+            effective_year, effective_period = parse_effective_term(remarks)
+        for old_course_code, new_course_code in active_replacement_pairs(course_code, remarks):
+            key = (plan_key_value, old_course_code, new_course_code, effective_year, effective_period)
+            replacements_by_key[key] = {
+                "replacementKey": ":".join((
+                    plan_key_value,
+                    old_course_code.lower(),
+                    new_course_code.lower(),
+                    str(effective_year or "unknown"),
+                    (effective_period or "unknown").lower(),
+                )),
+                "planKey": plan_key_value,
+                "oldCourseCode": old_course_code,
+                "newCourseCode": new_course_code,
+                "effectiveYear": effective_year,
+                "effectivePeriod": effective_period,
+                "rawText": remarks,
+            }
+
+    return {
+        "plans": product_plans,
+        "requirements": requirements,
+        "planCourses": plan_courses,
+        "prerequisiteRules": prerequisite_rules,
+        "prerequisites": prerequisites,
+        "exclusions": exclusions,
+        "presentations": list(presentations_by_key.values()),
+        "lifecycleEvents": lifecycle_events,
+        "replacements": list(replacements_by_key.values()),
+    }
+
+
 def sql_string(value: object) -> str:
     if value is None:
         return "NULL"
@@ -522,38 +848,136 @@ def sql_json(value: object) -> str:
     return f"{sql_string(json.dumps(value, ensure_ascii=False))}::jsonb"
 
 
-def generate_preview_sql(plans: list[dict[str, Any]], entries: list[dict[str, Any]]) -> str:
+def sql_number(value: object) -> str:
+    return "NULL" if value is None else str(value)
+
+
+def generate_sql(models: dict[str, list[dict[str, Any]]]) -> str:
+    plan_keys = [plan["planKey"] for plan in models["plans"]]
+    plan_key_list = ", ".join(sql_string(value) for value in plan_keys)
     lines = [
-        "-- PREVIEW ONLY: curriculum tables are not part of the current application schema.",
-        "-- Review the JSON and agree on a schema before attempting to import this file.",
+        "-- Curriculum plan import generated by parse_curriculum_plans.py.",
+        "-- Requires the optional tables in scraper/curriculum-schema-extension.sql.",
+        "-- The extension is preliminary and is not part of the deployed application schema.",
+        "-- Review the JSON and issues TSV before importing this file.",
         "BEGIN;",
     ]
-    for plan in plans:
+
+    for plan in models["plans"]:
         lines.append(
             "INSERT INTO curriculum_plans "
-            "(plan_key, programme_name, category, study_mode, source_path, page_count) VALUES ("
+            "(plan_key, programme_name, programme_code, category, study_mode, curriculum_version, "
+            "effective_from, total_credit_units, source_path, source_hash) VALUES ("
             f"{sql_string(plan['planKey'])}, {sql_string(plan['programmeName'])}, "
-            f"{sql_string(plan['category'])}, {sql_string(plan['studyMode'])}, "
-            f"{sql_string(plan['sourcePath'])}, {plan['pageCount']});"
+            f"{sql_string(plan['programmeCode'])}, {sql_string(plan['category'])}, {sql_string(plan['studyMode'])}, "
+            f"{sql_string(plan['curriculumVersion'])}, {sql_string(plan['effectiveFrom'])}, "
+            f"{sql_number(plan['totalCreditUnits'])}, {sql_string(plan['sourcePath'])}, {sql_string(plan['sourceHash'])}) "
+            "ON CONFLICT (plan_key) DO UPDATE SET "
+            "programme_name = EXCLUDED.programme_name, programme_code = EXCLUDED.programme_code, "
+            "category = EXCLUDED.category, study_mode = EXCLUDED.study_mode, "
+            "curriculum_version = EXCLUDED.curriculum_version, effective_from = EXCLUDED.effective_from, "
+            "total_credit_units = EXCLUDED.total_credit_units, source_path = EXCLUDED.source_path, "
+            "source_hash = EXCLUDED.source_hash, last_updated = now();"
         )
-    for entry in entries:
+
+    if plan_keys:
+        lines.extend([
+            f"DELETE FROM curriculum_course_replacements WHERE plan_key IN ({plan_key_list});",
+            f"DELETE FROM curriculum_course_lifecycle_events WHERE plan_key IN ({plan_key_list});",
+            f"DELETE FROM curriculum_course_presentations WHERE plan_key IN ({plan_key_list});",
+            f"DELETE FROM curriculum_course_exclusions WHERE plan_key IN ({plan_key_list});",
+            f"DELETE FROM curriculum_prerequisite_rules WHERE plan_key IN ({plan_key_list});",
+            f"DELETE FROM curriculum_plan_courses WHERE plan_key IN ({plan_key_list});",
+            f"DELETE FROM curriculum_requirements WHERE plan_key IN ({plan_key_list});",
+        ])
+
+    for requirement in models["requirements"]:
+        lines.append(
+            "INSERT INTO curriculum_requirements ("
+            "requirement_key, plan_key, parent_requirement_key, name, requirement_type, minimum_credit_units, "
+            "maximum_credit_units, required_course_count, selection_rule, rule_text, sort_order"
+            ") VALUES ("
+            f"{sql_string(requirement['requirementKey'])}, {sql_string(requirement['planKey'])}, "
+            f"{sql_string(requirement['parentRequirementKey'])}, {sql_string(requirement['name'])}, "
+            f"{sql_string(requirement['requirementType'])}, {sql_number(requirement['minimumCreditUnits'])}, "
+            f"{sql_number(requirement['maximumCreditUnits'])}, {sql_number(requirement['requiredCourseCount'])}, "
+            f"{sql_string(requirement['selectionRule'])}, {sql_string(requirement['ruleText'])}, "
+            f"{requirement['sortOrder']});"
+        )
+
+    for course in models["planCourses"]:
         lines.append(
             "INSERT INTO curriculum_plan_courses ("
-            "entry_key, plan_key, section_name, section_credit_units, record_type, course_code, course_title, "
-            "credit_units, prerequisite_text, prerequisite_course_codes, excluded_combination_text, "
-            "excluded_course_codes, grouping_text, remarks, presentations, last_presentation, timetable, "
-            "status, effective_from_semester, source_page, source_table, source_row"
+            "plan_course_key, plan_key, requirement_key, course_code, source_course_title, "
+            "source_credit_units, status, sort_order"
             ") VALUES ("
-            f"{sql_string(entry['entryKey'])}, {sql_string(entry['planKey'])}, {sql_string(entry['section'])}, "
-            f"{entry['sectionCreditUnits'] if entry['sectionCreditUnits'] is not None else 'NULL'}, "
-            f"{sql_string(entry['recordType'])}, {sql_string(entry['courseCode'])}, {sql_string(entry['courseTitle'])}, "
-            f"{entry['creditUnits'] if entry['creditUnits'] is not None else 'NULL'}, "
-            f"{sql_string(entry['prerequisite'])}, {sql_json(entry['prerequisiteCourseCodes'])}, "
-            f"{sql_string(entry['excludedCombination'])}, {sql_json(entry['excludedCourseCodes'])}, "
-            f"{sql_string(entry['grouping'])}, {sql_string(entry['remarks'])}, {sql_json(entry['presentations'])}, "
-            f"{sql_string(entry['lastPresentation'])}, {sql_string(entry['timetable'])}, {sql_string(entry['status'])}, "
-            f"{sql_string(entry['effectiveFromSemester'])}, {entry['sourcePage']}, {entry['sourceTable']}, {entry['sourceRow']});"
+            f"{sql_string(course['planCourseKey'])}, {sql_string(course['planKey'])}, "
+            f"{sql_string(course['requirementKey'])}, {sql_string(course['courseCode'])}, "
+            f"{sql_string(course['sourceCourseTitle'])}, {sql_number(course['sourceCreditUnits'])}, "
+            f"{sql_string(course['status'])}, {course['sortOrder']});"
         )
+
+    for rule in models["prerequisiteRules"]:
+        lines.append(
+            "INSERT INTO curriculum_prerequisite_rules ("
+            "rule_key, plan_key, course_code, rule_operator, raw_text, rule_json, parse_status"
+            ") VALUES ("
+            f"{sql_string(rule['ruleKey'])}, {sql_string(rule['planKey'])}, {sql_string(rule['courseCode'])}, "
+            f"{sql_string(rule['operator'])}, {sql_string(rule['rawText'])}, {sql_json(rule['rule'])}, "
+            f"{sql_string(rule['parseStatus'])});"
+        )
+
+    for prerequisite in models["prerequisites"]:
+        lines.append(
+            "INSERT INTO curriculum_prerequisites (rule_key, prerequisite_course_code, sort_order) VALUES ("
+            f"{sql_string(prerequisite['ruleKey'])}, {sql_string(prerequisite['prerequisiteCourseCode'])}, "
+            f"{prerequisite['sortOrder']});"
+        )
+
+    for exclusion in models["exclusions"]:
+        lines.append(
+            "INSERT INTO curriculum_course_exclusions ("
+            "plan_key, course_code, excluded_course_code, raw_text"
+            ") VALUES ("
+            f"{sql_string(exclusion['planKey'])}, {sql_string(exclusion['courseCode'])}, "
+            f"{sql_string(exclusion['excludedCourseCode'])}, {sql_string(exclusion['rawText'])});"
+        )
+
+    for presentation in models["presentations"]:
+        lines.append(
+            "INSERT INTO curriculum_course_presentations ("
+            "plan_key, course_code, presentation_year, presentation_period, status"
+            ") VALUES ("
+            f"{sql_string(presentation['planKey'])}, {sql_string(presentation['courseCode'])}, "
+            f"{presentation['presentationYear']}, {sql_string(presentation['presentationPeriod'])}, "
+            f"{sql_string(presentation['status'])});"
+        )
+
+    for event in models["lifecycleEvents"]:
+        lines.append(
+            "INSERT INTO curriculum_course_lifecycle_events ("
+            "lifecycle_event_key, plan_key, course_code, source_course_title, status, effective_year, "
+            "effective_period, raw_effective_term, raw_remarks"
+            ") VALUES ("
+            f"{sql_string(event['lifecycleEventKey'])}, {sql_string(event['planKey'])}, "
+            f"{sql_string(event['courseCode'])}, {sql_string(event['sourceCourseTitle'])}, "
+            f"{sql_string(event['status'])}, {sql_number(event['effectiveYear'])}, "
+            f"{sql_string(event['effectivePeriod'])}, {sql_string(event['rawEffectiveTerm'])}, "
+            f"{sql_string(event['rawRemarks'])});"
+        )
+
+    for replacement in models["replacements"]:
+        lines.append(
+            "INSERT INTO curriculum_course_replacements ("
+            "replacement_key, plan_key, old_course_code, new_course_code, effective_year, "
+            "effective_period, raw_text"
+            ") VALUES ("
+            f"{sql_string(replacement['replacementKey'])}, {sql_string(replacement['planKey'])}, "
+            f"{sql_string(replacement['oldCourseCode'])}, {sql_string(replacement['newCourseCode'])}, "
+            f"{sql_number(replacement['effectiveYear'])}, {sql_string(replacement['effectivePeriod'])}, "
+            f"{sql_string(replacement['rawText'])});"
+        )
+
     lines.append("COMMIT;")
     return "\n\n".join(lines) + "\n"
 
@@ -573,10 +997,10 @@ def write_issues(path: Path, issues: list[dict[str, Any]]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Parse SUSS curriculum-plan PDFs into reviewable JSON or preview SQL.")
+    parser = argparse.ArgumentParser(description="Parse SUSS curriculum-plan PDFs into product JSON and importable SQL.")
     parser.add_argument("--input-dir", type=Path, default=Path("data/input/curriculum-plans"))
     parser.add_argument("--json", type=Path, default=Path("data/output/curriculum/curriculum-plans.json"))
-    parser.add_argument("--out", type=Path, default=Path("data/output/curriculum/curriculum-plans.preview.sql"))
+    parser.add_argument("--out", type=Path, default=Path("data/output/curriculum/curriculum-plans.sql"))
     parser.add_argument("--issues-out", type=Path, default=Path("data/output/curriculum/issues.tsv"))
     parser.add_argument("--format", choices=("json", "sql", "both"), default="both")
     parser.add_argument(
@@ -597,7 +1021,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    print("TLL curriculum entries use selective English/Tamil CID OCR automatically.")
+    print("Tamil curriculum plans use selective English/Tamil title OCR automatically.")
 
     ocr_languages = parse_ocr_languages(args.ocr_languages)
     if not ocr_languages:
@@ -615,7 +1039,7 @@ def main() -> None:
         plan, plan_entries, plan_issues = parse_plan(
             pdf_path,
             args.input_dir,
-            ocr_on_cid=args.ocr_on_cid,
+            ocr_on_cid=args.ocr_on_cid or "tamil" in pdf_path.stem.lower(),
             ocr_output_root=args.ocr_output_dir,
             ocr_languages=ocr_languages,
             ocr_course_prefixes=TAMIL_COURSE_PREFIXES,
@@ -624,6 +1048,7 @@ def main() -> None:
         entries.extend(plan_entries)
         issues.extend(plan_issues)
 
+    models = build_product_models(plans, entries)
     payload = {
         "metadata": {
             "generatedAt": datetime.now(timezone.utc).isoformat(),
@@ -632,15 +1057,21 @@ def main() -> None:
             "entryCount": len(entries),
             "courseLikeRowCount": sum(plan["courseLikeRowCount"] for plan in plans),
             "issueCount": len(issues),
+            "recordCounts": {key: len(value) for key, value in models.items()},
             "notes": [
-                "Course rows are programme-plan-specific and are not merged globally.",
-                "Prerequisite and exclusion logic is preserved as source text plus referenced course-code lists.",
-                "SQL output targets provisional tables that do not exist in the current schema.",
+                "Course rows remain programme-plan-specific and are not merged globally.",
+                "Presentations describe published availability and do not create class schedules or semesters.",
+                "Prerequisite rules preserve source text and flag mixed or non-course conditions for review.",
+                "Retired and replaced rows are lifecycle records and are not batch-added as active plan courses.",
                 "CID OCR is limited to affected title cells and never overwrites source PDFs.",
             ],
         },
-        "plans": plans,
-        "entries": entries,
+        **models,
+        "review": {
+            "plans": plans,
+            "sourceEntries": entries,
+            "issues": issues,
+        },
     }
 
     if args.format in {"json", "both"}:
@@ -649,12 +1080,15 @@ def main() -> None:
         print(f"JSON written to: {args.json}")
     if args.format in {"sql", "both"}:
         args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(generate_preview_sql(plans, entries), encoding="utf-8")
-        print(f"Preview SQL written to: {args.out}")
+        args.out.write_text(generate_sql(models), encoding="utf-8")
+        print(f"SQL written to: {args.out}")
 
     write_issues(args.issues_out, issues)
     print(f"Plans parsed: {len(plans)}")
     print(f"Curriculum entries parsed: {len(entries)}")
+    print(f"Active plan courses: {len(models['planCourses'])}")
+    print(f"Course presentations: {len(models['presentations'])}")
+    print(f"Lifecycle events: {len(models['lifecycleEvents'])}")
     print(f"Issues: {len(issues)}")
     print(f"Issues written to: {args.issues_out}")
 

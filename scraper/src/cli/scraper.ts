@@ -403,7 +403,7 @@ async function runAll(format: OutputFormat, courseFilterArgs: string[]): Promise
   await runScheduleFlow(format, courseFilterArgs);
   await refreshCourses(format, courseFilterArgs);
   await parseCurriculumPlans(format);
-  console.log("\nAll Items finished. Review data/output/. Curriculum SQL is preview-only until a schema is approved.");
+  console.log("\nAll Items finished. Review data/output/ before importing the generated SQL.");
 }
 
 async function executeAction(action: Action, format: OutputFormat, courseFilterArgs: string[]): Promise<void> {
