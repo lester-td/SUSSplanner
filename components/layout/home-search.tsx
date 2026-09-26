@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Fuse from "fuse.js";
 
@@ -11,6 +11,13 @@ export type HomeSearchItem = {
   description: string;
   href: string;
   keywords?: readonly string[];
+};
+
+type CourseSearchApiResult = {
+  courseCode: string;
+  courseName: string | null;
+  schoolName: string | null;
+  creditUnits: number | null;
 };
 
 type HomeSearchDocument = {
@@ -80,6 +87,7 @@ export function HomeSearch({
 {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [courseMatches, setCourseMatches] = useState<HomeSearchItem[]>([]);
   const trimmedQuery = query.trim();
   const normalizedQuery = normalizeSearchText(query);
   const compactQuery = compactSearchText(query);
@@ -134,16 +142,77 @@ export function HomeSearch({
       .slice(0, 6)
       .map(({ item }) => item);
   }, [compactQuery, fuse, items, normalizedQuery, showSuggestionsOnEmpty]);
+
+  useEffect(() => {
+    if (trimmedQuery.length < 2)
+    {
+      setCourseMatches([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      const requestQuery = new URLSearchParams({ q: trimmedQuery });
+
+      fetch(`/api/courses/search?${requestQuery}`, { signal: controller.signal })
+        .then((response) => {
+          if (!response.ok)
+          {
+            throw new Error("Unable to search courses.");
+          }
+
+          return response.json() as Promise<{ courses: CourseSearchApiResult[] }>;
+        })
+        .then((payload) => {
+          setCourseMatches(payload.courses.slice(0, 3).map((course) => ({
+            label: course.courseName
+              ? `${course.courseCode} — ${course.courseName}`
+              : course.courseCode,
+            description: [
+              course.schoolName,
+              course.creditUnits === null ? null : `${course.creditUnits} CU`,
+            ].filter(Boolean).join(" · ") || "View course details.",
+            href: `/courses/${encodeURIComponent(course.courseCode)}`,
+            keywords: ["course", "module", course.courseCode, course.courseName ?? ""],
+          })));
+        })
+        .catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === "AbortError"))
+          {
+            setCourseMatches([]);
+          }
+        });
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [trimmedQuery]);
+
+  const combinedMatches = useMemo(() => {
+    const itemsByHref = new Map<string, HomeSearchItem>();
+
+    for (const item of [...matches, ...courseMatches])
+    {
+      if (!itemsByHref.has(item.href))
+      {
+        itemsByHref.set(item.href, item);
+      }
+    }
+
+    return [...itemsByHref.values()];
+  }, [courseMatches, matches]);
   const courseSearchItem = trimmedQuery
     ? {
-      label: `Search courses for "${trimmedQuery}"`,
-      description: "Search course codes, names, schools, and synopses.",
+      label: `View all course results for "${trimmedQuery}"`,
+      description: "Open the complete course search with this query.",
       href: `/courses?q=${encodeURIComponent(trimmedQuery)}`,
     } satisfies HomeSearchItem
     : null;
   const visibleItems = courseSearchItem
-    ? [...matches.slice(0, 5), courseSearchItem]
-    : matches;
+    ? [...combinedMatches.slice(0, 5), courseSearchItem]
+    : combinedMatches.slice(0, 6);
 
   function openItem(item: HomeSearchItem)
   {
@@ -167,7 +236,7 @@ export function HomeSearch({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          const bestMatch = matches[0];
+          const bestMatch = combinedMatches[0];
 
           if (trimmedQuery && bestMatch)
           {
@@ -179,7 +248,7 @@ export function HomeSearch({
         }}
         className="relative"
       >
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)] sm:left-4 sm:h-5 sm:w-5" />
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)] sm:left-4 sm:h-5 sm:w-5" />
         <input
           type="search"
           value={query}

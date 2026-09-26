@@ -24,18 +24,18 @@ export type StudentResource = {
 
 export const studentResources = [
   {
-    id: "suss-portal",
-    label: "SUSS Portal",
-    href: "https://portal.suss.edu.sg",
+    id: "suss-eservices",
+    label: "SUSS eServices",
+    href: "https://sims1.suss.edu.sg/EService/Student/default.aspx",
     category: "Daily Tools",
-    description: "Student portal for enrolment, admin services, records, and student transactions.",
+    description: "SUSS eServices for enrolment, administration, records, and student transactions.",
     keywords: ["student portal", "portal", "sims", "backpack", "admin", "eservices", "enrolment", "enrollment", "fees", "records", "results", "grades", "transcript", "profile"],
     showOnHome: true,
   },
   {
     id: "canvas",
     label: "Canvas",
-    href: "https://canvas.suss.edu.sg",
+    href: "https://canvas.suss.edu.sg/",
     category: "Daily Tools",
     description: "Canvas LMS for course sites, announcements, assignments, and class materials.",
     keywords: ["canvas lms", "lms", "learning management system", "classes", "assignments", "modules", "course site", "announcements", "quizzes", "calendar", "inbox", "deadlines", "submissions", "lesson"],
@@ -44,19 +44,29 @@ export const studentResources = [
   {
     id: "mymail",
     label: "MyMail",
-    href: "https://outlook.office365.com",
+    href: "https://outlook.office.com/mail/",
     category: "Daily Tools",
     description: "SUSS student email through Outlook and Office 365.",
     keywords: ["email", "outlook", "office 365", "microsoft 365", "mail", "mymail", "student email", "inbox", "webmail"],
     showOnHome: true,
   },
   {
+    id: "learnova",
+    label: "Learnova",
+    href: "https://learnova.suss.edu.sg/d2l/login",
+    category: "Daily Tools",
+    description: "SUSS Learnova learning platform.",
+    keywords: ["learnova", "learning", "d2l", "course materials", "classes"],
+    showOnHome: true,
+  },
+  {
     id: "library",
     label: "SUSS Library",
-    href: "https://library.suss.edu.sg",
+    href: "https://library.suss.edu.sg/",
     category: "Library & Research",
     description: "Library homepage for research help, facilities, services, and library updates.",
     keywords: ["library", "research", "books", "articles", "journal", "journals", "database", "databases", "study space", "opening hours", "resources"],
+    showOnHome: true,
   },
   {
     id: "career-portal",
@@ -67,11 +77,11 @@ export const studentResources = [
     keywords: ["career", "kinobi", "jobs", "resume", "cv", "internship", "employment", "job portal", "career portal", "cover letter", "interview"],
   },
   {
-    id: "istudyguide",
-    label: "iStudyGuide",
-    href: "https://isg.suss.edu.sg",
+    id: "ismartguide",
+    label: "iSmartGuide",
+    href: "https://isg.suss.edu.sg/user/login",
     category: "Daily Tools",
-    description: "iStudyGuide and course study guidance resources.",
+    description: "iSmartGuide course and study guidance resources.",
     keywords: ["isg", "i smart guide", "ismart guide", "study guide", "istudyguide", "course guide", "study plan", "learning guide"],
     showOnHome: true,
   },
@@ -189,6 +199,15 @@ export const studentResources = [
     category: "Daily Tools",
     description: "Book SUSS Library discussion rooms and study spaces.",
     keywords: ["discussion room", "room booking", "study room", "libcal", "spaces", "library room", "meeting room", "book room", "reserve room"],
+    showOnHome: true,
+  },
+  {
+    id: "success-gateway",
+    label: "Success Gateway",
+    href: "https://www.campusgroups.com/shibboleth/login?idp=suss&school=suss",
+    category: "Daily Tools",
+    description: "SUSS Success Gateway for student activities, communities, and opportunities.",
+    keywords: ["success gateway", "campus groups", "student activities", "communities", "opportunities"],
     showOnHome: true,
   },
   {
@@ -346,4 +365,24 @@ export const studentResourceCategories = [
   "Contacts",
 ] as const satisfies readonly StudentResourceCategory[];
 
-export const homeQuickResources = studentResources.filter((resource) => "showOnHome" in resource && resource.showOnHome);
+const homeQuickResourceIds = [
+  "suss-eservices",
+  "mymail",
+  "canvas",
+  "learnova",
+  "ismartguide",
+  "library",
+  "discussion-room-booking",
+  "success-gateway",
+] as const;
+
+export const homeQuickResources = homeQuickResourceIds.map((resourceId) => {
+  const resource = studentResources.find((item) => item.id === resourceId);
+
+  if (!resource)
+  {
+    throw new Error(`Missing home quick resource: ${resourceId}`);
+  }
+
+  return resource;
+});

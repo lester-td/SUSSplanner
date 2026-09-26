@@ -24,6 +24,7 @@ import {
   TbLayoutGrid,
   TbLayoutRows,
   TbLayersIntersect,
+  TbLink,
   TbList,
   TbMail,
   TbMapPin,
@@ -129,6 +130,11 @@ export function RowsIcon({ className }: IconProps)
 export function LayersIcon({ className }: IconProps)
 {
   return renderIcon(TbLayersIntersect, className);
+}
+
+export function LinkIcon({ className }: IconProps)
+{
+  return renderIcon(TbLink, className);
 }
 
 export function SwapIcon({ className }: IconProps)
