@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { parseArgs, requireString } from "../lib/args.js";
+import { filterScheduleResult, loadCourseCodeFilter } from "../lib/courseCodeFilter.js";
 import type { ScheduleType } from "../lib/types.js";
 import { parseScheduleCsv } from "../parsers/scheduleCsv.js";
 import { generateSql } from "../sql/generateSql.js";
@@ -16,13 +17,16 @@ function validateScheduleType(value: string): ScheduleType {
 
 async function extractPdfTableToCsv(pdfPath: string, csvPath: string): Promise<void> {
   try {
-    await execFileAsync("python3", ["tools/pdf_table_to_csv.py", pdfPath, "-o", csvPath], {
+    const { stderr } = await execFileAsync("python3", ["tools/pdf_table_to_csv.py", pdfPath, "-o", csvPath], {
       cwd: process.cwd(),
       maxBuffer: 1024 * 1024 * 20
     });
+    if (stderr.trim().length > 0) {
+      console.warn(stderr.trim());
+    }
   } catch (error) {
     throw new Error(
-      `Failed to extract tables from ${pdfPath}. Make sure Python and pdfplumber are installed. Run: pip install pdfplumber\n` +
+      `Failed to extract tables from ${pdfPath}. Make sure Python dependencies are installed. Run: pip install -r requirements.txt\n` +
         String((error as Error).message)
     );
   }
@@ -31,8 +35,8 @@ async function extractPdfTableToCsv(pdfPath: string, csvPath: string): Promise<v
 async function main(): Promise<void> {
   const args = parseArgs();
   const scheduleType = validateScheduleType(requireString(args, "schedule-type"));
-  const outSql = typeof args.out === "string" ? args.out : "data/output/schedule-import.sql";
-  const outJson = typeof args.json === "string" ? args.json : "data/output/schedule-parsed.json";
+  const outSql = typeof args.out === "string" ? args.out : "data/output/schedules/schedule.sql";
+  const outJson = typeof args.json === "string" ? args.json : "data/output/schedules/schedule.json";
   const csvPath = typeof args.csv === "string" ? args.csv : null;
   const pdfPath = typeof args.pdf === "string" ? args.pdf : null;
 
@@ -51,7 +55,8 @@ async function main(): Promise<void> {
   }
 
   const csvText = await fs.readFile(finalCsvPath, "utf8");
-  const result = parseScheduleCsv(csvText, scheduleType);
+  const courseCodeFilter = await loadCourseCodeFilter(args);
+  const result = filterScheduleResult(parseScheduleCsv(csvText, scheduleType), courseCodeFilter);
   const sql = generateSql({
     semesters: result.semesters,
     courses: result.courses,

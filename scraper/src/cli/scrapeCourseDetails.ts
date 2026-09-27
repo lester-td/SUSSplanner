@@ -3,24 +3,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { parseArgs, optionalBool, optionalString } from "../lib/args.js";
+import { resolveInputCourseCodes } from "../lib/courseCodeFilter.js";
 import { downloadPdf } from "../lib/pdf.js";
 import type { CourseDetailParseResult } from "../lib/types.js";
 import { buildCourseDetailPdfUrl, parseCourseDetailText } from "../parsers/courseDetailPdf.js";
 import { generateSql } from "../sql/generateSql.js";
 
 const execFileAsync = promisify(execFile);
-
-async function readCodes(args: Record<string, string | boolean>): Promise<string[]> {
-  const codesInline = optionalString(args, "codes");
-  const codesFile = optionalString(args, "codes-file") ?? "data/output/course-codes.txt";
-
-  if (codesInline) {
-    return codesInline.split(",").map(code => code.trim().toUpperCase()).filter(Boolean);
-  }
-
-  const content = await fs.readFile(codesFile, "utf8");
-  return content.split(/[,\n\r\t ]+/).map(code => code.trim().toUpperCase()).filter(Boolean);
-}
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -39,21 +28,24 @@ async function extractPdfWithPdfplumber(pdfPath: string, textPath: string, jsonP
   await fs.mkdir(path.dirname(textPath), { recursive: true });
   await fs.mkdir(path.dirname(jsonPath), { recursive: true });
 
-  await execFileAsync("python3", ["tools/course_pdf_to_text.py", pdfPath, "-o", textPath, "--json", jsonPath], {
+  const { stderr } = await execFileAsync("python3", ["tools/course_pdf_to_text.py", pdfPath, "-o", textPath, "--json", jsonPath], {
     cwd: process.cwd(),
     maxBuffer: 1024 * 1024 * 20
   });
+  if (stderr.trim().length > 0) {
+    console.warn(stderr.trim());
+  }
 
   return fs.readFile(textPath, "utf8");
 }
 
 async function main(): Promise<void> {
   const args = parseArgs();
-  const outSql = optionalString(args, "out") ?? "data/output/course-details-import.sql";
-  const outJson = optionalString(args, "json") ?? "data/output/course-details-parsed.json";
-  const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/course-pdfs";
-  const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/course-raw-text";
-  const rawJsonDir = optionalString(args, "raw-json-dir") ?? "data/output/course-pdf-json";
+  const outSql = optionalString(args, "out") ?? "data/output/courses/course-details.sql";
+  const outJson = optionalString(args, "json") ?? "data/output/courses/course-details.json";
+  const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/courses";
+  const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/courses/raw-text";
+  const rawJsonDir = optionalString(args, "raw-json-dir") ?? "data/output/courses/pdf-json";
   const force = optionalBool(args, "force");
   const delayMs = Number(optionalString(args, "delay-ms") ?? "250");
 
@@ -61,7 +53,7 @@ async function main(): Promise<void> {
   await fs.mkdir(path.dirname(outJson), { recursive: true });
   await fs.mkdir(pdfDir, { recursive: true });
 
-  const courseCodes = [...new Set(await readCodes(args))].sort();
+  const courseCodes = await resolveInputCourseCodes(args, "data/output/schedules/course-codes.txt");
   const results: CourseDetailParseResult[] = [];
 
   for (const courseCode of courseCodes) {

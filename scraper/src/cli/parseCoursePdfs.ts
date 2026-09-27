@@ -2,13 +2,16 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { parseArgs, optionalString } from "../lib/args.js";
+import { parseArgs, optionalBool, optionalString } from "../lib/args.js";
+import { loadCourseCodeFilter, matchesCourseCode, type CourseCodeFilter } from "../lib/courseCodeFilter.js";
+import { parseOutputFormat, writesJson, writesSql } from "../lib/outputFormat.js";
 import type { CourseDetailParseResult, ScheduleType } from "../lib/types.js";
 import { buildCourseDetailPdfUrl, isNoRecordFoundText, isftForScheduleType, parseCourseDetailText } from "../parsers/courseDetailPdf.js";
 import { generateSql } from "../sql/generateSql.js";
 
 const execFileAsync = promisify(execFile);
 const SCHEDULE_TYPES: ScheduleType[] = ["daytime", "evening"];
+const TAMIL_COURSE_PREFIX = "TLL";
 
 interface ParseIssue {
   courseCode: string;
@@ -91,12 +94,6 @@ function enrichCourseFieldsAcrossScheduleVariants(results: CourseDetailParseResu
 }
 
 
-async function readOptionalCodes(filePath?: string): Promise<Set<string> | null> {
-  if (!filePath) return null;
-  const content = await fs.readFile(filePath, "utf8");
-  return new Set(content.split(/[,\n\r\t ]+/).map(code => code.trim().toUpperCase()).filter(Boolean));
-}
-
 async function pathExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
@@ -110,10 +107,14 @@ function isScheduleType(value: string): value is ScheduleType {
   return value === "daytime" || value === "evening";
 }
 
+function isTamilCourseCode(courseCode: string): boolean {
+  return courseCode.trim().toUpperCase().startsWith(TAMIL_COURSE_PREFIX);
+}
+
 async function listPdfFilesInDir(
   dir: string,
   scheduleType: ScheduleType,
-  allowedCodes: Set<string> | null
+  courseCodeFilter: CourseCodeFilter
 ): Promise<Array<{ courseCode: string; scheduleType: ScheduleType; pdfPath: string }>> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const pdfs: Array<{ courseCode: string; scheduleType: ScheduleType; pdfPath: string }> = [];
@@ -124,7 +125,7 @@ async function listPdfFilesInDir(
 
     const courseCode = path.basename(entry.name, path.extname(entry.name)).trim().toUpperCase();
     if (!courseCode) continue;
-    if (allowedCodes && !allowedCodes.has(courseCode)) continue;
+    if (!matchesCourseCode(courseCode, courseCodeFilter)) continue;
 
     pdfs.push({ courseCode, scheduleType, pdfPath: path.join(dir, entry.name) });
   }
@@ -134,7 +135,7 @@ async function listPdfFilesInDir(
 
 async function listCoursePdfFiles(
   pdfDir: string,
-  allowedCodes: Set<string> | null,
+  courseCodeFilter: CourseCodeFilter,
   fallbackScheduleType: ScheduleType
 ): Promise<Array<{ courseCode: string; scheduleType: ScheduleType; pdfPath: string }>> {
   const pdfs: Array<{ courseCode: string; scheduleType: ScheduleType; pdfPath: string }> = [];
@@ -142,18 +143,18 @@ async function listCoursePdfFiles(
   for (const scheduleType of SCHEDULE_TYPES) {
     const subdir = path.join(pdfDir, scheduleType);
     if (await pathExists(subdir)) {
-      pdfs.push(...await listPdfFilesInDir(subdir, scheduleType, allowedCodes));
+      pdfs.push(...await listPdfFilesInDir(subdir, scheduleType, courseCodeFilter));
     }
   }
 
-  // Backwards compatibility for older flat data/input/course-pdfs/CODE.pdf layout.
+  // Backwards compatibility for a flat data/input/courses/CODE.pdf layout.
   // Use --schedule-type to tell the parser what those flat PDFs represent.
   const flatEntries = await fs.readdir(pdfDir, { withFileTypes: true }).catch(() => []);
   for (const entry of flatEntries) {
     if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".pdf")) continue;
     const courseCode = path.basename(entry.name, path.extname(entry.name)).trim().toUpperCase();
     if (!courseCode) continue;
-    if (allowedCodes && !allowedCodes.has(courseCode)) continue;
+    if (!matchesCourseCode(courseCode, courseCodeFilter)) continue;
     pdfs.push({ courseCode, scheduleType: fallbackScheduleType, pdfPath: path.join(pdfDir, entry.name) });
   }
 
@@ -162,62 +163,142 @@ async function listCoursePdfFiles(
   );
 }
 
-async function extractPdfWithPdfplumber(pdfPath: string, textPath: string, jsonPath?: string): Promise<string> {
+interface PdfExtractionOptions {
+  jsonPath?: string;
+  ocrOnCid: boolean;
+  ocrOutputPath?: string;
+  ocrLanguages: string;
+}
+
+interface PdfExtractionResult {
+  text: string;
+  warnings: string[];
+  ocrUsed: boolean;
+  expectedTopicCount?: number;
+}
+
+async function extractPdfWithPdfplumber(
+  pdfPath: string,
+  textPath: string,
+  options: PdfExtractionOptions
+): Promise<PdfExtractionResult> {
   await fs.mkdir(path.dirname(textPath), { recursive: true });
-  if (jsonPath) await fs.mkdir(path.dirname(jsonPath), { recursive: true });
+  if (options.jsonPath) await fs.mkdir(path.dirname(options.jsonPath), { recursive: true });
+  if (options.ocrOutputPath) await fs.mkdir(path.dirname(options.ocrOutputPath), { recursive: true });
 
   const args = ["tools/course_pdf_to_text.py", pdfPath, "-o", textPath];
-  if (jsonPath) args.push("--json", jsonPath);
-
-  try {
-    await execFileAsync("python3", args, { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 20 });
-  } catch (error) {
-    const err = error as Error & { stderr?: string };
-    throw new Error(
-      `pdfplumber extraction failed for ${pdfPath}. Run 'pip install -r requirements.txt'. ${err.stderr ?? err.message}`
-    );
+  if (options.jsonPath) args.push("--json", options.jsonPath);
+  if (options.ocrOnCid) {
+    args.push("--ocr-on-cid", "--ocr-languages", options.ocrLanguages);
+    if (options.ocrOutputPath) args.push("--ocr-output", options.ocrOutputPath);
   }
 
-  return fs.readFile(textPath, "utf8");
+  try {
+    const { stderr } = await execFileAsync("python3", args, { cwd: process.cwd(), maxBuffer: 1024 * 1024 * 20 });
+    if (stderr.trim().length > 0) {
+      const extractionWarnings = stderr
+        .split(/\r?\n/)
+        .filter(line => !line.includes("unresolved CID glyphs remain after font repair"));
+      if (extractionWarnings.length > 0) console.warn(extractionWarnings.join("\n"));
+    }
+  } catch (error) {
+    const err = error as Error & { stderr?: string };
+    const details = err.stderr?.trim() || err.message;
+    throw new Error(`PDF extraction failed for ${pdfPath}: ${details}`);
+  }
+
+  const text = await fs.readFile(textPath, "utf8");
+  let warnings: string[] = [];
+  let ocrUsed = false;
+  let expectedTopicCount: number | undefined;
+  if (options.jsonPath) {
+    const extractionJson = JSON.parse(await fs.readFile(options.jsonPath, "utf8")) as {
+      warnings?: unknown;
+      ocr?: { expectedTopicCount?: unknown };
+    };
+    if (Array.isArray(extractionJson.warnings)) {
+      warnings = extractionJson.warnings.filter((warning): warning is string => typeof warning === "string");
+    }
+    ocrUsed = extractionJson.ocr !== undefined;
+    if (typeof extractionJson.ocr?.expectedTopicCount === "number") {
+      expectedTopicCount = extractionJson.ocr.expectedTopicCount;
+    }
+  }
+
+  return { text, warnings, ocrUsed, expectedTopicCount };
+}
+
+async function validateOcrEnvironment(languages: string): Promise<void> {
+  try {
+    const { stdout } = await execFileAsync(
+      "python3",
+      ["tools/pdf_ocr.py", "--languages", languages],
+      { cwd: process.cwd(), maxBuffer: 1024 * 1024 }
+    );
+    if (stdout.trim()) console.log(stdout.trim());
+  } catch (error) {
+    const err = error as Error & { stderr?: string };
+    throw new Error(err.stderr?.trim() || err.message);
+  }
 }
 
 async function main(): Promise<void> {
   const args = parseArgs();
-  const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/course-pdfs";
-  const codesFile = optionalString(args, "codes-file");
-  const outSql = optionalString(args, "out") ?? "data/output/course-details-import.sql";
-  const outJson = optionalString(args, "json") ?? "data/output/course-details-parsed.json";
-  const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/course-raw-text";
-  const rawJsonDir = optionalString(args, "raw-json-dir") ?? "data/output/course-pdf-json";
-  const issuesOut = optionalString(args, "issues-out") ?? "data/output/course-parse-issues.tsv";
+  const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/courses";
+  const outSql = optionalString(args, "out") ?? "data/output/courses/course-details.sql";
+  const outJson = optionalString(args, "json") ?? "data/output/courses/course-details.json";
+  const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/courses/raw-text";
+  const rawJsonDir = optionalString(args, "raw-json-dir") ?? "data/output/courses/pdf-json";
+  const ocrOnCid = optionalBool(args, "ocr-on-cid");
+  const ocrPdfDir = optionalString(args, "ocr-pdf-dir") ?? "data/output/courses/ocr-pdfs";
+  const ocrLanguages = optionalString(args, "ocr-languages") ?? "eng,tam";
+  const issuesOut = optionalString(args, "issues-out") ?? "data/output/courses/parse-issues.tsv";
+  const format = parseOutputFormat(args);
   const fallbackScheduleTypeRaw = optionalString(args, "schedule-type") ?? "evening";
   const fallbackScheduleType: ScheduleType = isScheduleType(fallbackScheduleTypeRaw)
     ? fallbackScheduleTypeRaw
     : "evening";
 
-  await fs.mkdir(path.dirname(outSql), { recursive: true });
-  await fs.mkdir(path.dirname(outJson), { recursive: true });
+  if (writesSql(format)) await fs.mkdir(path.dirname(outSql), { recursive: true });
+  if (writesJson(format)) await fs.mkdir(path.dirname(outJson), { recursive: true });
   await fs.mkdir(path.dirname(issuesOut), { recursive: true });
 
-  const allowedCodes = await readOptionalCodes(codesFile);
-  const pdfs = await listCoursePdfFiles(pdfDir, allowedCodes, fallbackScheduleType);
+  const courseCodeFilter = await loadCourseCodeFilter(args);
+  const pdfs = await listCoursePdfFiles(pdfDir, courseCodeFilter, fallbackScheduleType);
 
   if (pdfs.length === 0) {
-    throw new Error(`No course PDFs found in ${pdfDir}${codesFile ? ` matching ${codesFile}` : ""}.`);
+    throw new Error(`No course PDFs found in ${pdfDir}${courseCodeFilter.active ? " matching the course-code filters" : ""}.`);
+  }
+
+  const tamilPdfCount = pdfs.filter(pdf => isTamilCourseCode(pdf.courseCode)).length;
+  const ocrRequired = ocrOnCid || tamilPdfCount > 0;
+  if (ocrRequired) {
+    if (tamilPdfCount > 0) {
+      console.log(`TLL course PDFs detected (${tamilPdfCount}); selective English/Tamil CID OCR is enabled automatically.`);
+    }
+    await validateOcrEnvironment(ocrLanguages);
   }
 
   const results: CourseDetailParseResult[] = [];
   const skippedIssues: ParseIssue[] = [];
 
   for (const { courseCode, scheduleType, pdfPath } of pdfs) {
+    const useOcr = ocrOnCid || isTamilCourseCode(courseCode);
     const sourceUrl = buildCourseDetailPdfUrl(courseCode, isftForScheduleType(scheduleType));
     const textPath = path.join(rawTextDir, scheduleType, `${courseCode}.txt`);
     const jsonDumpPath = path.join(rawJsonDir, scheduleType, `${courseCode}.json`);
+    const ocrOutputPath = useOcr ? path.join(ocrPdfDir, scheduleType, `${courseCode}.pdf`) : undefined;
 
     console.log(`Parsing ${courseCode} (${scheduleType}) from ${pdfPath}`);
 
     try {
-      const extractedText = await extractPdfWithPdfplumber(pdfPath, textPath, jsonDumpPath);
+      const extraction = await extractPdfWithPdfplumber(pdfPath, textPath, {
+        jsonPath: jsonDumpPath,
+        ocrOnCid: useOcr,
+        ocrOutputPath,
+        ocrLanguages
+      });
+      const extractedText = extraction.text;
 
       if (isNoRecordFoundText(extractedText)) {
         const issue = `No record found in course PDF for ${courseCode} (${scheduleType}); skipped.`;
@@ -226,8 +307,15 @@ async function main(): Promise<void> {
         continue;
       }
 
-      const parsed = parseCourseDetailText(extractedText, { courseCode, sourceUrl, scheduleType });
+      const parsed = parseCourseDetailText(extractedText, {
+        courseCode,
+        sourceUrl,
+        scheduleType,
+        recoverUnbulletedTopics: extraction.ocrUsed,
+        expectedTopicCount: extraction.expectedTopicCount
+      });
       parsed.sourcePath = pdfPath;
+      parsed.warnings.push(...extraction.warnings.filter(warning => !parsed.warnings.includes(warning)));
       results.push(parsed);
 
       if (parsed.warnings.length > 0) {
@@ -236,6 +324,9 @@ async function main(): Promise<void> {
       }
     } catch (error) {
       const message = (error as Error).message;
+      if (useOcr && message.includes("OCR validation error:")) {
+        throw new Error(`${courseCode} (${scheduleType}): ${message}`);
+      }
       console.error(`Failed to parse ${courseCode} (${scheduleType}): ${message}`);
       results.push({
         course: { courseCode, synopsisUrl: sourceUrl, lastScrapedAt: new Date().toISOString() },
@@ -250,13 +341,14 @@ async function main(): Promise<void> {
 
   enrichCourseFieldsAcrossScheduleVariants(results);
 
-  const sql = generateSql({
-    courses: results.map(result => result.course),
-    assessments: results.flatMap(result => result.assessments)
-  });
-
-  await fs.writeFile(outJson, JSON.stringify(results, null, 2), "utf8");
-  await fs.writeFile(outSql, sql, "utf8");
+  if (writesJson(format)) await fs.writeFile(outJson, JSON.stringify(results, null, 2) + "\n", "utf8");
+  if (writesSql(format)) {
+    const sql = generateSql({
+      courses: results.map(result => result.course),
+      assessments: results.flatMap(result => result.assessments)
+    });
+    await fs.writeFile(outSql, sql, "utf8");
+  }
 
   const issueLines = ["course_code\tschedule_type\tseverity\tissue"];
   for (const result of results) {
@@ -282,12 +374,13 @@ async function main(): Promise<void> {
   console.log(`Evening PDFs parsed: ${eveningCount}`);
   console.log(`Failed parses: ${failedCount}`);
   console.log(`Parsed assessment components: ${assessmentCount}`);
-  console.log(`SQL written to: ${outSql}`);
-  console.log(`JSON written to: ${outJson}`);
+  if (ocrRequired) console.log(`OCR-corrected PDF copies written to: ${ocrPdfDir}`);
+  if (writesSql(format)) console.log(`SQL written to: ${outSql}`);
+  if (writesJson(format)) console.log(`JSON written to: ${outJson}`);
   console.log(`Issue report written to: ${issuesOut}`);
 }
 
 main().catch(error => {
-  console.error(error);
+  console.error((error as Error).message);
   process.exit(1);
 });
