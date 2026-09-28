@@ -627,16 +627,34 @@
 
 :root[data-color-scheme="dark"] .home-aero-shortcut,
 :root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n) {
-  border-color: var(--outline-variant);
-  background: var(--surface-container-low);
-  box-shadow: var(--shadow-elev-1);
+  border-color: rgb(255 255 255 / 0.16);
+  background: linear-gradient(135deg, #303334, #2b2e2f);
+  box-shadow:
+    0 5px 14px rgb(0 0 0 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+:root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n):hover,
+:root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n):focus-visible {
+  border-color: rgb(var(--suss-light-blue-rgb) / 0.42);
+  background: linear-gradient(135deg, #393e40, #323739);
+  box-shadow:
+    0 9px 22px rgb(0 0 0 / 0.27),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
 }
 
 :root[data-color-scheme="dark"] .home-aero-shortcut-icon,
 :root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n) .home-aero-shortcut-icon {
   border: 0;
   background: transparent;
-  filter: drop-shadow(0 5px 8px rgb(0 0 0 / 0.28));
+  filter: drop-shadow(0 4px 7px rgb(0 0 0 / 0.2));
+}
+
+:root[data-color-scheme="dark"] .home-aero-shortcut-arrow {
+  border: 1px solid rgb(255 255 255 / 0.13);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.05);
+  color: var(--primary);
 }
 
 :root[data-color-scheme="dark"] .home-upcoming-date {
@@ -728,8 +746,10 @@
 }
 
 :root[data-color-scheme="dark"] .home-aero-feedback-icon {
-  border-color: var(--outline);
-  background: rgb(255 255 255 / 0.07);
+  border-color: rgb(255 255 255 / 0.19);
+  background: rgb(255 255 255 / 0.08);
+  color: var(--primary);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
 }
 
 :root[data-color-scheme="dark"] .home-aero-warning-icon {
@@ -737,8 +757,17 @@
 }
 
 :root[data-color-scheme="dark"] .home-aero-feedback {
-  border-color: var(--outline);
-  background: var(--surface-container-low);
+  border-color: rgb(255 255 255 / 0.19);
+  background: linear-gradient(135deg, #303536, #282c2d 75%);
+  box-shadow:
+    0 10px 28px rgb(0 0 0 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+:root[data-color-scheme="dark"] .home-aero-feedback-bubble {
+  border-color: rgb(255 255 255 / 0.21);
+  background: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
 }
 
 :root[data-color-scheme="dark"] .home-aero-feedback-button {
