@@ -9,6 +9,7 @@ import {
   type UpcomingDateItem,
   type UpcomingDateState,
 } from "@/components/home/upcoming-dates";
+import { AppWordmark } from "@/components/layout/app-wordmark";
 import { AppShell } from "@/components/layout/app-shell";
 import { HomeSearch, type HomeSearchItem } from "@/components/layout/home-search";
 import {
@@ -27,8 +28,10 @@ import { homeQuickResources, studentResources } from "@/lib/student-resources";
 import {
   buildWeekLabel,
   formatCompactDate,
+  formatCurrentWeekChipForMobile,
   formatDataUpdatedValue,
   getCurrentSemesterContext,
+  getCurrentWeekChip,
   getSingaporeDateString,
   type CurrentSemesterContext,
 } from "@/lib/timetable/date-utils";
@@ -367,6 +370,11 @@ export default async function HomePage()
     semesterTree.flatMap((item) => item.weeks),
     now,
   );
+  const currentWeekLabel = formatCurrentWeekChipForMobile(getCurrentWeekChip(
+    currentSemesterContext.semester,
+    currentSemesterContext.week,
+    currentSemesterContext.isVacation,
+  ));
   const upcomingDates = getUpcomingDates(academicCalendarEvents, semesterTree, currentSemesterContext, today, now);
   const searchItems = [
     ...appSearchItems,
@@ -429,7 +437,7 @@ export default async function HomePage()
                   <span className="min-w-0 break-words text-left text-[11px] font-bold leading-[0.9rem] sm:text-[13px] sm:leading-5">
                     {item.label}
                   </span>
-                  <span className="home-aero-action-icon flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--outline-variant)] bg-white/70 text-[var(--primary)] transition group-hover:translate-x-0.5 sm:h-6 sm:w-6">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center text-[var(--primary)] transition group-hover:translate-x-0.5 sm:h-6 sm:w-6">
                     <ArrowUpRightIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </span>
                 </span>
@@ -491,17 +499,29 @@ export default async function HomePage()
     >
       <div className="home-page grid gap-4 sm:gap-5 lg:gap-6">
         <section className="home-aero-hero relative" aria-labelledby="home-hero-title">
-          <div className="home-aero-hero-copy relative z-20 flex min-w-0 flex-col justify-center px-1 py-6 sm:px-2 sm:py-8 lg:min-h-[25rem] lg:w-[53%] lg:py-10">
-            <h1 id="home-hero-title" className="max-w-lg text-[27px] font-extrabold leading-[1.08] tracking-[-0.04em] text-[var(--on-surface)] sm:text-[34px] lg:text-[38px]">
-              Welcome to <span className="text-[var(--primary)]">SUSS Planner.</span>
+          <div className="home-aero-hero-copy relative z-20 flex min-w-0 flex-col justify-center px-1 py-5 sm:px-2 sm:py-6 lg:min-h-[20rem] lg:w-[53%] lg:py-8">
+            <h1 id="home-hero-title" className="flex max-w-2xl flex-wrap items-center gap-x-3 gap-y-2 text-[27px] font-extrabold leading-[1.08] tracking-[-0.04em] text-[var(--on-surface)] sm:text-[34px] lg:text-[38px]">
+              <span>Welcome to</span>
+              <AppWordmark
+                appearance="adaptive"
+                className="h-10 gap-2.5 sm:h-12 lg:h-14"
+                iconPosition="right"
+                size="hero"
+              />
             </h1>
 
-            <blockquote className="home-aero-quote mt-5 max-w-2xl border-l-2 border-[var(--secondary)] pl-4 text-[15px] font-medium italic leading-6 text-[var(--on-surface-variant)] sm:mt-6 sm:text-[17px] sm:leading-7">
-              <span className="mb-1 block text-[10px] font-extrabold not-italic uppercase tracking-[0.12em] text-[var(--primary)]">Quote of the day</span>
+            <blockquote className="home-aero-quote mt-4 max-w-2xl border-l-2 border-[var(--secondary)] pl-4 text-[15px] font-medium italic leading-6 text-[var(--on-surface-variant)] sm:mt-5 sm:text-[17px] sm:leading-7">
+              <span className="mb-2 flex items-center justify-between gap-3 not-italic">
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--primary)]">Quote of the day</span>
+                <span className="home-current-week-chip inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold leading-4 shadow-sm backdrop-blur sm:text-[12px] xl:hidden">
+                  <CalendarWeekIcon className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
+                  {currentWeekLabel}
+                </span>
+              </span>
               “{quoteOfTheDay}”
             </blockquote>
 
-            <div className="mt-5 max-w-2xl sm:mt-6">
+            <div className="mt-4 max-w-2xl sm:mt-5">
               <HomeSearch
                 items={searchItems}
                 placeholder="Search anything..."

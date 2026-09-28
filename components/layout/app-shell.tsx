@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { AppWordmark } from "@/components/layout/app-wordmark";
 import {
   BookIcon,
   CalculatorIcon,
@@ -106,7 +106,7 @@ export function AppShell({
   const currentWeekLabelMobile = formatCurrentWeekChipForMobile(currentWeekLabel);
 
   useEffect(() => {
-    if (!showHeader || !showNav)
+    if (!showHeader || !showNav || activeSection === "home")
     {
       setIsMobileHeaderCollapsed(false);
       return;
@@ -147,7 +147,7 @@ export function AppShell({
         window.cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [showHeader, showNav]);
+  }, [activeSection, showHeader, showNav]);
 
   function renderNavItem(item: NavItem, variant: "desktop" | "mobile")
   {
@@ -182,23 +182,16 @@ export function AppShell({
         <header
           className="app-navbar sticky top-0 z-40 border-b border-[color:var(--header-divider)] bg-[var(--header-surface)] shadow-[0_4px_18px_rgba(15,23,42,0.08)] backdrop-blur"
           data-has-nav={showNav ? "true" : "false"}
-          data-mobile-collapsed={showNav && isMobileHeaderCollapsed ? "true" : "false"}
+          data-mobile-collapsed={showNav && activeSection !== "home" && isMobileHeaderCollapsed ? "true" : "false"}
         >
           <div className="app-navbar__inner px-3 py-2.5 md:px-[16px] md:py-3">
             <div className="app-navbar__desktop mx-auto hidden max-w-7xl items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2.5 xl:gap-3">
-                <Link prefetch href="/" aria-label="SUSS Planner home" className="hidden shrink-0 lg:inline-flex">
-                  <span className="relative block h-7 w-[190px] sm:h-8 sm:w-[220px]">
-                    <Image
-                      src="/suss_planner_full_white.png"
-                      alt="SUSS Planner"
-                      fill
-                      priority
-                      sizes="(min-width: 640px) 220px, 190px"
-                      className="object-contain"
-                    />
-                  </span>
-                </Link>
+                {activeSection !== "home" ? (
+                  <Link prefetch href="/" aria-label="SUSS Planner home" className="hidden shrink-0 lg:inline-flex">
+                    <AppWordmark appearance="inverse" className="h-7 sm:h-8" decorative />
+                  </Link>
+                ) : null}
 
                 {showNav ? (
                   <nav className="-mx-1 flex min-w-0 items-center gap-1 overflow-x-auto px-1 sm:gap-1.5 md:gap-2" aria-label="Primary">
@@ -215,30 +208,23 @@ export function AppShell({
             </div>
 
             <div className="app-navbar__mobile mx-auto hidden max-w-7xl">
-              <div className="app-navbar__mobile-top" aria-hidden={showNav && isMobileHeaderCollapsed ? true : undefined}>
-                <Link
-                  prefetch
-                  href="/"
-                  aria-label="SUSS Planner home"
-                  tabIndex={showNav && isMobileHeaderCollapsed ? -1 : undefined}
-                  className="app-navbar__mobile-brand inline-flex shrink-0"
-                >
-                  <span className="app-navbar__mobile-logo relative block h-7 w-[170px] sm:h-8 sm:w-[210px]">
-                    <Image
-                      src="/suss_planner_full_white.png"
-                      alt="SUSS Planner"
-                      fill
-                      priority
-                      sizes="(min-width: 640px) 210px, 170px"
-                      className="object-contain"
-                    />
-                  </span>
-                </Link>
+              {activeSection !== "home" ? (
+                <div className="app-navbar__mobile-top" aria-hidden={showNav && isMobileHeaderCollapsed ? true : undefined}>
+                  <Link
+                    prefetch
+                    href="/"
+                    aria-label="SUSS Planner home"
+                    tabIndex={showNav && isMobileHeaderCollapsed ? -1 : undefined}
+                    className="app-navbar__mobile-brand inline-flex shrink-0"
+                  >
+                    <AppWordmark appearance="inverse" className="app-navbar__mobile-logo h-7 sm:h-8" decorative />
+                  </Link>
 
-                <div className="app-navbar__mobile-context app-navbar-context min-w-0 flex-1 truncate whitespace-nowrap px-1 py-1 text-right text-[11px] font-semibold leading-4 text-[var(--header-text-muted)] sm:text-[13px] sm:leading-5">
-                  {currentWeekLabelMobile}
+                  <div className="app-navbar__mobile-context app-navbar-context min-w-0 flex-1 truncate whitespace-nowrap px-1 py-1 text-right text-[11px] font-semibold leading-4 text-[var(--header-text-muted)] sm:text-[13px] sm:leading-5">
+                    {currentWeekLabelMobile}
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               {showNav ? (
                 <nav className="app-navbar__mobile-nav" aria-label="Primary">

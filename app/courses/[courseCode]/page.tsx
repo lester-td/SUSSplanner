@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -14,6 +15,22 @@ import {
 } from "@/lib/data/metadata";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 import { optionalSemesterIdSchema } from "@/lib/validation/timetable";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ courseCode: string }>;
+}): Promise<Metadata>
+{
+  const { courseCode } = await params;
+  const course = await getCourseByCode(courseCode);
+
+  return {
+    title: course
+      ? `${course.courseCode}${course.courseName ? `: ${course.courseName}` : ""} | SUSS Planner`
+      : "Course | SUSS Planner",
+  };
+}
 
 export default async function CourseDetailRoute({
   params,

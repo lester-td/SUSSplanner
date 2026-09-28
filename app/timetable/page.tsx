@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
+
 import { AppShell } from "@/components/layout/app-shell";
 import { PlannerClient } from "@/components/timetable/planner-client";
 import { getLatestDataUpdatedAt, getSemestersWithClassesAndWeeks } from "@/lib/data/metadata";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Timetable | SUSS Planner",
+};
 
 export default async function TimetablePage()
 {
