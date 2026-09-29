@@ -63,6 +63,10 @@
     --footer-surface: var(--header-surface);
     --primary-ring-soft: rgb(var(--suss-blue-rgb) / 0.22);
     --primary-ring-strong: rgb(var(--suss-blue-rgb) / 0.3);
+    --control-surface: #ffffff;
+    --control-surface-hover: #f8fafc;
+    --control-border: #bfd3e0;
+    --control-track: #ffffff;
     --now-line: var(--suss-red);
     --bg: var(--background);
     --panel: var(--surface-container-lowest);
@@ -103,7 +107,11 @@
     --surface-container-high: #383838;
     --surface-container-highest: #404040;
     --surface-variant: #3b3b3b;
-    --input-surface: #1b1b1b;
+    --input-surface: #242629;
+    --control-surface: #242629;
+    --control-surface-hover: #2c2f33;
+    --control-border: #56778b;
+    --control-track: #242629;
     --outline: rgba(255, 255, 255, 0.16);
     --section-border: rgba(255, 255, 255, 0.1);
     --outline-variant: rgba(255, 255, 255, 0.08);
@@ -1363,15 +1371,6 @@
   outline-offset: 2px;
 }
 
-:root[data-color-scheme="dark"] :is(input, select, textarea) {
-  border-color: var(--outline-variant);
-  background-color: var(--input-surface);
-}
-
-:root[data-color-scheme="dark"] :is(input, select, textarea):hover {
-  border-color: var(--outline);
-}
-
 :root[data-color-scheme="dark"] :is(input, select, textarea):disabled {
   color: var(--disabled-text);
 }
@@ -1511,8 +1510,8 @@
 }
 
 :root[data-color-scheme="dark"] .calculator-segmented-control {
-  border-color: var(--outline-variant);
-  background: var(--input-surface);
+  border-color: var(--control-border);
+  background: var(--control-track);
 }
 
 :root[data-color-scheme="dark"] .calculator-segmented-control__thumb {
@@ -2067,4 +2066,47 @@
     padding-top: 1.25rem;
     border-top: 1px solid var(--outline-variant);
   }
+}
+
+/* Neutral controls keep a subtle blue outline in both color schemes. */
+:is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not(.course-pagination-active) {
+  border-color: var(--control-border);
+  background-color: var(--control-surface);
+}
+
+:is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not(.course-pagination-active):hover:not(:disabled) {
+  background-color: var(--control-surface-hover);
+}
+
+:is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not(.course-pagination-active):focus {
+  border-color: var(--primary);
+  background-color: var(--control-surface-hover);
+}
+
+:is(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--primary);
+}
+
+:is(.app-segmented-control, .calculator-segmented-control, .planner-segmented-control) {
+  border-color: var(--control-border);
+  background-color: var(--control-track);
+}
+
+.app-segmented-control button[aria-pressed="false"]:hover {
+  background-color: var(--control-surface-hover);
+}
+
+:root[data-color-scheme="dark"] .app-segmented-control button[aria-pressed="true"],
+:root[data-color-scheme="dark"] .app-segmented-control button[aria-pressed="true"]:hover {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+:root[data-color-scheme="dark"] .home-upcoming-filter {
+  border-color: var(--control-border);
+  background: var(--control-surface);
+}
+
+:root[data-color-scheme="dark"] .home-upcoming-filter[aria-pressed="false"]:hover {
+  background: var(--control-surface-hover);
 }

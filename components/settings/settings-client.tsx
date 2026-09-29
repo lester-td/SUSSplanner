@@ -493,7 +493,7 @@ function SegmentedControl<T extends string>({
 {
   return (
     <div
-      className="inline-flex max-w-full flex-wrap rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-1"
+      className="app-segmented-control inline-flex max-w-full flex-wrap rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-1"
       role="group"
       aria-label={label}
     >
