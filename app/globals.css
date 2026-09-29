@@ -2343,14 +2343,14 @@
 .course-search-page .course-search-filter-card {
   border-color: #9eb8c4;
   background-color: var(--background);
-  box-shadow: 0 4px 10px rgb(0 0 0 / 0.1), 0 14px 28px rgb(0 0 0 / 0.1);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.06), 0 10px 24px rgb(0 0 0 / 0.05);
   backdrop-filter: none;
 }
 
 :root[data-color-scheme="dark"] .course-search-page .course-search-filter-card {
   border-color: #66818d;
   background-color: #202020;
-  box-shadow: 0 4px 10px rgb(0 0 0 / 0.2), 0 14px 28px rgb(0 0 0 / 0.2);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.14), 0 10px 24px rgb(0 0 0 / 0.12);
 }
 
 @media (max-width: 767px) {
