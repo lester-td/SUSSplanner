@@ -239,7 +239,7 @@ export function AppShell({
       <section
         className={`app-content-surface flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] ${activeSection === "planner" && contentLayout === "full-bleed" ? "app-content-surface--planner-full-bleed" : ""}`}
       >
-        <div className={`flex min-h-0 flex-1 flex-col ${showFooter ? "app-footer-gap" : ""}`.trim()}>
+        <div className={`flex min-h-0 flex-1 flex-col ${showFooter && activeSection !== "planner" ? "app-footer-gap" : ""}`.trim()}>
           {contentLayout === "framed" ? (
             <div className={`px-3 ${showFooter ? "" : "pb-3"} pt-3 md:px-[16px] md:pt-8 ${contentFrameClassName}`.trim()}>
               <div className={`mx-auto w-full max-w-7xl ${contentContainerClassName}`.trim()}>
