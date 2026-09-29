@@ -417,7 +417,7 @@ export default async function HomePage()
   function renderQuickLinksSection()
   {
     return (
-      <section id="portal-links" aria-labelledby="quick-links" className="home-aero-panel relative z-10 overflow-hidden">
+      <section id="portal-links" aria-labelledby="quick-links" className="home-aero-panel home-main-section relative z-10 overflow-hidden">
         <div className="home-aero-panel-heading">
           <LinkIcon className="h-5 w-5 text-[var(--primary)]" />
           <h2 id="quick-links" className="text-[15px] font-bold leading-5 tracking-[-0.02em] sm:text-[17px]">
@@ -476,7 +476,7 @@ export default async function HomePage()
   function renderUpcomingDatesSection()
   {
     return (
-      <section className="home-aero-panel h-full overflow-hidden" aria-labelledby="upcoming-dates">
+      <section className="home-aero-panel home-main-section h-full overflow-hidden" aria-labelledby="upcoming-dates">
         <div className="home-aero-panel-heading">
           <CalendarWeekIcon className="h-5 w-5 text-[var(--primary)]" />
           <h2 id="upcoming-dates" className="text-[15px] font-bold leading-5 tracking-[-0.02em] sm:text-[17px]">
@@ -505,7 +505,7 @@ export default async function HomePage()
       contentFrameClassName="home-aero-frame"
       showFooter={false}
     >
-      <div className="home-page grid gap-4 sm:gap-5 lg:gap-6">
+      <div className="home-page grid gap-0 sm:gap-5 lg:gap-6">
         <section className="home-aero-hero relative" aria-labelledby="home-hero-title">
           <div className="home-aero-hero-copy relative z-20 flex min-w-0 flex-col justify-center px-1 py-5 sm:px-2 sm:py-6 lg:min-h-[20rem] lg:w-[53%] lg:py-8">
             <h1 id="home-hero-title" className="flex max-w-2xl flex-wrap items-center gap-x-3 gap-y-2 text-[27px] font-extrabold leading-[1.08] tracking-[-0.04em] text-[var(--on-surface)] sm:text-[34px] lg:text-[38px]">
@@ -518,14 +518,14 @@ export default async function HomePage()
               />
             </h1>
 
-            <blockquote className="home-aero-quote mt-4 max-w-2xl border-l-2 border-[var(--secondary)] pl-4 text-[15px] font-medium italic leading-6 text-[var(--on-surface-variant)] sm:mt-5 sm:text-[17px] sm:leading-7">
-              <span className="mb-2 flex items-center justify-between gap-3 not-italic">
-                <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--primary)]">Quote of the day</span>
-                <span className="home-current-week-chip inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold leading-4 shadow-sm backdrop-blur sm:text-[12px] xl:hidden">
-                  <CalendarWeekIcon className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
-                  {currentWeekLabel}
-                </span>
+            <div className="mt-4 flex max-w-2xl justify-end sm:mt-5 xl:hidden">
+              <span className="home-current-week-chip inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold leading-4 shadow-sm backdrop-blur sm:text-[12px]">
+                <CalendarWeekIcon className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
+                {currentWeekLabel}
               </span>
+            </div>
+
+            <blockquote className="home-aero-quote mt-3 max-w-2xl border-l-2 border-[var(--secondary)] pl-4 text-[15px] font-medium italic leading-6 text-[var(--on-surface-variant)] sm:text-[17px] sm:leading-7 xl:mt-5">
               “{quoteOfTheDay}”
             </blockquote>
 
@@ -546,11 +546,11 @@ export default async function HomePage()
 
         {renderQuickLinksSection()}
 
-        <div className="grid items-stretch gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.9fr)_minmax(18rem,0.78fr)] lg:gap-6">
+        <div className="grid items-stretch gap-0 sm:gap-5 lg:grid-cols-[minmax(0,1.9fr)_minmax(18rem,0.78fr)] lg:gap-6">
           {renderUpcomingDatesSection()}
 
-          <aside className="grid content-start gap-4 sm:gap-5" aria-label="Home page utilities">
-            <section className="home-aero-panel home-aero-panel--subtle overflow-hidden" aria-labelledby="home-disclaimer">
+          <aside className="grid content-start gap-0 sm:gap-5" aria-label="Home page utilities">
+            <section className="home-aero-panel home-aero-panel--subtle home-main-section overflow-hidden" aria-labelledby="home-disclaimer">
               <div className="home-aero-panel-heading home-aero-panel-heading--warning">
                 <span className="home-aero-warning-icon text-[22px] font-black leading-none text-amber-800" aria-hidden="true">!</span>
                 <h2 id="home-disclaimer" className="text-[15px] font-bold leading-5">Important</h2>
@@ -569,7 +569,7 @@ export default async function HomePage()
               </div>
             </section>
 
-            <section className="home-aero-feedback relative overflow-hidden rounded-[1rem] border p-4 shadow-[var(--shadow-elev-1)] sm:p-5" aria-labelledby="feedback-cta">
+            <section className="home-aero-feedback home-main-section relative overflow-hidden rounded-[1rem] border p-4 shadow-[var(--shadow-elev-1)] sm:p-5" aria-labelledby="feedback-cta">
               <span className="home-aero-feedback-bubble home-aero-feedback-bubble--one" aria-hidden="true" />
               <span className="home-aero-feedback-bubble home-aero-feedback-bubble--two" aria-hidden="true" />
               <span className="home-aero-feedback-icon relative flex h-10 w-10 items-center justify-center rounded-[0.8rem] border border-white/60 bg-white/65 text-[var(--primary)] shadow-sm">

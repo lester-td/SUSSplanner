@@ -7,7 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { GlobalRegistrationReminders } from "@/components/registration/global-registration-reminders";
 import { SettingsProvider } from "@/components/settings/settings-provider";
-import { APP_SETTINGS_STORAGE_KEY } from "@/lib/settings/app-settings";
+import { APP_SETTINGS_STORAGE_KEY, DEFAULT_APP_SETTINGS } from "@/lib/settings/app-settings";
 import "./globals.css";
 
 const inter = Inter({
@@ -31,7 +31,7 @@ const settingsBootstrapScript = `
   try {
     const raw = window.localStorage.getItem(${JSON.stringify(APP_SETTINGS_STORAGE_KEY)});
     const settings = raw ? JSON.parse(raw) : {};
-    const preference = settings.colorScheme === "dark" || settings.colorScheme === "light" ? settings.colorScheme : "system";
+    const preference = settings.colorScheme === "dark" || settings.colorScheme === "light" || settings.colorScheme === "system" ? settings.colorScheme : ${JSON.stringify(DEFAULT_APP_SETTINGS.colorScheme)};
     const resolved = preference === "system"
       ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
       : preference;

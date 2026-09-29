@@ -2,9 +2,12 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import {
+  BellIcon,
   CalendarWeekIcon,
+  PaletteIcon,
   RefreshIcon,
 } from "@/components/planner/icons";
 import { RegistrationReminderStatusPill } from "@/components/registration/reminder-status-pill";
@@ -202,21 +205,25 @@ const PREVIEW_VISIBLE_END_MINUTES = getVisibleEndMinutes(
 );
 
 const PREVIEW_TIME_SLOTS = buildTimeSlots(PREVIEW_VISIBLE_END_MINUTES);
-
 function Section({
   title,
   id,
+  icon,
   children,
 }: {
   title: string;
   id: string;
+  icon: ReactNode;
   children: ReactNode;
 })
 {
   return (
-    <section id={id} className="border-t border-[var(--outline-variant)] py-4 first:border-t-0 first:pt-0 sm:py-7">
-      <h2 className="text-[20px] font-bold leading-7 text-[var(--on-surface)] sm:text-[22px]">{title}</h2>
-      <div className="mt-3 space-y-4 sm:mt-4 sm:space-y-5">{children}</div>
+    <section id={id} aria-labelledby={`${id}-heading`} className="app-aero-panel settings-section min-w-0 overflow-hidden">
+      <div className="app-aero-panel-heading">
+        {icon}
+        <h2 id={`${id}-heading`} className="text-[15px] font-bold leading-5 tracking-[-0.02em] sm:text-[17px]">{title}</h2>
+      </div>
+      <div className="space-y-5 p-4 sm:p-5">{children}</div>
     </section>
   );
 }
@@ -225,50 +232,22 @@ function SettingRow({
   title,
   description,
   detail,
-  alignControl = "center",
   children,
 }: {
   title: string;
   description: string;
   detail?: ReactNode;
-  alignControl?: "center" | "start";
   children: ReactNode;
 })
 {
-  if (alignControl === "start")
-  {
-    return (
-      <div className="grid gap-3">
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="min-w-0 text-[15px] font-bold leading-6 text-[var(--on-surface)]">{title}</h3>
-          <div className="flex shrink-0">{children}</div>
-        </div>
-        <p className="max-w-2xl text-[14px] leading-6 text-[var(--on-surface-variant)]">
-          {description}
-        </p>
-        {detail ? (
-          <div>
-            {detail}
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
   return (
-    <div className="flow-root sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-x-4 sm:gap-y-1.5">
-      <div className="float-right mb-1 ml-3 sm:col-start-2 sm:row-start-1 sm:float-none sm:mb-0 sm:ml-0 sm:justify-self-end md:self-start">{children}</div>
-      <div className="min-w-0 sm:col-start-1 sm:row-start-1">
-        <h3 className="text-[16px] font-bold leading-6 text-[var(--on-surface)] sm:text-[17px]">{title}</h3>
-        <p className="mt-1.5 text-[14px] leading-6 text-[var(--on-surface-variant)]">
-          {description}
-        </p>
-        {detail ? (
-          <div className="mt-3">
-            {detail}
-          </div>
-        ) : null}
+    <div className="settings-row grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-x-6">
+      <div className="min-w-0">
+        <h3 className="text-[15px] font-bold leading-6 text-[var(--on-surface)] sm:text-[16px]">{title}</h3>
+        <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[14px] sm:leading-6">{description}</p>
+        {detail ? <div className="mt-2">{detail}</div> : null}
       </div>
+      <div className="flex min-w-0 flex-wrap items-center lg:justify-self-end">{children}</div>
     </div>
   );
 }
@@ -495,7 +474,7 @@ function ReminderSchedulePopover()
       >
         Reminder schedule
       </button>
-      {popover}
+      {popover ? createPortal(popover, document.body) : null}
     </>
   );
 }
@@ -514,7 +493,7 @@ function SegmentedControl<T extends string>({
 {
   return (
     <div
-      className="inline-flex rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1 sm:p-1.5"
+      className="inline-flex max-w-full flex-wrap rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-1"
       role="group"
       aria-label={label}
     >
@@ -525,7 +504,7 @@ function SegmentedControl<T extends string>({
           <button
             key={option.value}
             type="button"
-            className={`rounded px-3 py-1.5 text-[13px] font-bold transition sm:px-4 sm:py-2 sm:text-[14px] ${
+            className={`rounded-[0.65rem] px-2.5 py-1.5 text-[12px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)] sm:px-4 sm:py-2 sm:text-[13px] ${
               selected
                 ? "bg-[var(--primary)] text-[var(--on-primary)] shadow-sm"
                 : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
@@ -558,7 +537,7 @@ function ThemePicker({
           <button
             key={theme.id}
             type="button"
-            className={`rounded-lg border bg-[var(--surface-container-lowest)] p-3 text-left transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] sm:p-4 ${
+            className={`app-aero-shortcut rounded-[0.9rem] border p-3 text-left transition hover:-translate-y-0.5 hover:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)] sm:p-4 ${
               selected ? "border-[var(--primary)] ring-2 ring-[var(--primary-ring-soft)]" : "border-[var(--outline-variant)]"
             }`}
             aria-pressed={selected}
@@ -566,9 +545,11 @@ function ThemePicker({
           >
             <div className="flex items-center justify-between gap-2 sm:gap-3">
               <span className="text-[14px] font-bold text-[var(--on-surface)]">{theme.name}</span>
-              <span className="text-[12px] font-semibold text-[var(--on-surface-variant)]">
-                {selected ? "Selected" : "Choose"}
-              </span>
+              {selected ? (
+                <span className="text-[12px] font-semibold text-[var(--on-surface-variant)]">
+                  Selected
+                </span>
+              ) : null}
             </div>
             <ul className="mt-3 grid grid-cols-8 gap-1 sm:mt-4 sm:gap-1.5" aria-label={`${theme.name} colors`}>
               {theme.colors.map((color) => (
@@ -609,11 +590,11 @@ function TimetablePreview({
   );
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--outline-variant)] px-3 py-2.5 sm:px-4 sm:py-3">
+    <div className="overflow-hidden rounded-[0.9rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+      <div className="app-aero-panel-heading flex items-center justify-between gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2">
           <CalendarWeekIcon className="h-4 w-4 text-[var(--primary)]" />
-          <span className="text-[13px] font-bold text-[var(--on-surface)]">Timetable preview</span>
+          <span className="text-[13px] font-bold text-[var(--on-surface)]">Preview</span>
         </div>
         <span className="text-[12px] font-semibold text-[var(--on-surface-variant)]">
           {isHorizontal ? "Horizontal" : "Vertical"}
@@ -726,9 +707,9 @@ export function SettingsClient()
   }
 
   return (
-    <div className="settings-page">
-      <div className="flex flex-col gap-5 sm:gap-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="settings-page -mx-3 sm:mx-0">
+      <div className="grid gap-0 sm:gap-5 lg:gap-6">
+        <header className="flex flex-col gap-3 px-4 pb-4 pt-3 sm:flex-row sm:items-end sm:justify-between sm:px-0 sm:pb-0 md:pt-8">
           <div>
             <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[32px] sm:leading-10 sm:tracking-normal">
               Settings
@@ -737,111 +718,109 @@ export function SettingsClient()
               Customise how SUSS Planner looks and behaves on this browser.
             </p>
           </div>
-        </div>
+        </header>
 
-        <div className="-mx-3 border-y border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-4 sm:mx-0 sm:rounded-lg sm:border sm:px-6 sm:py-6 sm:shadow-sm">
-          <Section id="appearance" title="Appearance">
-            <SettingRow
-              title="Night mode"
-              description="Choose whether SUSS Planner follows your system appearance, stays light, or stays dark."
-            >
-              <SegmentedControl
-                label="Night mode"
-                value={settings.colorScheme}
-                options={[
-                  { value: "system", label: "Auto" },
-                  { value: "dark", label: "On" },
-                  { value: "light", label: "Off" },
-                ]}
-                onChange={(colorScheme) => updateSettings({ colorScheme })}
-              />
-            </SettingRow>
-          </Section>
+        <Section id="timetable" title="Timetable" icon={<CalendarWeekIcon className="h-5 w-5 text-[var(--primary)]" />}>
+          <SettingRow
+            title="Timetable orientation"
+            description="Choose the default timetable layout for desktop and print exports."
+          >
+            <SegmentedControl
+              label="Timetable orientation"
+              value={settings.timetableOrientation}
+              options={[
+                { value: "horizontal", label: "Horizontal" },
+                { value: "vertical", label: "Vertical" },
+              ]}
+              onChange={(timetableOrientation) => updateSettings({ timetableOrientation })}
+            />
+          </SettingRow>
 
-          <Section id="timetable" title="Timetable">
-            <SettingRow
-              title="Timetable orientation"
-              description="Choose the default timetable layout for desktop and print exports."
-            >
-              <SegmentedControl
-                label="Timetable orientation"
-                value={settings.timetableOrientation}
-                options={[
-                  { value: "horizontal", label: "Horizontal" },
-                  { value: "vertical", label: "Vertical" },
-                ]}
-                onChange={(timetableOrientation) => updateSettings({ timetableOrientation })}
-              />
-            </SettingRow>
+          <SettingRow
+            title="Default class type"
+            description="Choose whether new timetable entries prefer full-time TG groups or part-time CRN groups."
+          >
+            <SegmentedControl
+              label="Default class type"
+              value={settings.timetableStudyMode}
+              options={[
+                { value: "full-time", label: "Full-time" },
+                { value: "part-time", label: "Part-time" },
+              ]}
+              onChange={(timetableStudyMode) => updateSettings({ timetableStudyMode })}
+            />
+          </SettingRow>
+        </Section>
 
-            <SettingRow
-              title="Default class type"
-              description="Choose whether new timetable entries prefer full-time TG groups or part-time CRN groups."
-            >
-              <SegmentedControl
-                label="Default class type"
-                value={settings.timetableStudyMode}
-                options={[
-                  { value: "full-time", label: "Full-time" },
-                  { value: "part-time", label: "Part-time" },
-                ]}
-                onChange={(timetableStudyMode) => updateSettings({ timetableStudyMode })}
-              />
-            </SettingRow>
-          </Section>
+        <Section id="reminders" title="Reminders" icon={<BellIcon className="h-5 w-5 text-[var(--primary)]" />}>
+          <SettingRow
+            title="In-app reminders"
+            description="Receive in-app reminders for eCR and Add/Drop before each window opens, while it is active, and before it closes."
+            detail={<ReminderSchedulePopover />}
+          >
+            <SegmentedControl
+              label="In-app reminders"
+              value={settings.registrationReminders.enabled ? "on" : "off"}
+              options={[
+                { value: "on", label: "On" },
+                { value: "off", label: "Off" },
+              ]}
+              onChange={(value) => updateRegistrationReminderPreferences({ enabled: value === "on" })}
+            />
+          </SettingRow>
+        </Section>
 
-          <Section id="theme" title="Theme">
-            <p className="max-w-2xl text-[13px] leading-6 text-[var(--on-surface-variant)] sm:text-[14px]">
-              Pick the timetable color palette. The preview reflects the selected palette and
-              timetable orientation.
-            </p>
+        <Section id="appearance" title="Appearance" icon={<PaletteIcon className="h-5 w-5 text-[var(--primary)]" />}>
+          <SettingRow
+            title="Color mode"
+            description="Choose a light or dark appearance, or match your device settings."
+          >
+            <SegmentedControl
+              label="Color mode"
+              value={settings.colorScheme}
+              options={[
+                { value: "system", label: "Auto" },
+                { value: "light", label: "Light" },
+                { value: "dark", label: "Dark" },
+              ]}
+              onChange={(colorScheme) => updateSettings({ colorScheme })}
+            />
+          </SettingRow>
+          <div id="theme" className="space-y-4 border-t border-[var(--outline-variant)] pt-5">
+            <div>
+              <h3 className="text-[15px] font-bold leading-6 text-[var(--on-surface)] sm:text-[16px]">Timetable theme</h3>
+              <p className="mt-1 text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[14px] sm:leading-6">
+                Pick the timetable color palette. The preview reflects the selected palette and timetable orientation.
+              </p>
+            </div>
             <TimetablePreview settings={settings} theme={selectedTheme} />
             <ThemePicker
               selectedThemeId={settings.themeId}
               onSelectTheme={(themeId) => updateSettings({ themeId })}
             />
-          </Section>
-
-          <Section id="reminders" title="Course Registration Reminders">
-            <SettingRow
-              title="In-app reminders"
-              description="Receive in-app reminders for eCR and Add/Drop before each window opens, while it is active, and before it closes."
-              detail={<ReminderSchedulePopover />}
-            >
-              <SegmentedControl
-                label="In-app reminders"
-                value={settings.registrationReminders.enabled ? "on" : "off"}
-                options={[
-                  { value: "on", label: "On" },
-                  { value: "off", label: "Off" },
-                ]}
-                onChange={(value) => updateRegistrationReminderPreferences({ enabled: value === "on" })}
-              />
-            </SettingRow>
-          </Section>
-
-          <div className="border-t border-[var(--outline-variant)] pt-4 sm:pt-7">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1.5">
-              <div className="min-w-0">
-                <h2 className="text-[20px] font-bold leading-7 text-[var(--on-surface)] sm:text-[22px]">
-                  Reset settings
-                </h2>
-                <p className="max-w-2xl text-[13px] leading-6 text-[var(--on-surface-variant)] sm:text-[14px]">
-                  Restore every setting on this page to its default value.
-                </p>
-              </div>
-              <div className="justify-self-end">
-                <button
-                  type="button"
-                  className="app-danger-action rounded-[0.8rem] bg-red-500 px-4 py-2 text-[13px] font-semibold leading-5 text-white transition-colors hover:bg-red-400 sm:px-5 sm:py-2.5 sm:text-[14px]"
-                  onClick={() => setResetConfirmOpen(true)}
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
           </div>
-        </div>
+        </Section>
+
+        <section id="reset" aria-labelledby="reset-heading" className="app-aero-panel settings-section min-w-0 overflow-hidden">
+          <div className="app-aero-panel-heading">
+            <RefreshIcon className="h-5 w-5 text-[var(--primary)]" />
+            <h2 id="reset-heading" className="text-[15px] font-bold leading-5 tracking-[-0.02em] sm:text-[17px]">
+              Reset settings
+            </h2>
+          </div>
+          <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start lg:gap-x-6">
+            <p className="max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[14px] sm:leading-6">
+              Revert your settings to default values.
+            </p>
+            <button
+              type="button"
+              className="app-danger-action justify-self-start rounded-[0.8rem] bg-red-500 px-4 py-2 text-[13px] font-semibold leading-5 text-white transition-colors hover:bg-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 sm:px-5 sm:py-2.5 sm:text-[14px] lg:justify-self-end"
+              onClick={() => setResetConfirmOpen(true)}
+            >
+              Reset
+            </button>
+          </div>
+        </section>
         <span className="sr-only">Current color scheme preference: {settings.colorScheme}</span>
       </div>
 

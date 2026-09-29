@@ -29,6 +29,7 @@ import {
   TbMail,
   TbMapPin,
   TbMoon,
+  TbPalette,
   TbPencil,
   TbPlus,
   TbRefresh,
@@ -225,6 +226,11 @@ export function SunIcon({ className }: IconProps)
 export function MoonIcon({ className }: IconProps)
 {
   return renderIcon(TbMoon, className);
+}
+
+export function PaletteIcon({ className }: IconProps)
+{
+  return renderIcon(TbPalette, className);
 }
 
 export function CodeIcon({ className }: IconProps)

@@ -29,7 +29,7 @@ export const DEFAULT_REGISTRATION_REMINDER_PREFERENCES: RegistrationReminderPref
 };
 
 export const DEFAULT_APP_SETTINGS: SettingsState = {
-  colorScheme: "system",
+  colorScheme: "light",
   themeId: "current-timetable",
   timetableOrientation: "horizontal",
   registrationReminders: DEFAULT_REGISTRATION_REMINDER_PREFERENCES,

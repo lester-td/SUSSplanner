@@ -235,7 +235,8 @@
   }
 }
 
-.home-aero-frame {
+.home-aero-frame,
+.app-aero-frame {
   flex: 1;
   overflow-x: clip;
   padding-top: 0;
@@ -301,7 +302,8 @@
   pointer-events: none;
 }
 
-.home-aero-panel {
+.home-aero-panel,
+.app-aero-panel {
   border: 1px solid color-mix(in srgb, var(--suss-light-blue), var(--outline-variant) 48%);
   border-radius: 1rem;
   background: rgb(255 255 255 / 0.82);
@@ -315,7 +317,8 @@
   box-shadow: var(--shadow-elev-1);
 }
 
-.home-aero-panel-heading {
+.home-aero-panel-heading,
+.app-aero-panel-heading {
   display: flex;
   min-height: 3.15rem;
   align-items: center;
@@ -332,7 +335,8 @@
   border-bottom-color: rgb(180 120 0 / 0.14);
 }
 
-.home-aero-shortcut {
+.home-aero-shortcut,
+.app-aero-shortcut {
   border-color: rgb(var(--suss-blue-rgb) / 0.12);
   background: #f4f9fc;
   box-shadow:
@@ -340,10 +344,15 @@
     inset 0 1px 0 rgb(255 255 255 / 0.95);
 }
 
-.home-aero-shortcut:hover {
+.home-aero-shortcut:hover,
+.app-aero-shortcut:hover {
   box-shadow:
     0 12px 24px rgb(0 30 96 / 0.13),
     inset 0 1px 0 rgb(255 255 255 / 0.96);
+}
+
+.app-aero-shortcut[aria-pressed="true"] {
+  border-color: var(--primary);
 }
 
 .home-aero-shortcut-icon {
@@ -565,11 +574,13 @@
   height: 1.25rem;
 }
 
-:root[data-color-scheme="dark"] .home-aero-frame {
+:root[data-color-scheme="dark"] .home-aero-frame,
+:root[data-color-scheme="dark"] .app-aero-frame {
   background: var(--background);
 }
 
-:root[data-color-scheme="dark"] .home-aero-panel {
+:root[data-color-scheme="dark"] .home-aero-panel,
+:root[data-color-scheme="dark"] .app-aero-panel {
   border-color: var(--outline-variant);
   background: var(--surface-container-lowest);
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.22);
@@ -621,7 +632,8 @@
     linear-gradient(180deg, rgb(0 0 0 / 0.04), transparent 58%, var(--background) 100%);
 }
 
-:root[data-color-scheme="dark"] .home-aero-panel-heading {
+:root[data-color-scheme="dark"] .home-aero-panel-heading,
+:root[data-color-scheme="dark"] .app-aero-panel-heading {
   border-bottom-color: rgb(var(--suss-light-blue-rgb) / 0.16);
   background: #203b49;
   box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.18);
@@ -633,7 +645,8 @@
 }
 
 :root[data-color-scheme="dark"] .home-aero-shortcut,
-:root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n) {
+:root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n),
+:root[data-color-scheme="dark"] .app-aero-shortcut {
   border-color: rgb(255 255 255 / 0.16);
   background: linear-gradient(135deg, #303334, #2b2e2f);
   box-shadow:
@@ -642,12 +655,18 @@
 }
 
 :root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n):hover,
-:root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n):focus-visible {
+:root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n):focus-visible,
+:root[data-color-scheme="dark"] .app-aero-shortcut:hover,
+:root[data-color-scheme="dark"] .app-aero-shortcut:focus-visible {
   border-color: rgb(var(--suss-light-blue-rgb) / 0.42);
   background: linear-gradient(135deg, #393e40, #323739);
   box-shadow:
     0 9px 22px rgb(0 0 0 / 0.27),
     inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+:root[data-color-scheme="dark"] .app-aero-shortcut[aria-pressed="true"] {
+  border-color: var(--primary);
 }
 
 :root[data-color-scheme="dark"] .home-aero-shortcut-icon,
@@ -815,6 +834,7 @@
 @media (max-width: 639px) {
   .home-aero-hero {
     margin-inline: -0.75rem;
+    margin-bottom: 1rem;
   }
 
   .home-aero-hero-copy {
@@ -838,6 +858,35 @@
       linear-gradient(180deg, transparent 58%, var(--background) 100%),
       linear-gradient(90deg, rgb(20 20 20 / 0.93), rgb(20 20 20 / 0.78)),
       linear-gradient(180deg, rgb(20 20 20 / 0.22), rgb(20 20 20 / 0.7));
+  }
+
+  .home-page .home-main-section {
+    margin-inline: -0.75rem;
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--outline-variant);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  :root[data-color-scheme="dark"] .home-page .home-main-section {
+    border-color: var(--outline-variant);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .home-page .home-aero-feedback.home-main-section {
+    background: #eaf7f5;
+  }
+
+  :root[data-color-scheme="dark"] .home-page .home-aero-feedback.home-main-section {
+    background: linear-gradient(135deg, #303536, #282c2d 75%);
+  }
+
+  .home-page .home-aero-feedback-bubble {
+    display: none;
   }
 }
 
@@ -1888,4 +1937,27 @@
 
 .timetable-cell.is-very-tight .timetable-cell__meta {
   white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .settings-page .settings-section {
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--outline-variant);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  :root[data-color-scheme="dark"] .settings-page .settings-section {
+    border-color: var(--outline-variant);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .settings-page .settings-row + .settings-row {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--outline-variant);
+  }
 }
