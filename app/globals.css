@@ -329,6 +329,11 @@
   border-bottom-color: rgb(180 120 0 / 0.14);
 }
 
+.feedback-form-field,
+:root[data-color-scheme="dark"] .feedback-form-field {
+  background-color: transparent;
+}
+
 .feedback-info-tile {
   border-color: rgb(var(--suss-blue-rgb) / 0.16);
   box-shadow:

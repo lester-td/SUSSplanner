@@ -204,7 +204,7 @@ export function FeedbackForm()
           id="feedback-type"
           value={type}
           onChange={(event) => setType(event.target.value as FeedbackType)}
-          className="min-h-11 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[15px] font-normal leading-6 text-[var(--on-surface)] outline-none transition focus:border-[var(--primary)] focus:ring-2 focus:ring-[color:var(--primary)]/20"
+          className="min-h-11 rounded-[0.5rem] feedback-form-field border border-[var(--outline-variant)] px-3 py-2 text-[15px] font-normal leading-6 text-[var(--on-surface)] outline-none transition focus:border-[var(--primary)] focus:ring-2 focus:ring-[color:var(--primary)]/20"
         >
           {feedbackTypes.map((option) => (
             <option key={option} value={option}>{option}</option>
@@ -230,7 +230,7 @@ export function FeedbackForm()
           rows={8}
           required
           placeholder="Tell us what happened, what you expected, or which course data looks off."
-          className="min-h-44 resize-y rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[15px] leading-6 text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[color:var(--primary)]/20"
+          className="min-h-44 resize-y rounded-[0.5rem] feedback-form-field border border-[var(--outline-variant)] px-3 py-2 text-[15px] leading-6 text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[color:var(--primary)]/20"
         />
       </div>
 
@@ -245,7 +245,7 @@ export function FeedbackForm()
           onChange={(event) => setContact(event.target.value)}
           maxLength={320}
           placeholder="Optional, only if you want us to follow up"
-          className="min-h-11 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[15px] leading-6 text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[color:var(--primary)]/20"
+          className="min-h-11 rounded-[0.5rem] feedback-form-field border border-[var(--outline-variant)] px-3 py-2 text-[15px] leading-6 text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[color:var(--primary)]/20"
         />
       </div>
 

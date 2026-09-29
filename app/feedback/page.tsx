@@ -93,9 +93,6 @@ export default async function FeedbackPage()
                 </h2>
               </div>
               <div className="p-4 sm:p-5">
-                <p className="mb-5 text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[14px] sm:leading-6">
-                  Use this form for quick notes, private contact details, or course data corrections.
-                </p>
                 <FeedbackForm />
               </div>
             </section>
