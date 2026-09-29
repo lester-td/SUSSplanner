@@ -790,6 +790,12 @@
     inset 0 1px 0 rgb(255 255 255 / 0.38);
 }
 
+@media (max-width: 1199px) {
+  .home-hero-wordmark .app-wordmark__icon {
+    display: none;
+  }
+}
+
 @media (max-width: 1023px) {
   .home-aero-hero {
     min-height: 0;
@@ -837,10 +843,6 @@
 
   .home-hero-wordmark > span:not(.app-wordmark__icon) {
     white-space: normal;
-  }
-
-  .home-hero-wordmark .app-wordmark__icon {
-    display: none;
   }
 
   .home-aero-hero-art {

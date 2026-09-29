@@ -709,12 +709,12 @@ export function SettingsClient()
   return (
     <div className="settings-page -mx-3 sm:mx-0">
       <div className="grid gap-0 sm:gap-5 lg:gap-6">
-        <header className="flex flex-col gap-3 px-4 pb-4 pt-3 sm:flex-row sm:items-end sm:justify-between sm:px-0 sm:pb-0 md:pt-8">
+        <header className="flex flex-col gap-3 px-3 pb-4 pt-3 sm:flex-row sm:items-end sm:justify-between sm:px-0 sm:pb-0 md:pt-8">
           <div>
             <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[32px] sm:leading-10 sm:tracking-normal">
               Settings
             </h1>
-            <p className="mt-2 max-w-3xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:text-[15px] sm:leading-7">
+            <p className="mt-1.5 max-w-3xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:mt-2 sm:text-[15px] sm:leading-7">
               Customise how SUSS Planner looks and behaves on this browser.
             </p>
           </div>
