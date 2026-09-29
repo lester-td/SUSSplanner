@@ -943,7 +943,7 @@ export function CourseSearchPage({
           ) : null}
         </section>
 
-        <aside className="hidden md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-150px)] md:self-start md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:px-1">
+        <aside className="hidden md:sticky md:top-[90px] md:mt-0 md:block md:self-start md:px-1">
           {renderFilterSettings()}
         </aside>
       </div>

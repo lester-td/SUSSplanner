@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-import quotes from "@/app/quotes.json";
+import quotes from "@/app/data/quotes.json";
 import {
   CompactUpcomingDates,
   type UpcomingDateAudience,
@@ -359,8 +359,8 @@ function getQuoteOfTheDay(today: string)
     ((hash * 31) + character.charCodeAt(0)) >>> 0
   ), 0);
 
-  return quotes[dateHash % quotes.length]?.quote
-    ?? "A clear plan turns a crowded week into a sequence of possible steps.";
+  return quotes[dateHash % quotes.length]
+    ?? { text: "A clear plan turns a crowded week into a sequence of possible steps." };
 }
 
 export default async function HomePage()
@@ -523,9 +523,14 @@ export default async function HomePage()
               {currentWeekLabel}
             </p>
 
-            <blockquote className="home-aero-quote mt-3 max-w-2xl border-l-2 border-[var(--secondary)] pl-4 text-[15px] font-medium italic leading-6 text-[var(--on-surface-variant)] sm:text-[17px] sm:leading-7 xl:mt-5">
-              “{quoteOfTheDay}”
-            </blockquote>
+            <figure className="home-aero-quote mt-3 max-w-2xl border-l-2 border-[var(--secondary)] pl-4 text-[15px] leading-6 text-[var(--on-surface-variant)] sm:text-[17px] sm:leading-7 xl:mt-5">
+              <blockquote className="font-medium italic">“{quoteOfTheDay.text}”</blockquote>
+              {"author" in quoteOfTheDay && quoteOfTheDay.author && (
+                <figcaption className="mt-1 text-[13px] font-normal not-italic sm:text-[14px]">
+                  — {quoteOfTheDay.author}
+                </figcaption>
+              )}
+            </figure>
 
             <div className="mt-3 max-w-2xl sm:mt-5">
               <HomeSearch
