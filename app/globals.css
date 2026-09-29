@@ -20,7 +20,7 @@
     --suss-grey-rgb: 214 210 196;
     --suss-lime-rgb: 208 223 0;
     --suss-light-blue-rgb: 154 219 232;
-    --background: #ffffff;
+    --background: #fcfbf8;
     --surface: #f7f5ef;
     --surface-bright: #fbfaf7;
     --surface-dim: #d8d3c6;
@@ -57,16 +57,16 @@
     --header-text: #ffffff;
     --header-text-muted: rgb(255 255 255 / 0.78);
     --header-chip-bg: rgb(255 255 255 / 0.12);
-    --header-chip-active-bg: #ffffff;
+    --header-chip-active-bg: var(--background);
     --header-chip-active-text: var(--suss-blue);
     --header-divider: rgb(255 255 255 / 0.14);
     --footer-surface: var(--header-surface);
     --primary-ring-soft: rgb(var(--suss-blue-rgb) / 0.22);
     --primary-ring-strong: rgb(var(--suss-blue-rgb) / 0.3);
-    --control-surface: #ffffff;
+    --control-surface: var(--background);
     --control-surface-hover: #f8fafc;
     --control-border: #bfd3e0;
-    --control-track: #ffffff;
+    --control-track: var(--background);
     --now-line: var(--suss-red);
     --bg: var(--background);
     --panel: var(--surface-container-lowest);
@@ -244,7 +244,7 @@
   display: block;
   flex: none;
   height: 1.5rem;
-  background: #fff;
+  background: var(--background);
 }
 
 :root[data-color-scheme="dark"] .app-footer-gap::after {
@@ -256,12 +256,12 @@
   flex: 1;
   overflow-x: clip;
   padding-top: 0;
-  background: #fff;
+  background: var(--background);
 }
 
 .home-aero-hero {
   min-height: 20rem;
-  background: #fff;
+  background: var(--background);
 }
 
 .home-aero-hero-copy {
@@ -297,7 +297,7 @@
 
 .home-aero-hero input {
   border-color: rgb(var(--suss-blue-rgb) / 0.35);
-  background: rgb(255 255 255 / 0.9);
+  background: color-mix(in srgb, var(--background) 90%, transparent);
   box-shadow:
     0 9px 24px rgb(0 30 96 / 0.11),
     inset 0 1px 0 rgb(255 255 255 / 0.9);
@@ -306,9 +306,9 @@
 
 .home-aero-hero-shine {
   background:
-    linear-gradient(270deg, #fff 0, rgb(255 255 255 / 0.92) 3%, transparent 13%),
+    linear-gradient(270deg, var(--background) 0, color-mix(in srgb, var(--background) 92%, transparent) 3%, transparent 13%),
     linear-gradient(112deg, rgb(255 255 255 / 0.7), transparent 46%),
-    linear-gradient(180deg, rgb(255 255 255 / 0.04), transparent 58%, #fff 100%);
+    linear-gradient(180deg, rgb(255 255 255 / 0.04), transparent 58%, var(--background) 100%);
   pointer-events: none;
 }
 
@@ -400,7 +400,7 @@
 
 .feedback-info-icon {
   border: 1px solid rgb(var(--suss-blue-rgb) / 0.12);
-  background: rgb(255 255 255 / 0.78);
+  background: color-mix(in srgb, var(--background) 78%, transparent);
   color: var(--primary);
   box-shadow: 0 3px 10px rgb(var(--suss-blue-rgb) / 0.08);
 }
@@ -641,7 +641,7 @@
   display: block;
   border: 1px solid rgb(255 255 255 / 0.8);
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.5);
+  background: color-mix(in srgb, var(--background) 50%, transparent);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.86);
   pointer-events: none;
 }
@@ -933,7 +933,7 @@
 
   .home-aero-hero-shine {
     background:
-      linear-gradient(180deg, transparent 62%, #fff 100%),
+      linear-gradient(180deg, transparent 62%, var(--background) 100%),
       linear-gradient(90deg, rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.76)),
       linear-gradient(180deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.62));
   }
@@ -975,7 +975,7 @@
 
   .home-aero-hero-shine {
     background:
-      linear-gradient(180deg, transparent 58%, #fff 100%),
+      linear-gradient(180deg, transparent 58%, var(--background) 100%),
       linear-gradient(90deg, rgb(255 255 255 / 0.94), rgb(255 255 255 / 0.8)),
       linear-gradient(180deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0.7));
   }
@@ -1412,7 +1412,7 @@
 
 .class-schedule-table {
   --schedule-table-heading: #e9eef2;
-  --schedule-table-row: #ffffff;
+  --schedule-table-row: var(--background);
   --schedule-table-stripe: #f3f6f8;
   --schedule-table-exam: #e7edf1;
   --schedule-table-border: #d8e1e7;

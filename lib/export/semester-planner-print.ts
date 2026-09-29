@@ -113,7 +113,7 @@ export function openSemesterPlannerPrintView(state: SemesterPlannerState)
         min-height: 297mm;
         margin: 18px auto;
         padding: 14mm;
-        background: white;
+        background: #fcfbf8;
         box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
       }
       header {
@@ -180,7 +180,7 @@ export function openSemesterPlannerPrintView(state: SemesterPlannerState)
       .empty { padding: 8px 10px; color: #687488; font-size: 11px; }
       footer { margin-top: 16px; color: #687488; font-size: 9px; text-align: center; }
       @media print {
-        body { background: white; }
+        body { background: #fcfbf8; }
         .toolbar { display: none; }
         .page {
           width: auto;

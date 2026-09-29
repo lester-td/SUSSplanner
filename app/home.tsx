@@ -570,7 +570,7 @@ export default async function HomePage()
             <section className="home-aero-feedback home-main-section relative overflow-hidden rounded-[1rem] border p-4 shadow-[var(--shadow-elev-1)] sm:p-5" aria-labelledby="feedback-cta">
               <span className="home-aero-feedback-bubble home-aero-feedback-bubble--one" aria-hidden="true" />
               <span className="home-aero-feedback-bubble home-aero-feedback-bubble--two" aria-hidden="true" />
-              <span className="home-aero-feedback-icon relative flex h-10 w-10 items-center justify-center rounded-[0.8rem] border border-white/60 bg-white/65 text-[var(--primary)] shadow-sm">
+              <span className="home-aero-feedback-icon relative flex h-10 w-10 items-center justify-center rounded-[0.8rem] border border-white/60 bg-[color-mix(in_srgb,var(--background)_65%,transparent)] text-[var(--primary)] shadow-sm">
                 <EditIcon className="h-5 w-5" />
               </span>
               <div className="relative mt-4">

@@ -74,7 +74,7 @@ function ClassList({ events }: { events: TimetableEventRecord[] })
   return (
     <ul className="flex flex-wrap gap-1.5">
       {events.map((event) => (
-        <li key={event.eventId} className="timetable-alert-chip w-fit max-w-full rounded-[0.35rem] border border-[var(--outline-variant)] bg-white px-2 py-1 shadow-sm">
+        <li key={event.eventId} className="timetable-alert-chip w-fit max-w-full rounded-[0.35rem] border border-[var(--outline-variant)] bg-[var(--background)] px-2 py-1 shadow-sm">
           <p className="text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
             {event.courseCode} {formatClassGroupLabel(event.groupCode)}
           </p>
@@ -174,7 +174,7 @@ function ClassClashBadges({ clashes }: { clashes: TimetableClash[] })
       {participants.map((event) => (
         <span
           key={event.shareKey}
-          className="timetable-alert-chip rounded-full border border-[var(--outline-variant)] bg-white px-2 py-1 text-[11px] font-semibold leading-none text-[var(--on-surface)] shadow-sm"
+          className="timetable-alert-chip rounded-full border border-[var(--outline-variant)] bg-[var(--background)] px-2 py-1 text-[11px] font-semibold leading-none text-[var(--on-surface)] shadow-sm"
         >
           {formatClashEventLabel(event, false)}
         </span>
@@ -186,7 +186,7 @@ function ClassClashBadges({ clashes }: { clashes: TimetableClash[] })
 function ExamClashTile({ clash }: { clash: TimetableClash })
 {
   return (
-    <article className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-white px-2 py-1.5 shadow-sm">
+    <article className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-[var(--background)] px-2 py-1.5 shadow-sm">
       <p className="text-[10px] font-semibold leading-[13px] text-[var(--on-surface)] sm:text-[11px] sm:leading-[14px]">
         {formatEventDate(clash.eventDate)} · {formatTimeRange(clash.startTime, clash.endTime)}
       </p>
@@ -277,7 +277,7 @@ function ClashScheduleSection({
                 <td className="border-b border-[var(--outline-variant)] px-3 py-2.5">
                   <div className="flex flex-wrap gap-1.5">
                     {clash.events.map((event) => (
-                      <span key={event.eventId} className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-white px-2 py-1 text-[12px] font-semibold text-[var(--on-surface)] shadow-sm">
+                      <span key={event.eventId} className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-[var(--background)] px-2 py-1 text-[12px] font-semibold text-[var(--on-surface)] shadow-sm">
                         {formatClashEventLabel(event, isExam)}
                       </span>
                     ))}
