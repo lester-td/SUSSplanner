@@ -50,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         <meta name="darkreader-lock" />
+        <link rel="icon" type="image/png" sizes="64x64" href="/brand/favicon-dark.png?v=2" />
       </head>
       <body>
         <Script

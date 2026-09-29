@@ -98,6 +98,13 @@ const homeQuickResourceIcons: Record<string, string> = {
   "success-gateway": "/home-icons/success-gateway.png",
 } as const;
 
+const homeQuickResourceIconScales: Partial<Record<string, number>> = {
+  learnova: 1.28,
+  ismartguide: 1.28,
+  "discussion-room-booking": 0.95,
+  "success-gateway": 0.91,
+};
+
 const audienceLabels: Record<AcademicCalendarEventRecord["audience"], UpcomingDateAudience> = {
   FTUG: { id: "FTUG", label: "Full-time UG" },
   PTUG: { id: "PTUG", label: "Part-time UG" },
@@ -431,13 +438,14 @@ export default async function HomePage()
                     height={96}
                     sizes="72px"
                     className="h-full w-full object-contain"
+                    style={{ transform: `scale(${homeQuickResourceIconScales[item.id] ?? 1})` }}
                   />
                 </span>
                 <span className="flex min-w-0 flex-1 items-center justify-between gap-1 sm:gap-2">
                   <span className="min-w-0 break-words text-left text-[11px] font-bold leading-[0.9rem] sm:text-[13px] sm:leading-5">
                     {item.label}
                   </span>
-                  <span className="home-aero-shortcut-arrow flex h-5 w-5 shrink-0 items-center justify-center text-[var(--primary)] transition group-hover:translate-x-0.5 sm:h-6 sm:w-6">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center text-[var(--primary)] transition group-hover:translate-x-0.5 sm:h-6 sm:w-6">
                     <ArrowUpRightIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </span>
                 </span>
@@ -542,7 +550,7 @@ export default async function HomePage()
           {renderUpcomingDatesSection()}
 
           <aside className="grid content-start gap-4 sm:gap-5" aria-label="Home page utilities">
-            <section className="home-aero-panel overflow-hidden" aria-labelledby="home-disclaimer">
+            <section className="home-aero-panel home-aero-panel--subtle overflow-hidden" aria-labelledby="home-disclaimer">
               <div className="home-aero-panel-heading home-aero-panel-heading--warning">
                 <span className="home-aero-warning-icon text-[22px] font-black leading-none text-amber-800" aria-hidden="true">!</span>
                 <h2 id="home-disclaimer" className="text-[15px] font-bold leading-5">Important</h2>

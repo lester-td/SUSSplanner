@@ -79,6 +79,7 @@ export function CompactUpcomingDates({ items, today }: { items: UpcomingDateItem
 {
   const [audienceFilter, setAudienceFilter] = useState<AudienceFilter>("all");
   const [showAllMobile, setShowAllMobile] = useState(false);
+  const [showAllDesktop, setShowAllDesktop] = useState(false);
   const audienceOptions = useMemo(
     () => uniqueAudiences(items.flatMap((item) => item.schedules)),
     [items],
@@ -103,6 +104,7 @@ export function CompactUpcomingDates({ items, today }: { items: UpcomingDateItem
   {
     setAudienceFilter(filter);
     setShowAllMobile(false);
+    setShowAllDesktop(false);
   }
 
   return (
@@ -138,12 +140,13 @@ export function CompactUpcomingDates({ items, today }: { items: UpcomingDateItem
             {rows.map(({ anchorId, detail, label, rowKey, schedule }, index) => {
               const status = getScheduleStatus(schedule, today);
               const hiddenOnMobile = !showAllMobile && index >= 4;
+              const hiddenOnDesktop = !showAllDesktop && index >= 5;
 
               return (
                 <li
                   id={anchorId}
                   key={rowKey}
-                  className={`scroll-mt-24 py-3 sm:grid sm:grid-cols-[7rem_minmax(0,1fr)_auto] sm:items-start sm:gap-2 sm:py-3.5 ${hiddenOnMobile ? "hidden sm:grid" : ""}`}
+                  className={`scroll-mt-24 py-3 sm:grid-cols-[7rem_minmax(0,1fr)_auto] sm:items-start sm:gap-2 sm:py-3.5 lg:py-3 ${hiddenOnMobile ? "hidden" : ""} ${hiddenOnDesktop ? "sm:hidden" : "sm:grid"}`}
                 >
                   <div className="mb-1 flex items-center justify-between gap-2 sm:contents">
                     <div className={`home-upcoming-date home-upcoming-date--${schedule.dotState} inline-flex w-max whitespace-nowrap rounded-[0.55rem] border px-2 py-1 text-[11px] font-extrabold leading-4 sm:col-start-1 sm:row-start-1 sm:justify-self-end sm:text-[12px]`}>
@@ -186,6 +189,21 @@ export function CompactUpcomingDates({ items, today }: { items: UpcomingDateItem
                 <span>{showAllMobile ? "Show less" : "Show more"}</span>
                 <ChevronRightIcon
                   className={`h-3.5 w-3.5 transition-transform ${showAllMobile ? "-rotate-90" : "rotate-90"}`}
+                />
+              </button>
+            </div>
+          ) : null}
+          {rows.length > 5 ? (
+            <div className="hidden p-2 text-center sm:block lg:py-1.5">
+              <button
+                type="button"
+                className="home-upcoming-show-more"
+                aria-expanded={showAllDesktop}
+                onClick={() => setShowAllDesktop((current) => !current)}
+              >
+                <span>{showAllDesktop ? "Show less" : "Show more"}</span>
+                <ChevronRightIcon
+                  className={`h-3.5 w-3.5 transition-transform ${showAllDesktop ? "-rotate-90" : "rotate-90"}`}
                 />
               </button>
             </div>
