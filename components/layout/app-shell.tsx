@@ -239,9 +239,9 @@ export function AppShell({
       <section
         className={`app-content-surface flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] ${activeSection === "planner" && contentLayout === "full-bleed" ? "app-content-surface--planner-full-bleed" : ""}`}
       >
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className={`flex min-h-0 flex-1 flex-col ${showFooter ? "app-footer-gap" : ""}`.trim()}>
           {contentLayout === "framed" ? (
-            <div className={`px-3 pb-3 pt-3 md:px-[16px] md:pt-8 ${contentFrameClassName}`.trim()}>
+            <div className={`px-3 ${showFooter ? "" : "pb-3"} pt-3 md:px-[16px] md:pt-8 ${contentFrameClassName}`.trim()}>
               <div className={`mx-auto w-full max-w-7xl ${contentContainerClassName}`.trim()}>
                 {children}
               </div>
@@ -252,17 +252,17 @@ export function AppShell({
         </div>
 
         {showFooter ? (
-          <footer className={`border-t border-[var(--brand-divider)] bg-[var(--footer-surface)] ${activeSection === "home" ? "hidden sm:block" : ""}`}>
+          <footer className={`border-t border-[var(--header-divider)] bg-[var(--footer-surface)] ${activeSection === "home" ? "hidden sm:block" : ""}`}>
             <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
+                <p className="text-[13px] font-semibold leading-5 text-[var(--header-text)]">
                   SUSS Planner
                 </p>
-                <div className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                <div className="mt-1 text-[12px] leading-5 text-[var(--header-text-muted)]">
                   <p>
                     This is a student developed web application in beta phase. The information is provided with absolutely no warranties, although it has been checked to the best of our ability.
                   </p>
-                  <p className="mt-1 font-semibold text-[var(--on-surface)]">
+                  <p className="mt-1 font-semibold text-[var(--header-text)]">
                     Data last updated: {formatDataUpdatedValue(dataUpdatedAt)}
                   </p>
                   {footerContent ? <div className="mt-1">{footerContent}</div> : null}
@@ -273,13 +273,13 @@ export function AppShell({
                 <Link
                   prefetch
                   href="/feedback"
-                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-white/20 bg-white/10 px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--header-text)] transition-colors hover:bg-white/20"
                 >
                   <EditIcon className="h-4 w-4" />
                   Feedback
                 </Link>
                 <a
-                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-white/20 bg-white/10 px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--header-text)] transition-colors hover:bg-white/20"
                   href="https://github.com/Simplificatedd/SUSSplanner"
                   target="_blank"
                   rel="noreferrer"

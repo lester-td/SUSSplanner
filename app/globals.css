@@ -60,7 +60,7 @@
     --header-chip-active-bg: #ffffff;
     --header-chip-active-text: var(--suss-blue);
     --header-divider: rgb(255 255 255 / 0.14);
-    --footer-surface: color-mix(in srgb, var(--surface-container-low), var(--suss-grey) 18%);
+    --footer-surface: var(--header-surface);
     --primary-ring-soft: rgb(var(--suss-blue-rgb) / 0.22);
     --primary-ring-strong: rgb(var(--suss-blue-rgb) / 0.3);
     --now-line: var(--suss-red);
@@ -143,7 +143,7 @@
     --header-chip-active-bg: var(--primary);
     --header-chip-active-text: var(--on-primary);
     --header-divider: rgb(var(--suss-light-blue-rgb) / 0.18);
-    --footer-surface: #06162c;
+    --footer-surface: var(--header-surface);
     --primary-ring-soft: rgb(var(--suss-light-blue-rgb) / 0.42);
     --primary-ring-strong: rgb(var(--suss-light-blue-rgb) / 0.58);
     --now-line: var(--suss-red);
@@ -233,6 +233,18 @@
       font-size: 16px;
     }
   }
+}
+
+.app-footer-gap::after {
+  content: "";
+  display: block;
+  flex: none;
+  height: 1.5rem;
+  background: #fff;
+}
+
+:root[data-color-scheme="dark"] .app-footer-gap::after {
+  background: transparent;
 }
 
 .home-aero-frame,
