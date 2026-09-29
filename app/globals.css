@@ -269,12 +269,6 @@
   background-image: url("/brand/calendar-dark.png?v=2");
 }
 
-.home-current-week-chip {
-  border-color: rgb(0 30 96 / 0.18);
-  background: rgb(255 255 255 / 0.82);
-  color: #4a5261;
-}
-
 .home-aero-hero-art {
   bottom: -3rem;
   background-image: url("/home-campus-hero.png");
@@ -602,17 +596,9 @@
   color: var(--header-text);
 }
 
-:root[data-color-scheme="dark"] .app-wordmark--adaptive .app-wordmark__icon {
+:root[data-color-scheme="dark"] .app-wordmark--adaptive .app-wordmark__icon,
+:root[data-color-scheme="dark"] .home-week-logo {
   background-image: url("/brand/calendar-dark.png?v=2");
-}
-
-:root[data-color-scheme="dark"] .home-current-week-chip {
-  border-color: rgb(var(--suss-light-blue-rgb) / 0.3);
-  background: rgb(8 25 45 / 0.78);
-  color: var(--on-surface);
-  box-shadow:
-    0 3px 12px rgb(0 0 0 / 0.22),
-    inset 0 1px 0 rgb(255 255 255 / 0.08);
 }
 
 :root[data-color-scheme="dark"] .home-aero-hero input {
@@ -834,11 +820,27 @@
 @media (max-width: 639px) {
   .home-aero-hero {
     margin-inline: -0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: -0.15rem;
   }
 
   .home-aero-hero-copy {
     padding-inline: 1rem;
+  }
+
+  .home-hero-title {
+    display: block;
+  }
+
+  .home-hero-wordmark {
+    display: inline;
+  }
+
+  .home-hero-wordmark > span:not(.app-wordmark__icon) {
+    white-space: normal;
+  }
+
+  .home-hero-wordmark .app-wordmark__icon {
+    display: none;
   }
 
   .home-aero-hero-art {

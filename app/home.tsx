@@ -507,29 +507,27 @@ export default async function HomePage()
     >
       <div className="home-page grid gap-0 sm:gap-5 lg:gap-6">
         <section className="home-aero-hero relative" aria-labelledby="home-hero-title">
-          <div className="home-aero-hero-copy relative z-20 flex min-w-0 flex-col justify-center px-1 py-5 sm:px-2 sm:py-6 lg:min-h-[20rem] lg:w-[53%] lg:py-8">
-            <h1 id="home-hero-title" className="flex max-w-2xl flex-wrap items-center gap-x-3 gap-y-2 text-[27px] font-extrabold leading-[1.08] tracking-[-0.04em] text-[var(--on-surface)] sm:text-[34px] lg:text-[38px]">
-              <span>Welcome to</span>
+          <div className="home-aero-hero-copy relative z-20 flex min-w-0 flex-col justify-center px-1 py-4 sm:px-2 sm:py-6 lg:min-h-[20rem] lg:w-[53%] lg:py-8">
+            <h1 id="home-hero-title" className="home-hero-title flex max-w-2xl flex-wrap items-center gap-x-2 gap-y-2 text-[27px] font-extrabold leading-[1.08] tracking-[-0.04em] text-[var(--on-surface)] sm:text-[34px] lg:text-[38px]">
+              <span>Welcome to</span>{" "}
               <AppWordmark
                 appearance="adaptive"
-                className="h-10 gap-2.5 sm:h-12 lg:h-14"
+                className="home-hero-wordmark h-10 gap-2.5 sm:h-12 lg:h-14"
                 iconPosition="right"
                 size="hero"
               />
             </h1>
 
-            <div className="mt-4 flex max-w-2xl justify-end sm:mt-5 xl:hidden">
-              <span className="home-current-week-chip inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold leading-4 shadow-sm backdrop-blur sm:text-[12px]">
-                <CalendarWeekIcon className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
-                {currentWeekLabel}
-              </span>
-            </div>
+            <p className="mt-0.5 flex max-w-2xl items-center gap-1 text-[12px] font-semibold leading-5 text-[var(--on-surface-variant)] sm:mt-3 sm:gap-2 sm:text-[13px] xl:hidden">
+              <span aria-hidden="true" className="home-week-logo app-wordmark__icon block h-5 w-5 shrink-0 sm:hidden" />
+              {currentWeekLabel}
+            </p>
 
             <blockquote className="home-aero-quote mt-3 max-w-2xl border-l-2 border-[var(--secondary)] pl-4 text-[15px] font-medium italic leading-6 text-[var(--on-surface-variant)] sm:text-[17px] sm:leading-7 xl:mt-5">
               “{quoteOfTheDay}”
             </blockquote>
 
-            <div className="mt-4 max-w-2xl sm:mt-5">
+            <div className="mt-3 max-w-2xl sm:mt-5">
               <HomeSearch
                 items={searchItems}
                 placeholder="Search anything..."
