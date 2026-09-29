@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import {
   CalendarIcon,
+  CalendarWeekIcon,
   ColumnsIcon,
   DownloadIcon,
   EyeIcon,
@@ -19,7 +20,7 @@ import {
 } from "@/components/planner/icons";
 import { ActionButton, IconButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
-import { ClassScheduleModalContent } from "@/components/timetable/class-schedule-modal-content";
+import { ClassScheduleModalContent, formatClassScheduleTitle } from "@/components/timetable/class-schedule-modal-content";
 import { ExamCalendar, ExamCalendarOverviewRail } from "@/components/timetable/exam-calendar";
 import { SelectorRail } from "@/components/timetable/selector-rail";
 import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
@@ -445,7 +446,8 @@ export function ShareClient({
 
       <Modal
         open={Boolean(scheduleCourse)}
-        title="Class Schedule"
+        title={scheduleCourse ? formatClassScheduleTitle(formatClassGroupLabel(scheduleCourse.groupCode), scheduleCourse.events) : "Class Schedule"}
+        headerIcon={<CalendarWeekIcon className="h-5 w-5 shrink-0 text-[var(--primary)]" />}
         onClose={() => setScheduleCourse(null)}
         showCloseButton
         maxWidthClassName="max-w-4xl"
@@ -455,7 +457,6 @@ export function ShareClient({
           <ClassScheduleModalContent
             courseCode={scheduleCourse.courseCode}
             courseName={scheduleCourse.courseName}
-            classGroupLabel={formatClassGroupLabel(scheduleCourse.groupCode)}
             events={scheduleCourse.events}
             selectedSemesterId={selectedSemester?.semesterId ?? null}
           />

@@ -20,7 +20,7 @@
     --suss-grey-rgb: 214 210 196;
     --suss-lime-rgb: 208 223 0;
     --suss-light-blue-rgb: 154 219 232;
-    --background: #f7f5ef;
+    --background: #ffffff;
     --surface: #f7f5ef;
     --surface-bright: #fbfaf7;
     --surface-dim: #d8d3c6;
@@ -176,6 +176,7 @@
   }
 
   html {
+    background: var(--background);
     scroll-behavior: smooth;
     scrollbar-gutter: stable;
   }
@@ -189,12 +190,7 @@
   body {
     margin: 0;
     min-height: 100dvh;
-    background:
-      radial-gradient(1200px 640px at 0% -12%, rgb(var(--suss-blue-rgb) / 0.09), transparent 56%),
-      radial-gradient(900px 500px at 100% 0%, rgb(var(--suss-red-rgb) / 0.06), transparent 52%),
-      radial-gradient(880px 520px at 100% 100%, rgb(var(--suss-light-blue-rgb) / 0.12), transparent 50%),
-      radial-gradient(860px 520px at 0% 100%, rgb(var(--suss-lime-rgb) / 0.08), transparent 48%),
-      var(--background);
+    background: var(--background);
     color: var(--on-surface);
     font-family: var(--font-sans);
     line-height: 1.4;
@@ -320,7 +316,7 @@
 .app-aero-panel {
   border: 1px solid color-mix(in srgb, var(--suss-light-blue), var(--outline-variant) 48%);
   border-radius: 1rem;
-  background: rgb(255 255 255 / 0.82);
+  background: var(--background);
   box-shadow:
     0 10px 28px rgb(0 30 96 / 0.08),
     inset 0 1px 0 rgb(255 255 255 / 0.9);
@@ -347,6 +343,28 @@
 .home-aero-panel-heading--warning {
   background: #fff3cd;
   border-bottom-color: rgb(180 120 0 / 0.14);
+}
+
+.app-modal-header-close {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #000000;
+}
+
+.app-modal-header-close:hover {
+  border-color: #e9b0b1;
+  background: #fde6e7;
+  color: #9f2930;
+}
+
+:root[data-color-scheme="dark"] .app-modal-header-close {
+  color: var(--on-surface);
+}
+
+:root[data-color-scheme="dark"] .app-modal-header-close:hover {
+  border-color: #dba4a8;
+  background: #f3d6d9;
+  color: #85252c;
 }
 
 .feedback-form-field,
@@ -399,8 +417,8 @@
 
 .home-aero-shortcut,
 .app-aero-shortcut {
-  border-color: rgb(var(--suss-blue-rgb) / 0.12);
-  background: #f4f9fc;
+  border-color: var(--control-border);
+  background: var(--control-surface);
   box-shadow:
     0 6px 16px rgb(0 30 96 / 0.07),
     inset 0 1px 0 rgb(255 255 255 / 0.95);
@@ -485,9 +503,9 @@
 .home-upcoming-filter {
   flex: 0 0 auto;
   padding: 0.35rem 0.7rem;
-  border: 1px solid rgb(var(--suss-blue-rgb) / 0.2);
+  border: 1px solid var(--control-border);
   border-radius: 999px;
-  background: #f4f9fc;
+  background: var(--control-surface);
   color: var(--on-surface-variant);
   font-size: 0.7rem;
   font-weight: 700;
@@ -497,8 +515,8 @@
 }
 
 .home-upcoming-filter:hover {
-  border-color: rgb(var(--suss-blue-rgb) / 0.34);
-  background: #e9f5fb;
+  border-color: var(--primary);
+  background: var(--control-surface-hover);
   color: var(--primary);
   transform: translateY(-1px);
 }
@@ -738,8 +756,8 @@
 :root[data-color-scheme="dark"] .home-aero-shortcut,
 :root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n),
 :root[data-color-scheme="dark"] .app-aero-shortcut {
-  border-color: rgb(255 255 255 / 0.16);
-  background: linear-gradient(135deg, #303334, #2b2e2f);
+  border-color: var(--control-border);
+  background: var(--control-surface);
   box-shadow:
     0 5px 14px rgb(0 0 0 / 0.2),
     inset 0 1px 0 rgb(255 255 255 / 0.07);
@@ -749,8 +767,8 @@
 :root[data-color-scheme="dark"] .home-aero-shortcut:nth-child(n):focus-visible,
 :root[data-color-scheme="dark"] .app-aero-shortcut:hover,
 :root[data-color-scheme="dark"] .app-aero-shortcut:focus-visible {
-  border-color: rgb(var(--suss-light-blue-rgb) / 0.42);
-  background: linear-gradient(135deg, #393e40, #323739);
+  border-color: var(--primary);
+  background: var(--control-surface-hover);
   box-shadow:
     0 9px 22px rgb(0 0 0 / 0.27),
     inset 0 1px 0 rgb(255 255 255 / 0.1);
@@ -868,7 +886,7 @@
 
 :root[data-color-scheme="dark"] .home-aero-feedback {
   border-color: rgb(255 255 255 / 0.19);
-  background: linear-gradient(135deg, #303536, #282c2d 75%);
+  background: var(--background);
   box-shadow: var(--shadow-elev-1);
 }
 
@@ -991,7 +1009,7 @@
   }
 
   :root[data-color-scheme="dark"] .home-page .home-aero-feedback.home-main-section {
-    background: linear-gradient(135deg, #303536, #282c2d 75%);
+    background: var(--background);
   }
 
   .home-page .home-aero-feedback-bubble {
@@ -1120,20 +1138,21 @@
 .course-search-sticky-header {
   top: var(--course-search-navbar-height);
   padding-top: var(--course-search-sticky-header-padding-top);
-  background: var(--surface-container-lowest);
+  background: var(--background);
 }
 
 .course-search-filter-header {
-  isolation: isolate;
-  background: var(--surface-container-lowest);
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: calc(1rem - 1px) calc(1rem - 1px) 0 0;
 }
 
-.course-search-filter-header::before {
-  content: "";
-  position: absolute;
-  inset: -0.25rem -1rem 0;
-  z-index: -1;
-  background: inherit;
+.course-search-filter-body {
+  padding-inline: 0.75rem;
+}
+
+:root:not([data-color-scheme="dark"]) #course-filter-drawer {
+  background: var(--background);
 }
 
 @media (max-width: 767px) {
@@ -1343,14 +1362,10 @@
 }
 
 :root[data-color-scheme="dark"] .app-content-surface--planner-full-bleed {
-  background: var(--surface-container-lowest);
-}
-
-:root[data-color-scheme="dark"] .course-search-sticky-header {
   background: var(--background);
 }
 
-:root[data-color-scheme="dark"] .course-search-filter-header {
+:root[data-color-scheme="dark"] .course-search-sticky-header {
   background: var(--background);
 }
 
@@ -1395,6 +1410,45 @@
   background: var(--surface-container);
 }
 
+.class-schedule-table {
+  --schedule-table-heading: #e9eef2;
+  --schedule-table-row: #ffffff;
+  --schedule-table-stripe: #f3f6f8;
+  --schedule-table-exam: #e7edf1;
+  --schedule-table-border: #d8e1e7;
+
+  border-color: var(--schedule-table-border);
+  background: var(--schedule-table-row);
+}
+
+.class-schedule-table__heading {
+  background: var(--schedule-table-heading);
+}
+
+.class-schedule-table tbody tr:nth-child(odd) {
+  background: var(--schedule-table-row);
+}
+
+.class-schedule-table tbody tr:nth-child(even) {
+  background: var(--schedule-table-stripe);
+}
+
+.class-schedule-table tbody tr.class-schedule-table__exam {
+  background: var(--schedule-table-exam);
+}
+
+.class-schedule-table :is(th, td) {
+  border-color: var(--schedule-table-border);
+}
+
+:root[data-color-scheme="dark"] .class-schedule-table {
+  --schedule-table-heading: #454c51;
+  --schedule-table-row: #30363a;
+  --schedule-table-stripe: #383f43;
+  --schedule-table-exam: #485157;
+  --schedule-table-border: #4e585e;
+}
+
 :root[data-color-scheme="dark"] .app-navbar {
   border-color: var(--header-divider);
   background: linear-gradient(180deg, color-mix(in srgb, var(--header-surface), #ffffff 4%), var(--header-surface));
@@ -1434,13 +1488,13 @@
 }
 
 :root[data-color-scheme="dark"] .app-action-button--ghost {
-  border-color: var(--outline);
-  background: transparent;
+  border-color: var(--control-border);
+  background: var(--control-surface);
   color: var(--on-surface);
 }
 
 :root[data-color-scheme="dark"] .app-action-button--ghost:hover {
-  background: var(--surface-container-high);
+  background: var(--control-surface-hover);
   color: var(--on-surface);
 }
 
@@ -1582,7 +1636,7 @@
 
 .planner-continuation-card {
   --planner-continuation-border: rgb(var(--suss-blue-rgb) / 0.18);
-  --planner-continuation-bg: color-mix(in srgb, var(--surface-container-lowest), var(--suss-grey) 18%);
+  --planner-continuation-bg: var(--background);
   --planner-continuation-accent: rgb(var(--suss-blue-rgb) / 0.22);
 
   border-color: var(--planner-continuation-border);
@@ -1602,7 +1656,7 @@
 
 :root[data-color-scheme="dark"] .planner-continuation-card {
   --planner-continuation-border: rgb(var(--suss-light-blue-rgb) / 0.28);
-  --planner-continuation-bg: color-mix(in srgb, var(--surface-container), #000 8%);
+  --planner-continuation-bg: var(--background);
   --planner-continuation-accent: rgb(var(--suss-light-blue-rgb) / 0.35);
 }
 
@@ -1644,8 +1698,8 @@
 }
 
 :root[data-color-scheme="dark"] .planner-secondary-action {
-  border-color: var(--outline);
-  background: transparent;
+  border-color: var(--control-border);
+  background: var(--control-surface);
 }
 
 :root[data-color-scheme="dark"] .planner-progress-track {
@@ -2061,11 +2115,11 @@
   .feedback-info-tile {
     box-shadow: none;
   }
+}
 
-  .settings-page .settings-row + .settings-row {
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--outline-variant);
-  }
+.settings-page .settings-row + .settings-row {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--outline-variant);
 }
 
 /* Neutral controls keep a subtle blue outline in both color schemes. */
@@ -2087,7 +2141,7 @@
   accent-color: var(--primary);
 }
 
-:is(.app-segmented-control, .calculator-segmented-control, .planner-segmented-control) {
+:is(.app-segmented-control, .app-control-track, .calculator-segmented-control, .planner-segmented-control) {
   border-color: var(--control-border);
   background-color: var(--control-track);
 }
@@ -2109,4 +2163,277 @@
 
 :root[data-color-scheme="dark"] .home-upcoming-filter[aria-pressed="false"]:hover {
   background: var(--control-surface-hover);
+}
+
+/* Secondary buttons and links use the same neutral control surface as fields. */
+:is(button, a):is(
+  [class~="bg-[var(--surface-container-lowest)]"],
+  [class~="bg-[var(--surface-container-low)]"],
+  [class~="bg-[var(--surface-container)]"],
+  [class~="border-[var(--outline-variant)]"],
+  [class~="border-[var(--brand-divider)]"]
+) {
+  background-color: var(--control-surface);
+}
+
+:is(button, a):is(
+  [class~="border-[var(--outline-variant)]"],
+  [class~="border-[var(--brand-divider)]"]
+) {
+  border-color: var(--control-border);
+}
+
+:is(button, a):is(
+  [class~="hover:bg-[var(--surface-container-high)]"],
+  [class~="hover:bg-[var(--surface-container-low)]"]
+):hover:not(:disabled) {
+  background-color: var(--control-surface-hover);
+}
+
+:is(button, a)[class~="hover:border-[var(--brand-divider)]"]:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+:root[data-color-scheme="dark"] button.app-choice-button,
+:root[data-color-scheme="dark"] button.app-choice-button:hover {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Page canvases and card bodies use the base page color; bands keep surface tokens. */
+:root :is(.app-content-surface, .timetable-page, .timetable-canvas-shell) {
+  background-color: var(--background);
+}
+
+:root[data-color-scheme="dark"] :is(.app-content-surface, .timetable-page, .timetable-canvas-shell) {
+  background-color: var(--background);
+}
+
+:root :is(
+  .home-aero-panel,
+  .app-aero-panel,
+  .home-feature-card,
+  .home-shortcut-card,
+  .app-modal-surface,
+  .calculator-panel,
+  .planner-control-card,
+  .planner-drop-zone:not(.planner-drop-zone--active),
+  .planner-course-card,
+  .planner-summary-stat,
+  .planner-progress-card,
+  .planner-continuation-card,
+  .timetable-selected-card,
+  .timetable-alerts-card,
+  .class-schedule-summary-card,
+  .exam-calendar__window
+) {
+  background-color: var(--background);
+}
+
+:root[data-color-scheme="dark"] :is(
+  .home-aero-panel,
+  .app-aero-panel,
+  .home-feature-card,
+  .home-shortcut-card,
+  .app-modal-surface,
+  .calculator-panel,
+  .planner-control-card,
+  .planner-drop-zone:not(.planner-drop-zone--active),
+  .planner-course-card,
+  .planner-summary-stat,
+  .planner-progress-card,
+  .planner-continuation-card,
+  .timetable-selected-card,
+  .timetable-alerts-card,
+  .class-schedule-summary-card,
+  .exam-calendar__window
+) {
+  background-color: var(--background);
+}
+
+/* Course cards share the same blue headers and outlines. */
+.course-detail-facts {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-elev-1);
+  backdrop-filter: none;
+}
+
+@media (min-width: 640px) {
+  .course-detail-stat + .course-detail-stat {
+    border-left: 1px solid var(--course-detail-card-border);
+  }
+}
+
+.course-detail-stat__header {
+  min-height: 1.75rem;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .course-detail-stat__header {
+    padding-inline: 0.75rem;
+  }
+}
+
+:root[data-color-scheme="dark"] .course-detail-facts {
+  box-shadow: var(--shadow-elev-1);
+}
+
+.course-detail-assessment__header,
+.course-detail-classes__header {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.course-detail-assessment__body {
+  padding: 0 0.75rem;
+}
+
+.course-detail-assessment__body > :not(.course-detail-assessment__list) {
+  margin-block: 0.75rem;
+}
+
+.course-detail-assessment__list > * + * {
+  border-top: 1px solid var(--outline-variant);
+}
+
+.course-detail-classes__body {
+  padding: 0.75rem;
+}
+
+/* Course cards share one outline and body surface. */
+.course-detail-page {
+  --course-detail-card-border: #9eb8c4;
+  --course-detail-card-body: var(--background);
+  --course-detail-mobile-fact-bg: #e1f3fa;
+}
+
+:root[data-color-scheme="dark"] .course-detail-page {
+  --course-detail-card-border: #66818d;
+  --course-detail-card-body: #202020;
+  --course-detail-mobile-fact-bg: #203b49;
+}
+
+.course-detail-page :is(.course-detail-facts, .course-detail-stat, .course-detail-assessment, .course-detail-classes),
+:root[data-color-scheme="dark"] .course-detail-page :is(.course-detail-facts, .course-detail-stat, .course-detail-assessment, .course-detail-classes) {
+  border-color: var(--course-detail-card-border);
+  background-color: var(--course-detail-card-body);
+}
+
+.course-search-page .course-search-filter-card {
+  border-color: #9eb8c4;
+  background-color: var(--background);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+:root[data-color-scheme="dark"] .course-search-page .course-search-filter-card {
+  border-color: #66818d;
+  background-color: #202020;
+}
+
+@media (max-width: 767px) {
+  #course-filter-drawer .course-search-filter-card {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  #course-filter-drawer .course-search-filter-header {
+    padding-inline: 1rem;
+    border-radius: 0;
+  }
+
+  #course-filter-drawer .course-search-filter-body {
+    padding-inline: 1rem;
+  }
+}
+
+/* On phones, the course controls become edge-to-edge sections. */
+@media (max-width: 639px) {
+  .course-detail-intro {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .course-detail-facts,
+  .course-detail-side {
+    margin-inline: -0.75rem;
+  }
+
+  .course-detail-page .course-detail-facts,
+  :root[data-color-scheme="dark"] .course-detail-page .course-detail-facts {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .course-detail-page .course-detail-facts .course-detail-stat,
+  :root[data-color-scheme="dark"] .course-detail-page .course-detail-facts .course-detail-stat {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: space-between;
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--outline-variant);
+    border-radius: 0;
+    background: var(--course-detail-mobile-fact-bg);
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .course-detail-page .course-detail-facts .course-detail-stat:last-child,
+  :root[data-color-scheme="dark"] .course-detail-page .course-detail-facts .course-detail-stat:last-child {
+    border-bottom: 1px solid var(--outline-variant);
+  }
+
+  .course-detail-stat__header,
+  :root[data-color-scheme="dark"] .course-detail-stat__header {
+    min-height: 0;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .course-detail-stat__header span:last-child {
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+
+  .course-detail-stat__value {
+    min-height: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    text-align: right;
+  }
+
+  .course-detail-page .course-detail-assessment,
+  :root[data-color-scheme="dark"] .course-detail-page .course-detail-assessment {
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--outline-variant);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .course-detail-page .course-detail-classes,
+  :root[data-color-scheme="dark"] .course-detail-page .course-detail-classes {
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--outline-variant);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
 }

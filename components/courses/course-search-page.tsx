@@ -684,11 +684,11 @@ export function CourseSearchPage({
   function renderFilterSettings()
   {
     return (
-      <>
-        <div className="course-search-filter-header sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-[var(--brand-divider)] pb-2 pt-2">
+      <article className="app-aero-panel course-search-filter-card">
+        <div className="app-aero-panel-heading course-search-filter-header sticky top-0 z-20 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <SettingsIcon className="h-[18px] w-[18px] text-[var(--primary)]" />
-            <h2 className="text-[16px] font-semibold leading-5 text-[var(--on-surface)]">Search Settings</h2>
+            <SettingsIcon className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+            <h2 className="text-[16px] font-semibold leading-5">Search Settings</h2>
           </div>
           <button
             type="button"
@@ -700,7 +700,7 @@ export function CourseSearchPage({
           </button>
         </div>
 
-        <div className="divide-y divide-[var(--brand-divider)]">
+        <div className="course-search-filter-body divide-y divide-[var(--brand-divider)]">
           <FilterGroup title="Offered In">
             {semesters.map((semester) => (
               <CheckboxRow
@@ -817,7 +817,7 @@ export function CourseSearchPage({
             ))}
           </FilterGroup>
         </div>
-      </>
+      </article>
     );
   }
 
@@ -943,7 +943,7 @@ export function CourseSearchPage({
           ) : null}
         </section>
 
-        <aside className="hidden border-l border-[var(--brand-divider)] pl-2.5 md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-150px)] md:self-start md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:pr-1">
+        <aside className="hidden md:sticky md:top-[90px] md:mt-0 md:block md:max-h-[calc(100dvh-150px)] md:self-start md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain md:px-1">
           {renderFilterSettings()}
         </aside>
       </div>
@@ -964,7 +964,7 @@ export function CourseSearchPage({
           filtersOpen ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
       >
-        <div className="max-h-[min(78dvh,42rem)] overflow-x-hidden overflow-y-auto px-4 pb-24 pt-4">
+        <div className="max-h-[min(78dvh,42rem)] overflow-x-hidden overflow-y-auto pb-24">
           {filtersOpen ? renderFilterSettings() : null}
         </div>
       </div>

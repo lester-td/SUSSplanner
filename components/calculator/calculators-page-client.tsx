@@ -23,7 +23,7 @@ export function CalculatorsPageClient()
           Calculators
         </h1>
         <div
-          className="inline-grid h-12 w-full grid-cols-2 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5 sm:w-auto"
+          className="app-control-track inline-grid h-12 w-full grid-cols-2 rounded-[1rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5 sm:w-auto"
           role="tablist"
           aria-label="Calculator type"
         >
@@ -39,7 +39,7 @@ export function CalculatorsPageClient()
                 onClick={() => setMode(item.id)}
                 className={`min-w-[7rem] rounded-[0.8rem] px-4 text-[14px] font-semibold leading-5 transition-colors ${
                   isActive
-                    ? "calculator-primary-action bg-[var(--primary)] text-on-primary"
+                    ? "calculator-primary-action app-choice-button bg-[var(--primary)] text-on-primary"
                     : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
                 }`}
               >

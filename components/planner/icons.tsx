@@ -26,6 +26,7 @@ import {
   TbLayersIntersect,
   TbLink,
   TbList,
+  TbListCheck,
   TbMail,
   TbMapPin,
   TbMoon,
@@ -151,6 +152,11 @@ export function SchoolIcon({ className }: IconProps)
 export function ListIcon({ className }: IconProps)
 {
   return renderIcon(TbList, className);
+}
+
+export function AssessmentIcon({ className }: IconProps)
+{
+  return renderIcon(TbListCheck, className);
 }
 
 export function ClockIcon({ className }: IconProps)

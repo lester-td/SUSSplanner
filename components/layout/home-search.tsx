@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Fuse from "fuse.js";
 
-import { ArrowUpRightIcon, SearchIcon } from "@/components/planner/icons";
+import { SearchIcon } from "@/components/planner/icons";
 
 export type HomeSearchItem = {
   label: string;
@@ -71,6 +71,39 @@ function isInternalLink(href: string)
 function isMailLink(href: string)
 {
   return href.startsWith("mailto:");
+}
+
+function getResultType(href: string)
+{
+  if (isMailLink(href))
+  {
+    return "Email";
+  }
+
+  if (isInternalLink(href))
+  {
+    if (href.startsWith("/#upcoming-date-"))
+    {
+      return "Upcoming Dates";
+    }
+
+    return href === "/courses" || href.startsWith("/courses/") || href.startsWith("/courses?")
+      ? "Course Search"
+      : "SUSS Planner";
+  }
+
+  try
+  {
+    const hostname = new URL(href).hostname.toLowerCase();
+
+    return hostname.includes("suss")
+      ? "SUSS Website"
+      : "External Link";
+  }
+  catch
+  {
+    return "External Link";
+  }
 }
 
 export function HomeSearch({
@@ -268,8 +301,7 @@ export function HomeSearch({
           aria-label="Search suggestions"
         >
           {visibleItems.map((item) => {
-            const isExternal = !isInternalLink(item.href);
-            const isCourseSearchSuggestion = courseSearchItem?.href === item.href;
+            const resultType = getResultType(item.href);
 
             return (
               <button
@@ -278,7 +310,7 @@ export function HomeSearch({
                 onClick={() => openItem(item)}
                 className="group flex min-h-[3.5rem] w-full items-start justify-between gap-2.5 border-b border-[var(--outline-variant)] px-3 py-2.5 text-left transition last:border-b-0 hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--primary-ring-soft)] sm:min-h-[4.25rem] sm:gap-3 sm:px-4 sm:py-3"
               >
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block text-[13px] font-bold leading-5 text-[var(--on-surface)] group-hover:text-[var(--primary)] sm:text-[14px]">
                     {item.label}
                   </span>
@@ -286,11 +318,9 @@ export function HomeSearch({
                     {item.description}
                   </span>
                 </span>
-                {isExternal ? (
-                  <ArrowUpRightIcon className="h-3.5 w-3.5 shrink-0 text-[var(--on-surface-variant)] group-hover:text-[var(--primary)] sm:h-4 sm:w-4" />
-                ) : isCourseSearchSuggestion ? (
-                  <SearchIcon className="h-3.5 w-3.5 shrink-0 text-[var(--on-surface-variant)] group-hover:text-[var(--primary)] sm:h-4 sm:w-4" />
-                ) : null}
+                <span className="shrink-0 self-start whitespace-nowrap text-[10px] font-semibold leading-5 text-[var(--on-surface-variant)]">
+                  {resultType}
+                </span>
               </button>
             );
           })}

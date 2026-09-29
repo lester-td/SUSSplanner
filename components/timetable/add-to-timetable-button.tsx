@@ -96,7 +96,11 @@ export function AddToTimetableButton({
 })
 {
   const [added, setAdded] = useState(false);
-  const [targetSemesterId, setTargetSemesterId] = useState<number | null>(null);
+  const [targetSemesterId, setTargetSemesterId] = useState<number | null>(() => resolveTargetSemesterId({
+    offeredSemesters: course.offeredSemesters,
+    preferredSemesterId,
+    fallbackSemesterId,
+  }));
   const [busy, setBusy] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const courseCode = useMemo(() => normalizeCourseCode(course.courseCode), [course.courseCode]);

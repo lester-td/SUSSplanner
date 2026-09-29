@@ -607,7 +607,7 @@ export function OcasCalculatorClient()
                         onClick={() => setSelectedScheduleType(scheduleType)}
                         className={`rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${
                           selectedScheduleType === scheduleType
-                            ? "calculator-primary-action bg-[var(--primary)] text-on-primary"
+                            ? "calculator-primary-action app-choice-button bg-[var(--primary)] text-on-primary"
                             : "calculator-chip bg-[var(--brand-chip-bg)] text-[var(--primary)] hover:bg-[var(--surface-container-high)]"
                         }`}
                       >
@@ -676,7 +676,7 @@ export function OcasCalculatorClient()
                                     </span>
                                   </div>
                                   <div className="flex min-w-0 items-center justify-start sm:shrink-0 sm:justify-end">
-                                    <div className="inline-flex rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-0.5 text-[11px] font-semibold leading-4">
+                                    <div className="app-control-track inline-flex rounded-full border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-0.5 text-[11px] font-semibold leading-4">
                                       <button
                                         type="button"
                                         onClick={() => setAssessmentScoreInput(component.componentId, (current) => ({
@@ -685,7 +685,7 @@ export function OcasCalculatorClient()
                                         }))}
                                         className={`rounded-full px-1.5 py-1 transition-colors sm:px-2.5 ${
                                           isPercentageMode
-                                            ? "calculator-primary-action bg-[var(--primary)] text-on-primary"
+                                            ? "calculator-primary-action app-choice-button bg-[var(--primary)] text-on-primary"
                                             : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
                                         }`}
                                       >
@@ -700,7 +700,7 @@ export function OcasCalculatorClient()
                                         className={`rounded-full px-1.5 py-1 transition-colors sm:px-2.5 ${
                                           isPercentageMode
                                             ? "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
-                                            : "calculator-primary-action bg-[var(--primary)] text-on-primary"
+                                            : "calculator-primary-action app-choice-button bg-[var(--primary)] text-on-primary"
                                         }`}
                                       >
                                         Score

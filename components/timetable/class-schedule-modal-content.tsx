@@ -6,6 +6,12 @@ import { ArrowUpRightIcon } from "@/components/planner/icons";
 import { formatEventDate, formatTimeRange } from "@/lib/timetable/date-utils";
 import type { ClassEventWithWeekRecord } from "@/lib/timetable/types";
 
+export function formatClassScheduleTitle(classGroupLabel: string, events: ClassEventWithWeekRecord[])
+{
+  const sessionCount = events.filter((event) => event.eventKind === "CLASS").length;
+  return classGroupLabel + " — " + sessionCount + " " + (sessionCount === 1 ? "Session" : "Sessions");
+}
+
 function formatExamWeekLabel(event: ClassEventWithWeekRecord)
 {
   if (event.weekLabel?.trim())
@@ -34,14 +40,12 @@ function formatExamDeliveryMode(event: ClassEventWithWeekRecord)
 export function ClassScheduleModalContent({
   courseCode,
   courseName,
-  classGroupLabel,
   events,
   selectedSemesterId,
   showViewCourseButton = true,
 }: {
   courseCode: string;
   courseName: string | null;
-  classGroupLabel: string;
   events: ClassEventWithWeekRecord[];
   selectedSemesterId?: number | null;
   showViewCourseButton?: boolean;
@@ -65,18 +69,6 @@ export function ClassScheduleModalContent({
             <span className="text-[22px] font-black leading-none tracking-[-0.04em] text-[var(--primary)] sm:text-[24px]">{courseCode}</span>
             <span className="text-[19px] font-semibold leading-[1.08] tracking-[-0.02em] text-[var(--on-surface)] sm:text-[22px]">{courseName ?? "Untitled course"}</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="class-schedule-summary-card dark-neutral-accent-card min-w-0 border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-2 py-1.5 sm:px-3 sm:py-2">
-              <p className="text-[10px] font-semibold uppercase leading-3 tracking-[0.04em] text-[var(--on-surface-variant)] sm:text-[11px] sm:leading-4 sm:tracking-[0.08em]">Class Group</p>
-              <p className="mt-1 min-w-0 break-words text-[13px] font-semibold leading-5 text-[var(--on-surface)] sm:text-[16px] sm:leading-6">{classGroupLabel}</p>
-            </div>
-            <div className="class-schedule-summary-card dark-neutral-accent-card min-w-0 border-l-2 border-[var(--primary)] bg-[var(--surface-container-low)] px-2 py-1.5 sm:px-3 sm:py-2">
-              <p className="text-[10px] font-semibold uppercase leading-3 tracking-[0.04em] text-[var(--on-surface-variant)] sm:text-[11px] sm:leading-4 sm:tracking-[0.08em]">Sessions</p>
-              <p className="mt-1 min-w-0 break-words text-[13px] font-semibold leading-5 text-[var(--on-surface)] sm:text-[16px] sm:leading-6">
-                {classEvents.length} {classEvents.length === 1 ? "session" : "sessions"}
-              </p>
-            </div>
-          </div>
         </div>
         {showViewCourseButton ? (
           <div className="shrink-0">
@@ -96,9 +88,9 @@ export function ClassScheduleModalContent({
           No class schedule events for this course.
         </p>
       ) : (
-        <div className="-mx-2 overflow-x-auto border border-[var(--outline-variant)] bg-[var(--surface-container-low)] sm:mx-0">
+        <div className="class-schedule-table -mx-2 overflow-x-auto border sm:mx-0">
           <table className="min-w-full border-collapse text-left text-[13px] leading-5">
-            <thead className="bg-[var(--surface-container-high)] text-[var(--on-surface)]">
+            <thead className="class-schedule-table__heading text-[var(--on-surface)]">
               <tr>
                 <th className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">Week</th>
                 <th className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">Date</th>
@@ -108,7 +100,7 @@ export function ClassScheduleModalContent({
             </thead>
             <tbody>
               {classEvents.map((event) => (
-                <tr key={event.eventId} className="text-[var(--on-surface)] odd:bg-[var(--surface)]">
+                <tr key={event.eventId} className="text-[var(--on-surface)]">
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2">{event.weekLabel ?? "-"}</td>
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2">{formatEventDate(event.eventDate)}</td>
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2">{formatTimeRange(event.startTime, event.endTime)}</td>
@@ -116,7 +108,7 @@ export function ClassScheduleModalContent({
                 </tr>
               ))}
               {examEvent ? (
-                <tr className="bg-[var(--surface-container-high)] text-[var(--on-surface)]">
+                <tr className="class-schedule-table__exam text-[var(--on-surface)]">
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">{formatExamWeekLabel(examEvent)}</td>
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-medium">{formatEventDate(examEvent.eventDate)}</td>
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-medium">{formatTimeRange(examEvent.startTime, examEvent.endTime)}</td>
