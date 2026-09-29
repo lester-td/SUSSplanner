@@ -51,6 +51,8 @@
     --brand-chip-bg: color-mix(in srgb, var(--suss-light-blue), #fff 74%);
     --rail-week-bg: color-mix(in srgb, var(--suss-grey) 30%, #fff 70%);
     --today-column-bg: color-mix(in srgb, var(--suss-light-blue), #fff 86%);
+    --today-column-stripe-a: var(--today-column-bg);
+    --today-column-stripe-b: color-mix(in srgb, var(--today-column-bg), #000 3%);
     --timetable-stripe-a: var(--surface-container-lowest);
     --timetable-stripe-b: color-mix(in srgb, var(--surface-container-lowest), #000 3%);
     --header-surface: var(--suss-blue);
@@ -141,7 +143,9 @@
     --brand-divider: rgb(var(--suss-light-blue-rgb) / 0.18);
     --brand-chip-bg: color-mix(in srgb, var(--suss-light-blue), #000 60%);
     --rail-week-bg: #181818;
-    --today-column-bg: color-mix(in srgb, var(--suss-light-blue), #fff 90%);
+    --today-column-bg: color-mix(in srgb, var(--suss-light-blue) 18%, var(--surface-container-lowest));
+    --today-column-stripe-a: var(--today-column-bg);
+    --today-column-stripe-b: color-mix(in srgb, var(--today-column-bg), #fff 4%);
     --timetable-stripe-a: var(--surface-container-lowest);
     --timetable-stripe-b: color-mix(in srgb, var(--surface-container-lowest), #fff 4%);
     --header-surface: #06162c;

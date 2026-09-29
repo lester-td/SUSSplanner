@@ -739,7 +739,9 @@ export function TimetableCanvas({
                     style={{
                       top: `${((segment.startMinutes - START_MINUTES) / rangeMinutes) * 100}%`,
                       height: `${((segment.endMinutes - segment.startMinutes) / rangeMinutes) * 100}%`,
-                      backgroundColor: segment.isEvenHour ? "var(--timetable-stripe-a)" : "var(--timetable-stripe-b)",
+                      backgroundColor: segment.isEvenHour
+                        ? (showNowLine && todayVisibleIndex === dayIndex ? "var(--today-column-stripe-a)" : "var(--timetable-stripe-a)")
+                        : (showNowLine && todayVisibleIndex === dayIndex ? "var(--today-column-stripe-b)" : "var(--timetable-stripe-b)"),
                       opacity: 0.88,
                     }}
                   />
