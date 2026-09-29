@@ -329,6 +329,49 @@
   border-bottom-color: rgb(180 120 0 / 0.14);
 }
 
+.feedback-info-tile {
+  border-color: rgb(var(--suss-blue-rgb) / 0.16);
+  box-shadow:
+    0 7px 20px rgb(var(--suss-blue-rgb) / 0.07),
+    inset 0 1px 0 rgb(255 255 255 / 0.72);
+}
+
+.feedback-info-tile--details {
+  --feedback-details-accent: #247a42;
+  border-color: rgb(36 122 66 / 0.24);
+  background:
+    radial-gradient(120% 95% at 100% 0%, rgb(103 181 112 / 0.25), transparent 65%),
+    linear-gradient(135deg, #f8fcf5, #e3f3e8);
+}
+
+.feedback-info-tile--details li::marker {
+  color: var(--feedback-details-accent);
+}
+
+.feedback-info-tile--issues {
+  border-color: rgb(var(--suss-red-rgb) / 0.16);
+  background:
+    radial-gradient(120% 95% at 100% 0%, rgb(var(--suss-red-rgb) / 0.1), transparent 65%),
+    linear-gradient(135deg, #fffaf8, #f7ece9);
+}
+
+.feedback-info-icon {
+  border: 1px solid rgb(var(--suss-blue-rgb) / 0.12);
+  background: rgb(255 255 255 / 0.78);
+  color: var(--primary);
+  box-shadow: 0 3px 10px rgb(var(--suss-blue-rgb) / 0.08);
+}
+
+.feedback-info-tile--details .feedback-info-icon {
+  border-color: rgb(36 122 66 / 0.18);
+  color: var(--feedback-details-accent);
+}
+
+.feedback-info-tile--issues .feedback-info-icon {
+  border-color: rgb(var(--suss-red-rgb) / 0.14);
+  color: var(--accent);
+}
+
 .home-aero-shortcut,
 .app-aero-shortcut {
   border-color: rgb(var(--suss-blue-rgb) / 0.12);
@@ -527,7 +570,7 @@
   background: #eaf7f5;
 }
 
-.home-aero-feedback-button {
+.app-feedback-button {
   border-color: rgb(var(--suss-blue-rgb) / 0.65);
   background: #123b7a;
   color: #fff;
@@ -536,12 +579,18 @@
     inset 0 1px 0 rgb(255 255 255 / 0.2);
 }
 
-.home-aero-feedback-button:hover {
+.app-feedback-button:hover:not(:disabled) {
   border-color: rgb(var(--suss-blue-rgb) / 0.9);
   background: #20559e;
   box-shadow:
     0 7px 18px rgb(0 30 96 / 0.25),
     inset 0 1px 0 rgb(255 255 255 / 0.24);
+}
+
+.app-feedback-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
 }
 
 .home-aero-feedback-bubble {
@@ -628,6 +677,37 @@
 :root[data-color-scheme="dark"] .home-aero-panel-heading--warning {
   border-bottom-color: rgb(248 211 106 / 0.16);
   background: #403821;
+}
+
+:root[data-color-scheme="dark"] .feedback-info-tile {
+  box-shadow:
+    0 7px 20px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+:root[data-color-scheme="dark"] .feedback-info-tile--details {
+  --feedback-details-accent: #a1d8a8;
+  border-color: rgb(125 197 137 / 0.24);
+  background:
+    radial-gradient(120% 95% at 100% 0%, rgb(103 181 112 / 0.16), transparent 65%),
+    linear-gradient(135deg, #263b2e, #1e2d25);
+}
+
+:root[data-color-scheme="dark"] .feedback-info-tile--issues {
+  border-color: rgb(var(--suss-red-rgb) / 0.28);
+  background:
+    radial-gradient(120% 95% at 100% 0%, rgb(var(--suss-red-rgb) / 0.18), transparent 65%),
+    linear-gradient(135deg, #352e35, #292930);
+}
+
+:root[data-color-scheme="dark"] .feedback-info-icon {
+  border-color: rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.12);
+}
+
+:root[data-color-scheme="dark"] .feedback-info-tile--issues .feedback-info-icon {
+  color: var(--danger-text);
 }
 
 :root[data-color-scheme="dark"] .home-aero-shortcut,
@@ -773,7 +853,7 @@
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
 }
 
-:root[data-color-scheme="dark"] .home-aero-feedback-button {
+:root[data-color-scheme="dark"] .app-feedback-button {
   border-color: rgb(var(--suss-light-blue-rgb) / 0.62);
   background: #91cad7;
   color: #0b1b24;
@@ -782,7 +862,7 @@
     inset 0 1px 0 rgb(255 255 255 / 0.34);
 }
 
-:root[data-color-scheme="dark"] .home-aero-feedback-button:hover {
+:root[data-color-scheme="dark"] .app-feedback-button:hover:not(:disabled) {
   border-color: rgb(var(--suss-light-blue-rgb) / 0.82);
   background: #a9dbe4;
   box-shadow:
@@ -1944,7 +2024,8 @@
 }
 
 @media (max-width: 639px) {
-  .settings-page .settings-section {
+  .settings-page .settings-section,
+  .feedback-page .feedback-section {
     overflow: visible;
     border: 0;
     border-top: 1px solid var(--outline-variant);
@@ -1954,9 +2035,14 @@
     backdrop-filter: none;
   }
 
-  :root[data-color-scheme="dark"] .settings-page .settings-section {
+  :root[data-color-scheme="dark"] .settings-page .settings-section,
+  :root[data-color-scheme="dark"] .feedback-page .feedback-section {
     border-color: var(--outline-variant);
     background: transparent;
+    box-shadow: none;
+  }
+
+  .feedback-info-tile {
     box-shadow: none;
   }
 

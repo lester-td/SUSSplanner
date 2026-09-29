@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { CheckIcon, ContinueIcon } from "@/components/planner/icons";
+import { ArrowUpRightIcon, CheckIcon } from "@/components/planner/icons";
 
 const feedbackTypes = [
   "Bug",
@@ -204,7 +204,7 @@ export function FeedbackForm()
           id="feedback-type"
           value={type}
           onChange={(event) => setType(event.target.value as FeedbackType)}
-          className="min-h-11 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[15px] font-semibold leading-6 text-[var(--on-surface)] outline-none transition focus:border-[var(--primary)] focus:ring-2 focus:ring-[color:var(--primary)]/20"
+          className="min-h-11 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[15px] font-normal leading-6 text-[var(--on-surface)] outline-none transition focus:border-[var(--primary)] focus:ring-2 focus:ring-[color:var(--primary)]/20"
         >
           {feedbackTypes.map((option) => (
             <option key={option} value={option}>{option}</option>
@@ -277,10 +277,10 @@ export function FeedbackForm()
         <button
           type="submit"
           disabled={!canSubmit}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[0.5rem] bg-[var(--primary)] px-4 py-2 text-[14px] font-bold leading-5 text-[var(--on-primary)] transition hover:bg-[var(--primary-container)] hover:text-[var(--on-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="app-feedback-button inline-flex min-h-11 items-center justify-center gap-2 rounded-full border px-4 py-2 text-[13px] font-bold leading-5 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
         >
-          {status === "success" ? <CheckIcon className="h-4 w-4" /> : <ContinueIcon className="h-4 w-4" />}
           {status === "submitting" ? "Sending..." : "Send feedback"}
+          {status === "success" ? <CheckIcon className="h-4 w-4" /> : <ArrowUpRightIcon className="h-4 w-4" />}
         </button>
       </div>
     </form>

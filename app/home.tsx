@@ -583,7 +583,7 @@ export default async function HomePage()
                 <Link
                   prefetch
                   href="/feedback"
-                  className="home-aero-feedback-button mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-bold leading-4 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
+                  className="app-feedback-button mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-bold leading-4 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
                 >
                   Send feedback
                   <ArrowUpRightIcon className="h-4 w-4" />
