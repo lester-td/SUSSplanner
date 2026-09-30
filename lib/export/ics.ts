@@ -30,8 +30,9 @@ export function buildIcs(semester: SemesterRecord | null, events: TimetableEvent
 
   for (const event of events)
   {
-    const summary = `${event.courseCode} ${event.groupCodeType} ${event.groupCode}${event.eventKind === "EXAM" ? " EXAM" : ""}`;
+    const summary = `${event.courseCode} (${event.groupCode})`;
     const description = [
+      `Course code: ${event.courseCode}`,
       event.courseName ? `Course: ${event.courseName}` : null,
       `Kind: ${event.eventKind}`,
       event.eventMode ? `Mode: ${event.eventMode}` : null,

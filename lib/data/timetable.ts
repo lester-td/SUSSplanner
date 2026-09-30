@@ -1,6 +1,7 @@
 import "server-only";
 
 import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
+import { getExamAssessmentMode } from "@/lib/timetable/exam-status";
 import { buildSharedClassIdentifier } from "@/lib/timetable/share-url";
 import type {
   SharedClassIdentifier,
@@ -86,11 +87,14 @@ export async function getTimetableDataFromClassIdentifiers(
       schoolName: matchingClass.schoolName,
       shareKey,
     } satisfies TimetableEventRecord));
-    const hasEca = courseByCourseCode.get(selectedClass.courseCode)?.assessments.some((assessment) => (
+    const assessments = courseByCourseCode.get(selectedClass.courseCode)?.assessments.filter((assessment) => (
       assessment.scheduleType === selectedClass.scheduleType
-      && [assessment.componentName, assessment.assessmentMode]
+    )) ?? [];
+    const hasEca = assessments.some((assessment) => (
+      [assessment.componentName, assessment.assessmentMode]
         .some((value) => value?.toLocaleLowerCase("en-SG").includes("eca"))
-    )) ?? false;
+    ));
+    const examAssessmentMode = getExamAssessmentMode(assessments);
 
     events.push(...classEvents);
     resolvedSelections.push({
@@ -99,6 +103,7 @@ export async function getTimetableDataFromClassIdentifiers(
       identifier: selectedClass,
       shareKey,
       hasEca,
+      examAssessmentMode,
     });
   }
 

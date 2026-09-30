@@ -215,7 +215,7 @@ unless they choose to import yours.
 | Format | What You Receive |
 |---|---|
 | **PNG** | An image of the timetable or exam view currently on screen. |
-| **PDF** | A PDF of the timetable or exam view currently on screen. |
+| **PDF** | Opens the browser print dialog. Save as PDF to get the timetable and exam calendar on white landscape A4 pages, followed by a selectable-text class-session list on portrait A4 pages. |
 | **ICS** | A calendar file that can be opened or imported into a calendar app. |
 
 ### Settings
@@ -566,7 +566,12 @@ be available.
 - Use **Order by Code**, **Order by Exam**, or **Order by CU** to organise
   **My Courses**.
 
-Courses with no written exam may show **No Exam** or **ECA**.
+A course with a scheduled exam shows its date and time. If the selected class group has
+an exam assessment but no dated exam event, the course instead shows **Proctored
+Online Exam**, **Online Exam**, or **Has an Exam**, followed by **Check
+Canvas/Learnova for exam details.** These courses appear in **Exams without
+timetable dates** below the dated exam calendar; no date is inferred from another
+class group. Courses without an exam assessment may show **No Exam** or **ECA**.
 
 ### Hide, Show, or Recolour a Course
 

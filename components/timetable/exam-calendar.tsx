@@ -4,6 +4,7 @@ import { type CSSProperties } from "react";
 
 import { formatClassGroupLabel, formatTimeRange } from "@/lib/timetable/date-utils";
 import { buildExamCards, getCourseColor } from "@/lib/timetable/timetable-utils";
+import type { ExportCourse } from "@/lib/export/timetable-model";
 
 function getContrastingTextColorFromHex(hexColor: string)
 {
@@ -59,9 +60,13 @@ function getContrastingTextColorFromHex(hexColor: string)
 export function ExamCalendar({
   cards,
   colorByShareKey,
+  undatedExams = [],
+  forceTwoColumns = false,
 }: {
   cards: ReturnType<typeof buildExamCards>;
   colorByShareKey: Map<string, string>;
+  undatedExams?: ExportCourse[];
+  forceTwoColumns?: boolean;
 })
 {
   const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -95,7 +100,7 @@ export function ExamCalendar({
 
   const dayFormatter = new Intl.DateTimeFormat("en-SG", { day: "numeric", month: "short" });
 
-  if (cards.length === 0)
+  if (cards.length === 0 && undatedExams.length === 0)
   {
     return (
       <div className="rounded-none border-2 border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 py-6 text-center text-[14px] leading-5 text-[var(--on-surface-variant)]">
@@ -223,6 +228,22 @@ export function ExamCalendar({
           </section>
         );
       })}
+      {undatedExams.length > 0 ? (
+        <section className="rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3">
+          <h3 className="text-[15px] font-semibold text-[var(--on-surface)]">Exams without timetable dates</h3>
+          <p className="mt-1 text-[12px] leading-4 text-[var(--on-surface-variant)]">Check with course instructor</p>
+          <div className={forceTwoColumns ? "mt-3 grid grid-cols-2 gap-2" : "mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3"}>
+            {undatedExams.map((course) => (
+              <article key={course.shareKey} className="relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 pl-4">
+                <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: course.color }} />
+                <div className="text-[13px] font-semibold text-[var(--on-surface)]">{course.courseCode} ({course.groupCode})</div>
+                <div className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">{course.courseName ?? "Untitled course"}</div>
+                <div className="mt-1 text-[12px] font-bold text-[var(--on-surface)]">{course.examDateLabel}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

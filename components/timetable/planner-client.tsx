@@ -28,8 +28,10 @@ import { ExamCalendar, ExamCalendarOverviewRail } from "@/components/timetable/e
 import { SelectorRail } from "@/components/timetable/selector-rail";
 import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
-import { exportPngDataUrlToPdf } from "@/lib/export/pdf-client";
-import { exportElementToPng, renderElementToPngDataUrl } from "@/lib/export/png";
+import { TimetableExportCard } from "@/components/timetable/timetable-export-card";
+import { printTimetablePdf } from "@/lib/export/pdf-client";
+import { buildExportCourses, getTimetableExportFileName } from "@/lib/export/timetable-model";
+import { exportElementToPng } from "@/lib/export/png";
 import {
   APP_SETTINGS_STORAGE_KEY,
   APP_SETTINGS_UPDATED_EVENT,
@@ -384,6 +386,7 @@ export function PlannerClient({
   const [selectedWeekId, setSelectedWeekId] = useState<number | "all">("all");
   const [shareMessage, setShareMessage] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<"PDF" | "ICS" | "PNG" | null>(null);
   const [searchResults, setSearchResults] = useState<CourseSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [plannerNotice, setPlannerNotice] = useState("");
@@ -403,6 +406,7 @@ export function PlannerClient({
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [colorPickerCourseCode, setColorPickerCourseCode] = useState<string | null>(null);
   const exportCaptureRef = useRef<HTMLDivElement | null>(null);
+  const alternateExportCaptureRef = useRef<HTMLDivElement | null>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
   const deferredSearch = useDeferredValue(searchInput);
 
@@ -682,6 +686,10 @@ export function PlannerClient({
     ])),
     [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards, themePalette],
   );
+  const exportCourses = useMemo(
+    () => buildExportCourses(selectedCards, colorByShareKey, hiddenClasses),
+    [selectedCards, colorByShareKey, hiddenClasses],
+  );
   const colorByCourseCode = useMemo(
     () => new Map(selectedCards.map((card) => [
       card.courseCode,
@@ -747,6 +755,10 @@ export function PlannerClient({
     }
     return merged;
   }, [classPickerCourse, colorByShareKey, pickerColorByShareKey]);
+  const undatedExams = useMemo(
+    () => exportCourses.filter((course) => course.examStatus === "undated" && !course.hidden),
+    [exportCourses],
+  );
   const examCards = useMemo(
     () => buildExamCards(visibleEvents).filter((card) => !hiddenClasses.includes(card.shareKey)),
     [hiddenClasses, visibleEvents],
@@ -970,13 +982,29 @@ export function PlannerClient({
     window.setTimeout(() => setShareMessage(""), 3000);
   }
 
-  function triggerDownload(path: string, fileName: string)
+  async function triggerDownload(path: string, fileName: string)
   {
-    const anchor = document.createElement("a");
-    anchor.href = `${path}?${buildShareQuery(semesterId, selectedClasses)}`;
-    anchor.download = fileName;
-    anchor.click();
     setDownloadOpen(false);
+    setExportingFormat("ICS");
+    try
+    {
+      const response = await fetch(`${path}?${buildShareQuery(semesterId, selectedClasses)}`);
+      if (!response.ok) throw new Error("Unable to download the calendar file.");
+      const url = URL.createObjectURL(await response.blob());
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }
+    catch
+    {
+      showPlannerBanner("Unable to download the calendar file.");
+    }
+    finally
+    {
+      setExportingFormat(null);
+    }
   }
 
   async function waitForExportLayout()
@@ -993,24 +1021,46 @@ export function PlannerClient({
     }
 
     setDownloadOpen(false);
-    await waitForExportLayout();
-    await exportElementToPng(
-      exportCaptureRef.current,
-      `suss-planner-${semesterId}-${viewMode}.png`,
-    );
+    setExportingFormat("PNG");
+    try
+    {
+      await waitForExportLayout();
+      await exportElementToPng(
+        exportCaptureRef.current,
+        getTimetableExportFileName(selectedSemester, "png"),
+      );
+    }
+    catch
+    {
+      showPlannerBanner("Unable to download the PNG image.");
+    }
+    finally
+    {
+      setExportingFormat(null);
+    }
   }
 
-  async function handlePdfExport()
+  function handlePdfExport()
   {
-    if (!exportCaptureRef.current)
-    {
-      return;
-    }
-
+    const timetableCard = viewMode === "class" ? exportCaptureRef.current : alternateExportCaptureRef.current;
+    const examCalendarCard = viewMode === "exam" ? exportCaptureRef.current : alternateExportCaptureRef.current;
+    if (!timetableCard || !examCalendarCard) return;
     setDownloadOpen(false);
-    await waitForExportLayout();
-    const pngDataUrl = await renderElementToPngDataUrl(exportCaptureRef.current);
-    await exportPngDataUrlToPdf(pngDataUrl, `suss-planner-${semesterId}-${viewMode}.pdf`);
+    setExportingFormat("PDF");
+    const opened = printTimetablePdf(
+      timetableCard,
+      examCalendarCard,
+      selectedSemester,
+      visibleEvents,
+      timetableData.clashes.filter((clash) => clash.events.every((event) => !hiddenClasses.includes(event.shareKey))),
+      getTimetableExportFileName(selectedSemester, "pdf"),
+      () => setExportingFormat(null),
+    );
+    if (!opened)
+    {
+      setExportingFormat(null);
+      showPlannerBanner("Unable to open the PDF print dialog.");
+    }
   }
 
   function resetPlanner()
@@ -1043,7 +1093,7 @@ export function PlannerClient({
 
   return (
     <>
-      <div ref={exportCaptureRef} className={`timetable-page flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
+      <div className={`timetable-page flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
           <div className="timetable-toolbar elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <SelectorRail
@@ -1172,7 +1222,7 @@ export function PlannerClient({
                   showCurrentTime={showCurrentTime}
                 />
               ) : (
-                <ExamCalendar cards={examCards} colorByShareKey={colorByShareKey} />
+                <ExamCalendar cards={examCards} colorByShareKey={colorByShareKey} undatedExams={undatedExams} />
               )}
             </div>
           </div>
@@ -1240,11 +1290,13 @@ export function PlannerClient({
                 <div className="relative" data-download-popover-root>
                   <ActionButton
                     variant="ghost"
-                    icon={<DownloadIcon className="h-[18px] w-[18px]" />}
-                    label="Download"
+                    icon={exportingFormat ? <span aria-hidden="true" className="h-[18px] w-[18px] motion-safe:animate-spin rounded-full border-2 border-current border-r-transparent" /> : <DownloadIcon className="h-[18px] w-[18px]" />}
+                    label={exportingFormat ? "Loading…" : "Download"}
                     onClick={() => setDownloadOpen((current) => !current)}
                     stretch
+                    disabled={exportingFormat !== null}
                   />
+                  <span className="sr-only" role="status" aria-live="polite">{exportingFormat ? `Preparing ${exportingFormat} export` : ""}</span>
                   {downloadOpen ? (
                     <div className="elev-3 absolute left-0 top-full z-30 mt-1.5 w-full min-w-[9.5rem] rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                       <div
@@ -1253,7 +1305,7 @@ export function PlannerClient({
                       />
                       <div className="grid grid-cols-1 gap-1.5">
                         <ActionButton variant="ghost" icon={<DownloadIcon className="h-[18px] w-[18px]" />} label="PDF" onClick={() => void handlePdfExport()} />
-                        <ActionButton variant="ghost" icon={<CalendarIcon className="h-[18px] w-[18px]" />} label="ICS" onClick={() => triggerDownload("/api/export/ics", `suss-planner-${semesterId}-${viewMode}.ics`)} />
+                        <ActionButton variant="ghost" icon={<CalendarIcon className="h-[18px] w-[18px]" />} label="ICS" onClick={() => void triggerDownload("/api/export/ics", `suss-planner-${semesterId}-${viewMode}.ics`)} />
                         <ActionButton variant="ghost" icon={<GridIcon className="h-[18px] w-[18px]" />} label="PNG" onClick={() => void handlePngExport()} />
                       </div>
                     </div>
@@ -1357,7 +1409,7 @@ export function PlannerClient({
                           </div>
                           <div className="flex min-w-0 items-center gap-1.5">
                             <CalendarIcon className="h-4 w-4 shrink-0" />
-                            {record.examDateLabel === "No Exam" || record.examDateLabel === "ECA" ? (
+                            {record.examStatus !== "dated" ? (
                               <span className="truncate font-bold text-[var(--on-surface)]">{record.examDateLabel}</span>
                             ) : (
                               <>
@@ -1366,6 +1418,9 @@ export function PlannerClient({
                               </>
                             )}
                           </div>
+                          {record.examGuidance ? (
+                            <div className="pl-5 text-[11px] leading-4">{record.examGuidance}</div>
+                          ) : null}
                           <div className="flex min-w-0 items-center gap-1.5">
                             <SchoolIcon className="h-4 w-4 shrink-0" />
                             <span className="shrink-0 font-semibold text-[var(--on-surface)]">Credit Units:</span>
@@ -1422,6 +1477,34 @@ export function PlannerClient({
           </div>
         </aside>
       </div>
+
+      <TimetableExportCard
+        ref={exportCaptureRef}
+        semester={selectedSemester}
+        weekLabel={selectedWeekId === "all" ? "All weeks" : selectedWeekRecord?.label ?? "Selected week"}
+        viewMode={viewMode}
+        orientation={orientation}
+        blocks={allBlocks}
+        examCards={examCards}
+        colorByShareKey={colorByShareKey}
+        courses={exportCourses}
+        dayDateByDay={dayDateByDay}
+        showAllWeeks={selectedWeekId === "all"}
+      />
+
+      <TimetableExportCard
+        ref={alternateExportCaptureRef}
+        semester={selectedSemester}
+        weekLabel={selectedWeekId === "all" ? "All weeks" : selectedWeekRecord?.label ?? "Selected week"}
+        viewMode={viewMode === "class" ? "exam" : "class"}
+        orientation={orientation}
+        blocks={allBlocks}
+        examCards={examCards}
+        colorByShareKey={colorByShareKey}
+        courses={exportCourses}
+        dayDateByDay={dayDateByDay}
+        showAllWeeks={selectedWeekId === "all"}
+      />
 
       <Modal
         open={Boolean(scheduleCourse)}

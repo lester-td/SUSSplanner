@@ -193,7 +193,7 @@ export function CourseDetailPage({
                     <CalendarWeekIcon className="h-4 w-4 text-[var(--primary)]" />
                     {displaySemesterLabel}
                   </span>
-                  <div className="hidden flex-wrap items-center gap-2.5 sm:ml-auto sm:flex">
+                  <div className="course-detail-quick-actions hidden flex-wrap items-center gap-2.5 sm:ml-auto sm:flex">
                     <AddToTimetableButton
                       course={{ ...course, offeredSemesters }}
                       appearance="outline"
@@ -215,7 +215,7 @@ export function CourseDetailPage({
                     ) : null}
                   </div>
                 </div>
-                <div className="mt-2.5 flex w-full flex-nowrap items-center gap-2 sm:hidden">
+                <div className="course-detail-quick-actions mt-2.5 flex w-full flex-nowrap items-center gap-2 sm:hidden">
                   <AddToTimetableButton
                     course={{ ...course, offeredSemesters }}
                     appearance="outline"

@@ -481,6 +481,7 @@ export function TimetableCanvas({
   suppressActiveOutline,
   onBlockClick,
   showCurrentTime,
+  forceDesktop = false,
 }: {
   blocks: TimetableBlock[];
   blockColorByKey: Map<string, string>;
@@ -497,6 +498,7 @@ export function TimetableCanvas({
   suppressActiveOutline: boolean;
   onBlockClick: (block: TimetableBlock) => void;
   showCurrentTime: boolean;
+  forceDesktop?: boolean;
 })
 {
   const [isMobile, setIsMobile] = useState(false);
@@ -509,15 +511,16 @@ export function TimetableCanvas({
     return () => mediaQuery.removeEventListener("change", updateMobileState);
   }, []);
 
+  const useMobileLayout = isMobile && !forceDesktop;
   const hasSaturdayClasses = blocks.some((block) => block.dayOfWeek === 6);
   const visibleDays = DAY_LABELS
     .map((label, index) => ({ label, dayOfWeek: index + 1 }))
     .filter((day) => day.dayOfWeek <= 5 || hasSaturdayClasses);
   const rangeMinutes = Math.max(30, visibleEndMinutes - START_MINUTES);
-  const verticalSlotSize = isMobile ? 34 : 30;
+  const verticalSlotSize = useMobileLayout ? 34 : 30;
   const daySize = 84;
   const contentHeight = (rangeMinutes / 30) * verticalSlotSize;
-  const horizontalMinWidthPx = (rangeMinutes / 30) * (isMobile ? 56 : 58);
+  const horizontalMinWidthPx = (rangeMinutes / 30) * (useMobileLayout ? 56 : 58);
   const hourlyStripeSegments = buildHourlyStripeSegments(START_MINUTES, visibleEndMinutes);
   const laneLayouts = buildLaneLayouts(blocks);
   const dayBlocksByIndex = visibleDays.map((day) => blocks.filter((block) => block.dayOfWeek === day.dayOfWeek));
@@ -548,7 +551,7 @@ export function TimetableCanvas({
   const todayVisibleIndex = visibleDays.findIndex((day) => day.dayOfWeek === todayIndex);
   const showNowLine = showCurrentTime && todayVisibleIndex >= 0;
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const verticalHeaderHeightPx = isMobile
+  const verticalHeaderHeightPx = useMobileLayout
     ? (showAllWeeks ? 30 : 34)
     : (showAllWeeks ? 32 : 36);
 
@@ -556,8 +559,8 @@ export function TimetableCanvas({
   {
     return (
       <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`}>
-        <div className={`min-w-0 ${isMobile ? "overflow-x-auto" : "overflow-x-visible"}`}>
-          <div style={isMobile ? { minWidth: `${horizontalMinWidthPx}px` } : undefined}>
+        <div className={`min-w-0 ${useMobileLayout ? "overflow-x-auto" : "overflow-x-visible"}`}>
+          <div style={useMobileLayout ? { minWidth: `${horizontalMinWidthPx}px` } : undefined}>
             <div className="grid grid-cols-[3.75rem_minmax(0,1fr)] grid-rows-[1.25rem_minmax(0,1fr)] gap-0">
               <div className="sticky left-0 z-30 bg-[var(--surface-container-lowest)]" />
 
@@ -666,8 +669,8 @@ export function TimetableCanvas({
                       onClick={() => onBlockClick(block)}
                       showAllWeeks={showAllWeeks}
                       showCourseName
-                      hideTime={isMobile}
-                      isMobileView={isMobile}
+                      hideTime={useMobileLayout}
+                      isMobileView={useMobileLayout}
                     />
                   );
                 })}
@@ -696,7 +699,7 @@ export function TimetableCanvas({
               {showAllWeeks || !dayDateByDay[day.dayOfWeek] ? (
                 <span className={TIMETABLE_GRID_DAY_LABEL_CLASS}>{formatDayHeaderLabel(day.label)}</span>
               ) : (
-                <span className={isMobile ? "flex flex-col items-center leading-tight" : "inline-flex items-baseline gap-1 leading-tight"}>
+                <span className={useMobileLayout ? "flex flex-col items-center leading-tight" : "inline-flex items-baseline gap-1 leading-tight"}>
                   <span className={TIMETABLE_GRID_DAY_LABEL_CLASS}>{formatDayHeaderLabel(day.label)}</span>
                   <span className={TIMETABLE_GRID_DAY_DATE_CLASS}>{dayDateByDay[day.dayOfWeek]}</span>
                 </span>
@@ -710,10 +713,10 @@ export function TimetableCanvas({
             {timeSlots.map((slot) => (
               <div
                 key={slot}
-                className={`absolute w-full ${isMobile ? "-left-0.2 pl-0 text-left" : "left-0 pr-1.5 text-right"} ${TIMETABLE_GRID_TIME_LABEL_CLASS}`}
+                className={`absolute w-full ${useMobileLayout ? "-left-0.2 pl-0 text-left" : "left-0 pr-1.5 text-right"} ${TIMETABLE_GRID_TIME_LABEL_CLASS}`}
                 style={{
                   ...getHorizontalTimeLabelStyle(slot, timeSlots[0], timeSlots[timeSlots.length - 1], rangeMinutes, contentHeight),
-                  ...(isMobile ? { fontSize: "12px", lineHeight: "0.95rem" } : {}),
+                  ...(useMobileLayout ? { fontSize: "12px", lineHeight: "0.95rem" } : {}),
                 }}
               >
                 {slot % 60 === 0 ? formatCompactMinutes(slot) : ""}
@@ -812,8 +815,8 @@ export function TimetableCanvas({
                     onClick={() => onBlockClick(block)}
                     showAllWeeks={showAllWeeks}
                     showCourseName={false}
-                    hideTime={isMobile}
-                    isMobileView={isMobile}
+                    hideTime={useMobileLayout}
+                    isMobileView={useMobileLayout}
                   />
                 );
               })}

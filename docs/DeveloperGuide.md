@@ -103,7 +103,7 @@ flowchart LR
 
 | Boundary | Responsibilities | Key files |
 |---|---|---|
-| Browser | Interactive timetable, course search UI, semester planner, GPA calculator, settings, in-app registration reminders, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 semester-planner print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `lib/settings/app-settings.ts`, `lib/registration/`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/semester-planner-print.ts` |
+| Browser | Interactive timetable, course search UI, semester planner, GPA calculator, settings, in-app registration reminders, `localStorage`, JSON plan backup/restore, content-sized timetable PNG and browser print PDF export, A4 semester-planner print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `lib/settings/app-settings.ts`, `lib/registration/`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/semester-planner-print.ts` |
 | Next.js server | Server-rendered pages, validation, API route handlers, server-side ICS/PDF endpoints | `app/`, `lib/validation/`, `lib/export/ics.ts`, `lib/export/pdf.ts` |
 | Snapshot data layer | Reads deployment-local JSON shards, searches catalog data in memory, assembles timetables, and detects clashes | `lib/data/`, `lib/timetable/clash-detection.ts` |
 | Snapshot generator | Reads Postgres during development/build and writes deployable JSON | `scripts/build-data-snapshots.ts`, `lib/db/schema.ts` |
@@ -141,7 +141,7 @@ flowchart LR
 | Database | Supabase-compatible PostgreSQL |
 | Validation | Zod 4 |
 | Server PDF generation | `pdf-lib` |
-| Browser image/PDF export | `html-to-image` and `pdf-lib` |
+| Browser image/PDF export | `html-to-image` for PNG and `pdf-lib` for vector PDF |
 | Drag and drop | `@dnd-kit/core` in the semester planner |
 | Semester-planner backup and print export | Browser `Blob`/object URLs, native print dialog, and Zod validation |
 | Settings and registration reminders | Browser `localStorage`, validated preference normalization, bundled registration-event data, phase-based reminder thresholds |
@@ -476,10 +476,16 @@ All route handlers explicitly use the Node.js runtime.
 | `GET /api/classes` | Mode B: share query `sem` plus optional comma-separated `classes` | `{ timetable: TimetableData }`; resolves selections, events, clashes, weeks, and unresolved selections. |
 | `GET /api/classes/counts` | Required `semesterId`, comma-separated `courseCodes` | `{ counts }`; used to show whether selected courses have alternative class groups. |
 | `GET /api/export/ics` | Required `sem`; optional `classes` list | Downloadable `text/calendar` attachment containing all resolved events in `Asia/Singapore` timezone. |
-| `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable `application/pdf` event-list attachment with clash summary. The current timetable/share UI instead creates its PDF from a browser-rendered PNG. |
+| `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable server-generated `application/pdf` with a vector timetable and selectable-text event listing. The timetable and share UI PDF buttons use a separate browser print view built from the same export card as PNG. |
 
-PNG export is intentionally browser-side so it can preserve the rendered
-timetable view; there is no `/api/export/png` route.
+PNG export captures a dedicated, content-sized timetable and course card layout in the browser;
+there is no `/api/export/png` route. The timetable/share PDF export clones that same rendered card into a hidden print frame,
+scales the timetable and exam calendar onto separate white landscape A4 pages, then uses
+portrait A4 pages for the selectable-text class-session listing. The PDF button opens
+the browser print dialog directly. Assessment modes are resolved for each selected
+schedule type. If its class group has no dated exam event, the course and exam
+calendar show an undated exam status with Canvas/Learnova guidance. Dates from
+other class groups are not assigned to the selected group.
 
 Semester-planner JSON backup/import and the A4 print view are also browser-only.
 There are no semester planner export/import/print API routes, and semester planner data is
@@ -1544,9 +1550,9 @@ secret.
 - The scraper relies on external PDF formats and includes warning/issue reports
   because extraction can be incomplete or malformed.
 - No in-app admin interface exists.
-- The server PDF endpoint produces a timetable event-list PDF, while the
-  timetable UI creates a PDF from a browser screenshot. The semester-planner PDF
-  action instead opens an A4 HTML print view for the browser to save as PDF.
+- The timetable PDF builder draws the same grid, exam view, course panel, and orientation as
+  the PNG card using selectable text, followed by event listings. The
+  semester-planner PDF action opens an A4 HTML print view for the browser to save as PDF.
 - `getCurrentSemesterContext` falls back to the first returned semester/week
   when today's date is outside all configured semester-week ranges.
 

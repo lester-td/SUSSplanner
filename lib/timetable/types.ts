@@ -1,6 +1,8 @@
 export type ScheduleType = "daytime" | "evening";
 export type GroupCodeType = "TG" | "CRN";
 export type EventKind = "CLASS" | "EXAM" | "OTHER";
+export type ExamAssessmentMode = "Proctored Online Exam" | "Online Exam" | "Written Exam" | "Exam";
+export type ExamStatus = "dated" | "undated" | "eca" | "none";
 export type WeekType = "TEACHING" | "STUDY" | "EXAM";
 export type PlannerSection = "planner" | "semester-planner" | "courses" | "share";
 export type PlannerViewMode = "class" | "exam";
@@ -139,6 +141,7 @@ export type TimetableSelectionRecord = CourseClassRecord & {
   identifier: SharedClassIdentifier;
   shareKey: string;
   hasEca: boolean;
+  examAssessmentMode: ExamAssessmentMode | null;
 };
 
 export type TimetableEventRecord = ClassEventWithWeekRecord & {

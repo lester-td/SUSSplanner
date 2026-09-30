@@ -2461,3 +2461,73 @@
     backdrop-filter: none;
   }
 }
+
+/* Keep the timetable sidebar controls outlined and Share filled. */
+:root .timetable-side-panel .app-action-button {
+  border: 1px solid var(--control-border);
+  border-radius: 0.375rem;
+  background: var(--control-surface);
+  color: var(--on-surface);
+  font-weight: 600;
+  box-shadow: none;
+  transition: box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+:root .timetable-side-panel .app-action-button--ghost:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--control-surface-hover);
+  color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-ring-soft), 0 0 14px var(--primary-ring-soft);
+}
+
+:root .timetable-side-panel .app-action-button--primary:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px var(--primary-ring-soft), 0 0 14px var(--primary-ring-soft);
+}
+
+:root .timetable-side-panel .app-action-button:focus-visible {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-ring-strong), 0 0 16px var(--primary-ring-soft);
+}
+
+:root .timetable-side-panel .app-action-button--primary {
+  border-color: var(--button-primary, var(--primary));
+  background: var(--button-primary, var(--primary));
+  color: var(--button-on-primary, var(--on-primary));
+}
+
+:root .timetable-side-panel .app-action-button--primary:hover:not(:disabled) {
+  border-color: var(--button-primary-hover, var(--primary));
+  background: var(--button-primary-hover, var(--primary-container));
+  color: var(--button-on-primary, var(--on-primary));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root .timetable-side-panel .app-action-button {
+    transition: none;
+  }
+}
+
+/* The three quick actions in a course header share the Available Classes hover. */
+:root .course-detail-quick-actions > :is(button, a) {
+  transition: box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+:root .course-detail-quick-actions > :is(button, a):hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--control-surface-hover);
+  color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-ring-soft), 0 0 14px var(--primary-ring-soft);
+}
+
+:root .course-detail-quick-actions > :is(button, a):focus-visible {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-ring-strong), 0 0 16px var(--primary-ring-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root .course-detail-quick-actions > :is(button, a) {
+    transition: none;
+  }
+}

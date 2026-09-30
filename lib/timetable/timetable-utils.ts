@@ -1,3 +1,4 @@
+import { getUndatedExamLabel, UNDATED_EXAM_GUIDANCE } from "./exam-status";
 import {
   buildSharedClassIdentifier,
 } from "./share-url";
@@ -265,8 +266,12 @@ export function buildSelectedCourseCards(data: TimetableData)
       ...selection,
       shareKey: buildSharedClassIdentifier(selection.identifier),
       color: colorMap.get(selection.courseCode) ?? getCourseColor(selection.courseCode),
-      examDateLabel: exam ? formatEventDate(exam.eventDate) : selection.hasEca ? "ECA" : "No Exam",
+      examStatus: exam ? "dated" as const : selection.examAssessmentMode ? "undated" as const : selection.hasEca ? "eca" as const : "none" as const,
+      examDateLabel: exam ? formatEventDate(exam.eventDate)
+        : selection.examAssessmentMode ? getUndatedExamLabel(selection.examAssessmentMode)
+          : selection.hasEca ? "ECA" : "No Exam",
       examTimeLabel: exam ? stripSeconds(exam.startTime) : null,
+      examGuidance: !exam && selection.examAssessmentMode ? UNDATED_EXAM_GUIDANCE : null,
     };
   });
 }
