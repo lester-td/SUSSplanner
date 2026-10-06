@@ -31,17 +31,23 @@ function readParam(
 export function buildSharedClassIdentifier(classData: SharedClassIdentifier)
 {
   const parsed = sharedClassIdentifierSchema.parse(classData);
-  return [
+  const key = [
     parsed.courseCode,
     parsed.scheduleType,
     parsed.groupCodeType,
     parsed.groupCode,
   ].join(":");
+  return parsed.originSemesterId ? `${key}@${parsed.originSemesterId}` : key;
 }
 
 export function parseSharedClassIdentifier(value: string)
 {
-  const [courseCode, groupCode, ...extraParts] = value.split(":");
+  const [compact, origin, ...extraOrigins] = value.split("@");
+  if (extraOrigins.length > 0 || (origin !== undefined && !/^[1-9]\d*$/.test(origin)))
+  {
+    throw new Error("Invalid continuation semester in shared class identifier.");
+  }
+  const [courseCode, groupCode, ...extraParts] = compact.split(":");
   if (!courseCode || !groupCode || extraParts.length > 0)
   {
     throw new Error("Shared class identifiers must use COURSECODE:TG01 or COURSECODE:CRN01.");
@@ -60,6 +66,7 @@ export function parseSharedClassIdentifier(value: string)
     scheduleType: groupCodeType === "TG" ? "daytime" : "evening",
     groupCodeType,
     groupCode,
+    ...(origin ? { originSemesterId: Number(origin) } : {}),
   });
 }
 
@@ -78,14 +85,15 @@ function compactSharedClassIdentifier(classData: SharedClassIdentifier)
     throw new Error("The shared class group code does not match its group-code type.");
   }
 
-  return `${parsed.courseCode}:${parsed.groupCode}`;
+  return `${parsed.courseCode}:${parsed.groupCode}${parsed.originSemesterId ? `@${parsed.originSemesterId}` : ""}`;
 }
 
 function compareSharedClasses(left: SharedClassIdentifier, right: SharedClassIdentifier)
 {
   return groupCodeTypeSortOrder[left.groupCodeType] - groupCodeTypeSortOrder[right.groupCodeType]
     || left.courseCode.localeCompare(right.courseCode)
-    || left.groupCode.localeCompare(right.groupCode);
+    || left.groupCode.localeCompare(right.groupCode)
+    || (left.originSemesterId ?? 0) - (right.originSemesterId ?? 0);
 }
 
 export function encodeShareUrlState(state: SharedTimetableState)

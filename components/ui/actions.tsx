@@ -7,13 +7,17 @@ export function ActionButton({
   onClick,
   stretch = false,
   disabled = false,
+  "aria-expanded": ariaExpanded,
+  "aria-controls": ariaControls,
 }: {
-  variant: "primary" | "ghost";
+  variant: "primary" | "ghost" | "danger";
   icon: ReactNode;
   label: string;
   onClick: () => void;
   stretch?: boolean;
   disabled?: boolean;
+  "aria-expanded"?: boolean;
+  "aria-controls"?: string;
 })
 {
   return (
@@ -24,10 +28,14 @@ export function ActionButton({
       } ${
         variant === "primary"
           ? "app-action-button app-action-button--primary bg-[var(--primary)] text-on-primary hover:bg-[var(--primary-container)] hover:text-on-primary"
+          : variant === "danger"
+            ? "app-action-button app-action-button--danger border border-[var(--error)] bg-[var(--control-surface)] text-[var(--danger-text,var(--error))] hover:bg-[var(--error-container)]"
           : "app-action-button app-action-button--ghost border border-[var(--brand-divider)] bg-[var(--surface-container)] text-[var(--on-surface)] hover:bg-[var(--surface-container-high)]"
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       onClick={onClick}
       disabled={disabled}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
     >
       {icon}
       <span>{label}</span>

@@ -171,6 +171,10 @@ Use **Timetable** when you are planning classes for a specific semester.
 When you add a course, SUSSPlanner selects an available class group and tries
 to avoid clashes with your current timetable.
 
+On narrow screens, the vertical **All weeks** view allows sideways scrolling
+when classes overlap in time. The time column stays pinned, and overlapping
+classes keep a readable width. Other vertical views fit the screen width.
+
 [Screenshot: Timetable Builder]
 
 ### GPA Calculator
@@ -226,7 +230,10 @@ Use **Settings** to adjust local preferences for this browser.
 2. Choose **Night mode**: **Auto**, **On**, or **Off**.
 3. Choose a timetable colour theme.
 4. Choose the default timetable orientation: **Horizontal** or **Vertical**.
-5. Adjust **Course Registration Reminders**.
+5. Choose **Open timetable to**: **All weeks**, **This week**, or **Last viewed**.
+   This applies to both layouts. **Last viewed** remembers the selected week
+   for each semester; **This week** falls back to **All weeks** when unavailable.
+6. Adjust **Course Registration Reminders**.
 
 Settings are saved automatically in the current browser. They do not sync to
 other browsers or devices.
@@ -336,13 +343,15 @@ Use a custom course for a course that is not listed, a work attachment, or a
 future requirement.
 
 1. Open **Planner**.
-2. Switch **Add a Course** to Custom mode.
+2. On desktop, switch **Module Bank** to Custom mode. On mobile, tap
+   **Add Course** at the bottom, then switch to Custom mode.
 3. Enter a course code or name.
 4. Enter the credit units.
 5. Enter the semester span.
 6. Select **Add Custom Module**.
 
-The custom course appears in the **Module Bank**.
+The custom course appears in the **Module Bank**. On mobile, choose a semester
+to assign it immediately, or select **Keep in Module Bank**.
 
 ### Remove Courses
 
@@ -359,6 +368,9 @@ The course and its classes are removed from the timetable.
 1. Open **Planner**.
 2. Drag the course to the red trash area.
 3. Release it when the area says **Release to delete course**.
+
+On mobile, tap the course’s **⋯** menu, select **Remove course**, then confirm.
+The same menu is available beside unassigned courses in the Module Bank.
 
 This cannot be undone.
 
@@ -379,18 +391,51 @@ Available** to show only courses that have not been assigned.
 Courses that span more than one semester are shown as continuing in later
 semesters.
 
+#### Planning on Mobile
+
+- Tap **Plan settings** under Progress to expand the credit target, semester
+  count, PDF, backup, and reset controls.
+- Tap a semester header to expand or collapse its course list.
+- Tap **Add Course** at the bottom to search the catalog or enter a custom course.
+  After adding it, choose a semester or keep it in the Module Bank.
+- Tap **Module Bank** at the bottom to see unassigned courses. Select **Assign**
+  beside a course, then choose its destination semester. The page opens and
+  scrolls to that semester.
+- Use a course’s **⋯** menu to move it, return it to the bank, edit a custom course,
+  or remove it. Continuing courses use the same menu. The panel shows the course’s
+  current semester or semester range.
+- Destinations that cannot accommodate the full semester span are disabled.
+- Swiping over courses scrolls the page. Drag-and-drop remains available on
+  desktop. While a bottom panel is open, the page behind it stays still.
+
+
+### Share Your Semester Planner
+
+1. Select **Share** in Progress.
+2. Select **Copy link**, or **Share** on a supported phone to choose an app.
+3. Send the link to the recipient.
+
+The link contains a snapshot of your courses, credit target, semesters and Module
+Bank. Later edits do not change a link you have already shared.
+
+Opening a link shows **Save shared plan?**, with a credit summary and collapsible
+semester groups. Expand each semester or the Module Bank to inspect its courses.
+The summary and save controls stay visible while the preview scrolls.
+Select **Save shared plan** to replace the current planner on that device, or
+**Cancel** to keep the existing plan. Once saved, it can be edited or reset normally.
+
 ### Back Up or Restore Your Semester Planner
 
 To download a restorable backup:
 
 1. Open **Planner**.
-2. Select **Backup Plan**.
+2. Select **Backup**.
 3. Select **Export**.
 
 To restore a backup:
 
 1. Open **Planner**.
-2. Select **Backup Plan**.
+2. Select **Backup**.
 3. Select **Import**, then choose a SUSSPlanner semester-plan JSON backup.
 4. Review the module and semester counts.
 5. Select **Replace Current Plan** to confirm.
@@ -409,7 +454,7 @@ Allow the new tab if your browser blocks it.
 ### Reset Your Semester Planner
 
 1. Open **Planner**.
-2. Select **Reset Planner**.
+2. Select **Reset** under Progress.
 3. Read the warning.
 4. Select **Reset Planner** again to confirm.
 
@@ -528,6 +573,24 @@ completed CUs. The clear-all confirmation cannot be undone.
 
 Your timetable is saved automatically in the current browser.
 
+When a listed course spans multiple semesters, selecting its starting class also
+adds a continuation in the next offered semester. Its block shows **Continues
+Jul '26** at the bottom. In July, the carried-over block is labelled **NIE301
+(Jan '26)** and its class can only be switched in the starting semester. You can remove it
+from either semester; removing a carried-over entry removes its linked starting
+selection and continuation, while preserving a separate July start.
+
+You can also add a separate July start of NIE301. Course search and class
+switching show classes from the selected semester, and the July start stays
+separate from the January continuation. Continuations retain the exact schedule
+type and TG/CRN chosen in the starting semester, and show only sessions belonging
+to that original cohort. A reused July TG/CRN does not supply sessions for the
+January continuation. If no continuation sessions are published, its entry stays
+saved without adding sessions from another cohort.
+
+A July 2026 start shows **Continues in January 2027** even before that
+semester's calendar weeks are available in the timetable selector.
+
 ### Change a Class Group
 
 If another class group is available:
@@ -594,7 +657,8 @@ Hiding a course does not remove it and does not resolve its clashes.
 2. Read the warning.
 3. Select **Reset** again to confirm.
 
-This clears selected courses, hidden-course settings, and custom colours. Your
+This clears courses starting in this semester, hidden-course settings, and custom
+colours. Carried-over courses remain after reset and can be removed individually. Your
 current semester, selected week, layout, and timetable or exam view remain.
 
 ## Sharing Timetables
@@ -792,8 +856,8 @@ SUSSPlanner keeps one multi-semester course plan at a time. To compare options:
 - Avoid clearing browser data if you want to keep your plans.
 - Do not rely on private or incognito windows for long-term saving.
 - Download or share important timetables as a reference.
-- Select **Backup Plan**, then **Export**, to download a restorable JSON backup.
-- Select **Backup Plan**, then **Import**, to validate a backup and review its
+- Select **Backup**, then **Export**, to download a restorable JSON backup.
+- Select **Backup**, then **Import**, to validate a backup and review its
   module and semester counts before replacing the current plan.
 - Select **Download PDF** to open an A4-formatted plan in a new tab, then use
   **Print / Save as PDF**.
@@ -816,7 +880,7 @@ No. Plans do not automatically sync between devices or browsers.
 ### Can I recover a plan after clearing browser data?
 
 Only if you exported a JSON backup before clearing the browser data. Open
-**Planner**, select **Backup Plan**, then select **Import** to restore it.
+**Planner**, select **Backup**, then select **Import** to restore it.
 SUSSPlanner does not provide online or account-based recovery.
 
 ### Can I share my multi-semester course plan?
@@ -927,7 +991,7 @@ Always check official SUSS registration information before registering.
 
 This can happen if browser data was cleared, a private-browsing session ended,
 or you changed browsers or devices. If you previously exported a JSON backup,
-open **Planner**, select **Backup Plan**, then select **Import** to restore it.
+open **Planner**, select **Backup**, then select **Import** to restore it.
 SUSSPlanner cannot recover a plan without an exported backup.
 
 ### My GPA Calculator Entries Disappeared
@@ -973,7 +1037,7 @@ information available in SUSSPlanner.
 - Course registration reminders depend on the bundled registration schedule and
   are not a replacement for official SUSS notices.
 - SUSSPlanner can detect clashes but cannot guarantee a clash-free combination.
-- Organising the Planner is best done on a desktop or laptop.
+- The Planner uses drag-and-drop on desktop and tap-to-assign controls on mobile.
 
 ## Support
 

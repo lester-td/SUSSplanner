@@ -2,13 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { CourseSearchResultButton } from "@/components/calculator/course-search-result-button";
+import { SussGradeScale } from "@/components/calculator/suss-grade-scale";
+
 import {
   ArrowUpRightIcon,
+  AssessmentIcon,
   BookIcon,
   CalculatorIcon,
   SearchIcon,
   XIcon,
 } from "@/components/planner/icons";
+import { GRADE_BANDS, GRADE_POINT_VALUES } from "@/lib/calculator/grade-scale";
 import type { AssessmentComponentRecord, CourseRecord } from "@/lib/timetable/types";
 
 type CourseSearchResult = {
@@ -41,34 +46,6 @@ const EMPTY_SCORE_INPUT: AssessmentScoreInput = {
   percentage: "",
   rawScore: "",
   rawMax: "",
-};
-
-const GRADE_BANDS: Array<{ grade: string; minimum: number }> = [
-  { grade: "A+", minimum: 85 },
-  { grade: "A", minimum: 80 },
-  { grade: "A-", minimum: 75 },
-  { grade: "B+", minimum: 70 },
-  { grade: "B", minimum: 65 },
-  { grade: "B-", minimum: 60 },
-  { grade: "C+", minimum: 55 },
-  { grade: "C", minimum: 50 },
-  { grade: "D+", minimum: 45 },
-  { grade: "D", minimum: 40 },
-  { grade: "F", minimum: 0 },
-];
-
-const GRADE_POINT_VALUES: Record<string, number> = {
-  "A+": 5,
-  A: 5,
-  "A-": 4.5,
-  "B+": 4,
-  B: 3.5,
-  "B-": 3,
-  "C+": 2.5,
-  C: 2,
-  "D+": 1.5,
-  D: 1,
-  F: 0,
 };
 
 function useDebouncedValue(value: string, delayMs: number)
@@ -438,16 +415,16 @@ export function OcasCalculatorClient()
 
   return (
     <section className="calculator-page calculator-section calculator-section--ocas w-full pb-6">
-      <div className="grid gap-2 sm:gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section className="min-w-0">
           <div ref={searchContainerRef} className="relative z-20 mb-3">
-            <div className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-2.5 py-2 sm:px-3 sm:py-3">
-              <div className="flex items-start justify-between gap-3">
+            <div className="app-aero-panel calculator-panel calculator-major-panel">
+              <div className="app-aero-panel-heading calculator-panel-heading justify-between">
                 <div className="flex items-center gap-3">
                   <CalculatorIcon className="h-5 w-5 text-[var(--primary)]" />
-                  <h3 className="text-[16px] font-bold leading-6 text-[var(--on-surface)]">
+                  <h2 className="text-[16px] font-bold leading-6 text-[var(--on-surface)]">
                     Choose course
-                  </h3>
+                  </h2>
                 </div>
                 {selectedCourse ? (
                   <button
@@ -464,108 +441,100 @@ export function OcasCalculatorClient()
                 ) : null}
               </div>
 
-              {selectedCourse ? (
-                <div className="calculator-panel calculator-inner-panel mt-2.5 rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 sm:mt-3 sm:px-3 sm:py-2.5">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[13px] font-bold text-[var(--primary)]">{selectedCourse.courseCode}</p>
-                      <p className="mt-1 text-[15px] font-semibold text-[var(--on-surface)]">
-                        {selectedCourse.courseName ?? "Course name unavailable"}
-                      </p>
-                      <p className="mt-1 text-[12px] text-[var(--on-surface-variant)]">
-                        {selectedCourse.creditUnits ?? 0} CU
-                      </p>
-                    </div>
-                    <a
-                      href={`/courses/${selectedCourse.courseCode}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-[0.6rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                    >
-                      <BookIcon className="h-4 w-4" />
-                      Course page
-                      <ArrowUpRightIcon className="h-4 w-4" />
-                    </a>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="relative mt-3 h-[40px]">
-                    <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
-                    <input
-                      type="search"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Search by module code or title..."
-                      autoComplete="off"
-                      className="h-full w-full rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                    />
-                    {searchQuery ? (
-                      <button
-                        type="button"
-                        aria-label="Clear search"
-                        onClick={() => {
-                          setSearchQuery("");
-                          setSearchResults([]);
-                        }}
-                        className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </button>
-                    ) : null}
-
-                    {searchQuery.trim() ? (
-                      <div className="elev-3 absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
-                        {searchLoading ? (
-                          <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">Searching courses...</p>
-                        ) : searchResults.length > 0 ? (
-                          <ul className="max-h-80 overflow-y-auto py-1">
-                            {searchResults.map((course: CourseSearchResult) => {
-                              const alreadySelected = selectedCourseCode === course.courseCode;
-                              return (
-                                <li key={course.courseCode}>
-                                  <button
-                                    type="button"
-                                    disabled={alreadySelected}
-                                    onClick={() => {
-                                      setSelectedCourse(course);
-                                      setSearchQuery("");
-                                      setSearchResults([]);
-                                    }}
-                                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-[var(--surface-container-low)] disabled:cursor-not-allowed disabled:opacity-45"
-                                  >
-                                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[var(--primary)]">
-                                      <CalculatorIcon className="h-4 w-4" />
-                                    </span>
-                                    <span className="min-w-0 flex-1">
-                                      <span className="block text-[13px] font-bold text-[var(--on-surface)]">{course.courseCode}</span>
-                                      <span className="block truncate text-[12px] text-[var(--on-surface-variant)]">
-                                        {course.courseName ?? "Course name unavailable"}
-                                      </span>
-                                    </span>
-                                    <span className="shrink-0 text-[12px] font-semibold text-[var(--on-surface-variant)]">
-                                      {alreadySelected ? "Selected" : `${course.creditUnits ?? 5} CU`}
-                                    </span>
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        ) : (
-                          <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">No matching courses found.</p>
-                        )}
+              <div className="calculator-panel-body p-4 sm:p-5">
+                {selectedCourse ? (
+                  <div className="calculator-panel calculator-inner-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[13px] font-bold text-[var(--primary)]">{selectedCourse.courseCode}</p>
+                        <p className="mt-1 text-[15px] font-semibold text-[var(--on-surface)]">
+                          {selectedCourse.courseName ?? "Course name unavailable"}
+                        </p>
+                        <p className="mt-1 text-[12px] text-[var(--on-surface-variant)]">
+                          {selectedCourse.creditUnits ?? 0} CU
+                        </p>
                       </div>
-                    ) : null}
+                      <a
+                        href={`/courses/${selectedCourse.courseCode}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-[0.6rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                      >
+                        <BookIcon className="h-4 w-4" />
+                        Course page
+                        <ArrowUpRightIcon className="h-4 w-4" />
+                      </a>
+                    </div>
                   </div>
-                </>
-              )}
+                ) : (
+                  <>
+                    <div className="relative h-[40px]">
+                      <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
+                      <input
+                        type="search"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        aria-label="Search courses for OCAS"
+                        placeholder="Search by module code or title..."
+                        autoComplete="off"
+                        className="h-full w-full rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                      />
+                      {searchQuery ? (
+                        <button
+                          type="button"
+                          aria-label="Clear search"
+                          onClick={() => {
+                            setSearchQuery("");
+                            setSearchResults([]);
+                          }}
+                          className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </button>
+                      ) : null}
+
+                      {searchQuery.trim() ? (
+                        <div className="elev-3 absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+                          {searchLoading ? (
+                            <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">Searching courses...</p>
+                          ) : searchResults.length > 0 ? (
+                            <ul className="max-h-80 overflow-y-auto py-1">
+                              {searchResults.map((course: CourseSearchResult) => {
+                                const alreadySelected = selectedCourseCode === course.courseCode;
+                                return (
+                                  <li key={course.courseCode}>
+                                    <CourseSearchResultButton
+                                      course={course}
+                                      disabled={alreadySelected}
+                                      onClick={() => {
+                                        setSelectedCourse(course);
+                                        setSearchQuery("");
+                                        setSearchResults([]);
+                                      }}
+                                    />
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">No matching courses found.</p>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-2.5 py-2.5 sm:gap-3 sm:px-4 sm:py-3.5">
+          <div className="app-aero-panel calculator-panel calculator-major-panel overflow-hidden">
+            <div className="app-aero-panel-heading calculator-panel-heading flex-wrap justify-between">
               <div>
-                <h3 className="text-[15px] font-bold text-[var(--on-surface)]">Assessment strategy</h3>
+                <h2 className="flex items-center gap-2.5 text-[15px] font-bold text-[var(--on-surface)]">
+                  <AssessmentIcon className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                  Assessment strategy
+                </h2>
                 <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">
                   {selectedCourse
                     ? "Enter projected marks as percentages or raw scores."
@@ -631,6 +600,9 @@ export function OcasCalculatorClient()
                       <section key={group} className="border-b border-[var(--brand-divider)] lg:border-b-0 lg:border-r lg:last:border-r-0">
                         <div className="border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-2.5 py-2 sm:px-4 sm:py-3">
                           <div className="flex items-center gap-2">
+                            {group === "OCAS"
+                              ? <BookIcon className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+                              : <AssessmentIcon className="h-4 w-4 shrink-0 text-[var(--primary)]" />}
                             <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--primary)]">
                               {group}
                               <span className="shrink-0 text-[13px] font-semibold tracking-normal text-[var(--on-surface-variant)]">
@@ -782,10 +754,14 @@ export function OcasCalculatorClient()
         </section>
 
         <aside className="space-y-3 sm:space-y-4">
-          <section className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:p-3">
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 sm:gap-0 sm:divide-x sm:divide-y-0">
-                <div className="rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:pr-4">
+          <section className="app-aero-panel calculator-panel calculator-major-panel overflow-hidden">
+            <div className="app-aero-panel-heading calculator-panel-heading">
+              <ArrowUpRightIcon className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+              <h2 className="text-[15px] font-bold">Projected result</h2>
+            </div>
+            <div className="calculator-panel-body space-y-4 p-4 sm:p-5">
+              <div className="calculator-result-summary grid grid-cols-2 gap-2 sm:gap-0 sm:divide-x sm:divide-y-0">
+                <div className="calculator-result-stat rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:pr-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
                     Projected score
                   </p>
@@ -793,7 +769,7 @@ export function OcasCalculatorClient()
                     {formatPercent(estimatedScore)}
                   </p>
                 </div>
-                <div className="rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:pl-4">
+                <div className="calculator-result-stat rounded-[0.65rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:pl-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]">
                     Likely grade
                   </p>
@@ -826,46 +802,11 @@ export function OcasCalculatorClient()
             </div>
           </section>
 
-          <section className="calculator-panel calculator-nested-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-2.5 sm:p-3">
-            <h2 className="text-[13px] font-bold text-[var(--on-surface)]">SUSS grade scale</h2>
-            <div className="mt-3 grid grid-cols-[auto_1fr_auto] gap-x-3 gap-y-1.5 text-[12px]">
-              <span className="font-semibold text-[var(--on-surface-variant)]">Grade</span>
-              <span className="font-semibold text-[var(--on-surface-variant)]">Mark</span>
-              <span className="text-right font-semibold text-[var(--on-surface-variant)]">GPV</span>
-              {GRADE_BANDS.map((band, index) => (
-                <div key={band.grade} className="col-span-3 grid grid-cols-subgrid items-center">
-                  <span className="font-semibold text-[var(--on-surface)]">{band.grade}</span>
-                  <span className="text-[var(--on-surface-variant)]">
-                    {formatGradeRange(index)}
-                  </span>
-                  <span className="text-right text-[var(--on-surface-variant)]">
-                    {GRADE_POINT_VALUES[band.grade].toFixed(1)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
+          <SussGradeScale />
         </aside>
       </div>
     </section>
   );
-}
-
-function formatGradeRange(index: number)
-{
-  const band = GRADE_BANDS[index];
-
-  if (index === 0)
-  {
-    return `${band.minimum}–100%`;
-  }
-
-  if (index === GRADE_BANDS.length - 1)
-  {
-    return `0–${GRADE_BANDS[index - 1].minimum - 1}%`;
-  }
-
-  return `${band.minimum}–${GRADE_BANDS[index - 1].minimum - 1}%`;
 }
 
 function formatCompletedWeight(value: number)

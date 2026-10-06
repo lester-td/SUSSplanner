@@ -26,8 +26,10 @@ Normal users do not have accounts. Timetable, semester planner, GPA-calculator,
 settings, and course-registration reminder interaction state are stored in
 browser `localStorage`. Semester planners can additionally be backed up to and
 restored from a local JSON file, or opened as an A4 print view for saving as
-PDF. A timetable can be shared through a semantic URL that contains a semester
-ID and selected class identifiers. The shared page remains read-only until the
+PDF. Semester planners can also be shared as compressed snapshots embedded in
+`/planner#plan=...`; recipients confirm **Save shared plan?** before replacing
+their local plan. A timetable can be shared through a semantic URL that contains
+a semester ID and selected class identifiers. The shared page remains read-only until the
 recipient explicitly imports it into their local timetable.
 
 The repository contains two cooperating workspaces:
@@ -446,6 +448,13 @@ class-group, semester, and optional week information.
 - Timetable assembly resolves semantic identifiers from schedule shards, loads
   events and semester data, derives ECA markers, detects clashes, and returns
   unresolved identifiers without silently removing them from the response.
+- Multi-semester event ownership comes from `data/schedule-cohorts.json`, generated
+  from each source document before schedules are merged. Snapshot generation
+  records `startSemesterId`; the schedule reader also annotates older snapshots.
+  Continued selections use their `originSemesterId` to select events and remap
+  their dates into the viewed semester's weeks. A reused TG/CRN supplies only
+  events belonging to the original cohort; class pickers expose new starts only.
+  Keep this generated ownership index with the source schedule changes.
 
 ## Frontend Routes and Pages
 
@@ -1526,8 +1535,9 @@ secret.
 - Calculator results depend on user-entered grades, prior GPA, prior
   GPA-counted CUs, and Pass/Fail selections; the app cannot verify them against
   official academic records or policy.
-- Only timetable semester/selections are shareable. The multi-semester study
-  plan can be imported/exported as JSON but cannot be shared through a URL.
+- Semester-planner share links are fixed snapshots, not live synchronized plans.
+  They use browser compression streams and versioned validation in
+  `lib/planner/share-url.ts`; unsupported browsers can use JSON backup instead.
 - Semester-planner PDF output depends on the browser print dialog and may require
   users to allow the new print-view tab.
 - Share links are limited to 50 class identifiers and depend on those semantic

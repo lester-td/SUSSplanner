@@ -2,7 +2,9 @@ import "server-only";
 
 import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
 import { getExamAssessmentMode } from "@/lib/timetable/exam-status";
+import { formatContinuationSemesterShort, getFollowingContinuationSemesters } from "@/lib/timetable/course-continuation";
 import { buildSharedClassIdentifier } from "@/lib/timetable/share-url";
+import { filterEventsForSemester, isClassStartingInSemester } from "@/lib/timetable/semester-events";
 import type {
   SharedClassIdentifier,
   TimetableData,
@@ -10,7 +12,7 @@ import type {
   TimetableSelectionRecord,
 } from "@/lib/timetable/types";
 import { getCourseSnapshot } from "./course-snapshot-reader";
-import { getSemesterById, getSemesterWeeks } from "./metadata";
+import { getSemesterById, getSemesterWeeks, getSemesters } from "./metadata";
 import { getScheduleSnapshot } from "./schedule-snapshot-reader";
 
 function normalizeCourseCode(courseCode: string)
@@ -37,9 +39,10 @@ export async function getTimetableDataFromClassIdentifiers(
 )
 {
   const normalizedSelections = normalizeSelections(selectedClasses);
-  const [semester, semesterWeeks] = await Promise.all([
+  const [semester, semesterWeeks, semesters] = await Promise.all([
     getSemesterById(semesterId),
     getSemesterWeeks(semesterId),
+    getSemesters(),
   ]);
 
   if (normalizedSelections.length === 0)
@@ -68,25 +71,75 @@ export async function getTimetableDataFromClassIdentifiers(
 
   for (const selectedClass of normalizedSelections)
   {
-    const matchingClass = scheduleByCourseCode.get(selectedClass.courseCode)?.classes.find((item) => (
-      item.scheduleType === selectedClass.scheduleType
+    const originId = selectedClass.originSemesterId ?? semesterId;
+    const originSemester = semesters.find((item) => item.semesterId === selectedClass.originSemesterId);
+    const targetClass = scheduleByCourseCode.get(selectedClass.courseCode)?.classes.find((item) => (
+      item.semesterId === semesterId
+      && item.scheduleType === selectedClass.scheduleType
       && item.groupCodeType === selectedClass.groupCodeType
       && item.groupCode === selectedClass.groupCode
     ));
+    let matchingClass = targetClass;
+    if (selectedClass.originSemesterId !== undefined)
+    {
+      const originSchedule = await getScheduleSnapshot(originId, selectedClass.courseCode);
+      matchingClass = originSchedule?.classes.find((item) => (
+        item.semesterId === originId
+        && item.scheduleType === selectedClass.scheduleType
+        && item.groupCodeType === selectedClass.groupCodeType
+        && item.groupCode === selectedClass.groupCode
+      ));
+      const validTarget = getFollowingContinuationSemesters({
+        courseCode: selectedClass.courseCode,
+        semesterId: originId,
+        offeredSemesters: courseByCourseCode.get(selectedClass.courseCode)?.offeredSemesters ?? [],
+        semesters,
+      }).some((item) => item.semesterId === semesterId);
+      if (!originSemester || !validTarget)
+      {
+        unresolvedSelections.push(selectedClass);
+        continue;
+      }
+    }
 
-    if (!matchingClass)
+    if (!matchingClass || (selectedClass.originSemesterId === undefined && !isClassStartingInSemester(matchingClass)))
     {
       unresolvedSelections.push(selectedClass);
       continue;
     }
 
     const shareKey = buildSharedClassIdentifier(selectedClass);
-    const classEvents = matchingClass.events.map((event) => ({
-      ...event,
-      courseName: matchingClass.courseName,
-      schoolName: matchingClass.schoolName,
-      shareKey,
-    } satisfies TimetableEventRecord));
+    const courseLabel = originSemester
+      ? `${selectedClass.courseCode} (${formatContinuationSemesterShort(originSemester.semesterName)})`
+      : selectedClass.courseCode;
+    const candidates = selectedClass.originSemesterId === undefined
+      ? matchingClass.events
+      : [...matchingClass.events, ...(targetClass?.events ?? [])];
+    const ownEvents = candidates.filter((event) => (event.startSemesterId ?? event.semesterId) === originId);
+    const scopedEvents = ownEvents.map((event) => {
+      const week = semesterWeeks.find((item) => event.eventDate >= item.startDate && event.eventDate <= item.endDate);
+      return {
+        ...event,
+        semesterId,
+        startSemesterId: originId,
+        weekId: week?.weekId ?? null,
+        weekNo: week?.weekNo ?? null,
+        weekType: week?.weekType ?? null,
+        weekLabel: week?.label ?? null,
+      };
+    });
+    const uniqueEvents = new Map(scopedEvents.map((event) => [
+      [event.eventKind, event.eventDate, event.startTime, event.endTime].join("|"), event,
+    ]));
+    const classEvents = (semester ? filterEventsForSemester([...uniqueEvents.values()], semester, semesterWeeks) : [])
+      .map((event) => ({
+        ...event,
+        courseName: matchingClass.courseName,
+        schoolName: matchingClass.schoolName,
+        shareKey,
+        courseLabel,
+        originSemesterId: selectedClass.originSemesterId,
+      } satisfies TimetableEventRecord));
     const assessments = courseByCourseCode.get(selectedClass.courseCode)?.assessments.filter((assessment) => (
       assessment.scheduleType === selectedClass.scheduleType
     )) ?? [];
@@ -99,11 +152,13 @@ export async function getTimetableDataFromClassIdentifiers(
     events.push(...classEvents);
     resolvedSelections.push({
       ...matchingClass,
+      semesterId,
       events: classEvents,
       identifier: selectedClass,
       shareKey,
       hasEca,
       examAssessmentMode,
+      courseLabel,
     });
   }
 

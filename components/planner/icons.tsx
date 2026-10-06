@@ -17,6 +17,7 @@ import {
   TbCornerDownRight,
   TbColumns3,
   TbDownload,
+  TbDeviceFloppy,
   TbEye,
   TbEyeOff,
   TbFilter,
@@ -87,6 +88,11 @@ export function TrashIcon({ className }: IconProps)
 export function DownloadIcon({ className }: IconProps)
 {
   return renderIcon(TbDownload, className);
+}
+
+export function BackupIcon({ className }: IconProps)
+{
+  return renderIcon(TbDeviceFloppy, className);
 }
 
 export function UploadIcon({ className }: IconProps)

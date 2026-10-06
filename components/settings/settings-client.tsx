@@ -105,6 +105,7 @@ function settingsAreEqual(left: SettingsState, right: SettingsState)
   return left.colorScheme === right.colorScheme
     && left.themeId === right.themeId
     && left.timetableOrientation === right.timetableOrientation
+    && left.timetableOpeningView === right.timetableOpeningView
     && left.registrationReminders.enabled === right.registrationReminders.enabled
     && left.timetableStudyMode === right.timetableStudyMode;
 }
@@ -733,6 +734,22 @@ export function SettingsClient()
                 { value: "vertical", label: "Vertical" },
               ]}
               onChange={(timetableOrientation) => updateSettings({ timetableOrientation })}
+            />
+          </SettingRow>
+
+          <SettingRow
+            title="Open timetable to"
+            description="Choose the week view to open in either layout. This week falls back to All weeks when unavailable. Last viewed remembers each semester."
+          >
+            <SegmentedControl
+              label="Open timetable to"
+              value={settings.timetableOpeningView}
+              options={[
+                { value: "all-weeks", label: "All weeks" },
+                { value: "this-week", label: "This week" },
+                { value: "last-viewed", label: "Last viewed" },
+              ]}
+              onChange={(timetableOpeningView) => updateSettings({ timetableOpeningView })}
             />
           </SettingRow>
 

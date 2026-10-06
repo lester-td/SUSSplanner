@@ -61,6 +61,15 @@ describe("timetable exports", () => {
     expect(lanes.get(blocks.find((block) => block.shareKey === "ICT263-CRN01")!.id)?.index).toBe(1);
   });
 
+  it("keeps a continuation and a new start distinct in ICS when their group is reused", () => {
+    const carried = { ...event, originSemesterId: 10, courseLabel: "ICT235 (Jan '26)", shareKey: `${event.shareKey}@10` };
+    const ics = buildIcs(semester, [event, carried]);
+    expect(ics).toContain("SUMMARY:ICT235 (TG01)");
+    expect(ics).toContain("SUMMARY:ICT235 (Jan '26) (TG01)");
+    expect(ics).toContain("UID:sussplanner-1@sussplanner.local");
+    expect(ics).toContain("UID:sussplanner-1-from-10@sussplanner.local");
+  });
+
   it("supports the horizontal course panel and exam calendar as vector PDF views", async () => {
     const courses = [{
       shareKey: event.shareKey,

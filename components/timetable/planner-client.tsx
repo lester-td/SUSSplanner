@@ -46,16 +46,24 @@ import {
   getCurrentWeekChip,
 } from "@/lib/timetable/date-utils";
 import {
+  getCourseContinuationDisplay,
+  getFollowingContinuationSemesters,
+} from "@/lib/timetable/course-continuation";
+import {
   TIMETABLE_STORAGE_KEY,
   TIMETABLE_UPDATED_EVENT,
   loadSavedTimetable,
   getSavedSemesterState,
   saveTimetableToLocalStorage,
+  upsertClassInSavedTimetable,
+  removeClassFromSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import {
   buildSharedClassIdentifier,
   encodeShareUrlState,
 } from "@/lib/timetable/share-url";
+import { filterClassesForSemester, filterEventsForSemester, filterTimetableForSemester } from "@/lib/timetable/semester-events";
+import { resolveTimetableOpeningWeek } from "@/lib/timetable/opening-week";
 import {
   buildExamCards,
   buildSelectableWeeks,
@@ -123,26 +131,15 @@ function buildPreviewEvents(classes: CourseClassRecord[]): TimetableEventRecord[
 
 function createDefaultSemesterState(
   semesterId: number,
-  currentSemesterId: number,
-  currentWeekId: number | null,
-  semesterWeeks: SemesterWeekRecord[],
   defaultOrientation: TimetableOrientation,
 ): PlannerStorageState
 {
-  const currentWeek = semesterWeeks.find((week) => week.weekId === currentWeekId) ?? null;
-  const selectedWeekId = semesterId === currentSemesterId
-    && currentWeek?.weekType === "TEACHING"
-    && currentWeek.weekNo >= 1
-    && currentWeek.weekNo <= 12
-    ? currentWeek.weekId
-    : "all";
-
   return {
     semesterId,
     selectedClasses: [],
     hiddenClasses: [],
     courseColorsByCourseCode: {},
-    selectedWeekId,
+    selectedWeekId: "all",
     orientation: defaultOrientation,
     viewMode: "class",
   };
@@ -180,7 +177,7 @@ function replaceSelectionForCourse(
 )
 {
   return [
-    ...current.filter((item) => item.courseCode !== incoming.courseCode),
+    ...current.filter((item) => item.courseCode !== incoming.courseCode || item.originSemesterId !== undefined),
     incoming,
   ];
 }
@@ -249,6 +246,16 @@ function pickPreferredClass(
   }
 
   return preferred[0] ?? fallback[0] ?? null;
+}
+
+function toClassSelection(group: CourseClassRecord): SharedClassIdentifier
+{
+  return {
+    courseCode: group.courseCode,
+    scheduleType: group.scheduleType,
+    groupCodeType: group.groupCodeType,
+    groupCode: group.groupCode,
+  };
 }
 
 function buildDayDateByDay(week: SemesterWeekRecord | null)
@@ -364,10 +371,12 @@ function resolveThemeColorPreference(
 
 export function PlannerClient({
   semesters,
+  allSemesters,
   currentSemesterId,
   currentWeekId,
 }: {
   semesters: SemesterOption[];
+  allSemesters: SemesterRecord[];
   currentSemesterId: number;
   currentWeekId: number | null;
 })
@@ -408,6 +417,9 @@ export function PlannerClient({
   const exportCaptureRef = useRef<HTMLDivElement | null>(null);
   const alternateExportCaptureRef = useRef<HTMLDivElement | null>(null);
   const noticeTimeoutRef = useRef<number | null>(null);
+  const activeSemesterIdRef = useRef(semesterId);
+  activeSemesterIdRef.current = semesterId;
+  const pickerRequestRef = useRef(0);
   const deferredSearch = useDeferredValue(searchInput);
 
   const selectedSemester = semesters.find((semester) => semester.semesterId === semesterId) ?? semesters[0] ?? null;
@@ -421,23 +433,24 @@ export function PlannerClient({
     const semesterIdToLoad = savedSemesterExists && saved
       ? saved.semesterId
       : currentSemesterId || semesters[0]?.semesterId || 0;
-    const next = savedSemesterExists && saved
+    const savedSemesterState = savedSemesterExists && saved
       ? saved
-      : getSavedSemesterState(saved, semesterIdToLoad)
-        ?? createDefaultSemesterState(
-          semesterIdToLoad,
-          currentSemesterId,
-          currentWeekId,
-          semesters.find((semester) => semester.semesterId === semesterIdToLoad)?.weeks ?? [],
-          settings.timetableOrientation,
-        );
+      : getSavedSemesterState(saved, semesterIdToLoad);
+    const next = savedSemesterState ?? createDefaultSemesterState(semesterIdToLoad, settings.timetableOrientation);
 
     setAppSettings(settings);
     setSemesterId(semesterIdToLoad);
     setSelectedClasses(next.selectedClasses);
     setHiddenClasses(next.hiddenClasses);
     setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
-    setSelectedWeekId(next.selectedWeekId);
+    setSelectedWeekId(resolveTimetableOpeningWeek({
+      openingView: settings.timetableOpeningView,
+      semesterId: semesterIdToLoad,
+      currentSemesterId,
+      currentWeekId,
+      semesterWeeks: semesters.find((semester) => semester.semesterId === semesterIdToLoad)?.weeks ?? [],
+      lastViewedWeekId: savedSemesterState?.selectedWeekId,
+    }));
     setOrientation(saved?.orientation ?? settings.timetableOrientation);
     setViewMode(saved?.viewMode ?? "class");
     setReady(true);
@@ -519,7 +532,7 @@ export function PlannerClient({
       return;
     }
 
-    const courseCodes = [...new Set(selectedClasses.map((selection) => selection.courseCode))];
+    const courseCodes = [...new Set(selectedClasses.filter((selection) => selection.originSemesterId === undefined).map((selection) => selection.courseCode))];
     if (courseCodes.length === 0)
     {
       setCourseHasAlternativesByCode({});
@@ -601,7 +614,9 @@ export function PlannerClient({
         return response.json() as Promise<{ timetable: TimetableData }>;
       })
       .then((payload) => {
-        setTimetableData(payload.timetable);
+        if (controller.signal.aborted || activeSemesterIdRef.current !== semesterId) return;
+        if (!selectedSemester) return;
+        setTimetableData(filterTimetableForSemester(payload.timetable, selectedSemester, semesterWeeks));
         setSelectedWeekId((current) => (
           current === "all" || payload.timetable.semesterWeeks.some((week) => week.weekId === current)
             ? current
@@ -650,7 +665,9 @@ export function PlannerClient({
         }
         return response.json() as Promise<SearchResponse>;
       })
-      .then((payload) => setSearchResults(payload.courses))
+      .then((payload) => {
+        if (!controller.signal.aborted && activeSemesterIdRef.current === semesterId) setSearchResults(payload.courses);
+      })
       .catch((error: unknown) => {
         if ((error as { name?: string })?.name === "AbortError")
         {
@@ -677,6 +694,20 @@ export function PlannerClient({
     () => buildThemedCourseColorMap(selectedCards, themePalette),
     [selectedCards, themePalette],
   );
+  const continuationByShareKey = useMemo(() => {
+    const saved = ready ? loadSavedTimetable() : null;
+
+    return new Map(selectedCards.flatMap((card) => {
+      const display = getCourseContinuationDisplay({
+        selection: card.identifier,
+        semesterId,
+        semesterStates: saved?.semesterStates,
+        semesters: allSemesters,
+      });
+
+      return display ? [[card.shareKey, display] as const] : [];
+    }));
+  }, [ready, selectedCards, selectedClasses, semesterId, allSemesters]);
   const colorByShareKey = useMemo(
     () => new Map(selectedCards.map((card) => [
       card.shareKey,
@@ -687,8 +718,15 @@ export function PlannerClient({
     [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards, themePalette],
   );
   const exportCourses = useMemo(
-    () => buildExportCourses(selectedCards, colorByShareKey, hiddenClasses),
-    [selectedCards, colorByShareKey, hiddenClasses],
+    () => buildExportCourses(
+      selectedCards.map((card) => ({
+        ...card,
+        continuationLabel: continuationByShareKey.get(card.shareKey)?.cardLines.join(" · "),
+      })),
+      colorByShareKey,
+      hiddenClasses,
+    ),
+    [selectedCards, colorByShareKey, continuationByShareKey, hiddenClasses],
   );
   const colorByCourseCode = useMemo(
     () => new Map(selectedCards.map((card) => [
@@ -700,15 +738,25 @@ export function PlannerClient({
     [courseColorsByCourseCode, defaultColorByCourseCode, selectedCards, themePalette],
   );
   const selectedShareKeyByCourseCode = useMemo(
-    () => new Map(selectedClasses.map((selection) => [selection.courseCode, buildSharedClassIdentifier(selection)])),
+    () => new Map(selectedClasses.filter((selection) => selection.originSemesterId === undefined).map((selection) => [selection.courseCode, buildSharedClassIdentifier(selection)])),
     [selectedClasses],
   );
   const visibleEvents = useMemo(
-    () => timetableData.events.filter((event) => !hiddenClasses.includes(event.shareKey)),
-    [hiddenClasses, timetableData.events],
+    () => (selectedSemester ? filterEventsForSemester(timetableData.events, selectedSemester, semesterWeeks) : [])
+      .filter((event) => !hiddenClasses.includes(event.shareKey)),
+    [hiddenClasses, selectedSemester, semesterWeeks, timetableData.events],
   );
-  const allBlocks = useMemo(() => buildTimetableBlocks(visibleEvents, selectedWeekId), [selectedWeekId, visibleEvents]);
-  const pickerPreviewEvents = useMemo(() => buildPreviewEvents(classPickerClasses), [classPickerClasses]);
+  const allBlocks = useMemo(
+    () => buildTimetableBlocks(visibleEvents, selectedWeekId).map((block) => ({
+      ...block,
+      continuationLabel: continuationByShareKey.get(block.shareKey)?.blockText,
+    })),
+    [continuationByShareKey, selectedWeekId, visibleEvents],
+  );
+  const pickerPreviewEvents = useMemo(
+    () => selectedSemester ? filterEventsForSemester(buildPreviewEvents(classPickerClasses), selectedSemester, semesterWeeks) : [],
+    [classPickerClasses, selectedSemester, semesterWeeks],
+  );
   const pickerBlocks = useMemo(
     () => buildTimetableBlocks(pickerPreviewEvents, selectedWeekId),
     [pickerPreviewEvents, selectedWeekId],
@@ -831,9 +879,13 @@ export function PlannerClient({
 
   function removeClass(shareKey: string)
   {
-    setSelectedClasses((current) => current.filter((value) => `${value.courseCode}:${value.scheduleType}:${value.groupCodeType}:${value.groupCode}` !== shareKey));
-    setHiddenClasses((current) => current.filter((value) => value !== shareKey));
-    setClassPickerCourse((current) => (current && shareKey.startsWith(`${current.courseCode}:`) ? null : current));
+    const selection = selectedClasses.find((item) => buildSharedClassIdentifier(item) === shareKey);
+    if (!selection) return;
+    const next = removeClassFromSavedTimetable(loadSavedTimetable(), semesterId, selection);
+    saveTimetableToLocalStorage(next);
+    setSelectedClasses(next.selectedClasses);
+    setHiddenClasses(next.hiddenClasses);
+    closeClassPicker();
   }
 
   function showPlannerBanner(message: string)
@@ -848,16 +900,20 @@ export function PlannerClient({
 
   function closeClassPicker()
   {
+    pickerRequestRef.current += 1;
     setClassPickerCourse(null);
     setClassPickerClasses([]);
     setClassPickerError("");
     setClassPickerLoading(false);
   }
 
-  function addClassSelection(selection: SharedClassIdentifier)
+  function addClassSelection(selection: SharedClassIdentifier, continuationSemesterIds: number[] = [])
   {
+    if (selection.originSemesterId !== undefined) return;
+    const next = upsertClassInSavedTimetable(loadSavedTimetable(), semesterId, selection, continuationSemesterIds);
+    saveTimetableToLocalStorage(next);
     setSelectedClasses((current) => replaceSelectionForCourse(current, selection));
-    setHiddenClasses((current) => current.filter((value) => !value.startsWith(`${selection.courseCode}:`)));
+    setHiddenClasses(next.hiddenClasses);
     closeClassPicker();
     setSearchInput("");
     setSearchResults([]);
@@ -877,20 +933,24 @@ export function PlannerClient({
     });
 
     const saved = loadSavedTimetable();
-    const next = getSavedSemesterState(saved, nextSemesterId)
-      ?? createDefaultSemesterState(
-        nextSemesterId,
-        currentSemesterId,
-        currentWeekId,
-        semesters.find((semester) => semester.semesterId === nextSemesterId)?.weeks ?? [],
-        appSettings.timetableOrientation,
-      );
+    const savedSemesterState = getSavedSemesterState(saved, nextSemesterId);
+    const next = savedSemesterState ?? createDefaultSemesterState(nextSemesterId, appSettings.timetableOrientation);
 
+    activeSemesterIdRef.current = nextSemesterId;
+    setTimetableData({ semester: null, semesterWeeks: [], selections: [], events: [], clashes: [], unresolvedSelections: [] });
+    setScheduleCourse(null);
     setSemesterId(nextSemesterId);
     setSelectedClasses(next.selectedClasses);
     setHiddenClasses(next.hiddenClasses);
     setCourseColorsByCourseCode(next.courseColorsByCourseCode ?? {});
-    setSelectedWeekId(next.selectedWeekId);
+    setSelectedWeekId(resolveTimetableOpeningWeek({
+      openingView: appSettings.timetableOpeningView,
+      semesterId: nextSemesterId,
+      currentSemesterId,
+      currentWeekId,
+      semesterWeeks: semesters.find((semester) => semester.semesterId === nextSemesterId)?.weeks ?? [],
+      lastViewedWeekId: savedSemesterState?.selectedWeekId,
+    }));
     setSearchInput("");
     setSearchResults([]);
     setPlannerNotice("");
@@ -899,6 +959,8 @@ export function PlannerClient({
 
   function openClassPicker(course: ClassPickerCourse)
   {
+    const requestId = ++pickerRequestRef.current;
+    const requestSemesterId = semesterId;
     setClassPickerCourse(course);
     setClassPickerLoading(true);
     setClassPickerError("");
@@ -917,13 +979,21 @@ export function PlannerClient({
         }
         return response.json() as Promise<ClassesResponse>;
       })
-      .then((payload) => setClassPickerClasses(payload.classes))
-      .catch((error: unknown) => setClassPickerError(error instanceof Error ? error.message : "Unable to load class groups."))
-      .finally(() => setClassPickerLoading(false));
+      .then((payload) => {
+        if (requestId !== pickerRequestRef.current || requestSemesterId !== activeSemesterIdRef.current) return;
+        setClassPickerClasses(selectedSemester ? filterClassesForSemester(payload.classes, selectedSemester, semesterWeeks) : []);
+      })
+      .catch((error: unknown) => {
+        if (requestId === pickerRequestRef.current) setClassPickerError(error instanceof Error ? error.message : "Unable to load class groups.");
+      })
+      .finally(() => {
+        if (requestId === pickerRequestRef.current) setClassPickerLoading(false);
+      });
   }
 
   async function handleSearchResultClick(course: CourseSearchResult)
   {
+    const requestSemesterId = semesterId;
     const offeredInSelectedSemester = course.offeredSemesters.some((semester) => semester.semesterId === semesterId);
 
     if (!offeredInSelectedSemester)
@@ -944,8 +1014,9 @@ export function PlannerClient({
         throw new Error("Unable to load class groups.");
       }
       const payload = await response.json() as ClassesResponse;
+      if (requestSemesterId !== activeSemesterIdRef.current) return;
       const preferredGroupType = appSettings.timetableStudyMode === "full-time" ? "TG" : "CRN";
-      const firstClass = pickPreferredClass(payload.classes, preferredGroupType, visibleEvents);
+      const firstClass = pickPreferredClass(selectedSemester ? filterClassesForSemester(payload.classes, selectedSemester, semesterWeeks) : [], preferredGroupType, visibleEvents);
 
       if (!firstClass)
       {
@@ -953,17 +1024,17 @@ export function PlannerClient({
         return;
       }
 
-      setSearchInput("");
-      setSearchResults([]);
-      addClassSelection({
-        courseCode: firstClass.courseCode,
-        scheduleType: firstClass.scheduleType,
-        groupCodeType: firstClass.groupCodeType,
-        groupCode: firstClass.groupCode,
+      const continuationSemesters = getFollowingContinuationSemesters({
+        courseCode: course.courseCode,
+        semesterId,
+        offeredSemesters: course.offeredSemesters,
+        semesters: allSemesters,
       });
+      addClassSelection(toClassSelection(firstClass), continuationSemesters.map((item) => item.semesterId));
     }
     catch (error: unknown)
     {
+      if (requestSemesterId !== activeSemesterIdRef.current) return;
       showPlannerBanner(error instanceof Error ? error.message : "Unable to load class groups.");
     }
   }
@@ -1065,7 +1136,7 @@ export function PlannerClient({
 
   function resetPlanner()
   {
-    setSelectedClasses([]);
+    setSelectedClasses((current) => current.filter((item) => item.originSemesterId !== undefined));
     setHiddenClasses([]);
     setCourseColorsByCourseCode({});
     setSearchInput("");
@@ -1075,7 +1146,7 @@ export function PlannerClient({
     closeClassPicker();
     saveTimetableToLocalStorage({
       semesterId,
-      selectedClasses: [],
+      selectedClasses: selectedClasses.filter((item) => item.originSemesterId !== undefined),
       hiddenClasses: [],
       courseColorsByCourseCode: {},
       selectedWeekId,
@@ -1090,6 +1161,9 @@ export function PlannerClient({
   const nextOrientationToggle = orientation === "horizontal"
     ? { label: "Vertical", icon: <ColumnsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("vertical") }
     : { label: "Horizontal", icon: <RowsIcon className="h-[18px] w-[18px]" />, onClick: () => setOrientation("horizontal") };
+  const thisWeek = semesterId === currentSemesterId
+    ? selectableWeeks.find((week) => week.weekId === currentWeekId)
+    : undefined;
 
   return (
     <>
@@ -1183,6 +1257,7 @@ export function PlannerClient({
                   isPickMode={Boolean(classPickerCourse)}
                   suppressActiveOutline={Boolean(classPickerCourse)}
                   onBlockClick={(block) => {
+                    if (block.originSemesterId !== undefined) return;
                     if (classPickerCourse)
                     {
                       const matchingGroup = classPickerClasses.find((group) => {
@@ -1284,8 +1359,8 @@ export function PlannerClient({
           </div>
 
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3">
-            <div className={orientation === "horizontal" ? "space-y-1 md:grid md:grid-flow-col md:auto-cols-fr md:gap-1 md:space-y-0" : "space-y-1"}>
-              <div className={`grid grid-cols-3 gap-1 ${orientation === "horizontal" ? "md:contents" : ""}`}>
+            <div className="space-y-1">
+              <div className="grid grid-cols-3 gap-1">
                 <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share" onClick={handleShare} stretch />
                 <div className="relative" data-download-popover-root>
                   <ActionButton
@@ -1313,19 +1388,18 @@ export function PlannerClient({
                 </div>
                 <ActionButton variant="ghost" icon={nextViewToggle.icon} label={nextViewToggle.label} onClick={nextViewToggle.onClick} stretch />
               </div>
-              <div className={`grid grid-cols-2 gap-1 ${orientation === "horizontal" ? "md:contents" : ""}`}>
+              <div className="grid grid-cols-3 gap-1">
+                <ActionButton
+                  variant={selectedWeekId === "all" ? "primary" : "ghost"}
+                  icon={<CalendarWeekIcon className="h-[18px] w-[18px]" />}
+                  label={selectedWeekId === "all" ? "This Week" : "Äll Weeks"}
+                  onClick={() => setSelectedWeekId((current) => current === "all" ? thisWeek?.weekId ?? "all" : "all")}
+                  stretch
+                  disabled={selectedWeekId === "all" && !thisWeek}
+                />
                 <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} stretch />
                 <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} stretch />
               </div>
-              {selectedWeekId !== "all" ? (
-                <ActionButton
-                  variant="ghost"
-                  icon={<GridIcon className="h-[18px] w-[18px]" />}
-                  label="Show All Weeks"
-                  onClick={() => setSelectedWeekId("all")}
-                  stretch
-                />
-              ) : null}
             </div>
 
             {shareMessage ? (
@@ -1340,6 +1414,7 @@ export function PlannerClient({
               {selectedCards.map((record) => {
                 const isHidden = hiddenClasses.includes(record.shareKey);
                 const recordColor = colorByShareKey.get(record.shareKey) ?? record.color;
+                const continuation = continuationByShareKey.get(record.shareKey);
                 return (
                   <article
                     key={record.shareKey}
@@ -1391,7 +1466,7 @@ export function PlannerClient({
                           </div>
                           <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
                             <Link
-                              href={`/courses/${record.courseCode}`}
+                              href={`/courses/${record.courseCode}?semesterId=${semesterId}`}
                               className="inline min-w-0 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                             >
                               <span className="text-[14px] font-extrabold leading-5 sm:text-[15px]">{record.courseCode}</span>{" "}
@@ -1401,6 +1476,13 @@ export function PlannerClient({
                             </Link>
                           </div>
                         </div>
+                        {continuation ? (
+                          <div className="mt-1 pl-6 text-[11px] font-semibold leading-4 text-[var(--on-surface)] sm:text-[12px]">
+                            {continuation.cardLines.map((line) => (
+                              <div key={line}>{line}</div>
+                            ))}
+                          </div>
+                        ) : null}
                         <div className="mt-1 space-y-1 text-[12px] font-medium leading-4 text-[var(--on-surface-variant)] sm:text-[13px] sm:leading-5">
                           <div className="flex min-w-0 items-center gap-1.5">
                             <ListIcon className="h-4 w-4 shrink-0" />
@@ -1518,6 +1600,7 @@ export function PlannerClient({
           <ClassScheduleModalContent
             courseCode={scheduleCourse.courseCode}
             courseName={scheduleCourse.courseName}
+            courseLabel={scheduleCourse.courseLabel}
             events={scheduleCourse.events}
             selectedSemesterId={semesterId}
           />
@@ -1527,7 +1610,7 @@ export function PlannerClient({
       <Modal
         open={confirmResetOpen}
         title="Reset planner"
-        description="You are about to clear the selected courses for this semester. Are you sure?"
+        description="Clear courses starting in this semester? Their future continuations will also be removed. Courses carried from earlier semesters remain."
         onClose={() => setConfirmResetOpen(false)}
         bodyClassName="py-4"
         footer={(

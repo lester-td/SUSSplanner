@@ -100,6 +100,7 @@ function buildFallbackCourses(events: TimetableEventRecord[], colors?: Map<strin
     return [{
       shareKey: event.shareKey,
       courseCode: event.courseCode,
+      courseLabel: event.courseLabel,
       courseName: event.courseName,
       groupCode: event.groupCode,
       examDateLabel: exam ? formatEventDate(exam.eventDate) : "No Exam",
@@ -234,7 +235,7 @@ function drawBlock(
   const top = y + height;
   if (height >= 11)
   {
-    const title = horizontal && block.courseName ? `${block.courseCode} ${block.courseName}` : block.courseCode;
+    const title = horizontal && block.courseName ? `${block.courseLabel ?? block.courseCode} ${block.courseName}` : (block.courseLabel ?? block.courseCode);
     page.drawText(fitText(title, bold, 9, textWidth), { x: x + 4, y: top - 11, font: bold, size: 9, color: textColor });
   }
   if (height >= 21) page.drawText(fitText(block.groupCode, regular, 8, textWidth), { x: x + 4, y: top - 21, font: regular, size: 8, color: textColor });
@@ -460,7 +461,7 @@ function drawExamGrid(page: PDFPage, windows: ExamWindow[], undatedCourses: Expo
           const color = options.colorByShareKey?.get(card.shareKey) ?? getCourseColor(card.courseCode);
           page.drawRectangle({ x: colX + 3, y: bottom, width: colWidth - 6, height: 29, color: colorFromHex(color), borderColor: GRID, borderWidth: 0.4 });
           const textColor = readableColor(color);
-          page.drawText(fitText(card.courseCode, bold, 7.5, colWidth - 12), { x: colX + 6, y: bottom + 19, font: bold, size: 7.5, color: textColor });
+          page.drawText(fitText(card.courseLabel ?? card.courseCode, bold, 7.5, colWidth - 12), { x: colX + 6, y: bottom + 19, font: bold, size: 7.5, color: textColor });
           page.drawText(fitText(`${card.groupCode}  ${formatTimeRange(card.startTime, card.endTime)}`, regular, 6.5, colWidth - 12), {
             x: colX + 6, y: bottom + 8, font: regular, size: 6.5, color: textColor,
           });
@@ -488,7 +489,7 @@ function drawExamGrid(page: PDFPage, windows: ExamWindow[], undatedCourses: Expo
       const cardTop = sectionTop - 35 - row * 60;
       page.drawRectangle({ x: cardX, y: cardTop - 55, width: cardWidth, height: 55, color: SUBTLE, borderColor: GRID, borderWidth: 0.5 });
       page.drawRectangle({ x: cardX, y: cardTop - 55, width: 3, height: 55, color: colorFromHex(course.color) });
-      page.drawText(fitText(`${course.courseCode} (${course.groupCode})`, bold, 8.5, cardWidth - 14), {
+      page.drawText(fitText(`${course.courseLabel ?? course.courseCode} (${course.groupCode})`, bold, 8.5, cardWidth - 14), {
         x: cardX + 8, y: cardTop - 13, font: bold, size: 8.5, color: INK,
       });
       page.drawText(fitText(course.courseName ?? "Untitled course", regular, 7.5, cardWidth - 14), {
@@ -530,7 +531,7 @@ function drawCoursePanel(page: PDFPage, courses: ExportCourse[], x: number, top:
     page.drawRectangle({ x: cardX, y: bottom, width: 3, height: cardHeight, color: colorFromHex(course.color) });
     page.drawRectangle({ x: cardX + 8, y: cardTop - 14, width: 8, height: 8, color: colorFromHex(course.color) });
     const titleX = cardX + 21;
-    const code = fitText(course.courseCode, bold, 9, cardWidth - 27);
+    const code = fitText(course.courseLabel ?? course.courseCode, bold, 9, cardWidth - 27);
     page.drawText(code, { x: titleX, y: cardTop - 13, font: bold, size: 9, color: INK });
     const nameX = titleX + bold.widthOfTextAtSize(code, 9) + 4;
     const nameWidth = Math.max(0, cardX + cardWidth - nameX - (course.hidden ? 41 : 6));
@@ -669,7 +670,7 @@ function drawEventPages(pdf: PDFDocument, semester: SemesterRecord | null, event
   for (const event of sorted)
   {
     const dateChanged = event.eventDate !== previousDate;
-    const title = `${event.courseCode} (${event.groupCode})  ${formatTimeRange(event.startTime, event.endTime)}`;
+    const title = `${event.courseLabel ?? event.courseCode} (${event.groupCode})  ${formatTimeRange(event.startTime, event.endTime)}`;
     const details = [event.courseName, event.eventKind !== "CLASS" ? event.eventKind : null,
       event.eventMode ? `Mode: ${event.eventMode}` : null, event.venue ? `Venue: ${event.venue}` : null,
       event.weekLabel ? `Week: ${event.weekLabel}` : null, event.remarks ? `Notes: ${event.remarks}` : null]
@@ -701,7 +702,7 @@ function drawEventPages(pdf: PDFDocument, semester: SemesterRecord | null, event
     for (const clash of clashes)
     {
       ensure(27);
-      const label = `${formatEventDate(clash.eventDate)} ${formatTimeRange(clash.startTime, clash.endTime)}: ${clash.events.map((event) => `${event.courseCode} (${event.groupCode})`).join(", ")}`;
+      const label = `${formatEventDate(clash.eventDate)} ${formatTimeRange(clash.startTime, clash.endTime)}: ${clash.events.map((event) => `${event.courseLabel ?? event.courseCode} (${event.groupCode})`).join(", ")}`;
       page!.drawText(fitText(label, regular, 9, contentWidth), { x: MARGIN, y: y!, font: regular, size: 9, color: INK });
       y! -= 16;
     }

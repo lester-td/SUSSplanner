@@ -32,6 +32,7 @@ export default async function CalculatorsPage()
       activeSection="calculator"
       currentSemesterContext={currentSemesterContext}
       dataUpdatedAt={latestDataUpdatedAt}
+      contentFrameClassName="app-aero-frame"
     >
       <CalculatorsPageClient />
     </AppShell>

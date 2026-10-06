@@ -5,6 +5,7 @@ import { START_MINUTES } from "@/lib/timetable/date-utils";
 export type ExportCourse = {
   shareKey: string;
   courseCode: string;
+  courseLabel?: string;
   courseName: string | null;
   groupCode: string;
   examDateLabel: string;
@@ -12,6 +13,7 @@ export type ExportCourse = {
   examStatus: ExamStatus;
   examGuidance: string | null;
   creditUnits: number | null;
+  continuationLabel?: string;
   color: string;
   hidden: boolean;
 };
@@ -25,6 +27,7 @@ export function buildExportCourses(
   return cards.map((card) => ({
     shareKey: card.shareKey,
     courseCode: card.courseCode,
+    courseLabel: card.courseLabel,
     courseName: card.courseName,
     groupCode: card.groupCode,
     examDateLabel: card.examDateLabel,
@@ -32,6 +35,7 @@ export function buildExportCourses(
     examStatus: card.examStatus,
     examGuidance: card.examGuidance,
     creditUnits: card.creditUnits,
+    continuationLabel: card.continuationLabel,
     color: colors.get(card.shareKey) ?? card.color,
     hidden: hiddenClasses.includes(card.shareKey),
   }));

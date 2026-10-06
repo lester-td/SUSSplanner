@@ -312,6 +312,19 @@ Outputs:
 data/output/schedules-import.sql      SQL for semesters/courses/classes/class_events
 data/output/schedules-parsed.json     parsed schedule data
 data/output/course-codes.txt          unique course codes found in schedules
+../data/schedule-cohorts.json         source cohort ownership of continuation sessions
+```
+
+The cohort index preserves which intake owns each multi-semester session before
+documents with reused TG/CRN numbers are merged. Commit it with schedule changes;
+the app uses it when building and reading schedule snapshots. Override its output
+path with `--cohorts-out`. To regenerate it from existing extracted CSVs without
+reimporting the database, run from `scraper/`:
+
+```bash
+npm run generate:cohorts -- \
+  --manifest data/input/schedule-manifest.json \
+  --csv-dir data/output/schedules/extracted-csv
 ```
 
 If you already have `schedules-parsed.json` and just want to regenerate SQL using the latest schema:

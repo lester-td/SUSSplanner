@@ -380,7 +380,7 @@ export function ShareClient({
                               href={`/courses/${record.courseCode}`}
                               className="inline min-w-0 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                             >
-                              <span className="text-[15px] font-extrabold leading-5">{record.courseCode}</span>{" "}
+                              <span className="text-[15px] font-extrabold leading-5">{record.courseLabel ?? record.courseCode}</span>{" "}
                               <span className="text-[15px] font-normal leading-5">
                                 {record.courseName ?? "Untitled course"}
                               </span>
@@ -502,6 +502,7 @@ export function ShareClient({
           <ClassScheduleModalContent
             courseCode={scheduleCourse.courseCode}
             courseName={scheduleCourse.courseName}
+            courseLabel={scheduleCourse.courseLabel}
             events={scheduleCourse.events}
             selectedSemesterId={selectedSemester?.semesterId ?? null}
           />

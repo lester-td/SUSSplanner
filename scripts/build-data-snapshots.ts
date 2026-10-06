@@ -5,6 +5,7 @@ import process from "node:process";
 import { loadEnvConfig } from "@next/env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { annotateEventCohort } from "../lib/timetable/schedule-cohorts";
 
 import {
   academicCalendarEvents,
@@ -243,6 +244,7 @@ async function main()
       else classRowsByCourseCode.set(row.courseCode, [row]);
     }
     const eventsByClassId = new Map<number, ClassEventWithWeekRecord[]>();
+    const allSemesters = [...semestersById.values()];
     for (const row of eventRows)
     {
       const classRow = classRowsById.get(row.classId);
@@ -253,7 +255,7 @@ async function main()
       const week = (weeksBySemesterId.get(classRow.semesterId) ?? []).find(
         (item) => row.eventDate >= item.startDate && row.eventDate <= item.endDate,
       );
-      const mapped: ClassEventWithWeekRecord = {
+      const mapped: ClassEventWithWeekRecord = annotateEventCohort({
         eventId: row.eventId,
         classId: row.classId,
         courseCode: classRow.courseCode,
@@ -273,7 +275,7 @@ async function main()
         weekNo: week?.weekNo ?? null,
         weekType: week?.weekType ?? null,
         weekLabel: week?.label ?? null,
-      };
+      }, allSemesters);
       const existing = eventsByClassId.get(row.classId);
       if (existing) existing.push(mapped);
       else eventsByClassId.set(row.classId, [mapped]);
@@ -379,8 +381,12 @@ async function main()
           || right.semesterId - left.semesterId
         ));
       const courseAssessments = assessmentsByCourseCode.get(courseRow.courseCode) ?? [];
+      const startingClasses = relevantClasses.filter(row => {
+        const events = eventsByClassId.get(row.classId) ?? [];
+        return events.length === 0 || events.some(event => event.startSemesterId === row.semesterId);
+      });
       const offeringsByKey = new Map<string, CourseOfferingSnapshot>();
-      for (const classRow of relevantClasses)
+      for (const classRow of startingClasses)
       {
         const key = `${classRow.semesterId}:${classRow.scheduleType}`;
         const existing = offeringsByKey.get(key);
@@ -431,11 +437,11 @@ async function main()
         creditUnits: courseRow.creditUnits,
         presentationPattern: courseRow.presentationPattern,
         courseSynopsis: courseRow.courseSynopsis,
-        hasAvailableClasses: relevantClasses.length > 0,
-        availableClassCount: relevantClasses.length,
+        hasAvailableClasses: startingClasses.length > 0,
+        availableClassCount: startingClasses.length,
         offeredSemesters,
-        scheduleTypes: unique(relevantClasses.map((row) => row.scheduleType)) as CourseIndexSnapshotRecord["scheduleTypes"],
-        availableAsGsp: relevantClasses.some((row) => row.availableAsGsp === true),
+        scheduleTypes: unique(startingClasses.map((row) => row.scheduleType)) as CourseIndexSnapshotRecord["scheduleTypes"],
+        availableAsGsp: startingClasses.some((row) => row.availableAsGsp === true),
         assessmentModes: unique(courseAssessments.map((assessment) => assessment.assessmentMode?.trim()).filter((value): value is string => Boolean(value))).sort(),
         offerings,
       });

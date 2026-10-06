@@ -19,6 +19,7 @@ const MIN_LANE_WIDTH_PX = 38;
 const MIN_LANE_HEIGHT_PX = 18;
 const VERTICAL_TIME_AXIS_COLUMN = "clamp(1.95rem, 5.8vw, 2.75rem)";
 const VERTICAL_DAY_COLUMN_MIN = "clamp(2.8rem, 11vw, 8rem)";
+const VERTICAL_LANE_MIN_WIDTH_PX = 64;
 const TIMETABLE_GRID_CLASS = "timetable-grid";
 const TIMETABLE_GRID_TIME_LABEL_CLASS = "timetable-grid__time-label";
 const TIMETABLE_GRID_DAY_LABEL_CLASS = "timetable-grid__day-label";
@@ -180,14 +181,16 @@ function formatBlockWeekLabel(weekLabel: string)
     }
     if (/^[\d,\s-]+$/.test(suffix))
     {
-      return `Weeks ${normalizeNumericWeekList(suffix)}`;
+      const normalized = normalizeNumericWeekList(suffix);
+      return `${/^\d+$/.test(normalized) ? "Week" : "Weeks"} ${normalized}`;
     }
     return `Weeks ${normalizeCommaSpacing(suffix)}`;
   }
 
   if (/^[\d,\s-]+$/.test(trimmed))
   {
-    return `Weeks ${normalizeNumericWeekList(trimmed)}`;
+    const normalized = normalizeNumericWeekList(trimmed);
+    return `${/^\d+$/.test(normalized) ? "Week" : "Weeks"} ${normalized}`;
   }
 
   if (/^[\d,\s+\-]+$/.test(trimmed))
@@ -545,7 +548,17 @@ export function TimetableCanvas({
     horizontalRunningTop += height;
   }
   const horizontalContentHeight = horizontalRunningTop;
-  const verticalGridTemplateColumns = `${VERTICAL_TIME_AXIS_COLUMN} ${dayLaneCounts.map((laneCount) => `minmax(${VERTICAL_DAY_COLUMN_MIN}, ${laneCount}fr)`).join(" ")}`;
+  const allowVerticalScroll = !isHorizontal && !forceDesktop && showAllWeeks
+    && dayLaneCounts.some((laneCount) => laneCount > 1);
+  const verticalDayColumnMinimums = dayLaneCounts.map((laneCount) => (
+    forceDesktop ? VERTICAL_DAY_COLUMN_MIN
+      : allowVerticalScroll ? `max(${VERTICAL_DAY_COLUMN_MIN}, ${laneCount * VERTICAL_LANE_MIN_WIDTH_PX}px)`
+        : "0px"
+  ));
+  const verticalGridTemplateColumns = `${VERTICAL_TIME_AXIS_COLUMN} ${dayLaneCounts.map((laneCount, dayIndex) => `minmax(${verticalDayColumnMinimums[dayIndex]}, ${laneCount}fr)`).join(" ")}`;
+  const verticalGridWidth = allowVerticalScroll
+    ? `max(100%, calc(${VERTICAL_TIME_AXIS_COLUMN} + ${verticalDayColumnMinimums.join(" + ")}))`
+    : undefined;
   const now = new Date();
   const todayIndex = now.getDay() === 0 ? 7 : now.getDay();
   const todayVisibleIndex = visibleDays.findIndex((day) => day.dayOfWeek === todayIndex);
@@ -650,12 +663,12 @@ export function TimetableCanvas({
                       block={block}
                       color={blockColorByKey.get(block.shareKey) ?? getCourseColor(block.courseCode)}
                       active={activeShareKey === block.shareKey}
-                      available={Boolean(activeShareKey) && activeShareKey !== block.shareKey && (
+                      available={block.originSemesterId === undefined && Boolean(activeShareKey) && activeShareKey !== block.shareKey && (
                         deEmphasisMode === "all"
                         || (deEmphasisMode === "course-only" && Boolean(activeCourseCode) && block.courseCode === activeCourseCode)
                       )}
-                      clickable={isPickMode || Boolean(courseCanPickByCode[block.courseCode])}
-                      showPickHint={!isPickMode && Boolean(courseCanPickByCode[block.courseCode])}
+                      clickable={block.originSemesterId === undefined && (isPickMode || Boolean(courseCanPickByCode[block.courseCode]))}
+                      showPickHint={block.originSemesterId === undefined && !isPickMode && Boolean(courseCanPickByCode[block.courseCode])}
                       suppressOutline={suppressActiveOutline}
                       dimmed={false}
                       style={{
@@ -683,10 +696,15 @@ export function TimetableCanvas({
   }
 
   return (
-    <div className={`${TIMETABLE_GRID_CLASS} overflow-visible bg-[var(--surface-container-lowest)]`}>
-      <div className="w-full">
+    <div
+      className={`${TIMETABLE_GRID_CLASS} ${forceDesktop ? "overflow-visible" : allowVerticalScroll ? "isolate max-w-full overflow-x-auto" : "max-w-full overflow-x-hidden"} bg-[var(--surface-container-lowest)]`}
+      role="region"
+      aria-label="Weekly timetable"
+      tabIndex={allowVerticalScroll ? 0 : undefined}
+    >
+      <div className="w-full" style={{ width: verticalGridWidth }}>
         <div className="grid gap-0" style={{ gridTemplateColumns: verticalGridTemplateColumns, gridTemplateRows: `${verticalHeaderHeightPx}px` }}>
-          <div className="bg-[var(--surface-container-lowest)]" />
+          <div className={`${allowVerticalScroll ? "sticky left-0 z-40" : ""} bg-[var(--surface-container-lowest)]`} />
           {visibleDays.map((day, index) => (
             <div
               key={day.dayOfWeek}
@@ -709,7 +727,10 @@ export function TimetableCanvas({
         </div>
 
         <div className="grid" style={{ gridTemplateColumns: verticalGridTemplateColumns }}>
-          <div className="relative" style={{ height: `${contentHeight}px` }}>
+          <div
+            className={allowVerticalScroll ? "sticky left-0 z-40 border-r border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]" : "relative"}
+            style={{ height: `${contentHeight}px` }}
+          >
             {timeSlots.map((slot) => (
               <div
                 key={slot}
@@ -797,12 +818,12 @@ export function TimetableCanvas({
                     block={block}
                     color={blockColorByKey.get(block.shareKey) ?? getCourseColor(block.courseCode)}
                     active={activeShareKey === block.shareKey}
-                    available={Boolean(activeShareKey) && activeShareKey !== block.shareKey && (
+                    available={block.originSemesterId === undefined && Boolean(activeShareKey) && activeShareKey !== block.shareKey && (
                       deEmphasisMode === "all"
                       || (deEmphasisMode === "course-only" && Boolean(activeCourseCode) && block.courseCode === activeCourseCode)
                     )}
-                    clickable={isPickMode || Boolean(courseCanPickByCode[block.courseCode])}
-                    showPickHint={!isPickMode && Boolean(courseCanPickByCode[block.courseCode])}
+                    clickable={block.originSemesterId === undefined && (isPickMode || Boolean(courseCanPickByCode[block.courseCode]))}
+                    showPickHint={block.originSemesterId === undefined && !isPickMode && Boolean(courseCanPickByCode[block.courseCode])}
                     suppressOutline={suppressActiveOutline}
                     dimmed={false}
                     style={{
@@ -868,9 +889,11 @@ function TimetableBlockButton({
   const classGroupLabel = formatClassGroupLabel(block.groupCode);
   const weekLabel = block.weekLabel ? formatBlockWeekLabel(block.weekLabel) : "";
   const modeLabel = block.eventMode ? formatEventModeLabel(block.eventMode) : "";
+  const continuationLabel = block.continuationLabel?.trim() ?? "";
   const showWeeks = showAllWeeks && !isVeryTight && Boolean(weekLabel);
   const showMode = !isTight && Boolean(modeLabel);
   const showTime = !isVeryTight && !hideTime;
+  const showContinuation = !isVeryTight && Boolean(continuationLabel);
 
   return (
     <button
@@ -883,21 +906,23 @@ function TimetableBlockButton({
         ["--block-text" as string]: getContrastingTextColorFromHex(color),
         opacity: dimmed ? 0.5 : undefined,
       }}
-      onClick={onClick}
-      title={`${block.courseCode} ${formatClassGroupLabel(block.groupCode)}
+      onClick={clickable ? onClick : undefined}
+      disabled={!clickable}
+      title={`${block.courseLabel ?? block.courseCode} ${formatClassGroupLabel(block.groupCode)}
 ${formatCompactMinuteRange(block.startMinutes, block.endMinutes)}${weekLabel ? `
-${weekLabel}` : ""}${showMode ? `
+${weekLabel}` : ""}${continuationLabel ? `
+${continuationLabel}` : ""}${showMode ? `
 ${modeLabel}` : ""}`}
     >
       <div className="timetable-cell__content">
         <div className="timetable-cell__module">
           {showCourseName && block.courseName ? (
             <span className="inline-flex min-w-0 max-w-full items-baseline gap-1">
-              <span className="shrink-0">{block.courseCode}</span>
+              <span className="shrink-0">{block.courseLabel ?? block.courseCode}</span>
               <span className="min-w-0 truncate font-medium">{block.courseName}</span>
             </span>
           ) : (
-            block.courseCode
+            block.courseLabel ?? block.courseCode
           )}
         </div>
 
@@ -915,6 +940,10 @@ ${modeLabel}` : ""}`}
 
         {showMode ? (
           <div className="timetable-cell__mode">{modeLabel}</div>
+        ) : null}
+
+        {showContinuation ? (
+          <div className="timetable-cell__continuation">{continuationLabel}</div>
         ) : null}
       </div>
     </button>

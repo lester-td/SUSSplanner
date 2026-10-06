@@ -6,6 +6,7 @@ import { parseArgs, requireString } from "../lib/args.js";
 import type { ScheduleParseResult, ScheduleType } from "../lib/types.js";
 import { parseScheduleCsv } from "../parsers/scheduleCsv.js";
 import { generateSql } from "../sql/generateSql.js";
+import { buildScheduleCohortIndex } from "../lib/scheduleCohorts.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -89,16 +90,22 @@ async function main(): Promise<void> {
 
   const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8")) as ScheduleManifest;
   const results: ScheduleParseResult[] = [];
+  const sources: Array<{ source: string; result: ScheduleParseResult }> = [];
 
   for (const item of manifest.schedules) {
     const source = item.pdf ?? item.csv;
     console.log(`Parsing ${source} (${item.scheduleType})...`);
     const csvPath = await getCsvForManifestItem(item, csvDir);
     const csvText = await fs.readFile(csvPath, "utf8");
-    results.push(parseScheduleCsv(csvText, item.scheduleType));
+    const result = parseScheduleCsv(csvText, item.scheduleType);
+    results.push(result);
+    sources.push({ source: source!, result });
   }
 
   const merged = mergeResults(results);
+  const cohortsPath = typeof args["cohorts-out"] === "string" ? args["cohorts-out"] : "../data/schedule-cohorts.json";
+  await fs.mkdir(path.dirname(cohortsPath), { recursive: true });
+  await fs.writeFile(cohortsPath, `${JSON.stringify(buildScheduleCohortIndex(sources), null, 2)}\n`, "utf8");
   const sql = generateSql({
     semesters: merged.semesters,
     courses: merged.courses,

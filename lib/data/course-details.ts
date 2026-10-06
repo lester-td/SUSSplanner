@@ -2,6 +2,8 @@ import "server-only";
 
 import { getCourseSnapshot } from "./course-snapshot-reader";
 import { getScheduleSnapshot } from "./schedule-snapshot-reader";
+import { getSemestersWithWeeks } from "./metadata";
+import { filterEventsForSemester, isClassStartingInSemester } from "@/lib/timetable/semester-events";
 
 function normalizeCourseCode(courseCode: string)
 {
@@ -45,13 +47,20 @@ export async function getCourseClasses(
   const semesterIds = semesterId
     ? [semesterId]
     : course.offeredSemesters.map((semester) => semester.semesterId);
-  const snapshots = await Promise.all(
-    semesterIds.map((id) => getScheduleSnapshot(id, normalizedCourseCode)),
-  );
+  const [snapshots, semesters] = await Promise.all([
+    Promise.all(semesterIds.map((id) => getScheduleSnapshot(id, normalizedCourseCode))),
+    getSemestersWithWeeks(),
+  ]);
 
   return snapshots
     .flatMap((snapshot) => snapshot?.classes ?? [])
-    .filter((item) => !scheduleType || item.scheduleType === scheduleType)
+    .filter((item) => (!semesterId || item.semesterId === semesterId) && (!scheduleType || item.scheduleType === scheduleType))
+    .filter(isClassStartingInSemester)
+    .map((item) => {
+      const semester = semesters.find((entry) => entry.semesterId === item.semesterId);
+      const ownEvents = item.events.filter(event => (event.startSemesterId ?? event.semesterId) === item.semesterId);
+      return { ...item, events: semester ? filterEventsForSemester(ownEvents, semester, semester.weeks) : [] };
+    })
     .sort((left, right) => (
       left.scheduleType.localeCompare(right.scheduleType)
       || left.groupCodeType.localeCompare(right.groupCodeType)
@@ -68,6 +77,6 @@ export async function getClassCountsByCourseCodes(courseCodes: string[], semeste
 
   return Object.fromEntries(normalizedCourseCodes.map((courseCode, index) => [
     courseCode,
-    schedules[index]?.classes.length ?? 0,
+    schedules[index]?.classes.filter(isClassStartingInSemester).length ?? 0,
   ]));
 }

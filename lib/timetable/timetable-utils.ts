@@ -146,10 +146,12 @@ export function buildTimetableBlocks(
     return classEvents
       .filter((event) => event.weekId === selectedWeekId)
       .map((event) => ({
-        id: `${event.eventId}`,
+        id: `${event.shareKey}:${event.eventId}`,
         shareKey: event.shareKey,
         courseCode: event.courseCode,
         courseName: event.courseName,
+        courseLabel: event.courseLabel,
+        originSemesterId: event.originSemesterId,
         groupCode: event.groupCode,
         groupCodeType: event.groupCodeType,
         dayOfWeek: event.dayOfWeek,
@@ -207,6 +209,8 @@ export function buildTimetableBlocks(
       shareKey: event.shareKey,
       courseCode: event.courseCode,
       courseName: event.courseName,
+      courseLabel: event.courseLabel,
+      originSemesterId: event.originSemesterId,
       groupCode: event.groupCode,
       groupCodeType: event.groupCodeType,
       dayOfWeek: event.dayOfWeek,
@@ -223,14 +227,15 @@ export function buildTimetableBlocks(
   return [...grouped.values()].sort((left, right) => left.dayOfWeek - right.dayOfWeek || left.startMinutes - right.startMinutes || left.courseCode.localeCompare(right.courseCode));
 }
 
-export function buildExamCards(events: TimetableEventRecord[])
+export function buildExamCards(events: TimetableEventRecord[]): ExamCard[]
 {
   return events
     .filter((event) => event.eventKind === "EXAM")
     .map((event) => ({
-      id: `${event.eventId}`,
+      id: `${event.shareKey}:${event.eventId}`,
       shareKey: event.shareKey,
       courseCode: event.courseCode,
+      courseLabel: event.courseLabel,
       courseName: event.courseName,
       groupCode: event.groupCode,
       eventDate: event.eventDate,

@@ -15,6 +15,7 @@ export function Modal({
   bodyClassName = "",
   showCloseButton = false,
   headerIcon,
+  headerContent,
 }: {
   open: boolean;
   title: string;
@@ -26,6 +27,7 @@ export function Modal({
   bodyClassName?: string;
   showCloseButton?: boolean;
   headerIcon?: ReactNode;
+  headerContent?: ReactNode;
 })
 {
   const titleId = useId();
@@ -107,6 +109,7 @@ export function Modal({
             {description ? (
               <p id={descriptionId} className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{description}</p>
             ) : null}
+            {headerContent}
           </div>
           {showCloseButton && headerIcon ? (
             <button

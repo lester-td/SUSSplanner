@@ -1,5 +1,6 @@
 import { plannerSemesterStateSchema, plannerStorageStateSchema } from "@/lib/validation/timetable";
-import type { PlannerSemesterState, PlannerStorageState, SharedTimetableState } from "./types";
+import type { PlannerSemesterState, PlannerStorageState, SharedClassIdentifier, SharedTimetableState } from "./types";
+import { buildSharedClassIdentifier } from "./share-url";
 
 export const TIMETABLE_STORAGE_KEY = "sussplanner.timetable.v1";
 export const TIMETABLE_UPDATED_EVENT = "sussplanner:timetable-updated";
@@ -51,6 +52,26 @@ function normalizeStorageState(state: PlannerStorageState)
     });
 
   semesterStates.set(String(activeSemesterState.semesterId), activeSemesterState);
+
+  // A continuation belongs to its starting semester. Keep its group in sync
+  // without touching a separate start of the same course in the target semester.
+  for (const [key, semesterState] of semesterStates)
+  {
+    if (semesterState.semesterId === activeSemesterState.semesterId) continue;
+    const selectedClasses = semesterState.selectedClasses.flatMap((selection) => {
+      if (selection.originSemesterId !== activeSemesterState.semesterId) return [selection];
+      const origin = activeSemesterState.selectedClasses.find((item) => (
+        item.courseCode === selection.courseCode && item.originSemesterId === undefined
+      ));
+      return origin ? [{ ...origin, originSemesterId: activeSemesterState.semesterId }] : [];
+    });
+    const validKeys = new Set(selectedClasses.map(buildSharedClassIdentifier));
+    semesterStates.set(key, {
+      ...semesterState,
+      selectedClasses,
+      hiddenClasses: semesterState.hiddenClasses.filter((shareKey) => validKeys.has(shareKey)),
+    });
+  }
 
   return {
     semesterId: activeSemesterState.semesterId,
@@ -195,13 +216,16 @@ export function isCourseInTimetable(
   const normalizedCode = normalizeCourseCode(courseCode);
   const semesterState = getSavedSemesterState(state, semesterId);
 
-  return semesterState?.selectedClasses.some((selection) => selection.courseCode === normalizedCode) ?? false;
+  return semesterState?.selectedClasses.some((selection) => (
+    selection.courseCode === normalizedCode && selection.originSemesterId === undefined
+  )) ?? false;
 }
 
 export function upsertClassInSavedTimetable(
   state: PlannerStorageState | null,
   semesterId: number,
   selection: SharedTimetableState["selectedClasses"][number],
+  continuationSemesterIds: number[] = [],
 )
 {
   const base = state ? getTimetableStateForSemester(state, semesterId) : createEmptyTimetableState(semesterId);
@@ -212,21 +236,52 @@ export function upsertClassInSavedTimetable(
   const nextSemesterState: PlannerSemesterState = {
     semesterId,
     selectedClasses: [
-      ...base.selectedClasses.filter((item) => item.courseCode !== normalizedSelection.courseCode),
+      ...base.selectedClasses.filter((item) => (
+        item.courseCode !== normalizedSelection.courseCode
+        || item.originSemesterId !== normalizedSelection.originSemesterId
+      )),
       normalizedSelection,
     ],
-    hiddenClasses: base.hiddenClasses.filter((shareKey) => !shareKey.startsWith(`${normalizedSelection.courseCode}:`)),
+    hiddenClasses: base.hiddenClasses.filter((shareKey) => !base.selectedClasses.some((item) => (
+      item.courseCode === normalizedSelection.courseCode
+      && item.originSemesterId === normalizedSelection.originSemesterId
+      && buildSharedClassIdentifier(item) === shareKey
+    ))),
     courseColorsByCourseCode: base.courseColorsByCourseCode,
     selectedWeekId: base.selectedWeekId,
   };
 
+  const semesterStates = {
+    ...(state?.semesterStates ?? {}),
+    [String(semesterId)]: nextSemesterState,
+  };
+  if (normalizedSelection.originSemesterId === undefined)
+  {
+    for (const targetId of continuationSemesterIds.filter((id) => id !== semesterId))
+    {
+      const target = semesterStates[String(targetId)] ?? {
+        semesterId: targetId,
+        selectedClasses: [],
+        hiddenClasses: [],
+        courseColorsByCourseCode: {},
+        selectedWeekId: "all" as const,
+      };
+      semesterStates[String(targetId)] = {
+        ...target,
+        selectedClasses: [
+          ...target.selectedClasses.filter((item) => (
+            item.courseCode !== normalizedSelection.courseCode || item.originSemesterId !== semesterId
+          )),
+          { ...normalizedSelection, originSemesterId: semesterId },
+        ],
+      };
+    }
+  }
+
   return normalizeStorageState({
     ...base,
     ...nextSemesterState,
-    semesterStates: {
-      ...(state?.semesterStates ?? {}),
-      [String(semesterId)]: nextSemesterState,
-    },
+    semesterStates,
   });
 }
 
@@ -240,8 +295,13 @@ export function removeCourseCodeFromSavedTimetable(
   const normalizedCode = normalizeCourseCode(courseCode);
   const nextSemesterState: PlannerSemesterState = {
     semesterId,
-    selectedClasses: base.selectedClasses.filter((selection) => selection.courseCode !== normalizedCode),
-    hiddenClasses: base.hiddenClasses.filter((shareKey) => !shareKey.startsWith(`${normalizedCode}:`)),
+    selectedClasses: base.selectedClasses.filter((selection) => (
+      selection.courseCode !== normalizedCode || selection.originSemesterId !== undefined
+    )),
+    hiddenClasses: base.hiddenClasses.filter((shareKey) => !base.selectedClasses.some((item) => (
+      item.courseCode === normalizedCode && item.originSemesterId === undefined
+      && buildSharedClassIdentifier(item) === shareKey
+    ))),
     courseColorsByCourseCode: base.courseColorsByCourseCode,
     selectedWeekId: base.selectedWeekId,
   };
@@ -254,6 +314,18 @@ export function removeCourseCodeFromSavedTimetable(
       [String(semesterId)]: nextSemesterState,
     },
   });
+}
+
+export function removeClassFromSavedTimetable(
+  state: PlannerStorageState | null,
+  semesterId: number,
+  selection: SharedClassIdentifier,
+)
+{
+  const originId = selection.originSemesterId ?? semesterId;
+  const next = removeCourseCodeFromSavedTimetable(state, originId, selection.courseCode);
+  // Remove the whole linked enrollment, but keep the semester being viewed.
+  return normalizeStorageState(getTimetableStateForSemester(next, semesterId));
 }
 
 export function clearSavedTimetable()

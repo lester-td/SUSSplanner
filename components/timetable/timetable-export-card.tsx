@@ -89,6 +89,9 @@ export const TimetableExportCard = forwardRef<HTMLDivElement, TimetableExportCar
                         {course.hidden ? <span className="ml-1 font-semibold text-[var(--on-surface-variant)]">(hidden)</span> : null}
                       </div>
                     </div>
+                    {course.continuationLabel ? (
+                      <div className="mt-1 pl-5 text-[12px] font-semibold leading-[18px] text-[var(--on-surface)]">{course.continuationLabel}</div>
+                    ) : null}
                     <div className="mt-1 space-y-0.5 text-[12px] leading-[18px] text-[var(--on-surface-variant)]">
                       <div className="flex items-start gap-1.5"><ListIcon className="mt-px h-4 w-4 shrink-0" /><span><span className="font-semibold text-[var(--on-surface)]">Group:</span> {course.groupCode}</span></div>
                       <div className="flex items-start gap-1.5"><CalendarIcon className="mt-px h-4 w-4 shrink-0" /><span>{course.examStatus === "dated" ? <><span className="font-semibold text-[var(--on-surface)]">Exam:</span> {getExportExamLabel(course)}</> : <span className="font-bold text-[var(--on-surface)]">{getExportExamLabel(course)}</span>}</span></div>

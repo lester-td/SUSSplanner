@@ -208,7 +208,7 @@ export function ExamCalendar({
                                 style={examStyle}
                               >
                                 <div className="timetable-cell__content">
-                                  <div className="timetable-cell__module">{card.courseCode}</div>
+                                  <div className="timetable-cell__module">{card.courseLabel ?? card.courseCode}</div>
                                   <div className="timetable-cell__meta">{formatClassGroupLabel(card.groupCode)}</div>
                                   <div className="timetable-cell__time">{formatTimeRange(card.startTime, card.endTime)}</div>
                                   {card.examMode ? (
@@ -236,7 +236,7 @@ export function ExamCalendar({
             {undatedExams.map((course) => (
               <article key={course.shareKey} className="relative overflow-hidden rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 pl-4">
                 <div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: course.color }} />
-                <div className="text-[13px] font-semibold text-[var(--on-surface)]">{course.courseCode} ({course.groupCode})</div>
+                <div className="text-[13px] font-semibold text-[var(--on-surface)]">{course.courseLabel ?? course.courseCode} ({course.groupCode})</div>
                 <div className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">{course.courseName ?? "Untitled course"}</div>
                 <div className="mt-1 text-[12px] font-bold text-[var(--on-surface)]">{course.examDateLabel}</div>
               </article>

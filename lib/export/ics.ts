@@ -30,7 +30,7 @@ export function buildIcs(semester: SemesterRecord | null, events: TimetableEvent
 
   for (const event of events)
   {
-    const summary = `${event.courseCode} (${event.groupCode})`;
+    const summary = `${event.courseLabel ?? event.courseCode} (${event.groupCode})`;
     const description = [
       `Course code: ${event.courseCode}`,
       event.courseName ? `Course: ${event.courseName}` : null,
@@ -44,7 +44,7 @@ export function buildIcs(semester: SemesterRecord | null, events: TimetableEvent
 
     lines.push(
       "BEGIN:VEVENT",
-      `UID:sussplanner-${event.eventId}@sussplanner.local`,
+      `UID:sussplanner-${event.eventId}${event.originSemesterId ? `-from-${event.originSemesterId}` : ""}@sussplanner.local`,
       `DTSTAMP:${stamp}`,
       `DTSTART;TZID=Asia/Singapore:${toIcsDateTime(event.eventDate, event.startTime)}`,
       `DTEND;TZID=Asia/Singapore:${toIcsDateTime(event.eventDate, event.endTime)}`,

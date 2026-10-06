@@ -40,12 +40,14 @@ function formatExamDeliveryMode(event: ClassEventWithWeekRecord)
 export function ClassScheduleModalContent({
   courseCode,
   courseName,
+  courseLabel,
   events,
   selectedSemesterId,
   showViewCourseButton = true,
 }: {
   courseCode: string;
   courseName: string | null;
+  courseLabel?: string;
   events: ClassEventWithWeekRecord[];
   selectedSemesterId?: number | null;
   showViewCourseButton?: boolean;
@@ -66,7 +68,7 @@ export function ClassScheduleModalContent({
       <div className="flex flex-col gap-2 border-b border-[var(--outline-variant)] pb-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3 sm:pb-3">
         <div className="min-w-0 space-y-2 sm:space-y-3">
           <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 sm:gap-x-3">
-            <span className="text-[22px] font-black leading-none tracking-[-0.04em] text-[var(--primary)] sm:text-[24px]">{courseCode}</span>
+            <span className="text-[22px] font-black leading-none tracking-[-0.04em] text-[var(--primary)] sm:text-[24px]">{courseLabel ?? courseCode}</span>
             <span className="text-[19px] font-semibold leading-[1.08] tracking-[-0.02em] text-[var(--on-surface)] sm:text-[22px]">{courseName ?? "Untitled course"}</span>
           </div>
         </div>

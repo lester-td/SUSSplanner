@@ -37,7 +37,7 @@ function buildEventListing(doc: Document, semester: SemesterRecord | null, event
     row.className = "print-events__row";
     const heading = doc.createElement("div");
     heading.className = "print-events__row-heading";
-    addTextElement(heading, "strong", "", `${event.courseCode} (${event.groupCode})`);
+    addTextElement(heading, "strong", "", `${event.courseLabel ?? event.courseCode} (${event.groupCode})`);
     addTextElement(heading, "span", "", formatTimeRange(event.startTime, event.endTime));
     row.appendChild(heading);
     const details = [event.courseName, event.eventMode ? `Mode: ${event.eventMode}` : null,
@@ -52,7 +52,7 @@ function buildEventListing(doc: Document, semester: SemesterRecord | null, event
     addTextElement(listing, "h3", "print-events__clashes-title", "Detected clashes");
     for (const clash of clashes)
     {
-      addTextElement(listing, "p", "print-events__clash", `${formatEventDate(clash.eventDate)} ${formatTimeRange(clash.startTime, clash.endTime)}: ${clash.events.map((event) => `${event.courseCode} (${event.groupCode})`).join(", ")}`);
+      addTextElement(listing, "p", "print-events__clash", `${formatEventDate(clash.eventDate)} ${formatTimeRange(clash.startTime, clash.endTime)}: ${clash.events.map((event) => `${event.courseLabel ?? event.courseCode} (${event.groupCode})`).join(", ")}`);
     }
   }
   return listing;

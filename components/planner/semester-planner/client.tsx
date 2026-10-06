@@ -1,7 +1,6 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
 import {
   AutoScrollActivator,
   DndContext,
@@ -16,16 +15,18 @@ import {
 import type { CollisionDetection, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
 import {
+  BackupIcon,
   BookIcon,
-  CalendarWeekIcon,
   ContinueIcon,
+  ChevronRightIcon,
+  EditIcon,
   DownloadIcon,
-  EditCalendarIcon,
   ListIcon,
   PlusIcon,
   RefreshIcon,
   SchoolIcon,
   SearchIcon,
+  ShareIcon,
   TrashIcon,
   UploadIcon,
 } from "@/components/planner/icons";
@@ -45,6 +46,11 @@ import {
   sortCourses,
 } from "@/components/planner/semester-planner/formatting";
 import { SemesterPlannerPanel } from "@/components/planner/semester-planner/panel";
+import { PlannerMobileCourseRow, PlannerMobileSheet, usePlannerMobileScrollLock } from "@/components/planner/semester-planner/mobile";
+import { PlannerPopover } from "@/components/planner/semester-planner/popover";
+import { SemesterPlannerPreviewSummary, SemesterPlannerSharePreview } from "@/components/planner/semester-planner/share-preview";
+import { ActionButton } from "@/components/ui/actions";
+import { CourseModeSwitch } from "@/components/ui/course-mode-switch";
 import { Modal } from "@/components/ui/modal";
 import { openSemesterPlannerPrintView } from "@/lib/export/semester-planner-print";
 import {
@@ -59,11 +65,14 @@ import {
   serializeSemesterPlannerBackup,
 } from "@/lib/planner/storage";
 import type { SemesterPlannerCourse, SemesterPlannerState } from "@/lib/planner/types";
+import { decodeSemesterPlannerShareUrl, encodeSemesterPlannerShareUrl } from "@/lib/planner/share-url";
 import type { CourseSearchResult, SemesterRecord } from "@/lib/timetable/types";
 
 type SearchResponse = {
   courses: CourseSearchResult[];
 };
+
+type MobilePanel = "add" | "bank" | "course" | "destination" | "remove";
 
 const pointerFirstCollisionDetection: CollisionDetection = (args) => {
   const pointerCollisions = pointerWithin(args);
@@ -102,6 +111,12 @@ export function SemesterPlannerClient({
 })
 {
   const [ready, setReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel | null>(null);
+  const [mobileCourseId, setMobileCourseId] = useState<string | null>(null);
+  const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(() => new Set([0]));
+  const [scrollToSemester, setScrollToSemester] = useState<number | null>(null);
   const [plan, setPlan] = useState<SemesterPlannerState>(defaultSemesterPlannerState());
   const [isCustomCourse, setIsCustomCourse] = useState(false);
   const [showAllModules, setShowAllModules] = useState(false);
@@ -120,10 +135,18 @@ export function SemesterPlannerClient({
   const [backupMenuOpen, setBackupMenuOpen] = useState(false);
   const [importedPlan, setImportedPlan] = useState<SemesterPlannerState | null>(null);
   const [importedPlanFileName, setImportedPlanFileName] = useState("");
+  const [importedPlanSource, setImportedPlanSource] = useState<"backup" | "shared">("backup");
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
+  usePlannerMobileScrollLock(isMobile && (editingCourseId !== null || resetConfirmOpen || importedPlan !== null || shareOpen));
   const noticeTimeoutRef = useRef<number | null>(null);
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const searchAnchorRef = useRef<HTMLLabelElement | null>(null);
+  const backupAnchorRef = useRef<HTMLDivElement | null>(null);
+  const sidebarRef = useRef<HTMLElement | null>(null);
   const mobileDragScrollFrameRef = useRef<number | null>(null);
   const mobileDragPointerYRef = useRef<number | null>(null);
   const mobileDragTrackingCleanupRef = useRef<(() => void) | null>(null);
@@ -146,6 +169,82 @@ export function SemesterPlannerClient({
     setPlan(loadSemesterPlannerState() ?? defaultSemesterPlannerState());
     setReady(true);
   }, []);
+
+  useEffect(() => {
+    let request = 0;
+    let disposed = false;
+    const readSharedPlan = async () => {
+      const currentRequest = ++request;
+      const hash = window.location.hash;
+      const params = new URLSearchParams(hash.slice(1));
+      if (!params.has("plan")) return;
+      try
+      {
+        const incoming = await decodeSemesterPlannerShareUrl(params.get("plan") ?? "");
+        if (disposed || currentRequest !== request || window.location.hash !== hash) return;
+        setImportedPlan(incoming);
+        setImportedPlanFileName("");
+        setImportedPlanSource("shared");
+        setMobilePanel(null);
+        setShareOpen(false);
+      }
+      catch (error)
+      {
+        if (disposed || currentRequest !== request || window.location.hash !== hash) return;
+        showNoticeMessage(typeof DecompressionStream === "undefined" && error instanceof Error
+          ? error.message
+          : "Unable to open shared plan. The link is invalid or unsupported.");
+        clearSharedPlanHash();
+      }
+    };
+    void readSharedPlan();
+    window.addEventListener("hashchange", readSharedPlan);
+    return () => {
+      disposed = true;
+      request++;
+      window.removeEventListener("hashchange", readSharedPlan);
+    };
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1023px)");
+    const updateMobile = () => {
+      setIsMobile(media.matches);
+      if (!media.matches) setMobilePanel(null);
+    };
+    updateMobile();
+    media.addEventListener("change", updateMobile);
+    return () => media.removeEventListener("change", updateMobile);
+  }, []);
+
+  useEffect(() => {
+    if (mobilePanel !== null || scrollToSemester === null) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`planner-mobile-semester-${scrollToSemester}`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+      setScrollToSemester(null);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobilePanel, scrollToSemester]);
+
+  useEffect(() => {
+    if (isMobile) return;
+    const updateSidebarHeight = () => {
+      const sidebar = sidebarRef.current;
+      if (sidebar)
+      {
+        sidebar.style.setProperty("--planner-sidebar-visible-top", `${Math.max(80, sidebar.getBoundingClientRect().top)}px`);
+      }
+    };
+
+    updateSidebarHeight();
+    window.addEventListener("scroll", updateSidebarHeight);
+    window.addEventListener("resize", updateSidebarHeight);
+
+    return () => {
+      window.removeEventListener("scroll", updateSidebarHeight);
+      window.removeEventListener("resize", updateSidebarHeight);
+    };
+  }, [isMobile]);
 
   useEffect(() => {
     if (!ready)
@@ -303,6 +402,7 @@ export function SemesterPlannerClient({
     () => sortedCourses.find((course) => course.id === draggedCourseId) ?? null,
     [draggedCourseId, sortedCourses],
   );
+  const mobileCourse = sortedCourses.find((course) => course.id === mobileCourseId) ?? null;
   useEffect(() => {
     if (!editingCourse)
     {
@@ -484,6 +584,65 @@ export function SemesterPlannerClient({
     }
   }
 
+  async function openPlanShare()
+  {
+    setShareUrl("");
+    setShareMessage("");
+    setShareOpen(true);
+    try
+    {
+      const path = await encodeSemesterPlannerShareUrl(plan);
+      setShareUrl(new URL(path, window.location.origin).href);
+    }
+    catch (error)
+    {
+      setShareMessage(error instanceof Error ? error.message : "Unable to create a share link. Please try again.");
+    }
+  }
+
+  async function copyPlanShareLink()
+  {
+    try
+    {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareMessage("Link copied.");
+    }
+    catch
+    {
+      setShareMessage("Select and copy the link above.");
+    }
+  }
+
+  async function sharePlanLink()
+  {
+    try
+    {
+      await navigator.share({ title: "Semester Planner", url: shareUrl });
+    }
+    catch (error)
+    {
+      if (error instanceof Error && error.name === "AbortError") return;
+      await copyPlanShareLink();
+    }
+  }
+
+  function clearSharedPlanHash()
+  {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    if (!params.has("plan")) return;
+    params.delete("plan");
+    const remaining = params.toString();
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${remaining ? `#${remaining}` : ""}`);
+  }
+
+  function dismissPlanImport()
+  {
+    if (importedPlanSource === "shared") clearSharedPlanHash();
+    setImportedPlan(null);
+    setImportedPlanFileName("");
+    setImportedPlanSource("backup");
+  }
+
   async function selectImportFile(file: File | undefined)
   {
     if (!file)
@@ -501,6 +660,7 @@ export function SemesterPlannerClient({
     {
       setImportedPlan(parseSemesterPlannerBackup(await file.text()));
       setImportedPlanFileName(file.name);
+      setImportedPlanSource("backup");
     }
     catch (error)
     {
@@ -517,9 +677,9 @@ export function SemesterPlannerClient({
     }
 
     setPlan(importedPlan);
-    setImportedPlan(null);
-    setImportedPlanFileName("");
-    showNoticeMessage("Semester plan imported.");
+    setExpandedSemesters(new Set([0]));
+    showNoticeMessage(importedPlanSource === "shared" ? "Shared plan saved." : "Semester plan imported.");
+    dismissPlanImport();
   }
 
   function addSemester()
@@ -601,6 +761,34 @@ export function SemesterPlannerClient({
     }
   }
 
+  function closeMobilePanel()
+  {
+    setMobilePanel(null);
+    setMobileCourseId(null);
+    setSearchQuery("");
+  }
+
+  function openMobileDestination(courseId: string)
+  {
+    setMobileCourseId(courseId);
+    setMobilePanel("destination");
+  }
+
+  function assignMobileCourse(semesterIndex: number | null)
+  {
+    if (!mobileCourse) return;
+    moveCourseToSemester(mobileCourse.id, semesterIndex);
+    showNoticeMessage(semesterIndex === null
+      ? `${mobileCourse.courseCode} is in the module bank.`
+      : `${mobileCourse.courseCode} assigned to Semester ${semesterIndex + 1}.`);
+    if (semesterIndex !== null)
+    {
+      setExpandedSemesters((current) => new Set(current).add(semesterIndex));
+      setScrollToSemester(semesterIndex);
+    }
+    closeMobilePanel();
+  }
+
   function addManualCourse()
   {
     const customLabel = manualCode.trim();
@@ -639,7 +827,8 @@ export function SemesterPlannerClient({
     setManualCode("");
     setManualCredits("");
     setManualSemesterSpan("");
-    showNoticeMessage("Custom module added to planner bank.");
+    if (isMobile) openMobileDestination(nextCourse.id);
+    else showNoticeMessage("Custom module added to planner bank.");
   }
 
   function saveEditedCustomCourse()
@@ -750,397 +939,310 @@ export function SemesterPlannerClient({
       courses: [...current.courses, catalogCourse],
     }));
     setSearchQuery("");
+    if (isMobile) openMobileDestination(catalogCourse.id);
   }
 
-  return (
-    <div className="planner-page">
-      <div className="space-y-3 md:space-y-4">
-        <div className="md:hidden">
-          <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)]">Semester Planner</h1>
-          <p className="mt-2 text-[13px] leading-5 text-[var(--on-surface-variant)]">
-            Forecast your courses and credit units fulfilment
+  const progressPanel = (
+    <section aria-labelledby="planner-progress-heading" className="app-aero-panel planner-section planner-progress-panel min-w-0">
+      <div className="app-aero-panel-heading">
+        <ListIcon className="h-5 w-5 text-[var(--primary)]" />
+        <h2 id="planner-progress-heading" className="text-[15px] font-bold leading-5 tracking-[-0.02em] sm:text-[17px]">Progress</h2>
+        <div className="ml-auto">
+          <ActionButton variant="ghost" icon={<ShareIcon className="h-4 w-4" />} label="Share" onClick={() => { void openPlanShare(); }} disabled={!ready} />
+        </div>
+      </div>
+      <div className="p-4 sm:p-5">
+        <div className="grid grid-cols-2 gap-3">
+          <label className="space-y-1">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Target Credits</span>
+            <input
+              type="number"
+              min="0"
+              step="2.5"
+              value={plan.totalCreditsGoal}
+              onChange={(event) => updatePlan((current) => ({
+                ...current,
+                totalCreditsGoal: Math.max(0, Number(event.target.value) || 0),
+              }))}
+              className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+            />
+          </label>
+
+          <label className="space-y-1">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Semesters</span>
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={plan.numSemesters}
+              onChange={(event) => updatePlan((current) => ({
+                ...current,
+                numSemesters: Math.max(1, Math.min(20, Number.parseInt(event.target.value, 10) || 1)),
+              }))}
+              className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+            />
+          </label>
+        </div>
+
+        <div className="planner-credit-allocation mt-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Credits Allocated</span>
+            <span className={`text-[12px] font-semibold ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
+              {Number(assignedCredits.toFixed(1))} / {formatCredits(plan.totalCreditsGoal)}
+              {plan.totalCreditsGoal > 0 ? ` · ${Number(creditProgressPercent.toFixed(1))}%` : ""}
+            </span>
+          </div>
+          <div className="planner-progress-track mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+            <div
+              className={`planner-progress-fill h-full rounded-full transition-all ${isOverTargetCredits ? "planner-progress-fill--error bg-[var(--error)]" : "bg-[var(--primary)]"}`}
+              style={{ width: `${creditProgressBarPercent}%` }}
+            />
+          </div>
+          <p className={`mt-2 text-[11px] font-medium ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
+            {plan.totalCreditsGoal > 0
+              ? isOverTargetCredits
+                ? `${formatCredits(assignedCredits - plan.totalCreditsGoal)} over target`
+                : `${formatCredits(plan.totalCreditsGoal - assignedCredits)} remaining`
+              : "Set a target credits value to track allocation progress."}
+            {` · ${sortedCourses.length} ${sortedCourses.length === 1 ? "course" : "courses"} added`}
           </p>
         </div>
-
-        <div className="sticky top-[3.55rem] z-30 -mx-3 border-y border-[var(--brand-divider)] bg-[color-mix(in_srgb,var(--surface-container-lowest)_92%,transparent)] px-3 py-2 shadow-[var(--shadow-elev-1)] backdrop-blur md:hidden">
-          <div className="grid grid-cols-3 items-center gap-2">
-            <button
-              type="button"
-              onClick={openPlanPdf}
-              className="planner-primary-action inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2 py-1.5 text-[11px] font-semibold leading-4 text-on-primary shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
-            >
-              <DownloadIcon className="h-3.5 w-3.5" />
-              Download PDF
-            </button>
-            <div className="relative min-w-0" data-backup-popover-root>
-              <button
-                type="button"
-                onClick={() => setBackupMenuOpen((current) => !current)}
-                aria-expanded={backupMenuOpen}
-                aria-haspopup="menu"
-                className="inline-flex w-full min-w-0 items-center justify-center gap-1.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-              >
-                <DownloadIcon className="h-3.5 w-3.5" />
-                Backup
-              </button>
-              {backupMenuOpen ? (
-                <div className="elev-3 absolute left-1/2 top-full z-40 mt-1.5 w-[min(17rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2">
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute -top-[7px] left-5 h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]"
+        <div ref={backupAnchorRef} className="planner-plan-actions relative mt-4 border-t border-[var(--outline-variant)] pt-4">
+          <ActionButton
+            variant="ghost"
+            icon={<DownloadIcon className="h-[18px] w-[18px]" />}
+            label="Download PDF"
+            onClick={openPlanPdf}
+          />
+          <div data-backup-popover-root>
+            <ActionButton
+              variant="ghost"
+              icon={<BackupIcon className="h-[18px] w-[18px]" />}
+              label="Backup"
+              onClick={() => setBackupMenuOpen((current) => !current)}
+              aria-expanded={backupMenuOpen}
+              aria-controls="semester-planner-backup"
+            />
+            {backupMenuOpen ? (
+              <PlannerPopover anchorRef={backupAnchorRef} id="semester-planner-backup" width={272} backupRoot className="elev-3 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <ActionButton
+                    variant="ghost"
+                    icon={<DownloadIcon className="h-[18px] w-[18px]" />}
+                    label="Export"
+                    onClick={exportPlan}
+                    stretch
                   />
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <button
-                      type="button"
-                      onClick={exportPlan}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
-                    >
-                      <DownloadIcon className="h-4 w-4" />
-                      Export
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBackupMenuOpen(false);
-                        importFileInputRef.current?.click();
-                      }}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
-                    >
-                      <UploadIcon className="h-4 w-4" />
-                      Import
-                    </button>
-                  </div>
-                  <p className="mt-2 border-t border-[var(--outline-variant)] px-1 pt-2 text-[10px] leading-4 text-[var(--on-surface-variant)]">
-                    Export a restorable JSON backup, or import one to replace your current semester plan after confirmation.
-                  </p>
-                </div>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              onClick={() => setResetConfirmOpen(true)}
-              className="inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[0.6rem] border border-[var(--error)] bg-[var(--surface-container-lowest)] px-2 py-1.5 text-[11px] font-semibold leading-4 text-[var(--error)] transition-colors hover:bg-[var(--error-container)]"
-            >
-              <RefreshIcon className="h-3.5 w-3.5" />
-              Reset
-            </button>
-          </div>
-        </div>
-
-        <section className="grid gap-3 md:grid-cols-2">
-          <div className="planner-control-card order-2 rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:order-1 md:px-5 md:py-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                {isCustomCourse ? (
-                <BookIcon className="h-7 w-7 text-[var(--primary)]" />
-                ) : (
-                <SearchIcon className="h-7 w-7 text-[var(--primary)]" />
-                )}
-                <div>
-                  <h2 className="text-[20px] font-semibold leading-7 text-[var(--on-surface)] md:text-[28px] md:font-medium md:leading-9 md:tracking-[-0.02em]">Add Course</h2>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomCourse((current) => !current)}
-                className="planner-segmented-control relative inline-grid h-[34px] shrink-0 grid-cols-2 overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
-                aria-pressed={isCustomCourse}
-                aria-label={`Add course mode: ${isCustomCourse ? "Custom" : "Search"}. Click to toggle.`}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`planner-segmented-control__thumb absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomCourse ? "translate-x-full" : "translate-x-0"}`}
-                />
-                <span
-                  aria-hidden="true"
-                  className={`planner-segmented-label relative z-10 flex min-w-[3.1rem] items-center justify-center rounded-[0.3rem] px-1.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 md:min-w-[4.25rem] md:px-2.5 ${!isCustomCourse ? "planner-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
-                >
-                  Search
-                </span>
-                <span
-                  aria-hidden="true"
-                  className={`planner-segmented-label relative z-10 flex min-w-[3.1rem] items-center justify-center rounded-[0.3rem] px-1.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 md:min-w-[4.25rem] md:px-2.5 ${isCustomCourse ? "planner-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
-                >
-                  Custom
-                </span>
-              </button>
-            </div>
-
-            {!isCustomCourse ? (
-              <div className="mt-3">
-                <label className="sr-only" htmlFor="semester-planner-offered-in">Offered In</label>
-                <select
-                  id="semester-planner-offered-in"
-                  value={searchSemesterId === "all" ? "" : String(searchSemesterId)}
-                  onChange={(event) => setSearchSemesterId(event.target.value ? Number.parseInt(event.target.value, 10) : "all")}
-                  className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                >
-                  <option value="">Any Semester</option>
-                  {semesters.map((semester) => (
-                    <option key={semester.semesterId} value={semester.semesterId}>
-                      {semester.semesterName} ({semester.academicYear})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-
-            {isCustomCourse ? (
-              <div className="mt-3 grid gap-3">
-                <input
-                  type="text"
-                  value={manualCode}
-                  onChange={(event) => setManualCode(event.target.value)}
-                  placeholder="Course Code or Course Name  (E.g. 'NCO101' or 'Work Attachment')"
-                  className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={manualCredits}
-                    onChange={(event) => setManualCredits(event.target.value)}
-                    placeholder="Credit units"
-                    className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  />
-                  <input
-                    type="number"
-                    min="1"
-                    max={plan.numSemesters}
-                    value={manualSemesterSpan}
-                    onChange={(event) => setManualSemesterSpan(event.target.value)}
-                    placeholder="Semester span"
-                    className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  <ActionButton
+                    variant="ghost"
+                    icon={<UploadIcon className="h-[18px] w-[18px]" />}
+                    label="Import"
+                    onClick={() => {
+                      setBackupMenuOpen(false);
+                      importFileInputRef.current?.click();
+                    }}
+                    stretch
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={addManualCourse}
-                  className="planner-primary-action inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-[var(--primary)] px-4 py-2.5 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
-                >
-                  <PlusIcon className="h-4 w-4" />
-                  Add Custom Module
-                </button>
-              </div>
-            ) : (
-              <div className="mt-3">
-                <label className="relative z-20 block">
-                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search by Course Code or Title..."
-                    className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-4 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  />
-                  {searchQuery.trim() ? (
-                    <div className="elev-3 absolute left-0 right-0 top-full z-20 mt-1.5 max-h-[28rem] overflow-y-auto rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
-                      {searchDropdownResults.map((course) => (
-                        <button
-                          key={course.courseCode}
-                          type="button"
-                          className="block w-full rounded-[0.6rem] px-2.5 py-2 text-left transition-colors hover:bg-[var(--surface-container-high)]"
-                          onClick={() => handleSearchResultClick(course)}
-                        >
-                          <div className="min-w-0">
-                            <span className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
-                              {course.courseCode}
-                            </span>
-                            <p className="mt-0.5 truncate text-[12px] leading-5 text-[var(--on-surface)]">
-                              {course.courseName ?? "Untitled course"}
-                            </p>
-                          </div>
-
-                          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] leading-4 text-[var(--on-surface-variant)]">
-                            <span className="inline-flex items-center gap-1">
-                              <BookIcon className="h-3.5 w-3.5" />
-                              {formatCredits(course.creditUnits ?? 0)}
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <SchoolIcon className="h-3.5 w-3.5" />
-                              {course.schoolName ?? "School unavailable"}
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              {formatOfferedSemesters(course)}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-
-                      {searchLoading ? (
-                        <div className="px-3 py-2 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">Searching…</div>
-                      ) : null}
-
-                      {!searchLoading && searchDropdownResults.length === 0 ? (
-                        <div className="rounded-[0.5rem] border border-dashed border-[var(--outline-variant)] px-4 py-3 text-center text-[11px] font-medium leading-4 text-[var(--on-surface-variant)]">
-                          No matching courses
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </label>
-              </div>
-            )}
-          </div>
-
-          <div className="planner-control-card order-1 rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:order-2 md:px-5 md:py-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="flex items-center gap-2 md:hidden">
-                  <ListIcon className="h-6 w-6 text-[var(--primary)]" />
-                  <h2 className="text-[20px] font-semibold leading-7 text-[var(--on-surface)]">Credits</h2>
-                </div>
-                <h1 className="hidden text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[28px] sm:font-extrabold sm:leading-9 sm:tracking-[-0.02em] md:block">Semester Planner</h1>
-                <p className="mt-2 hidden max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:mt-1 sm:text-[14px] sm:leading-6 md:block">
-                  Forecast your courses and credit units fulfilment
+                <p className="mt-3 border-t border-[var(--outline-variant)] pt-2 text-[11px] leading-4 text-[var(--on-surface-variant)]">
+                  Export a restorable JSON backup, or import one to replace your current semester plan after confirmation.
                 </p>
-              </div>
+              </PlannerPopover>
+            ) : null}
+          </div>
+          <ActionButton
+            variant="danger"
+            icon={<RefreshIcon className="h-[18px] w-[18px]" />}
+            label="Reset"
+            onClick={() => setResetConfirmOpen(true)}
+          />
+        </div>
+      </div>
+    </section>
+  );
 
-              <div className="hidden flex-col items-start gap-1.5 self-start md:flex lg:items-end">
-                <div className="flex gap-2 lg:justify-end">
-                  <button
-                    type="button"
-                    onClick={openPlanPdf}
-                    className="planner-primary-action inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] bg-[var(--primary)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-on-primary shadow-[var(--shadow-elev-1)] transition-colors hover:bg-[var(--primary-container)]"
-                  >
-                    <DownloadIcon className="h-3.5 w-3.5" />
-                    Download PDF
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setResetConfirmOpen(true)}
-                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[0.6rem] border border-[var(--error)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-[var(--error)] transition-colors hover:bg-[var(--error-container)]"
-                  >
-                    <RefreshIcon className="h-3.5 w-3.5" />
-                    Reset Planner
-                  </button>
-                </div>
-                <div className="relative self-start md:self-end" data-backup-popover-root>
-                  <button
-                    type="button"
-                    onClick={() => setBackupMenuOpen((current) => !current)}
-                    aria-expanded={backupMenuOpen}
-                    aria-haspopup="menu"
-                    className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-transparent px-2 py-1.5 text-[11px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:border-[var(--outline-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
-                  >
-                    <DownloadIcon className="h-3.5 w-3.5" />
-                    Backup Plan
-                  </button>
-                  {backupMenuOpen ? (
-                    <div className="elev-3 absolute right-auto top-full z-30 mt-1.5 w-[17rem] rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2 md:right-0">
-                      <div
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -top-[7px] left-5 h-3 w-3 rotate-45 border-l border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] md:left-auto md:right-5"
-                      />
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <button
-                          type="button"
-                          onClick={exportPlan}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
-                        >
-                          <DownloadIcon className="h-4 w-4" />
-                          Export
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBackupMenuOpen(false);
-                            importFileInputRef.current?.click();
-                          }}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-[0.55rem] border border-[var(--brand-divider)] bg-[var(--surface-container)] px-2.5 py-2 text-[11px] font-bold leading-4 text-[var(--on-surface)] transition-colors hover:bg-[var(--surface-container-high)]"
-                        >
-                          <UploadIcon className="h-4 w-4" />
-                          Import
-                        </button>
-                      </div>
-                      <p className="mt-2 border-t border-[var(--outline-variant)] px-1 pt-2 text-[10px] leading-4 text-[var(--on-surface-variant)]">
-                        Export a restorable JSON backup, or import one to replace your current semester plan after confirmation.
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+  const moduleBankPanel = (
+    <SemesterPlannerPanel
+      mobile={isMobile}
+      onAssignCourse={openMobileDestination}
+      onManageCourse={(courseId) => { setMobileCourseId(courseId); setMobilePanel("course"); }}
+      courseModeControl={(
+        <CourseModeSwitch isCustom={isCustomCourse} onChange={setIsCustomCourse} />
+      )}
+      addCourseForm={(
+        <>
+          {!isCustomCourse ? (
+            <div>
+              <label className="sr-only" htmlFor="semester-planner-offered-in">Offered In</label>
+              <select
+                id="semester-planner-offered-in"
+                value={searchSemesterId === "all" ? "" : String(searchSemesterId)}
+                onChange={(event) => setSearchSemesterId(event.target.value ? Number.parseInt(event.target.value, 10) : "all")}
+                className="w-full min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-normal leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+              >
+                <option value="">Any Semester</option>
+                {semesters.map((semester) => (
+                  <option key={semester.semesterId} value={semester.semesterId}>
+                    {semester.semesterName} ({semester.academicYear})
+                  </option>
+                ))}
+              </select>
             </div>
+          ) : null}
 
-            <div className="mt-3 grid grid-cols-2 gap-3 md:mt-4">
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Target Credits</span>
+          {isCustomCourse ? (
+            <div className="grid gap-3">
+              <input
+                type="text"
+                value={manualCode}
+                onChange={(event) => setManualCode(event.target.value)}
+                placeholder="Course Code or Course Name  (E.g. 'NCO101' or 'Work Attachment')"
+                className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
                 <input
                   type="number"
                   min="0"
                   step="0.5"
-                  value={plan.totalCreditsGoal}
-                  onChange={(event) => updatePlan((current) => ({
-                    ...current,
-                    totalCreditsGoal: Math.max(0, Number(event.target.value) || 0),
-                  }))}
-                  className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  value={manualCredits}
+                  onChange={(event) => setManualCredits(event.target.value)}
+                  placeholder="Credit units"
+                  className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                 />
-              </label>
-
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Semesters</span>
                 <input
                   type="number"
                   min="1"
-                  max="20"
-                  value={plan.numSemesters}
-                  onChange={(event) => updatePlan((current) => ({
-                    ...current,
-                    numSemesters: Math.max(1, Math.min(20, Number.parseInt(event.target.value, 10) || 1)),
-                  }))}
-                  className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  max={plan.numSemesters}
+                  value={manualSemesterSpan}
+                  onChange={(event) => setManualSemesterSpan(event.target.value)}
+                  placeholder="Semester span"
+                  className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[14px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                 />
+              </div>
+              <ActionButton
+                variant="ghost"
+                icon={<PlusIcon className="h-[18px] w-[18px]" />}
+                label="Add Custom Module"
+                onClick={addManualCourse}
+                stretch
+              />
+            </div>
+          ) : (
+            <div className="mt-3">
+              <label ref={searchAnchorRef} className="relative z-20 block">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search by Course Code or Title..."
+                  className="w-full rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-4 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                />
+                {searchQuery.trim() ? (
+                  <PlannerPopover inline={isMobile} anchorRef={searchAnchorRef} className="planner-search-results elev-3 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
+                    {searchDropdownResults.map((course) => (
+                      <button
+                        key={course.courseCode}
+                        type="button"
+                        className="block w-full rounded-[0.6rem] px-2.5 py-2 text-left transition-colors hover:bg-[var(--surface-container-high)]"
+                        onClick={() => handleSearchResultClick(course)}
+                      >
+                        <div className="min-w-0">
+                          <span className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
+                            {course.courseCode}
+                          </span>
+                          <p className="mt-0.5 truncate text-[12px] leading-5 text-[var(--on-surface)]">
+                            {course.courseName ?? "Untitled course"}
+                          </p>
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] leading-4 text-[var(--on-surface-variant)]">
+                          <span className="inline-flex items-center gap-1">
+                            <BookIcon className="h-3.5 w-3.5" />
+                            {formatCredits(course.creditUnits ?? 0)}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <SchoolIcon className="h-3.5 w-3.5" />
+                            {course.schoolName ?? "School unavailable"}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            {formatOfferedSemesters(course)}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+
+                    {searchLoading ? (
+                      <div className="px-3 py-2 text-[11px] leading-[14px] text-[var(--on-surface-variant)]">Searching…</div>
+                    ) : null}
+
+                    {!searchLoading && searchDropdownResults.length === 0 ? (
+                      <div className="rounded-[0.5rem] border border-dashed border-[var(--outline-variant)] px-4 py-3 text-center text-[11px] font-medium leading-4 text-[var(--on-surface-variant)]">
+                        No matching courses
+                      </div>
+                    ) : null}
+                  </PlannerPopover>
+                ) : null}
               </label>
             </div>
+          )}
+        </>
+      )}
+      bankCourses={isMobile ? unassignedCourses : bankCourses}
+      draggedCourseId={draggedCourseId}
+      showAllModules={showAllModules}
+      onDeleteCourse={deleteCourseFromBank}
+      onEditCourse={setEditingCourseId}
+      onToggleShowAllModules={() => setShowAllModules((current) => !current)}
+    />
+  );
 
-            <div className="planner-progress-card mt-3 rounded-[0.85rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5 md:mt-4 md:py-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[12px] font-semibold text-[var(--on-surface)]">Credits Allocated</span>
-                <span className={`text-[12px] font-semibold ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
+  return (
+    <div className="planner-page">
+      <input
+        ref={importFileInputRef}
+        type="file"
+        accept=".json,application/json"
+        className="hidden"
+        onChange={(event) => {
+          void selectImportFile(event.target.files?.[0]);
+          event.target.value = "";
+        }}
+      />
+      <div className="grid gap-5 lg:gap-6">
+        <header className="pb-1 pt-3 sm:pb-0 md:pt-8">
+          <h1 className="text-[24px] font-bold leading-[1.12] tracking-[-0.035em] text-[var(--on-surface)] sm:text-[32px] sm:leading-10 sm:tracking-normal">
+            Semester Planner
+          </h1>
+          <p className="mt-1.5 max-w-3xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:mt-2 sm:text-[15px] sm:leading-7">
+            Forecast your courses and credit units fulfilment
+          </p>
+        </header>
+
+        {isMobile ? (
+          <section className="planner-mobile-progress" aria-label="Progress">
+            <div className="planner-mobile-progress-summary">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[15px] font-bold">Progress</span>
+                <span className={`text-[13px] font-semibold ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--primary)]"}`}>
                   {formatCredits(assignedCredits)} / {formatCredits(plan.totalCreditsGoal)}
                 </span>
               </div>
-              <div className="planner-progress-track mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
-                <div
-                  className={`planner-progress-fill h-full rounded-full transition-all ${isOverTargetCredits ? "planner-progress-fill--error bg-[var(--error)]" : "bg-[var(--primary)]"}`}
-                  style={{ width: `${creditProgressBarPercent}%` }}
-                />
+              <div className="planner-progress-track my-1.5 h-2 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+                <div className={`planner-progress-fill h-full rounded-full ${isOverTargetCredits ? "planner-progress-fill--error bg-[var(--error)]" : "bg-[var(--primary)]"}`} style={{ width: `${creditProgressBarPercent}%` }} />
               </div>
-              <p className={`mt-2 text-[11px] font-medium ${isOverTargetCredits ? "text-[var(--error)]" : "text-[var(--on-surface-variant)]"}`}>
-                {plan.totalCreditsGoal > 0
-                  ? `${Number(creditProgressPercent.toFixed(1))}% of target credits allocated`
-                  : "Set a target credits value to track allocation progress."}
-              </p>
+              <div className="flex items-center justify-between gap-3 text-[12px] text-[var(--on-surface-variant)]">
+                <span>{plan.totalCreditsGoal > 0 ? `${formatCredits(Math.abs(plan.totalCreditsGoal - assignedCredits))} ${isOverTargetCredits ? "over target" : "remaining"}` : "Set a credit target"}</span>
+                <div className="flex shrink-0 gap-2">
+                  <button type="button" className="planner-mobile-text-button gap-1" disabled={!ready} onClick={() => { void openPlanShare(); }}><ShareIcon className="h-3.5 w-3.5" /> Share</button>
+                  <button type="button" className="planner-mobile-text-button" aria-expanded={mobileSettingsOpen} aria-controls="planner-mobile-progress-settings" onClick={() => setMobileSettingsOpen((current) => !current)}>
+                    Plan settings <ChevronRightIcon className={`ml-1 h-4 w-4 transition-transform ${mobileSettingsOpen ? "rotate-90" : ""}`} />
+                  </button>
+                </div>
+              </div>
             </div>
-
-            <div className="mt-3 grid gap-3 md:grid-cols-3">
-              <div className="hidden md:block">
-                <SummaryStat icon={<CalendarWeekIcon className="h-5 w-5" />} label="Assigned" value={formatCredits(assignedCredits)} />
-              </div>
-              <div className="hidden md:block">
-                <SummaryStat icon={<EditCalendarIcon className="h-5 w-5" />} label="Planned" value={formatCredits(plan.totalCreditsGoal)} />
-              </div>
-              <SummaryStat icon={<ListIcon className="h-5 w-5" />} label="Total Courses" value={String(sortedCourses.length)} />
-            </div>
-          </div>
-          <input
-            ref={importFileInputRef}
-            type="file"
-            accept=".json,application/json"
-            className="hidden"
-            onChange={(event) => {
-              void selectImportFile(event.target.files?.[0]);
-              event.target.value = "";
-            }}
-          />
-        </section>
-
-        {notice ? (
-          <div className="planner-notice rounded-[0.85rem] border border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] px-4 py-3 text-[13px] font-medium leading-5 text-[var(--primary)]">
-            {notice}
-          </div>
+            <div id="planner-mobile-progress-settings" hidden={!mobileSettingsOpen}>{progressPanel}</div>
+          </section>
         ) : null}
 
         <DndContext
@@ -1154,145 +1256,316 @@ export function SemesterPlannerClient({
           onDragEnd={handleCourseDragEnd}
           onDragCancel={handleCourseDragCancel}
         >
-        <section className="grid gap-3 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-4">
-          <SemesterPlannerPanel
-            bankCourses={bankCourses}
-            draggedCourseId={draggedCourseId}
-            showAllModules={showAllModules}
-            onDeleteCourse={deleteCourseFromBank}
-            onEditCourse={setEditingCourseId}
-            onToggleShowAllModules={() => setShowAllModules((current) => !current)}
-          />
+          <div className="planner-workspace">
+            {!isMobile ? <aside ref={sidebarRef} className="planner-sidebar" aria-label="Planner controls">
+              <div className="planner-sidebar-scroll">
+                {progressPanel}
 
-          <section className="min-w-0 space-y-3 md:space-y-4">
-            <div className="space-y-3">
-              {semesterIndexes.map((semesterIndex) => {
-                const startingCourses = sortedCourses.filter((course) => course.assignedSemester === semesterIndex);
-                const continuedCourses = sortedCourses.filter((course) => (
-                  course.assignedSemester !== null
-                  && course.assignedSemester < semesterIndex
-                  && (course.assignedSemester + course.semesterSpan) > semesterIndex
-                ));
-                const semesterCreditUnits = startingCourses.reduce((sum, course) => sum + course.creditUnits, 0);
+                {notice ? (
+                  <div className="planner-notice rounded-[0.85rem] border border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] px-4 py-3 text-[13px] font-medium leading-5 text-[var(--primary)]">
+                    {notice}
+                  </div>
+                ) : null}
 
-                return (
-                  <DroppableArticle
-                    key={semesterIndex}
-                    id={`${SEMESTER_DROP_ID_PREFIX}${semesterIndex}`}
-                    className={getPlannerDropZoneClass}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">
-                          Semester {semesterIndex + 1}
-                        </h2>
-                      </div>
+                {moduleBankPanel}
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-[16px] font-bold leading-6 text-[var(--primary)]">
-                          {formatCreditCount(semesterCreditUnits)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => deleteSemester(semesterIndex)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-[0.5rem] text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
-                          aria-label={`Delete semester ${semesterIndex + 1}`}
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
+              </div>
+            </aside> : null}
+            <section className="min-w-0 space-y-3 md:space-y-4">
+              <div className="grid items-start gap-3 md:gap-4 lg:grid-cols-2">
+                {semesterIndexes.map((semesterIndex) => {
+                  const startingCourses = sortedCourses.filter((course) => course.assignedSemester === semesterIndex);
+                  const continuedCourses = sortedCourses.filter((course) => (
+                    course.assignedSemester !== null
+                    && course.assignedSemester < semesterIndex
+                    && (course.assignedSemester + course.semesterSpan) > semesterIndex
+                  ));
+                  const semesterCreditUnits = startingCourses.reduce((sum, course) => sum + course.creditUnits, 0);
 
-                    {continuedCourses.length > 0 ? (
-                      <div className="planner-semester-course-grid mt-3 grid gap-2">
-                        {continuedCourses.map((course) => (
-                          <div
-                            key={`${course.id}-continued-${semesterIndex}`}
-                            className="planner-continuation-card flex min-h-12 items-center gap-2 rounded-[0.75rem] border border-dashed border-[var(--outline-variant)] px-3 py-2 text-[var(--on-surface-variant)]"
+                  if (isMobile)
+                  {
+                    const expanded = expandedSemesters.has(semesterIndex);
+                    const courseCount = startingCourses.length + continuedCourses.length;
+                    return (
+                      <section key={semesterIndex} id={`planner-mobile-semester-${semesterIndex}`} className="planner-mobile-semester">
+                        <h2>
+                          <button
+                            type="button"
+                            className="planner-mobile-semester-toggle"
+                            aria-expanded={expanded}
+                            aria-controls={`planner-mobile-semester-body-${semesterIndex}`}
+                            onClick={() => setExpandedSemesters((current) => {
+                              const next = new Set(current);
+                              if (next.has(semesterIndex)) next.delete(semesterIndex);
+                              else next.add(semesterIndex);
+                              return next;
+                            })}
                           >
-                            <ContinueIcon className="h-4 w-4 shrink-0 opacity-75" />
-                            <div className="min-w-0">
-                              <p className="text-[11px] font-medium leading-4">
-                                Continues from Semester {semesterIndex}
-                              </p>
-                              <p className="truncate text-[12px] font-semibold leading-4">
-                                {course.courseCode}
-                              </p>
+                            <span className="flex min-w-0 items-center gap-2 text-left">
+                              <span className="whitespace-nowrap text-[15px] font-bold leading-5">Semester {semesterIndex + 1}</span>
+                              <span className="whitespace-nowrap text-[11px] font-normal leading-4 text-[var(--on-surface-variant)]">{courseCount} {courseCount === 1 ? "course" : "courses"}</span>
+                            </span>
+                            <span className="ml-auto shrink-0 text-[12px] font-semibold text-[var(--primary)]">{formatCredits(semesterCreditUnits)}</span>
+                            <ChevronRightIcon className={`h-4 w-4 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`} />
+                          </button>
+                        </h2>
+                        <div id={`planner-mobile-semester-body-${semesterIndex}`} hidden={!expanded} className="planner-mobile-semester-body">
+                          {continuedCourses.map((course) => (
+                            <div key={`${course.id}-continued`} className="planner-mobile-continuation">
+                              <ContinueIcon className="h-4 w-4 shrink-0" />
+                              <div>
+                                <p className="text-[13px] font-semibold">{course.courseCode}</p>
+                                <p className="text-[12px]">Continues from Semester {(course.assignedSemester ?? 0) + 1}</p>
+                              </div>
+                              <button type="button" className="planner-mobile-icon-button ml-auto" aria-label={`Actions for ${course.courseCode}`} onClick={() => {
+                                setMobileCourseId(course.id);
+                                setMobilePanel("course");
+                              }}><span aria-hidden="true" className="text-[24px] leading-none">⋯</span></button>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
+                          ))}
+                          {startingCourses.map((course) => (
+                            <PlannerMobileCourseRow key={course.id} course={course} onAction={() => {
+                              setMobileCourseId(course.id);
+                              setMobilePanel("course");
+                            }} />
+                          ))}
+                          {courseCount === 0 ? (
+                            <div className="flex items-center justify-between gap-3 px-1.5 py-1">
+                              <p className="text-[13px] text-[var(--on-surface-variant)]">No courses assigned yet.</p>
+                              {canDeleteSemester(semesterIndex) ? (
+                                <button type="button" className="planner-mobile-text-button planner-mobile-text-button--danger" onClick={() => deleteSemester(semesterIndex)}>Delete</button>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      </section>
+                    );
+                  }
 
-                    <div className="planner-semester-course-grid mt-3 grid gap-2 md:mt-4">
-                      {startingCourses.length === 0 && continuedCourses.length === 0 ? (
-                        <p className="planner-empty-state col-span-full rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)] md:py-5">
-                          {draggedCourseId ? "Drop module here." : "Move modules here from the planner bank."}
-                        </p>
+                  return (
+                    <DroppableArticle
+                      key={semesterIndex}
+                      id={`${SEMESTER_DROP_ID_PREFIX}${semesterIndex}`}
+                      className={(isOver) => `${getPlannerDropZoneClass(isOver)} planner-semester-tile`}
+                    >
+                      <div className="planner-semester-heading flex items-center justify-between gap-2">
+                        <div>
+                          <h2 className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)] sm:text-[17px]">
+                            Semester {semesterIndex + 1}
+                          </h2>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span className="text-[12px] font-bold leading-5 text-[var(--primary)] sm:text-[14px]">
+                            {formatCreditCount(semesterCreditUnits)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => deleteSemester(semesterIndex)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-[0.5rem] text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                            aria-label={`Delete semester ${semesterIndex + 1}`}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {continuedCourses.length > 0 ? (
+                        <div className="planner-semester-course-grid mt-3 grid gap-2">
+                          {continuedCourses.map((course) => (
+                            <div
+                              key={`${course.id}-continued-${semesterIndex}`}
+                              className="planner-continuation-card flex min-h-12 items-center gap-2 rounded-[0.75rem] border border-dashed border-[var(--outline-variant)] px-3 py-2 text-[var(--on-surface-variant)]"
+                            >
+                              <ContinueIcon className="h-4 w-4 shrink-0 opacity-75" />
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-medium leading-4">
+                                  Continues from Semester {semesterIndex}
+                                </p>
+                                <p className="truncate text-[12px] font-semibold leading-4">
+                                  {course.courseCode}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       ) : null}
 
-                      {startingCourses.map((course) => (
-                        <CourseCard
-                          key={course.id}
-                          course={course}
-                          isDragging={draggedCourseId === course.id}
-                          draggable
-                          onEdit={course.source === "manual" ? () => setEditingCourseId(course.id) : undefined}
-                        />
-                      ))}
-                    </div>
-                  </DroppableArticle>
-                );
-              })}
+                      <div className="planner-semester-course-grid mt-3 grid gap-2 md:mt-4">
+                        {startingCourses.length === 0 && continuedCourses.length === 0 ? (
+                          <p className="planner-empty-state col-span-full rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] px-3 py-4 text-[12px] leading-5 text-[var(--on-surface-variant)] md:py-5">
+                            {draggedCourseId ? "Drop module here." : "Move modules here from the planner bank."}
+                          </p>
+                        ) : null}
 
-              <article className="planner-drop-zone rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:px-4 md:py-4">
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface-variant)]">
-                    New Semester
-                  </h2>
-                </div>
+                        {startingCourses.map((course) => (
+                          <CourseCard
+                            key={course.id}
+                            course={course}
+                            isDragging={draggedCourseId === course.id}
+                            draggable
+                            onEdit={course.source === "manual" ? () => setEditingCourseId(course.id) : undefined}
+                          />
+                        ))}
+                      </div>
+                    </DroppableArticle>
+                  );
+                })}
 
-                <div className="mt-3 md:mt-4">
-                  <button
-                    type="button"
-                    onClick={addSemester}
-                    className="planner-empty-state flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-4 text-[12px] font-semibold leading-5 text-[var(--primary)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] md:py-5"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    <span>Add Semester</span>
+                {!isMobile ? <article className="planner-drop-zone planner-new-semester rounded-[1rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 md:px-4 md:py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface-variant)]">
+                      New Semester
+                    </h2>
+                  </div>
+
+                  <div className="mt-3 md:mt-4">
+                    <button
+                      type="button"
+                      onClick={addSemester}
+                      className="planner-empty-state planner-add-semester flex w-full items-center justify-center gap-2 rounded-[0.8rem] border border-dashed border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-4 text-[12px] font-semibold leading-5 text-[var(--primary)] transition-colors hover:bg-[var(--surface-container-high)] md:py-5"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                      <span>Add Semester</span>
+                    </button>
+                  </div>
+                </article> : (
+                  <button type="button" className="planner-mobile-add-semester" onClick={addSemester} disabled={plan.numSemesters >= 20}>
+                    <PlusIcon className="h-4 w-4" /> Add Semester
+                  </button>
+                )}
+              </div>
+            </section>
+          </div>
+          {isMobile && mobilePanel ? (
+            <PlannerMobileSheet
+              title={mobilePanel === "add" ? "Add Course" : mobilePanel === "bank" ? `Module Bank (${unassignedCourses.length})` : mobilePanel === "destination" ? "Choose semester" : mobilePanel === "remove" ? "Remove course?" : mobileCourse?.courseCode ?? "Course actions"}
+              description={mobileCourse && mobilePanel !== "add" && mobilePanel !== "bank" ? `${mobileCourse.courseName} · ${formatCredits(mobileCourse.creditUnits)}${mobileCourse.semesterSpan > 1 ? ` · ${mobileCourse.semesterSpan} consecutive semesters` : ""}` : undefined}
+              onClose={closeMobilePanel}
+            >
+              {mobilePanel === "add" ? <>
+                {notice ? <p role="status" className="mb-3 text-[13px] text-[var(--primary)]">{notice}</p> : null}
+                {moduleBankPanel}
+              </> : null}
+              {mobilePanel === "bank" ? (
+                <>
+                  <button type="button" className="planner-mobile-primary-button mb-4" onClick={() => { setNotice(""); setMobilePanel("add"); }}><PlusIcon className="h-4 w-4" /> Add Course</button>
+                  {unassignedCourses.length === 0 ? <p className="py-5 text-[14px] text-[var(--on-surface-variant)]">All courses have been assigned. Add a course to continue planning.</p> : null}
+                  {unassignedCourses.map((course) => <PlannerMobileCourseRow key={course.id} course={course} assign onAction={() => openMobileDestination(course.id)} onMenu={() => { setMobileCourseId(course.id); setMobilePanel("course"); }} />)}
+                </>
+              ) : null}
+              {mobilePanel === "destination" && mobileCourse ? (
+                <div className="space-y-2">
+                  {semesterIndexes.map((semesterIndex) => {
+                    const credits = sortedCourses.filter((course) => course.assignedSemester === semesterIndex).reduce((sum, course) => sum + course.creditUnits, 0);
+                    const fits = semesterIndex + mobileCourse.semesterSpan <= plan.numSemesters;
+                    return (
+                      <button key={semesterIndex} type="button" className="planner-mobile-destination" disabled={!fits} onClick={() => assignMobileCourse(semesterIndex)}>
+                        <span className="text-left">
+                          <span className="block font-semibold">Semester {semesterIndex + 1}</span>
+                          <span className="block text-[12px] text-[var(--on-surface-variant)]">{fits ? mobileCourse.assignedSemester === semesterIndex ? "Current semester" : "Assign here" : `Needs ${mobileCourse.semesterSpan} consecutive semesters`}</span>
+                        </span>
+                        <span className="shrink-0 text-[13px] text-[var(--primary)]">{formatCredits(credits)}</span>
+                      </button>
+                    );
+                  })}
+                  <button type="button" className="planner-mobile-destination" onClick={() => assignMobileCourse(null)}>
+                    <span className="font-semibold">{mobileCourse.assignedSemester === null ? "Keep in Module Bank" : "Return to Module Bank"}</span>
+                    <BookIcon className="h-5 w-5" />
                   </button>
                 </div>
-              </article>
-            </div>
-          </section>
-        </section>
-        <DragOverlay
-          dropAnimation={null}
-          style={{ zIndex: 9999 }}
-          adjustScale={false}
-        >
-          {draggedCourse ? <CourseDragOverlay course={draggedCourse} /> : null}
-        </DragOverlay>
+              ) : null}
+              {mobilePanel === "course" && mobileCourse ? (
+                <>
+                  <p className="planner-mobile-course-location mb-3 text-[13px] font-semibold text-[var(--on-surface-variant)]">
+                    {mobileCourse.assignedSemester === null
+                      ? "Currently in Module Bank"
+                      : mobileCourse.semesterSpan > 1
+                        ? `Currently in Semesters ${mobileCourse.assignedSemester + 1}–${mobileCourse.assignedSemester + mobileCourse.semesterSpan}`
+                        : `Currently in Semester ${mobileCourse.assignedSemester + 1}`}
+                  </p>
+                  <div className="planner-mobile-course-actions space-y-2">
+                    <button type="button" className="planner-mobile-destination" onClick={() => setMobilePanel("destination")}>Move to semester <ChevronRightIcon className="h-4 w-4" /></button>
+                    <button type="button" className="planner-mobile-destination" onClick={() => assignMobileCourse(null)}>Return to Module Bank <BookIcon className="h-4 w-4" /></button>
+                    {mobileCourse.source === "manual" ? <button type="button" className="planner-mobile-destination" onClick={() => {
+                      setEditingCourseId(mobileCourse.id);
+                      closeMobilePanel();
+                    }}>Edit custom course <EditIcon className="h-4 w-4" /></button> : null}
+                    <button type="button" className="planner-mobile-destination text-[var(--error)]" onClick={() => setMobilePanel("remove")}>Remove course <TrashIcon className="h-4 w-4" /></button>
+                  </div>
+                </>
+              ) : null}
+              {mobilePanel === "remove" && mobileCourse ? (
+                <>
+                  <p className="mb-5 text-[14px] text-[var(--on-surface-variant)]">This removes the course from your plan, including its semester assignment.</p>
+                  <div className="flex justify-end gap-3">
+                    <button type="button" className="planner-mobile-text-button" onClick={() => setMobilePanel("course")}>Cancel</button>
+                    <button type="button" className="planner-mobile-text-button planner-mobile-text-button--danger" onClick={() => {
+                      deleteCourseFromBank(mobileCourse);
+                      closeMobilePanel();
+                    }}>Remove course</button>
+                  </div>
+                </>
+              ) : null}
+            </PlannerMobileSheet>
+          ) : null}
+          <DragOverlay
+            dropAnimation={null}
+            style={{ zIndex: 9999 }}
+            adjustScale={false}
+          >
+            {draggedCourse ? <CourseDragOverlay course={draggedCourse} /> : null}
+          </DragOverlay>
         </DndContext>
       </div>
 
+      {isMobile ? (
+        <>
+          {notice ? <div className="planner-mobile-notice" role="status">{notice}</div> : null}
+          <nav className="planner-mobile-toolbar" aria-label="Planner actions">
+            <button type="button" className="planner-mobile-primary-button" onClick={() => { setNotice(""); setSearchQuery(""); setMobilePanel("add"); }}><PlusIcon className="h-5 w-5" /> Add Course</button>
+            <button type="button" className="planner-mobile-bank-button" onClick={() => setMobilePanel("bank")}><BookIcon className="h-5 w-5" /> Module Bank ({unassignedCourses.length})</button>
+          </nav>
+        </>
+      ) : null}
+
+      <Modal
+        open={shareOpen}
+        title="Share semester plan"
+        description="Share a copy of your current plan."
+        onClose={() => setShareOpen(false)}
+        maxWidthClassName="max-w-md"
+        footer={(
+          <div className="flex w-full flex-wrap justify-end gap-2">
+            <ActionButton variant="ghost" icon={<ShareIcon className="h-4 w-4" />} label="Copy link" onClick={() => { void copyPlanShareLink(); }} disabled={!shareUrl} />
+            {isMobile && typeof navigator !== "undefined" && typeof navigator.share === "function" ? (
+              <ActionButton variant="primary" icon={<ShareIcon className="h-4 w-4" />} label="Share" onClick={() => { void sharePlanLink(); }} disabled={!shareUrl} />
+            ) : null}
+          </div>
+        )}
+        showCloseButton
+      >
+        {shareUrl ? (
+          <label className="block space-y-2 text-[13px] font-medium">
+            <span>Share link</span>
+            <input type="url" readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} className="w-full min-w-0 rounded-[0.5rem] border border-[var(--control-border)] bg-[var(--control-surface)] px-3 py-2 text-[16px] font-normal text-[var(--on-surface)]" />
+          </label>
+        ) : !shareMessage ? <p role="status" className="text-[13px]">Creating share link…</p> : null}
+        {shareMessage ? <p role="status" className="mt-3 text-[13px] text-[var(--on-surface-variant)]">{shareMessage}</p> : null}
+      </Modal>
+
       <Modal
         open={importedPlan !== null}
-        title="Import Semester Plan?"
-        description={`Importing ${importedPlanFileName || "this backup"} will replace your current semester plan.`}
-        onClose={() => {
-          setImportedPlan(null);
-          setImportedPlanFileName("");
-        }}
-        maxWidthClassName="max-w-md"
+        title={importedPlanSource === "shared" ? "Save shared plan?" : "Import Semester Plan?"}
+        description={importedPlanSource === "shared" ? "Saving this shared plan will replace your current semester plan on this device." : `Importing ${importedPlanFileName || "this backup"} will replace your current semester plan.`}
+        onClose={dismissPlanImport}
+        maxWidthClassName={importedPlanSource === "shared" ? "max-w-3xl" : "max-w-md"}
+        headerContent={importedPlanSource === "shared" && importedPlan ? <SemesterPlannerPreviewSummary plan={importedPlan} /> : undefined}
         footer={(
           <>
             <button
               type="button"
-              onClick={() => {
-                setImportedPlan(null);
-                setImportedPlanFileName("");
-              }}
+              onClick={dismissPlanImport}
               className="rounded-[0.7rem] border border-[var(--outline-variant)] px-3 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
             >
               Cancel
@@ -1302,14 +1575,16 @@ export function SemesterPlannerClient({
               onClick={confirmPlanImport}
               className="planner-primary-action rounded-[0.7rem] bg-[var(--primary)] px-3 py-2 text-[12px] font-semibold leading-4 text-on-primary transition-colors hover:bg-[var(--primary-container)]"
             >
-              Replace Current Plan
+              {importedPlanSource === "shared" ? "Save shared plan" : "Replace Current Plan"}
             </button>
           </>
         )}
       >
-        <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
-          The backup contains {importedPlan?.courses.length ?? 0} modules across {importedPlan?.numSemesters ?? 0} semesters. Export your current plan first if you may need it later.
-        </p>
+        {importedPlanSource === "shared" && importedPlan ? <SemesterPlannerSharePreview plan={importedPlan} /> : (
+          <p className="text-[13px] leading-6 text-[var(--on-surface-variant)]">
+            The backup contains {importedPlan?.courses.length ?? 0} modules across {importedPlan?.numSemesters ?? 0} semesters. Export your current plan first if you may need it later.
+          </p>
+        )}
       </Modal>
 
       <Modal
@@ -1415,27 +1690,6 @@ export function SemesterPlannerClient({
           </div>
         </div>
       </Modal>
-    </div>
-  );
-}
-
-function SummaryStat({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-})
-{
-  return (
-    <div className="planner-summary-stat rounded-[0.85rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] px-3 py-3">
-      <div className="flex items-center gap-2 text-[var(--primary)]">
-        {icon}
-        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">{label}</span>
-      </div>
-      <p className="mt-2 text-[18px] font-semibold leading-6 text-[var(--on-surface)]">{value}</p>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   saveTimetableToLocalStorage,
   upsertClassInSavedTimetable,
 } from "@/lib/timetable/local-storage";
+import { getFollowingContinuationSemesters } from "@/lib/timetable/course-continuation";
 import { readAppSettings } from "@/lib/settings/app-settings";
 import type {
   CourseClassRecord,
@@ -177,13 +178,19 @@ export function AddToTimetableButton({
 
       const payload = await response.json() as ClassesResponse;
       const preferredGroupType = readAppSettings().timetableStudyMode === "part-time" ? "CRN" : "TG";
-      const selectedClass = pickPreferredClass(payload.classes, preferredGroupType);
+      const selectedClass = pickPreferredClass(payload.classes.filter((group) => group.semesterId === nextTargetSemesterId), preferredGroupType);
       if (!selectedClass)
       {
         throw new Error("No class groups are available for this course in the selected semester.");
       }
 
-      const next = upsertClassInSavedTimetable(current, nextTargetSemesterId, toClassSelection(selectedClass));
+      const continuationSemesters = getFollowingContinuationSemesters({
+        courseCode,
+        semesterId: nextTargetSemesterId,
+        offeredSemesters: course.offeredSemesters ?? [],
+        semesters: course.offeredSemesters ?? [],
+      });
+      const next = upsertClassInSavedTimetable(loadSavedTimetable(), nextTargetSemesterId, toClassSelection(selectedClass), continuationSemesters.map((item) => item.semesterId));
       saveTimetableToLocalStorage(next);
       announceTimetableUpdated();
       setTargetSemesterId(nextTargetSemesterId);

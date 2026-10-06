@@ -14,6 +14,7 @@ export type SharedClassIdentifier = {
   scheduleType: ScheduleType;
   groupCodeType: GroupCodeType;
   groupCode: string;
+  originSemesterId?: number;
 };
 
 export type SharedTimetableState = {
@@ -120,6 +121,7 @@ export type ClassEventRecord = {
 export type ClassEventWithWeekRecord = ClassEventRecord & {
   courseCode: string;
   semesterId: number;
+  startSemesterId?: number;
   scheduleType: ScheduleType;
   groupCodeType: GroupCodeType;
   groupCode: string;
@@ -137,17 +139,21 @@ export type CourseClassRecord = ClassRecord & {
   events: ClassEventWithWeekRecord[];
 };
 
-export type TimetableSelectionRecord = CourseClassRecord & {
+export type TimetableSelectionRecord = Omit<CourseClassRecord, "events"> & {
+  events: TimetableEventRecord[];
   identifier: SharedClassIdentifier;
   shareKey: string;
   hasEca: boolean;
   examAssessmentMode: ExamAssessmentMode | null;
+  courseLabel?: string;
 };
 
 export type TimetableEventRecord = ClassEventWithWeekRecord & {
   courseName: string | null;
   schoolName: string | null;
   shareKey: string;
+  originSemesterId?: number;
+  courseLabel?: string;
 };
 
 export type TimetableClash = {
@@ -178,6 +184,9 @@ export type TimetableBlock = {
   startMinutes: number;
   endMinutes: number;
   weekLabel: string;
+  continuationLabel?: string;
+  originSemesterId?: number;
+  courseLabel?: string;
   venue: string | null;
   eventMode: string | null;
   occurrenceCount: number;
@@ -188,6 +197,7 @@ export type ExamCard = {
   id: string;
   shareKey: string;
   courseCode: string;
+  courseLabel?: string;
   courseName: string | null;
   groupCode: string;
   eventDate: string;

@@ -8,7 +8,7 @@ import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Planner | SUSS Planner",
+  title: "Semester Planner | SUSS Planner",
 };
 
 export default async function PlannerPage()
@@ -29,6 +29,7 @@ export default async function PlannerPage()
       activeSection="semester-planner"
       currentSemesterContext={currentSemesterContext}
       dataUpdatedAt={latestDataUpdatedAt}
+      contentFrameClassName="app-aero-frame"
     >
       <SemesterPlannerClient semesters={allSemesters} />
     </AppShell>

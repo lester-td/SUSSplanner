@@ -5,6 +5,7 @@ import path from "node:path";
 
 import { getSnapshotManifest } from "./manifest-reader";
 import { readCachedJson } from "./snapshot-cache";
+import { annotateEventCohort } from "@/lib/timetable/schedule-cohorts";
 import {
   getDataSnapshotBucket,
   type ScheduleSnapshot,
@@ -39,7 +40,10 @@ export async function getScheduleSnapshot(semesterId: number, courseCode: string
     relativePath,
     () => readFile(path.join(scheduleSnapshotRoot, fileName), "utf8"),
   );
-  const classes = snapshots.courses[normalizedCourseCode];
+  const classes = snapshots.courses[normalizedCourseCode]?.map(group => ({
+    ...group,
+    events: group.events.map(event => annotateEventCohort(event, manifest.semesters)),
+  }));
   return classes
     ? { semesterId, courseCode: normalizedCourseCode, classes } satisfies ScheduleSnapshot
     : null;
