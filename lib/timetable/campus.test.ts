@@ -6,6 +6,7 @@ import {
   formatCampusSummary,
   getClassCampusCodes,
   getEventCampusCodes,
+  groupClassesByCampus,
 } from "./campus";
 import { buildSelectedCourseCards, buildTimetableBlocks } from "./timetable-utils";
 import { buildExportCourses } from "@/lib/export/timetable-model";
@@ -25,25 +26,26 @@ const onlineEvent: TimetableEventRecord = {
 
 describe("campus labels", () => {
   it.each([
-    ["ONL", "Online"], ["CLE", "Clementi"], ["NP", "Ngee Ann Poly"], ["NYP", "Nanyang Poly"],
+    ["ONL", "Online"], ["CLE", "Clementi"], ["AMK", "Nanyang Poly"], ["EXT", "External Venue"],
   ])("expands %s to %s", (code, name) => {
     expect(formatCampusNames([code])).toBe(name);
     expect(formatCampusSummary([code])).toBe(name);
   });
 
   it("normalizes, deduplicates and orders codes consistently", () => {
-    expect(formatCampusCodes(["nyp", "CLE / onl", "NP", "Clementi", " "])).toBe("ONL/CLE/NP/NYP");
+    expect(formatCampusCodes(["amk", "CLE / onl", "EXT", "Clementi", " "])).toBe("CLE/AMK/EXT/ONL");
     expect(formatCampusSummary(["CLE", "Clementi"])).toBe("Clementi");
-    expect(formatCampusSummary(["ONL", "CLE"])).toBe("Mixed");
+    expect(formatCampusSummary(["ONL", "CLE"])).toBe("Clementi & Online");
+    expect(formatCampusSummary(["AMK", "CLE"])).toBe("Clementi & Nanyang Poly");
+    expect(formatCampusSummary(["ONL", "EXT", "AMK", "CLE"])).toBe("Clementi & Nanyang Poly & External Venue & Online");
   });
 
-  it("preserves unconfirmed campus codes", () => {
-    expect(formatCampusNames(["AMK"])).toBe("AMK");
-    expect(formatCampusNames(["EXT"])).toBe("EXT");
+  it("does not recognize NP or NYP as campus names", () => {
+    expect(formatCampusNames(["NP", "NYP"])).toBe("NP / NYP");
   });
 
   it("uses only explicitly specified campuses, including for online delivery", () => {
-    expect(getEventCampusCodes({ campus: "NP", eventMode: "ONLINE" })).toEqual(["NP"]);
+    expect(getEventCampusCodes({ campus: "AMK", eventMode: "ONLINE" })).toEqual(["AMK"]);
     expect(getEventCampusCodes({ campus: null, eventMode: "ONLINE" })).toEqual([]);
     expect(getEventCampusCodes({ campus: " ", eventMode: "VIRTUAL LABORATORY" })).toEqual([]);
     expect(getEventCampusCodes({ campus: null, eventMode: "FACE-TO-FACE" })).toEqual([]);
@@ -54,8 +56,47 @@ describe("campus labels", () => {
 
   it("ignores exams and other events in a course's campus summary", () => {
     expect(getClassCampusCodes([
-      onlineEvent, { ...event, eventKind: "EXAM" }, { ...event, eventKind: "OTHER", campus: "NP" },
+      onlineEvent, { ...event, eventKind: "EXAM" }, { ...event, eventKind: "OTHER", campus: "AMK" },
     ])).toEqual(["ONL"]);
+  });
+});
+
+describe("class groups by campus", () => {
+  it("groups classes by their complete teaching campus combination", () => {
+    const classes = [
+      { classId: 1, events: [onlineEvent, event] },
+      { classId: 2, events: [event] },
+      { classId: 3, events: [event, { ...onlineEvent, campus: "Clementi / ONL" }] },
+      { classId: 4, events: [{ ...event, campus: "AMK" }] },
+      { classId: 5, events: [onlineEvent] },
+      { classId: 6, events: [{ ...event, campus: "EXT" }] },
+      { classId: 7, events: [event, { ...event, campus: "AMK" }] },
+    ];
+    const grouped = groupClassesByCampus(classes);
+    expect(grouped.map(group => [formatCampusSummary(group.campuses), group.classes.map(item => item.classId)]))
+      .toEqual([
+        ["Clementi", [2]],
+        ["Nanyang Poly", [4]],
+        ["External Venue", [6]],
+        ["Online", [5]],
+        ["Clementi & Nanyang Poly", [7]],
+        ["Clementi & Online", [1, 3]],
+      ]);
+    expect(grouped.flatMap(group => group.classes)).toHaveLength(classes.length);
+  });
+
+  it("ignores exam venues and keeps classes without campus data together", () => {
+    const classes = [
+      { classId: 1, events: [{ ...event, campus: null }] },
+      { classId: 2, events: [event, { ...onlineEvent, eventKind: "EXAM" as const }] },
+      { classId: 3, events: [{ ...event, eventKind: "EXAM" as const, campus: "EXT" }] },
+      { classId: 4, events: [] },
+    ];
+    expect(groupClassesByCampus(classes)).toEqual([
+      { campuses: ["CLE"], classes: [classes[1]] },
+      { campuses: [], classes: [classes[0], classes[2], classes[3]] },
+    ]);
+    expect(groupClassesByCampus([])).toEqual([]);
   });
 });
 
@@ -71,8 +112,8 @@ describe("campuses across timetable weeks", () => {
   it("combines a class at the same time into one all-weeks block", () => {
     const blocks = buildTimetableBlocks([event, onlineEvent], "all");
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]).toMatchObject({ campus: "ONL/CLE", weekLabel: "1-2", occurrenceCount: 2, eventIds: [1, 2] });
-    expect(buildTimetableBlocks([onlineEvent, event], "all")[0].campus).toBe("ONL/CLE");
+    expect(blocks[0]).toMatchObject({ campus: "CLE/ONL", weekLabel: "1-2", occurrenceCount: 2, eventIds: [1, 2] });
+    expect(buildTimetableBlocks([onlineEvent, event], "all")[0].campus).toBe("CLE/ONL");
   });
 
   it("shows only the selected week's campus", () => {
@@ -95,12 +136,12 @@ describe("campuses across timetable weeks", () => {
       selections: [{
         classId: 1, semesterId: 1, ...identifier, courseName: event.courseName, schoolName: null,
         creditUnits: 5, presentationPattern: null, availableAsGsp: false, isRestricted: false, remarks: null,
-        identifier, shareKey: event.shareKey, events: [event, onlineEvent, { ...event, eventKind: "EXAM", campus: "NP" }],
+        identifier, shareKey: event.shareKey, events: [event, onlineEvent, { ...event, eventKind: "EXAM", campus: "AMK" }],
         hasEca: false, examAssessmentMode: null,
       }],
     };
     const cards = buildSelectedCourseCards(data);
-    expect(cards[0].campuses).toEqual(["ONL", "CLE"]);
-    expect(buildExportCourses(cards, new Map())[0].campuses).toEqual(["ONL", "CLE"]);
+    expect(cards[0].campuses).toEqual(["CLE", "ONL"]);
+    expect(buildExportCourses(cards, new Map())[0].campuses).toEqual(["CLE", "ONL"]);
   });
 });

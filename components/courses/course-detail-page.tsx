@@ -27,7 +27,7 @@ import {
   formatClassGroupLabel,
 } from "@/lib/timetable/date-utils";
 import { normalizeRichTextList } from "@/lib/timetable/timetable-utils";
-import { getClassCampusCodes } from "@/lib/timetable/campus";
+import { groupClassesByCampus } from "@/lib/timetable/campus";
 import type {
   AssessmentComponentRecord,
   CourseClassRecord,
@@ -76,9 +76,8 @@ export function CourseDetailPage({
 })
 {
   const [classes, setClasses] = useState(selectedSemesterId ? initialClasses : []);
-  const [campusClasses, setCampusClasses] = useState(initialClasses);
   const classRequestId = useRef(0);
-  const campuses = useMemo(() => getClassCampusCodes(campusClasses.flatMap(group => group.events)), [campusClasses]);
+  const campusGroups = useMemo(() => groupClassesByCampus(classes), [classes]);
   const [activeSemesterId, setActiveSemesterId] = useState<number | null>(selectedSemesterId ?? null);
   const semesterChoices = getSemesterChoices(offeredSemesters);
   const [loadingClasses, setLoadingClasses] = useState(false);
@@ -143,21 +142,22 @@ export function CourseDetailPage({
     const requestId = ++classRequestId.current;
     setActiveSemesterId(nextValue);
     setScheduleGroup(null);
+    setClasses([]);
+    const nextUrl = nextValue === null ? `/courses/${course.courseCode}` : `/courses/${course.courseCode}?semesterId=${nextValue}`;
+    window.history.replaceState(null, "", nextUrl);
 
     if (nextValue === null)
     {
-      setClasses([]);
+      setLoadingClasses(false);
+      return;
     }
 
     setLoadingClasses(true);
 
     const params = new URLSearchParams({
       courseCode: course.courseCode,
+      semesterId: String(nextValue),
     });
-
-    if (nextValue !== null) params.set("semesterId", String(nextValue));
-    const nextUrl = nextValue === null ? `/courses/${course.courseCode}` : `/courses/${course.courseCode}?semesterId=${nextValue}`;
-    window.history.replaceState(null, "", nextUrl);
 
     try
     {
@@ -170,13 +170,11 @@ export function CourseDetailPage({
 
       const payload = await response.json() as ClassesResponse;
       if (requestId !== classRequestId.current) return;
-      setClasses(nextValue === null ? [] : payload.classes);
-      setCampusClasses(payload.classes);
+      setClasses(payload.classes);
     }
     catch {
       if (requestId !== classRequestId.current) return;
       setClasses([]);
-      setCampusClasses([]);
     }
     finally
     {
@@ -255,7 +253,7 @@ export function CourseDetailPage({
           </div>
 
           <div className="course-detail-layout grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] xl:items-start">
-            <CourseFacts course={course} campuses={campuses} loading={loadingClasses} className="grid xl:hidden" />
+            <CourseFacts course={course} className="grid xl:hidden" />
 
             <section className="course-detail-main space-y-4">
               {course.courseSynopsis ? (
@@ -291,7 +289,7 @@ export function CourseDetailPage({
             </section>
 
             <section className="course-detail-side space-y-4">
-              <CourseFacts course={course} campuses={campuses} loading={loadingClasses} className="hidden xl:grid" />
+              <CourseFacts course={course} className="hidden xl:grid" />
 
               <article className="app-aero-panel course-detail-assessment overflow-hidden">
                 <h2 className="app-aero-panel-heading course-detail-assessment__header text-[16px] font-semibold leading-5">
@@ -399,23 +397,35 @@ export function CourseDetailPage({
                     ) : null}
 
                     {!loadingClasses && activeSemesterId !== null ? (
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                        {classes.map((group) => (
-                          <button
-                            key={group.classId}
-                            type="button"
-                            onClick={() => setScheduleGroup(group)}
-                            className="border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-left text-[13px] font-semibold leading-5 text-[var(--on-surface)] transition-[box-shadow,border-color,background-color,color] hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] hover:shadow-[0_0_0_1px_var(--primary-ring-soft),0_0_14px_var(--primary-ring-soft)] focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--primary-ring-strong),0_0_16px_var(--primary-ring-soft)]"
-                            aria-label={`View schedule for ${formatClassGroupLabel(group.groupCode)}`}
-                            title="View schedule"
-                          >
-                            <span className="flex items-center justify-between gap-2">
-                              <span>{formatClassGroupLabel(group.groupCode)}</span>
-                              {group.scheduleType === "daytime"
-                                ? <SunIcon className="h-4 w-4 text-[var(--primary)]" />
-                                : <MoonIcon className="h-4 w-4 text-[var(--on-surface-variant)]" />}
-                            </span>
-                          </button>
+                      <div className="space-y-4">
+                        {campusGroups.map((campusGroup) => (
+                          <section key={campusGroup.campuses.join("/") || "unspecified"}>
+                            {campusGroup.campuses.length > 0 ? (
+                              <h3 className="mb-2 flex items-center gap-1.5 text-[13px] font-semibold leading-5 text-[var(--on-surface-variant)]">
+                                <PinIcon className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+                                <CampusLabel campuses={campusGroup.campuses} />
+                              </h3>
+                            ) : null}
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                              {campusGroup.classes.map((group) => (
+                                <button
+                                  key={group.classId}
+                                  type="button"
+                                  onClick={() => setScheduleGroup(group)}
+                                  className="border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-left text-[13px] font-semibold leading-5 text-[var(--on-surface)] transition-[box-shadow,border-color,background-color,color] hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] hover:shadow-[0_0_0_1px_var(--primary-ring-soft),0_0_14px_var(--primary-ring-soft)] focus-visible:border-[var(--primary)] focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--primary-ring-strong),0_0_16px_var(--primary-ring-soft)]"
+                                  aria-label={`View schedule for ${formatClassGroupLabel(group.groupCode)}`}
+                                  title="View schedule"
+                                >
+                                  <span className="flex items-center justify-between gap-2">
+                                    <span>{formatClassGroupLabel(group.groupCode)}</span>
+                                    {group.scheduleType === "daytime"
+                                      ? <SunIcon className="h-4 w-4 text-[var(--primary)]" />
+                                      : <MoonIcon className="h-4 w-4 text-[var(--on-surface-variant)]" />}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </section>
                         ))}
                       </div>
                     ) : null}
@@ -455,15 +465,13 @@ export function CourseDetailPage({
   );
 }
 
-function CourseFacts({ course, campuses, loading, className }: { course: CourseRecord; campuses: string[]; loading: boolean; className: string })
+function CourseFacts({ course, className }: { course: CourseRecord; className: string })
 {
-  const showCampus = !loading && campuses.length > 0;
   return (
-    <div className={`app-aero-panel course-detail-facts grid-cols-1 ${showCampus ? "sm:grid-cols-4" : "sm:grid-cols-3"} ${className}`}>
+    <div className={`app-aero-panel course-detail-facts grid-cols-1 sm:grid-cols-3 ${className}`}>
       <DetailStat icon={<BookIcon className="h-5 w-5" />} label="Credits" value={`${course.creditUnits?.toFixed(1) ?? "0.0"} CU`} />
       <DetailStat icon={<LayersIcon className="h-5 w-5" />} label="Level" value={course.courseLevel ?? "-"} />
       <DetailStat icon={<SchoolIcon className="h-5 w-5" />} label="Track" value={course.isPostgraduate ? "Postgraduate" : "Undergraduate"} />
-      {showCampus ? <DetailStat icon={<PinIcon className="h-5 w-5" />} label="Campus" value={<CampusLabel campuses={campuses} />} /> : null}
     </div>
   );
 }
