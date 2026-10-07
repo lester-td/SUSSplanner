@@ -2491,8 +2491,9 @@
   }
 }
 
-/* Shared timetable sidebar and semester planner action buttons. */
-:root :is(.timetable-side-panel, .planner-page) .app-action-button {
+/* Shared timetable sidebar, semester planner, and calculator import buttons. */
+:root :is(.timetable-side-panel, .planner-page) .app-action-button,
+:root .calculator-planner-import {
   border: 1px solid var(--control-border);
   border-radius: 0.375rem;
   background: var(--control-surface);
@@ -2502,7 +2503,8 @@
   transition: box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease, color 150ms ease;
 }
 
-:root :is(.timetable-side-panel, .planner-page) .app-action-button--ghost:hover:not(:disabled) {
+:root :is(.timetable-side-panel, .planner-page) .app-action-button--ghost:hover:not(:disabled),
+:root .calculator-planner-import:hover:not(:disabled) {
   border-color: var(--primary);
   background: var(--control-surface-hover);
   color: var(--primary);
@@ -2528,7 +2530,8 @@
   box-shadow: 0 0 0 1px var(--primary-ring-soft), 0 0 14px var(--primary-ring-soft);
 }
 
-:root :is(.timetable-side-panel, .planner-page) .app-action-button:focus-visible {
+:root :is(.timetable-side-panel, .planner-page) .app-action-button:focus-visible,
+:root .calculator-planner-import:focus-visible {
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 2px var(--primary-ring-strong), 0 0 16px var(--primary-ring-soft);
@@ -2547,7 +2550,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root :is(.timetable-side-panel, .planner-page) .app-action-button {
+  :root :is(.timetable-side-panel, .planner-page) .app-action-button,
+  :root .calculator-planner-import {
     transition: none;
   }
 }

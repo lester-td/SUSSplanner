@@ -9,11 +9,11 @@ import {
   BookIcon,
   CalendarIcon,
   ClockIcon,
+  DownloadIcon,
   PlusIcon,
   SearchIcon,
   SchoolIcon,
   TrashIcon,
-  UploadIcon,
   XIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
@@ -675,9 +675,9 @@ export function GpaCalculatorClient()
                   <button
                     type="button"
                     onClick={openPlannerImport}
-                    className="inline-flex h-[34px] items-center justify-center gap-1.5 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                    className="calculator-planner-import inline-flex h-8 items-center justify-center gap-1.5 px-2.5 text-[12px] font-semibold leading-4"
                   >
-                    <UploadIcon className="h-4 w-4" />
+                    <DownloadIcon className="h-4 w-4" />
                     <span>Planner</span>
                   </button>
                   <CourseModeSwitch
