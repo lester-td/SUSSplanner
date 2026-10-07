@@ -48,14 +48,14 @@ export function GlobalNotifications({ announcements }: { announcements: Announce
   return (
     <aside
       aria-label="Notifications"
-      className="pointer-events-none fixed right-0 top-[6rem] z-50 max-h-[calc(100dvh-8rem)] w-[min(100vw,19.5rem)] space-y-2.5 overflow-y-auto p-3 sm:right-1 sm:top-[6.5rem] xl:top-[4rem]"
+      className="app-notification-stack pointer-events-none fixed right-0 top-[3.75rem] z-50 max-h-[calc(100dvh-5.75rem)] space-y-2.5 overflow-y-auto sm:top-[4.25rem] xl:top-[1.75rem]"
     >
       {visible.length > 0 ? (
         <section aria-label="Announcements" aria-live="polite" className="pointer-events-auto space-y-2.5">
           {visible.map(announcement => {
             const href = getAnnouncementHref(announcement.linkUrl);
             return (
-              <article key={announcement.announcementId} className="app-aero-panel overflow-hidden text-[var(--on-surface)]">
+              <article key={announcement.announcementId} className="app-aero-panel app-notification-card overflow-hidden text-[var(--on-surface)]">
                 <div className="app-announcement-heading flex items-center justify-between gap-2 py-1 pl-3 pr-1">
                   <h3 className="flex items-center gap-2 text-[13px] font-semibold leading-5">
                     <BellIcon className="h-4 w-4 shrink-0 text-[var(--primary)]" />

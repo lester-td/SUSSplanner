@@ -4,7 +4,10 @@ import {
   XIcon,
 } from "@/components/planner/icons";
 import { RegistrationReminderStatusPill } from "@/components/registration/reminder-status-pill";
-import { getRegistrationReminderWindowState } from "@/lib/registration/reminder-status";
+import {
+  getRegistrationReminderWindowState,
+  REGISTRATION_REMINDER_STATUS_CLASS_NAMES,
+} from "@/lib/registration/reminder-status";
 import {
   formatRegistrationReminderDateTime,
   parseRegistrationReminderDate,
@@ -29,9 +32,6 @@ function RegistrationReminderItem({
 })
 {
   const isNotification = variant !== "inline";
-  const itemClassName = isNotification
-    ? "relative h-[6.75rem] overflow-hidden rounded-[0.35rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-2 pl-3 pr-[3.25rem] text-[var(--on-surface)] shadow-[var(--shadow-elev-1)]"
-    : "relative overflow-hidden rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-3 pl-3 pr-[3.25rem] text-[var(--on-surface)] shadow-[var(--shadow-elev-1)]";
   const detailListClassName = isNotification
     ? "mt-1.5 grid text-[12px] leading-[18px] text-[var(--on-surface-variant)]"
     : "mt-2 grid gap-[0.45rem] text-[12px] leading-5 text-[var(--on-surface-variant)] sm:grid-cols-2";
@@ -41,57 +41,56 @@ function RegistrationReminderItem({
   const windowState = reminder.phase ?? getRegistrationReminderWindowState(eventStartsAt, eventEndsAt, now);
 
   return (
-    <article className={itemClassName}>
-      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-[var(--primary)]" />
-
-      <div className={`flex flex-col gap-2 ${isNotification ? "" : "sm:flex-row sm:items-start sm:justify-between"}`}>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.35rem] bg-[var(--brand-chip-bg)] text-[var(--primary)]">
-              <BellIcon className="h-4 w-4" />
-            </span>
-            <h3 className="min-w-0 flex-1 truncate text-[14px] font-bold leading-5 text-[var(--on-surface)]">
-              {reminder.title}
-            </h3>
-            <RegistrationReminderStatusPill state={windowState} />
-          </div>
-
-          {reminder.body ? (
-            <p className="mt-2 text-[13px] leading-5 text-[var(--on-surface)]">
-              {reminder.body}
-            </p>
-          ) : null}
-
-          <dl className={detailListClassName}>
-            <div className="flex min-w-0 items-start gap-1.5">
-              <CalendarWeekIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
-              <div className="min-w-0">
-                <dt className="font-semibold leading-4 text-[var(--on-surface)]">Window</dt>
-                <dd className="min-w-0">
-                  <div className="truncate">
-                    <span className="font-medium text-[var(--on-surface)]">Start:</span> {formatRegistrationReminderDateTime(reminder.eventStartsAt)}
-                  </div>
-                  <div className="truncate">
-                    <span className="font-medium text-[var(--on-surface)]">End:</span> {formatRegistrationReminderDateTime(reminder.eventEndsAt)}
-                  </div>
-                </dd>
-              </div>
-            </div>
-          </dl>
-        </div>
+    <article className={`app-aero-panel ${isNotification ? "app-notification-card" : ""} registration-reminder-card ${REGISTRATION_REMINDER_STATUS_CLASS_NAMES[windowState]} overflow-hidden text-[var(--on-surface)]`}>
+      <div className="registration-reminder-heading flex min-h-10 items-center justify-between gap-2 py-1 pl-3 pr-1">
+        <h3 className="flex items-center gap-2 text-[13px] font-semibold leading-5">
+          <BellIcon className="h-4 w-4 shrink-0 text-[var(--reminder-status-color)]" />
+          Reminder
+        </h3>
+        {onCloseReminder ? (
+          <button
+            type="button"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.25rem] transition-colors hover:bg-[var(--surface-container-lowest)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--reminder-status-color)]"
+            aria-label={`Snooze ${reminder.title}`}
+            title="Snooze reminder"
+            onClick={() => onCloseReminder(reminder)}
+          >
+            <XIcon className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
 
-      {onCloseReminder ? (
-        <button
-          type="button"
-          className="absolute inset-y-0 right-0 inline-flex h-full w-11 items-center justify-center border-l border-[var(--brand-divider)] text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--brand-chip-bg)] hover:text-[var(--primary)]"
-          aria-label={`Snooze ${reminder.title}`}
-          title="Snooze reminder"
-          onClick={() => onCloseReminder(reminder)}
-        >
-          <XIcon className="h-4 w-4" />
-        </button>
-      ) : null}
+      <div className="registration-reminder-content p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <h4 className="min-w-0 flex-1 break-words text-[14px] font-bold leading-5">
+            {reminder.title}
+          </h4>
+          <RegistrationReminderStatusPill state={windowState} />
+        </div>
+
+        {reminder.body ? (
+          <p className="mt-2 whitespace-pre-line break-words text-[13px] leading-5">
+            {reminder.body}
+          </p>
+        ) : null}
+
+        <dl className={detailListClassName}>
+          <div className="flex min-w-0 items-start gap-1.5">
+            <CalendarWeekIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--reminder-status-color)]" />
+            <div className="min-w-0">
+              <dt className="font-semibold leading-4 text-[var(--on-surface)]">Window</dt>
+              <dd className="min-w-0 break-words">
+                <div>
+                  <span className="font-medium text-[var(--on-surface)]">Start:</span> {formatRegistrationReminderDateTime(reminder.eventStartsAt)}
+                </div>
+                <div>
+                  <span className="font-medium text-[var(--on-surface)]">End:</span> {formatRegistrationReminderDateTime(reminder.eventEndsAt)}
+                </div>
+              </dd>
+            </div>
+          </div>
+        </dl>
+      </div>
     </article>
   );
 }

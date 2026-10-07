@@ -331,6 +331,27 @@
   box-shadow: var(--shadow-elev-1);
 }
 
+.app-notification-stack {
+  width: min(100vw, 21.75rem);
+  padding: 3rem 0.75rem 4rem;
+  /* Keep cards in place while giving their shadows room inside the scroll area. */
+  padding-left: clamp(0.75rem, calc(100vw - 18.75rem), 3rem);
+}
+
+@media (min-width: 640px) {
+  .app-notification-stack {
+    width: 22rem;
+    padding-right: 1rem;
+  }
+}
+
+.app-notification-card.app-aero-panel {
+  box-shadow:
+    0 4px 10px rgb(15 23 42 / 0.16),
+    0 16px 32px rgb(15 23 42 / 0.22),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
 .home-aero-panel-heading,
 .app-aero-panel-heading {
   display: flex;
@@ -683,6 +704,13 @@
 
 :root[data-color-scheme="dark"] .home-aero-panel--subtle {
   box-shadow: var(--shadow-elev-1);
+}
+
+:root[data-color-scheme="dark"] .app-notification-card {
+  box-shadow:
+    0 4px 10px rgb(0 0 0 / 0.45),
+    0 16px 32px rgb(0 0 0 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
 }
 
 :root[data-color-scheme="dark"] .home-aero-hero {
@@ -1054,27 +1082,48 @@
 }
 
 .registration-reminder-status--open {
-  background: #E8F5E9;
-  border-color: #A5D6A7;
-  color: #2E7D32;
+  --reminder-status-background: #E8F5E9;
+  --reminder-status-border: #A5D6A7;
+  --reminder-status-color: #2E7D32;
 }
 
 .registration-reminder-status--upcoming {
-  background: #FFF8E1;
-  border-color: #FFD54F;
-  color: #8A5A00;
+  --reminder-status-background: #FFF8E1;
+  --reminder-status-border: #FFD54F;
+  --reminder-status-color: #8A5A00;
 }
 
 .registration-reminder-status--closing-soon {
-  background: #FDECEA;
-  border-color: #F5A6A0;
-  color: #B42318;
+  --reminder-status-background: #FDECEA;
+  --reminder-status-border: #F5A6A0;
+  --reminder-status-color: #B42318;
 }
 
 .registration-reminder-status--ended {
-  background: #F3F4F6;
-  border-color: #D1D5DB;
-  color: #4B5563;
+  --reminder-status-background: #F3F4F6;
+  --reminder-status-border: #D1D5DB;
+  --reminder-status-color: #4B5563;
+}
+
+.registration-reminder-status {
+  background: var(--reminder-status-background);
+  border-color: var(--reminder-status-border);
+  color: var(--reminder-status-color);
+}
+
+.registration-reminder-card.app-aero-panel,
+:root[data-color-scheme="dark"] .registration-reminder-card {
+  border-color: var(--reminder-status-border);
+}
+
+.registration-reminder-content {
+  background: color-mix(in srgb, var(--reminder-status-background) 40%, var(--surface-container-lowest));
+}
+
+.registration-reminder-heading {
+  border-bottom: 1px solid var(--reminder-status-border);
+  background: var(--reminder-status-background);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
 }
 
 .upcoming-date-dot--default {
@@ -1098,27 +1147,31 @@
 }
 
 :root[data-color-scheme="dark"] .registration-reminder-status--open {
-  background: rgba(34, 197, 94, 0.14);
-  border-color: rgba(34, 197, 94, 0.45);
-  color: #86EFAC;
+  --reminder-status-background: rgba(34, 197, 94, 0.14);
+  --reminder-status-border: rgba(34, 197, 94, 0.45);
+  --reminder-status-color: #86EFAC;
 }
 
 :root[data-color-scheme="dark"] .registration-reminder-status--upcoming {
-  background: rgba(245, 158, 11, 0.14);
-  border-color: rgba(245, 158, 11, 0.45);
-  color: #FCD34D;
+  --reminder-status-background: rgba(245, 158, 11, 0.14);
+  --reminder-status-border: rgba(245, 158, 11, 0.45);
+  --reminder-status-color: #FCD34D;
 }
 
 :root[data-color-scheme="dark"] .registration-reminder-status--closing-soon {
-  background: rgba(239, 68, 68, 0.14);
-  border-color: rgba(239, 68, 68, 0.45);
-  color: #FCA5A5;
+  --reminder-status-background: rgba(239, 68, 68, 0.14);
+  --reminder-status-border: rgba(239, 68, 68, 0.45);
+  --reminder-status-color: #FCA5A5;
 }
 
 :root[data-color-scheme="dark"] .registration-reminder-status--ended {
-  background: rgba(148, 163, 184, 0.12);
-  border-color: rgba(148, 163, 184, 0.35);
-  color: #CBD5E1;
+  --reminder-status-background: rgba(148, 163, 184, 0.12);
+  --reminder-status-border: rgba(148, 163, 184, 0.35);
+  --reminder-status-color: #CBD5E1;
+}
+
+:root[data-color-scheme="dark"] .registration-reminder-heading {
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.18);
 }
 
 :root[data-color-scheme="dark"] .upcoming-date-dot--open {
