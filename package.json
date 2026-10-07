@@ -18,6 +18,7 @@
     "start": "next start",
     "test": "vitest run",
     "data:build": "tsx scripts/build-data-snapshots.ts",
+    "scraper": "npm --prefix scraper run start --",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate"
   },

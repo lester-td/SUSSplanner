@@ -207,6 +207,7 @@ Use the same Node/npm versions for the scraper, plus Python 3.10+ and `psql`.
 │   ├── src/parsers/             Schedule and course-detail parsers
 │   ├── src/sql/                 SQL generation
 │   ├── tools/                   Python PDF extraction helpers
+│   ├── curriculum-schema-extension.sql  Optional preliminary curriculum tables
 │   └── schema.sql               Complete database DDL used by scraper setup
 ├── scripts/build-data-snapshots.ts Build-time academic-data export
 ├── scripts/validate-project.mjs Environment and toolchain validation
@@ -261,8 +262,19 @@ From `scraper/`:
 npm install
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-ocr.txt
 ```
+
+TLL course synopsis and curriculum-plan parsing uses selective English/Tamil OCR for broken
+embedded glyphs. **All Items and TLL-inclusive course or curriculum selections require the
+OCR dependencies.** On Ubuntu/WSL, install them before starting the interactive scraper:
+
+```bash
+sudo apt install ghostscript tesseract-ocr-eng tesseract-ocr-tam fonts-noto-core
+```
+
+Simplified Chinese OCR (`tesseract-ocr-chi-sim`) is optional; the current Chinese
+curriculum PDFs expose their text as Unicode and do not require OCR.
 
 The scraper needs `psql` only when importing generated SQL or running database
 checks. It needs network access when downloading current course synopsis PDFs.
@@ -331,6 +343,10 @@ environment files except `.env.example`.
 `scraper/schema.sql` defines the academic database schema.
 `lib/db/schema.ts` manually mirrors the tables for the snapshot exporter and
 Drizzle tooling. Generated migrations under `drizzle/` are gitignored.
+
+The preliminary curriculum tables are deliberately excluded from both active schema files.
+Their standalone DDL is kept in `scraper/curriculum-schema-extension.sql` for evaluation in
+disposable databases. It is an optional extension, not a migration or deployed schema.
 
 ### Entity Relationship Diagram
 
@@ -879,10 +895,11 @@ flowchart TD
     Add{"Add current-semester module"}
     Catalog["Search full catalog through<br/>GET /api/calculator/courses"]
     Custom["Enter custom module label and credits"]
+    PlannerImport["Select saved semester-planner modules<br/>and skip duplicate course codes"]
     Grade["Set Credits, Grade, or GPV"]
     Sync["Synchronize Grade and GPV"]
     PF["Toggle Pass/Fail strategy"]
-    Prior["Set previous cumulative GPA<br/>and GPA-counted completed CUs"]
+    Prior["Set previous cumulative GPA,<br/>total completed CUs, and Pass/Fail CUs"]
     Calculate["Recalculate weighted current<br/>and cumulative GPA"]
     Persist["Persist calculator JSON to localStorage"]
     Clear["Confirm clearing all current modules"]
@@ -894,6 +911,8 @@ flowchart TD
     Ready --> Add
     Add --> Catalog
     Add --> Custom
+    Add --> PlannerImport
+    PlannerImport --> Grade
     Catalog --> Grade
     Custom --> Grade
     Ready --> Grade
@@ -1222,14 +1241,24 @@ Persisted JSON fields:
 - `modules`
 - `priorGpa`
 - `priorCredits`
+- `priorPassFailCredits`
 - Per-module `courseCode`, `courseName`, `creditUnits`, `grade`, `gradePoint`,
-  and `isPassFail`
+  `isPassFail`, and `creditUnitsEditable`
 
 The calculator is implemented directly in
 `components/calculator/gpa-calculator-client.tsx`; it does not have a
 separate type, validation, or storage module. Hydration catches malformed JSON
 and starts clean when parsing fails. Every subsequent module/prior-record
 change is written back to `localStorage`.
+
+The **Planner** button reads the saved semester plan in the same browser and opens
+a module-selection modal. Users can sort by course code/name or assigned semester,
+include/exclude custom modules, and select which modules to add. Existing course
+codes and repeated planner entries are disabled to prevent duplicates. Imported
+modules copy names and credits, start at grade `A` / GPV `5.0`, and are not Pass/Fail
+until the user selects it. Import appends modules without replacing the calculator
+or changing the saved planner. The available planner list refreshes on browser
+`storage` and `sussplanner:semester-planner-updated` events.
 
 Grade and GPV are bidirectionally synchronized through the fixed SUSS scale.
 Both `A+` and `A` map to `5.0`; selecting GPV `5.0` uses `A` as the canonical
@@ -1242,24 +1271,27 @@ selected.
 
 ```text
 currentGpaCredits = sum(module.creditUnits where !module.isPassFail)
+priorGpaCredits = max(0, priorCredits - priorPassFailCredits)
 
 currentGpa =
   sum(module.creditUnits * module.gradePoint where !module.isPassFail)
   / currentGpaCredits
 
 cumulativeGpa =
-  (priorGpa * priorCredits
+  (priorGpa * priorGpaCredits
     + sum(module.creditUnits * module.gradePoint where !module.isPassFail))
-  / (priorCredits + currentGpaCredits)
+  / (priorGpaCredits + currentGpaCredits)
 ```
 
 Current GPA is empty when `currentGpaCredits` is zero. Cumulative GPA is empty
-only when `priorCredits + currentGpaCredits` is zero. Users are instructed to
-exclude historical Pass/Fail modules from `priorCredits`; the UI cannot verify
-that input.
+only when `priorGpaCredits + currentGpaCredits` is zero. `priorCredits` is total
+previously completed CUs, including Pass/Fail; the separate Pass/Fail input is
+capped at that total and subtracted for the GPA denominator. Total completed CUs
+include both prior and current Pass/Fail modules. The app cannot verify these
+user-entered values against academic records.
 
 `Clear all` opens the shared `Modal` confirmation and removes only current
-modules. It preserves `priorGpa` and `priorCredits`.
+modules. It preserves `priorGpa`, `priorCredits`, and `priorPassFailCredits`.
 
 ### Semester Planner Backup Contract
 
@@ -1470,7 +1502,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor Maintainer
-    participant Source as SUSS/source PDFs + manifests
+    participant Source as SUSS/source PDFs + manifests + curriculum plans
     participant Scraper as Local scraper commands
     participant Artifacts as JSON / TSV / SQL artifacts
     participant DB as Postgres
@@ -1479,13 +1511,15 @@ sequenceDiagram
     participant Deploy as Vercel deployment
     participant App as Public application
 
-    Maintainer->>Scraper: Run week, schedule, download, and course parse commands
+    Maintainer->>Scraper: Choose a task from npm run scraper
     Scraper->>Source: Read local inputs or request course PDFs
     Source-->>Scraper: Source data
     Scraper->>Artifacts: Write parsed data, issues, and transactional SQL
     Maintainer->>Artifacts: Review warnings and generated output
     Maintainer->>DB: psql import using DATABASE_URL
     DB-->>Maintainer: Import result and verification queries
+    Maintainer->>DB: Enable intake availability for validated intakes
+    Maintainer->>Build: Copy reviewed cohort index to application data/
     Maintainer->>Build: Run npm run data:build (local verification)
     Build->>DB: Read normalized academic tables
     Build->>Snapshot: Write manifest, course index, course and schedule shards
@@ -1507,16 +1541,30 @@ steps below. Snapshot publication is the final application operation.
 4. Download course synopsis PDFs.
 5. Parse course synopsis PDFs and import course-detail SQL.
 6. Verify database counts/sample rows.
-7. Run `npm run data:build` from the repository root and review the manifest.
-8. Trigger a new Vercel deployment (a deploy hook is convenient).
+7. Enable `semesters.has_intake_schedule` for validated intakes and copy the reviewed
+   `scraper/data/schedule-cohorts.json` to `data/schedule-cohorts.json`.
+8. Run `npm run data:build` from the repository root and review the manifest.
+9. Trigger a new Vercel deployment (a deploy hook is convenient).
 
-Run scraper commands from `scraper/`. The key commands are
-`generate:weeks`, `scrape:all`, `download:courses`, and `parse:courses`; import
-the generated SQL with `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f <file>`.
-See `scraper/README.md` for exact arguments, review queries, and troubleshooting.
+Run `npm run scraper` from the repository root and choose the required task from
+the interactive menu. **All Items** runs the complete local preparation flow without
+changing the database. The menu then asks for JSON, SQL, or both and accepts optional
+course filters such as `TLL*`. TLL course and curriculum records automatically use
+selective English/Tamil OCR when unresolved CID glyphs remain; the menu warns about and
+validates the required dependencies before running a TLL-inclusive selection. Review
+generated files before importing SQL manually.
+Curriculum-plan JSON separates product records from raw review rows. Its generated SQL
+targets the optional tables in `scraper/curriculum-schema-extension.sql`; those tables are
+not part of the current application schema and should only be evaluated in a disposable
+database while the work is paused. The SQL covers plans, requirements, plan courses,
+prerequisite rules, exclusions, presentations, lifecycle events, and replacements.
+Curriculum presentations do not create timetable classes or semesters.
+The lower-level `generate:weeks`, `scrape:all`, `download:courses`,
+`parse:courses`, and `parse:curriculum` commands remain available for diagnostic runs. See
+`scraper/README.md` for the default paths, review queries, and troubleshooting.
 
-Generated scraper output and downloaded course PDFs are gitignored. Generated
-SQL is wrapped in `BEGIN`/`COMMIT` by default.
+Generated scraper output and downloaded course PDFs are gitignored. Importable generated
+SQL is wrapped in `BEGIN`/`COMMIT`.
 
 ### Publishing After Import
 
@@ -1572,6 +1620,7 @@ secret.
 | Run/check the app | Use `npm run dev`, `npm run typecheck`, and `npm run build`. |
 | Change data retrieval | Keep runtime reads in `lib/data/`; update the generator and snapshot types together when the persisted shape changes. |
 | Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. Generated files in `drizzle/` are not the schema source of truth. |
+| Evaluate the preliminary curriculum schema | Apply `scraper/curriculum-schema-extension.sql` only after the base schema in a disposable database. It is not a migration or part of the deployed schema. |
 | Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered snapshot reads behind route handlers. |
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
 | Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, and local-storage format aligned. |
@@ -1587,7 +1636,8 @@ secret.
 - There is no user account, cloud synchronization, or server-side backup of
   timetable, semester planner, or GPA-calculator state. Save a JSON backup or
   share link before clearing browser storage or moving plans between browsers.
-- GPA-calculator state has no export, import, share, cloud backup, or formal
+- The GPA calculator can import modules from the browser-local semester planner,
+  but has no calculator-state file import/export, share, cloud backup, or formal
   Zod validation layer.
 - `/calculators` is excluded from search-engine indexing.
 - Calculator results depend on user-entered grades, prior GPA, prior

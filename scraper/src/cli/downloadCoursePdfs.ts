@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { parseArgs, optionalBool, optionalString } from "../lib/args.js";
+import { resolveInputCourseCodes } from "../lib/courseCodeFilter.js";
 import type { ScheduleType } from "../lib/types.js";
 import { buildCourseDetailPdfUrl, isftForScheduleType } from "../parsers/courseDetailPdf.js";
 
@@ -25,18 +26,6 @@ const VARIANTS: Array<{ scheduleType: ScheduleType; isft: 0 | 1 }> = [
   { scheduleType: "daytime", isft: 1 },
   { scheduleType: "evening", isft: 0 }
 ];
-
-async function readCodes(args: Record<string, string | boolean>): Promise<string[]> {
-  const codesInline = optionalString(args, "codes");
-  const codesFile = optionalString(args, "codes-file") ?? "data/output/course-codes.txt";
-
-  if (codesInline) {
-    return codesInline.split(",").map(code => code.trim().toUpperCase()).filter(Boolean);
-  }
-
-  const content = await fs.readFile(codesFile, "utf8");
-  return content.split(/[,\n\r\t ]+/).map(code => code.trim().toUpperCase()).filter(Boolean);
-}
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -164,9 +153,9 @@ function formatReport(rows: CourseDownloadReportRow[]): string {
 
 async function main(): Promise<void> {
   const args = parseArgs();
-  const outDir = optionalString(args, "out-dir") ?? "data/input/course-pdfs";
-  const manifestOut = optionalString(args, "manifest-out") ?? "data/output/course-pdf-downloads.json";
-  const reportOut = optionalString(args, "report-out") ?? "data/output/course-pdf-download-report.tsv";
+  const outDir = optionalString(args, "out-dir") ?? "data/input/courses";
+  const manifestOut = optionalString(args, "manifest-out") ?? "data/output/courses/downloads.json";
+  const reportOut = optionalString(args, "report-out") ?? "data/output/courses/download-report.tsv";
   const force = optionalBool(args, "force");
   const delayMs = Number(optionalString(args, "delay-ms") ?? "250");
 
@@ -174,7 +163,7 @@ async function main(): Promise<void> {
   await fs.mkdir(path.dirname(manifestOut), { recursive: true });
   await fs.mkdir(path.dirname(reportOut), { recursive: true });
 
-  const courseCodes = [...new Set(await readCodes(args))].sort();
+  const courseCodes = await resolveInputCourseCodes(args, "data/output/schedules/course-codes.txt");
   const results: VariantDownloadResult[] = [];
 
   for (const courseCode of courseCodes) {
