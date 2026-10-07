@@ -94,7 +94,7 @@ async function main(): Promise<void> {
   }
 
   const merged = mergeResults(results);
-  const cohortsPath = typeof args["cohorts-out"] === "string" ? args["cohorts-out"] : "../data/schedule-cohorts.json";
+  const cohortsPath = typeof args["cohorts-out"] === "string" ? args["cohorts-out"] : "data/schedule-cohorts.json";
   await fs.mkdir(path.dirname(cohortsPath), { recursive: true });
   const cohortIndex = buildScheduleCohortIndex(sources, await readScheduleCohortIndex(cohortsPath));
   await fs.writeFile(cohortsPath, `${JSON.stringify(cohortIndex, null, 2)}\n`, "utf8");

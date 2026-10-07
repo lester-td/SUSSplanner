@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Local Node/TypeScript scraper that extracts SUSS timetable PDFs and latest course synopsis PDFs into Supabase/Postgres SQL inserts.",
   "scripts": {
+    "test": "node --import tsx --test src/cli/*.test.ts src/lib/*.test.ts src/parsers/*.test.ts",
     "scrape:schedule": "tsx src/cli/scrapeSchedule.ts",
     "scrape:all": "tsx src/cli/scrapeAll.ts",
     "generate:cohorts": "tsx src/cli/buildScheduleCohorts.ts",

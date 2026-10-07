@@ -2,6 +2,10 @@
 
 Run the scraper locally to parse source PDFs and generate SQL for import:
 
+This directory is a standalone project: its dependencies, commands, type checks,
+and tests run without the web application. Default output paths stay inside
+the scraper directory. Publishing data to the application is a separate step.
+
 ```text
 School schedule PDFs + SUSS course synopsis PDFs
         ↓
@@ -70,6 +74,8 @@ From the repository root:
 ```bash
 cd scraper
 npm install
+npm test
+npm run typecheck
 ```
 
 Create a Python environment for `pdfplumber`:
@@ -415,13 +421,15 @@ Outputs:
 data/output/schedules-import.sql      SQL for semesters/courses/classes/class_events
 data/output/schedules-parsed.json     parsed schedule data
 data/output/course-codes.txt          unique course codes found in schedules
-../data/schedule-cohorts.json         source cohort ownership of continuation sessions
+data/schedule-cohorts.json            source cohort ownership of continuation sessions
 ```
 
 The cohort index records explicitly assigned ownership of cross-term and pre-term
 sessions. Regeneration preserves older mappings and replaces mappings for events
 in the current input; it does not infer ownership from the first date or a course
-code list. Commit it with schedule changes. Later completion sessions appear in
+code list. The scraper keeps its own tracked index at `data/schedule-cohorts.json`,
+including historical mappings needed when a manifest covers only newer sources.
+Commit it with schedule changes. Later completion sessions appear in
 the later term's timetable without becoming new starting offerings; pre-term
 sessions stay in their originating timetable. Override its output path with
 `--cohorts-out`. To regenerate it from existing extracted CSVs without
@@ -639,14 +647,24 @@ Follow these stages in order, reviewing generated artifacts before import:
 The production application serves build-time JSON snapshots and does not query
 Postgres during user requests. After verifying the import, enable
 `semesters.has_intake_schedule` for the validated intakes as described above,
-then return to the repository root and run:
+then publish the reviewed cohort index to the application's `data/` directory.
+This explicit file handoff is required after either `scrape:all` or
+`generate:cohorts`; scraper commands do not update the application's copy.
+From `scraper/` in this repository:
 
 ```bash
+npm test
+npm run typecheck
+cp data/schedule-cohorts.json ../data/schedule-cohorts.json
 cd ..
 npm run data:build
 npm test
 npm run typecheck
 ```
+
+If the scraper lives elsewhere, copy its reviewed `data/schedule-cohorts.json`
+to the web application's `data/schedule-cohorts.json` instead. Commit both copies
+when maintaining them in this repository.
 
 Review the generated counts, then trigger a new Vercel deployment. Vercel runs
 the same snapshot generator during `prebuild`, so database-only updates do not

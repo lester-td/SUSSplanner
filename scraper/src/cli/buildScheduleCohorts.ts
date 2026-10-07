@@ -9,7 +9,7 @@ async function main(): Promise<void> {
   const args = parseArgs();
   const manifestPath = requireString(args, "manifest");
   const csvDir = requireString(args, "csv-dir");
-  const outputPath = typeof args.out === "string" ? args.out : "../data/schedule-cohorts.json";
+  const outputPath = typeof args.out === "string" ? args.out : "data/schedule-cohorts.json";
   const manifest = parseScheduleManifest(await fs.readFile(manifestPath, "utf8"));
   const sources = await Promise.all(manifest.schedules.map(async item => {
     const source = item.pdf ?? item.csv;

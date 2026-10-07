@@ -15,6 +15,9 @@ const searchOnlyExcludes = [snapshotManifest, courseSnapshots, scheduleSnapshots
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  typescript: {
+    tsconfigPath: "tsconfig.build.json",
+  },
   allowedDevOrigins: ["localhost", "127.0.0.1", ...envOrigins],
   outputFileTracingExcludes: {
     "/api/calculator/courses": searchOnlyExcludes,

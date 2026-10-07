@@ -107,6 +107,10 @@ state formats, and deployment guidance.
 ## Scraper Workflow
 
 The scraper is a separate maintainer workflow under [`scraper/`](./scraper).
+The app's installation, tests, type checks, build, and runtime do not require
+scraper dependencies. The scraper has its own `npm test` and `npm run typecheck`;
+it can run outside this repository. Data reaches the app through reviewed SQL
+imports and an explicit copy of the generated cohort index.
 See the [scraper guide](./scraper/README.md) for setup, PDF parsing, SQL
 generation, import order, validation, and troubleshooting.
 
