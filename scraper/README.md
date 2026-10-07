@@ -1,6 +1,6 @@
 # SUSS Scraper
 
-This scraper is designed for a local workflow:
+Run the scraper locally to parse source PDFs and generate SQL for import:
 
 ```text
 School schedule PDFs + SUSS course synopsis PDFs
@@ -11,11 +11,8 @@ parsed JSON + generated SQL
         ↓
 Supabase Postgres import using psql
 ```
----
 
 ## Tech stack
-
-This scraper/import workflow uses:
 
 | Layer | Technology | Purpose |
 |---|---|---|
@@ -25,24 +22,17 @@ This scraper/import workflow uses:
 | TS runner | tsx | Runs TypeScript CLI scripts without a manual build step |
 | PDF extraction | Python 3 + pdfplumber | Extracts tables/text from schedule PDFs and course synopsis PDFs |
 | Database | Supabase Postgres | Stores courses, semesters, timetable events, and assessment data |
-| DB import tool | psql | Imports generated SQL files into Supabase reliably |
-| Frontend hosting | Vercel | Hosts the deployed web app; scraping is done locally, not inside Vercel |
+| DB import tool | psql | Imports generated SQL into Supabase |
 | Data exchange | JSON + SQL files | JSON is used for review/debugging; SQL is used for database import |
 
 Recommended local environment:
 
 ```text
-Node.js 18+
-npm 9+
+Node.js 20+
+npm 10+
 Python 3.10+
 PostgreSQL client / psql
 ```
-
-The scraper is designed to run locally from your development machine.
-
----
-
-# Guide
 
 ## 0. What the scraper imports
 
@@ -70,22 +60,19 @@ The course synopsis scraper populates or updates:
 - `courses`, detailed latest course information
 - `assessment_components`, latest assessment strategy by `course_code + schedule_type`
 
-The online synopsis URL only gives the latest/current course synopsis, so assessment data is not treated as historical by semester.
-
----
+The synopsis endpoint exposes the latest version; assessments are not historical
+semester records.
 
 ## 1. Install dependencies
 
-From the scraper project root:
+From the repository root:
 
 ```bash
-cd ~/Git/SUSSplanner/scraper
+cd scraper
 npm install
 ```
 
-Python is needed because the scraper uses `pdfplumber` for PDF table/text extraction.
-
-Recommended:
+Create a Python environment for `pdfplumber`:
 
 ```bash
 python3 -m venv venv
@@ -93,17 +80,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-If `requirements.txt` is missing, install manually:
-
-```bash
-pip install pdfplumber
-```
-
----
-
 ## 2. Prepare Supabase database
 
-### Schema: schedule metadata and announcements
+### Schedule metadata and announcements
 
 `schema.sql` defines the database used by schedule imports and app snapshots:
 
@@ -170,9 +149,8 @@ withdraw it, then rebuild/deploy. Set `expires_at` to end its display automatica
 Set this flag explicitly after importing and validating each intake's schedule.
 
 Offering filters and intake selectors hide semesters whose flag is `false`.
-The timetable keeps active continuation destinations accessible with unchanged
-rail labels and shows a notice in the existing timetable info section, alongside
-Week 0 and Study Week classes, with the same dismissal behavior. Course snapshots
+The timetable keeps active continuation destinations accessible and shows a
+dismissible notice alongside Week 0 and Study Week classes. Course snapshots
 retain those destinations separately as `scheduledSemesters`, so adding a May
 class still creates its July continuation. New enrolments in an unavailable
 intake are rejected. Archived terms remain hidden from both uses.
@@ -192,7 +170,8 @@ snapshots without the field retain their previous visibility until rebuilt.
 
 ### Option A: fresh reset of public schema
 
-Only do this if you are okay deleting all existing imported data in `public`.
+This deletes all existing data in `public`. Use it only for an intentional reset.
+Set [DATABASE_URL](#3-set-database_url-locally) before running `psql`.
 
 Run in Supabase SQL Editor:
 
@@ -213,7 +192,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT ALL ON FUNCTIONS TO postgres, anon, authenticated, service_role;
 ```
 
-Then run the latest schema:
+Apply the schema:
 
 ```bash
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
@@ -221,11 +200,13 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
 
 ### Option B: existing database
 
-If you are not resetting, make sure the schema is already on the latest version:
+Compare the existing database with `schema.sql` and apply reviewed schema
+changes before importing. Check at least:
 
-- `courses` does **not** have `course_textbooks`
-- `assessment_components` has `schedule_type`
-- `assessment_components` does **not** have `semester_id`
+- `semesters.is_archived` and `semesters.has_intake_schedule` exist.
+- `classes.language` and `class_events.campus` exist.
+- Academic-calendar tables and `announcements` exist.
+- `assessment_components` has `schedule_type` and no `semester_id`.
 
 Check:
 
@@ -251,8 +232,6 @@ sort_order
 last_updated
 ```
 
----
-
 ## 3. Set DATABASE_URL locally
 
 Get the Supabase database connection string from:
@@ -274,8 +253,6 @@ Test:
 ```bash
 psql "$DATABASE_URL" -c "SELECT now();"
 ```
-
----
 
 ## 4. Prepare input folders
 
@@ -307,8 +284,6 @@ mkdir -p data/input/course-pdfs/evening
 mkdir -p data/output
 ```
 
----
-
 ## 5. Create schedule manifest
 
 Create or edit:
@@ -317,7 +292,7 @@ Create or edit:
 data/input/schedule-manifest.json
 ```
 
-The current combined PDF needs one entry:
+Example manifest for a combined PDF:
 
 ```json
 {
@@ -338,7 +313,7 @@ The current combined PDF needs one entry:
 evening. It is also the default when `scheduleType` is omitted. Classification
 uses the group code, including for weekend classes and exams.
 
-Older separate files still support `"scheduleType": "daytime"` or
+For separate files, use `"scheduleType": "daytime"` or
 `"scheduleType": "evening"`. These validate that every parsed row matches the
 specified type; a mismatch stops the import with an instruction to use `auto`.
 You can list multiple input files in the manifest when importing several intakes.
@@ -368,8 +343,6 @@ npm run scrape:schedule -- \
 
 `--schedule-type` is optional and defaults to `auto`. The batch importer and
 cohort generator use the same manifest and classification rules.
-
----
 
 ## 6. Generate and import semester weeks
 
@@ -424,8 +397,6 @@ Import:
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/semester-weeks-import.sql
 ```
 
----
-
 ## 7. Scrape schedule PDFs
 
 Run:
@@ -462,7 +433,7 @@ npm run generate:cohorts -- \
   --csv-dir data/output/schedules/extracted-csv
 ```
 
-If you already have `schedules-parsed.json` and just want to regenerate SQL using the latest schema:
+To regenerate SQL from existing parsed JSON:
 
 ```bash
 npm run schedule-json-to-sql -- \
@@ -484,8 +455,6 @@ psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM courses;"
 psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM classes;"
 psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM class_events;"
 ```
-
----
 
 ## 8. Download online course synopsis PDFs
 
@@ -542,8 +511,6 @@ npm run download:courses -- \
   --force
 ```
 
----
-
 ## 9. Parse course synopsis PDFs
 
 Run:
@@ -571,10 +538,6 @@ The parser skips PDFs whose extracted text says:
 No Record Found
 ```
 
-The parser no longer extracts or stores textbooks.
-
----
-
 ## 10. Inspect course parse results before importing
 
 Check the issue report:
@@ -590,19 +553,12 @@ head -50 data/output/course-parse-issues.tsv
 wc -l data/output/course-parse-issues.tsv
 ```
 
-Common warning types:
+The report identifies each course, schedule type, severity, and issue. Look for
+missing names or synopsis sections, missing assessments, weights that do not
+total 100, and PDFs containing `No Record Found`.
 
-```text
-course_name_missing
-synopsis_missing
-assessment_not_found
-assessment_total_not_100
-no_record_found
-```
-
-If assessment total is not 100, the scraper should skip assessment inserts for that course/schedule type instead of importing bad data.
-
----
+If assessment weights do not total 100, the parser skips assessment rows for that
+course and schedule type. Inspect the PDF and warnings before importing.
 
 ## 11. Regenerate SQL from course JSON only
 
@@ -620,8 +576,6 @@ Then inspect:
 ```bash
 less data/output/course-json-to-sql-issues.tsv
 ```
-
----
 
 ## 12. Import course details SQL
 
@@ -666,41 +620,19 @@ LIMIT 50;
 "
 ```
 
----
-
 ## 13. Recommended full import order
 
-For a fresh database:
+Follow these stages in order, reviewing generated artifacts before import:
 
-```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
-
-npm run generate:weeks -- \
-  --input data/input/semester-weeks.2027.json \
-  --out data/output/semester-weeks-import.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/semester-weeks-import.sql
-
-npm run scrape:all -- \
-  --manifest data/input/schedule-manifest.json \
-  --out data/output/schedules-import.sql \
-  --json data/output/schedules-parsed.json \
-  --course-codes-out data/output/course-codes.txt
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules-import.sql
-
-npm run download:courses -- \
-  --codes-file data/output/course-codes.txt \
-  --out-dir data/input/course-pdfs \
-  --report-out data/output/course-pdf-download-report.tsv \
-  --manifest-out data/output/course-pdf-downloads.json
-
-npm run parse:courses -- \
-  --pdf-dir data/input/course-pdfs \
-  --codes-file data/output/course-codes.txt \
-  --out data/output/course-details-import.sql \
-  --json data/output/course-details-parsed.json \
-  --issues-out data/output/course-parse-issues.tsv
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/course-details-import.sql
-```
+1. [Prepare the database](#2-prepare-supabase-database).
+2. [Generate and import semester weeks](#6-generate-and-import-semester-weeks).
+3. [Parse and import schedules](#7-scrape-schedule-pdfs).
+4. [Download course synopsis PDFs](#8-download-online-course-synopsis-pdfs).
+5. [Parse course details](#9-parse-course-synopsis-pdfs) and
+   [review warnings](#10-inspect-course-parse-results-before-importing).
+6. [Import course details and verify the database](#12-import-course-details-sql).
+7. Enable [intake schedule availability](#intake-schedule-availability), then
+   publish the snapshots as described below.
 
 ### Publish the imported data to the application
 
@@ -718,10 +650,8 @@ npm run typecheck
 
 Review the generated counts, then trigger a new Vercel deployment. Vercel runs
 the same snapshot generator during `prebuild`, so database-only updates do not
-require committing generated JSON. See `docs/DataSnapshots.md` for the complete
-publication and rollback workflow.
-
----
+require committing generated JSON. See
+[Data Snapshot Operations](../docs/DataSnapshots.md) for publication and rollback.
 
 ## 14. Troubleshooting
 
@@ -733,25 +663,24 @@ Use `psql`:
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/schedules-import.sql
 ```
 
-Do not paste large 20 MB SQL files into Supabase SQL Editor.
-
 ### Parser creates null course names
 
-The scraper should preserve existing schedule-imported course names and avoid overwriting with null. Check the issues TSV for `course_name_missing`.
+Course upserts preserve an existing name when the parsed name is null. Check the
+issues TSV for name-extraction warnings and inspect the source PDF.
 
 ### Course PDF says `No Record Found`
 
-This is not a parser bug. The SUSS URL returned a valid PDF with no course record. The parser skips it.
+The endpoint returned a PDF with no course record. The parser skips it.
 
 ### Assessment total not 100
 
-Usually caused by PDF table extraction artifacts or page breaks. The improved parser strips page footer text and carries OCAS/OES state across page breaks. If it still reports a non-100 total, inspect the source PDF manually before importing.
-
----
+PDF table extraction or page breaks can corrupt assessment weights. The parser
+strips footers and carries OCAS/OES state across pages; inspect the source PDF
+if the total is still incorrect.
 
 ## 15. Data model
 
-The latest schema intentionally separates data this way:
+The schema separates catalog data from semester-specific schedules:
 
 ```text
 courses
@@ -766,5 +695,3 @@ classes + class_events
 assessment_components
   latest assessment strategy by course_code + schedule_type
 ```
-
-`assessment_components` is not tied to `semester_id` because the SUSS course synopsis URL only exposes the latest/current version, not historical versions.

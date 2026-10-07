@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository contains two cooperating workspaces:
+This repository contains two parts:
 
 - the root Next.js application (`app/`, `components/`, `lib/`)
 - the maintainer-operated ingestion pipeline (`scraper/`)
@@ -47,17 +47,17 @@ Snapshot generation reads these existing relations without changing them:
 - `classes`
 - `class_events`
 - `assessment_components`
+- `announcements`
 
-Snapshot generation reads the existing database schema without changing it.
 `lib/db/schema.ts` remains the Drizzle mapping used by the build-time exporter
 and database tooling.
 
 ## Snapshot Contract
 
-Generated files are deliberately split by access pattern:
+Generated files are split by access pattern:
 
 - `manifest.json`: format version, timestamps, coverage, semesters, weeks,
-  calendar events, and shard paths
+  calendar events, announcements, and shard paths
 - `course-index.json`: compact searchable course records and offering metadata
 - `courses/<bucket>.json`: full details, assessments, and offered semesters for
   one deterministic course-code bucket
@@ -76,7 +76,7 @@ The snapshot format is versioned by `DATA_SNAPSHOT_FORMAT_VERSION` in
 
 Primary files:
 
-- `lib/data/*-reader.ts` and `lib/data/snapshot-cache.ts`: safe, category-specific,
+- `lib/data/*-reader.ts` and `lib/data/snapshot-cache.ts`: category-specific,
   memoized JSON file access
 - `lib/data/metadata.ts`: semesters, weeks, calendar, coverage, update timestamp
 - `lib/data/course-search.ts`: course search, calculator search, and facets
@@ -94,8 +94,7 @@ files are immutable for that deployment. JSON API responses use a one-year
 shared-cache lifetime; Vercel deployments provide the cache boundary, so a new
 deployment publishes a new data version atomically.
 
-After importing new academic data, trigger a new production deployment. No
-runtime cache-revalidation endpoint or cache secret is required.
+After importing new academic data, trigger a new production deployment.
 
 ## Routing and User State
 
@@ -104,8 +103,9 @@ runtime cache-revalidation endpoint or cache secret is required.
 - `/courses` searches the generated course index.
 - `/courses/[courseCode]` combines a course-detail shard with optional schedule
   shards.
-- `/share` resolves URL-contained semantic identifiers without storing them on
-  the server.
+- `/share` resolves URL-contained semantic identifiers for a read-only timetable
+  preview. `/planner#plan=...` carries a compressed semester-plan snapshot.
+  Both require confirmation before replacing local state.
 - `/api/export/ics` and `/api/export/pdf` assemble exports from the same
   snapshots.
 
