@@ -39,6 +39,10 @@ export type SemesterRecord = {
   academicYear: string;
   semesterNo: 1 | 2 | 3;
   semesterName: string;
+  // Older generated snapshots do not contain this field.
+  isArchived?: boolean;
+  // Missing in older snapshots; false means only continuation sessions are available.
+  hasIntakeSchedule?: boolean;
 };
 
 export type SemesterWeekRecord = {
@@ -63,6 +67,8 @@ export type CourseSearchResult = {
   hasAvailableClasses: boolean;
   availableClassCount: number;
   offeredSemesters: SemesterRecord[];
+  // Includes continuation destinations, even when their intake schedule is unavailable.
+  scheduledSemesters?: SemesterRecord[];
   scheduleTypes: ScheduleType[];
   availableAsGsp: boolean;
   assessmentModes: string[];
@@ -100,6 +106,8 @@ export type ClassRecord = {
   scheduleType: ScheduleType;
   groupCodeType: GroupCodeType;
   groupCode: string;
+  // Older generated snapshots do not contain this field.
+  language?: string | null;
   availableAsGsp: boolean | null;
   isRestricted: boolean | null;
   remarks: string | null;
@@ -114,7 +122,7 @@ export type ClassEventRecord = {
   startTime: string;
   endTime: string;
   eventMode: string | null;
-  venue: string | null;
+  campus: string | null;
   remarks: string | null;
 };
 
@@ -122,6 +130,8 @@ export type ClassEventWithWeekRecord = ClassEventRecord & {
   courseCode: string;
   semesterId: number;
   startSemesterId?: number;
+  // Explicitly owned sessions before the intake's nominal calendar start.
+  isPreTerm?: boolean;
   scheduleType: ScheduleType;
   groupCodeType: GroupCodeType;
   groupCode: string;
@@ -132,6 +142,8 @@ export type ClassEventWithWeekRecord = ClassEventRecord & {
 };
 
 export type CourseClassRecord = ClassRecord & {
+  // Explicit continuation targets in newly generated snapshots.
+  continuationSemesterIds?: number[];
   courseName: string | null;
   schoolName: string | null;
   creditUnits: number | null;
@@ -169,6 +181,8 @@ export type TimetableData = {
   semesterWeeks: SemesterWeekRecord[];
   selections: TimetableSelectionRecord[];
   events: TimetableEventRecord[];
+  // Complete sessions for the resolved class cohorts, used by the PDF listing.
+  classSessionEvents?: TimetableEventRecord[];
   clashes: TimetableClash[];
   unresolvedSelections: SharedClassIdentifier[];
 };
@@ -187,7 +201,7 @@ export type TimetableBlock = {
   continuationLabel?: string;
   originSemesterId?: number;
   courseLabel?: string;
-  venue: string | null;
+  campus: string | null;
   eventMode: string | null;
   occurrenceCount: number;
   eventIds: number[];

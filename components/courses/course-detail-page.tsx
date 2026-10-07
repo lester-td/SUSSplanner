@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { getSemesterChoices } from "@/lib/timetable/semester-visibility";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -12,17 +14,20 @@ import {
   BookIcon,
   CalendarWeekIcon,
   LayersIcon,
+  PinIcon,
   MoonIcon,
   SchoolIcon,
   SunIcon,
 } from "@/components/planner/icons";
 import { ClassScheduleModalContent, formatClassScheduleTitle } from "@/components/timetable/class-schedule-modal-content";
+import { CampusLabel } from "@/components/timetable/campus-label";
 import { AddToTimetableButton } from "@/components/timetable/add-to-timetable-button";
 import { Modal } from "@/components/ui/modal";
 import {
   formatClassGroupLabel,
 } from "@/lib/timetable/date-utils";
 import { normalizeRichTextList } from "@/lib/timetable/timetable-utils";
+import { getClassCampusCodes } from "@/lib/timetable/campus";
 import type {
   AssessmentComponentRecord,
   CourseClassRecord,
@@ -55,6 +60,7 @@ function formatAssessmentWeight(value: number)
 export function CourseDetailPage({
   course,
   offeredSemesters,
+  scheduledSemesters,
   currentSemesterId,
   selectedSemesterId,
   classes: initialClasses,
@@ -62,6 +68,7 @@ export function CourseDetailPage({
 }: {
   course: CourseRecord;
   offeredSemesters: SemesterRecord[];
+  scheduledSemesters?: SemesterRecord[];
   currentSemesterId: number | null;
   selectedSemesterId?: number;
   classes: CourseClassRecord[];
@@ -69,7 +76,11 @@ export function CourseDetailPage({
 })
 {
   const [classes, setClasses] = useState(selectedSemesterId ? initialClasses : []);
+  const [campusClasses, setCampusClasses] = useState(initialClasses);
+  const classRequestId = useRef(0);
+  const campuses = useMemo(() => getClassCampusCodes(campusClasses.flatMap(group => group.events)), [campusClasses]);
   const [activeSemesterId, setActiveSemesterId] = useState<number | null>(selectedSemesterId ?? null);
+  const semesterChoices = getSemesterChoices(offeredSemesters);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [scheduleGroup, setScheduleGroup] = useState<CourseClassRecord | null>(null);
   const [assessmentScheduleType, setAssessmentScheduleType] = useState<"daytime" | "evening" | null>(null);
@@ -129,15 +140,13 @@ export function CourseDetailPage({
 
   async function handleSemesterChange(nextValue: number | null)
   {
+    const requestId = ++classRequestId.current;
     setActiveSemesterId(nextValue);
     setScheduleGroup(null);
 
     if (nextValue === null)
     {
       setClasses([]);
-      setLoadingClasses(false);
-      window.history.replaceState(null, "", `/courses/${course.courseCode}`);
-      return;
     }
 
     setLoadingClasses(true);
@@ -146,8 +155,8 @@ export function CourseDetailPage({
       courseCode: course.courseCode,
     });
 
-    params.set("semesterId", String(nextValue));
-    const nextUrl = `/courses/${course.courseCode}?semesterId=${nextValue}`;
+    if (nextValue !== null) params.set("semesterId", String(nextValue));
+    const nextUrl = nextValue === null ? `/courses/${course.courseCode}` : `/courses/${course.courseCode}?semesterId=${nextValue}`;
     window.history.replaceState(null, "", nextUrl);
 
     try
@@ -160,14 +169,18 @@ export function CourseDetailPage({
       }
 
       const payload = await response.json() as ClassesResponse;
-      setClasses(payload.classes);
+      if (requestId !== classRequestId.current) return;
+      setClasses(nextValue === null ? [] : payload.classes);
+      setCampusClasses(payload.classes);
     }
     catch {
+      if (requestId !== classRequestId.current) return;
       setClasses([]);
+      setCampusClasses([]);
     }
     finally
     {
-      setLoadingClasses(false);
+      if (requestId === classRequestId.current) setLoadingClasses(false);
     }
   }
 
@@ -195,7 +208,7 @@ export function CourseDetailPage({
                   </span>
                   <div className="course-detail-quick-actions hidden flex-wrap items-center gap-2.5 sm:ml-auto sm:flex">
                     <AddToTimetableButton
-                      course={{ ...course, offeredSemesters }}
+                      course={{ ...course, offeredSemesters, scheduledSemesters }}
                       appearance="outline"
                       preferredSemesterId={activeSemesterId}
                       fallbackSemesterId={currentSemesterId}
@@ -217,7 +230,7 @@ export function CourseDetailPage({
                 </div>
                 <div className="course-detail-quick-actions mt-2.5 flex w-full flex-nowrap items-center gap-2 sm:hidden">
                   <AddToTimetableButton
-                    course={{ ...course, offeredSemesters }}
+                    course={{ ...course, offeredSemesters, scheduledSemesters }}
                     appearance="outline"
                     compact
                     preferredSemesterId={activeSemesterId}
@@ -241,8 +254,8 @@ export function CourseDetailPage({
             </div>
           </div>
 
-          <div className="course-detail-layout grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] xl:items-start">
-            <CourseFacts course={course} className="grid xl:hidden" />
+          <div className="course-detail-layout grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] xl:items-start">
+            <CourseFacts course={course} campuses={campuses} loading={loadingClasses} className="grid xl:hidden" />
 
             <section className="course-detail-main space-y-4">
               {course.courseSynopsis ? (
@@ -278,7 +291,7 @@ export function CourseDetailPage({
             </section>
 
             <section className="course-detail-side space-y-4">
-              <CourseFacts course={course} className="hidden xl:grid" />
+              <CourseFacts course={course} campuses={campuses} loading={loadingClasses} className="hidden xl:grid" />
 
               <article className="app-aero-panel course-detail-assessment overflow-hidden">
                 <h2 className="app-aero-panel-heading course-detail-assessment__header text-[16px] font-semibold leading-5">
@@ -370,7 +383,7 @@ export function CourseDetailPage({
                       className="w-full border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2.5 text-[13px] font-medium leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                     >
                       <option value="">Select semester</option>
-                      {offeredSemesters.map((semester) => (
+                      {semesterChoices.map((semester) => (
                         <option key={semester.semesterId} value={semester.semesterId}>
                           {semester.semesterName} ({semester.academicYear})
                         </option>
@@ -442,18 +455,20 @@ export function CourseDetailPage({
   );
 }
 
-function CourseFacts({ course, className }: { course: CourseRecord; className: string })
+function CourseFacts({ course, campuses, loading, className }: { course: CourseRecord; campuses: string[]; loading: boolean; className: string })
 {
+  const showCampus = !loading && campuses.length > 0;
   return (
-    <div className={`app-aero-panel course-detail-facts grid-cols-1 sm:grid-cols-3 ${className}`}>
-      <DetailStat icon={<BookIcon className="h-5 w-5" />} label="Credit Units" value={`${course.creditUnits?.toFixed(1) ?? "0.0"} CU`} />
-      <DetailStat icon={<LayersIcon className="h-5 w-5" />} label="Course Level" value={course.courseLevel ?? "Level unavailable"} />
-      <DetailStat icon={<SchoolIcon className="h-5 w-5" />} label="Academic Track" value={course.isPostgraduate ? "Postgraduate" : "Undergraduate"} />
+    <div className={`app-aero-panel course-detail-facts grid-cols-1 ${showCampus ? "sm:grid-cols-4" : "sm:grid-cols-3"} ${className}`}>
+      <DetailStat icon={<BookIcon className="h-5 w-5" />} label="Credits" value={`${course.creditUnits?.toFixed(1) ?? "0.0"} CU`} />
+      <DetailStat icon={<LayersIcon className="h-5 w-5" />} label="Level" value={course.courseLevel ?? "-"} />
+      <DetailStat icon={<SchoolIcon className="h-5 w-5" />} label="Track" value={course.isPostgraduate ? "Postgraduate" : "Undergraduate"} />
+      {showCampus ? <DetailStat icon={<PinIcon className="h-5 w-5" />} label="Campus" value={<CampusLabel campuses={campuses} />} /> : null}
     </div>
   );
 }
 
-function DetailStat({ icon, label, value }: { icon: ReactNode; label: string; value: string })
+function DetailStat({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode })
 {
   return (
     <div className="course-detail-stat min-w-0">
@@ -461,7 +476,7 @@ function DetailStat({ icon, label, value }: { icon: ReactNode; label: string; va
         <span className="shrink-0 text-[var(--primary)] [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
         <span className="min-w-0 text-[9px] font-bold uppercase leading-3 tracking-[0.04em] text-[var(--on-surface)] sm:text-[11px] sm:leading-4 sm:tracking-[0.08em]">{label}</span>
       </div>
-      <div className="course-detail-stat__value flex min-h-11 min-w-0 items-center break-words px-2 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] sm:px-3 sm:text-[18px] sm:leading-6">{value}</div>
+      <div className="course-detail-stat__value flex min-h-11 min-w-0 items-center break-words px-2 py-2 text-[12px] font-semibold leading-4 text-[var(--on-surface)] sm:px-2.5 sm:text-[15px] sm:leading-5">{value}</div>
     </div>
   );
 }

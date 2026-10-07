@@ -1,4 +1,5 @@
 import { getUndatedExamLabel, UNDATED_EXAM_GUIDANCE } from "./exam-status";
+import { getClassCampusCodes, getEventCampusCodes, normalizeCampusCodes } from "./campus";
 import {
   buildSharedClassIdentifier,
 } from "./share-url";
@@ -158,7 +159,7 @@ export function buildTimetableBlocks(
         startMinutes: toMinutes(event.startTime),
         endMinutes: toMinutes(event.endTime),
         weekLabel: event.weekLabel ?? formatEventDate(event.eventDate),
-        venue: event.venue,
+        campus: getEventCampusCodes(event).join("/") || null,
         eventMode: event.eventMode,
         occurrenceCount: 1,
         eventIds: [event.eventId],
@@ -176,7 +177,6 @@ export function buildTimetableBlocks(
       event.dayOfWeek,
       stripSeconds(event.startTime),
       stripSeconds(event.endTime),
-      event.venue ?? "",
     ].join("|");
 
     const existing = grouped.get(groupKey);
@@ -184,6 +184,9 @@ export function buildTimetableBlocks(
     {
       existing.occurrenceCount += 1;
       existing.eventIds.push(event.eventId);
+      existing.campus = normalizeCampusCodes([
+        existing.campus ?? "", ...getEventCampusCodes(event),
+      ]).join("/") || null;
       const existingMode = existing.eventMode?.trim() ?? "";
       const nextMode = event.eventMode?.trim() ?? "";
       if (existingMode && nextMode && existingMode !== nextMode)
@@ -217,7 +220,7 @@ export function buildTimetableBlocks(
       startMinutes: toMinutes(event.startTime),
       endMinutes: toMinutes(event.endTime),
       weekLabel: formatWeekSummary([event]),
-      venue: event.venue,
+      campus: getEventCampusCodes(event).join("/") || null,
       eventMode: event.eventMode?.trim() || null,
       occurrenceCount: 1,
       eventIds: [event.eventId],
@@ -269,6 +272,7 @@ export function buildSelectedCourseCards(data: TimetableData)
       .sort((left, right) => `${left.eventDate}${left.startTime}`.localeCompare(`${right.eventDate}${right.startTime}`))[0] ?? null;
     return {
       ...selection,
+      campuses: getClassCampusCodes(selection.events),
       shareKey: buildSharedClassIdentifier(selection.identifier),
       color: colorMap.get(selection.courseCode) ?? getCourseColor(selection.courseCode),
       examStatus: exam ? "dated" as const : selection.examAssessmentMode ? "undated" as const : selection.hasEca ? "eca" as const : "none" as const,

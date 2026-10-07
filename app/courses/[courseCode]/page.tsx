@@ -8,6 +8,7 @@ import {
   getCourseByCode,
   getCourseClasses,
   getCourseOfferedSemesters,
+  getCourseScheduledSemesters,
 } from "@/lib/data/course-details";
 import {
   getLatestDataUpdatedAt,
@@ -62,10 +63,11 @@ export default async function CourseDetailRoute({
     notFound();
   }
 
-  const [classes, assessments, offeredSemesters] = await Promise.all([
+  const [classes, assessments, offeredSemesters, scheduledSemesters] = await Promise.all([
     getCourseClasses(courseCode, selectedSemesterId),
     getAssessmentComponents(courseCode),
     getCourseOfferedSemesters(courseCode),
+    getCourseScheduledSemesters(courseCode),
   ]);
 
   return (
@@ -77,8 +79,9 @@ export default async function CourseDetailRoute({
       <CourseDetailPage
         course={course}
         offeredSemesters={offeredSemesters}
+        scheduledSemesters={scheduledSemesters}
         currentSemesterId={currentSemesterContext.semester?.semesterId ?? null}
-        selectedSemesterId={selectedSemesterId}
+        selectedSemesterId={offeredSemesters.some(semester => semester.semesterId === selectedSemesterId) ? selectedSemesterId : undefined}
         classes={classes}
         assessments={assessments}
       />

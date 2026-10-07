@@ -10,7 +10,7 @@ function event(semesterId: number, eventDate: string): ClassEventWithWeekRecord
     semesterId, eventDate, courseCode: "NIE301", classId: 1, eventId: 1,
     scheduleType: "daytime", groupCodeType: "TG", groupCode: "TG15",
     eventKind: "CLASS", dayOfWeek: 1, startTime: "09:00", endTime: "12:00",
-    eventMode: null, venue: null, remarks: null,
+    eventMode: null, campus: null, remarks: null,
     weekId: null, weekNo: null, weekType: null, weekLabel: null,
   };
 }
@@ -41,5 +41,12 @@ describe("semester event filtering", () => {
       startDate: "2026-01-12", endDate: "2026-01-18",
     };
     expect(filterEventsForSemester([event(3, "2026-01-13"), { ...event(1, "2026-08-13"), weekId: 1 }], january, [week])).toEqual([]);
+  });
+
+  it("keeps explicitly owned pre-term sessions without letting another intake's flag bypass date filtering", () => {
+    const owned = { ...event(1, "2025-12-21"), startSemesterId: 1, isPreTerm: true };
+    expect(filterEventsForSemester([owned], january)).toEqual([owned]);
+    expect(filterEventsForSemester([{ ...owned, startSemesterId: 3 }], january)).toEqual([]);
+    expect(filterEventsForSemester([{ ...owned, eventDate: "2026-08-21" }], january)).toEqual([]);
   });
 });

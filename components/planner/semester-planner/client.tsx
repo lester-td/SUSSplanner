@@ -1,5 +1,7 @@
 "use client";
 
+import { getSemesterChoices } from "@/lib/timetable/semester-visibility";
+
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import {
   AutoScrollActivator,
@@ -122,6 +124,7 @@ export function SemesterPlannerClient({
   const [showAllModules, setShowAllModules] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSemesterId, setSearchSemesterId] = useState<number | "all">("all");
+  const semesterChoices = getSemesterChoices(semesters);
   const [searchResults, setSearchResults] = useState<CourseSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [manualCode, setManualCode] = useState("");
@@ -1081,7 +1084,7 @@ export function SemesterPlannerClient({
                 className="w-full min-w-0 rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[12px] font-normal leading-4 text-[var(--on-surface)] outline-none transition-colors focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
               >
                 <option value="">Any Semester</option>
-                {semesters.map((semester) => (
+                {semesterChoices.map((semester) => (
                   <option key={semester.semesterId} value={semester.semesterId}>
                     {semester.semesterName} ({semester.academicYear})
                   </option>

@@ -21,7 +21,7 @@ import { getTimetableDataFromClassIdentifiers } from "./timetable";
 import { getCourseClasses } from "./course-details";
 
 const semesters: DataSnapshotManifest["semesters"] = [
-  { semesterId: 1, academicYear: "2025/2026", semesterNo: 2, semesterName: "January 2026", weeks: [] },
+  { semesterId: 1, academicYear: "2025/2026", semesterNo: 2, semesterName: "January 2026", isArchived: false, weeks: [] },
   { semesterId: 2, academicYear: "2025/2026", semesterNo: 3, semesterName: "May 2026", weeks: [] },
   { semesterId: 3, academicYear: "2026/2027", semesterNo: 1, semesterName: "July 2026", weeks: [] },
   { semesterId: 14, academicYear: "2026/2027", semesterNo: 2, semesterName: "January 2027", weeks: [] },
@@ -63,7 +63,7 @@ function group(semesterId: number, groupCode: string, classId: number): CourseCl
       scheduleType: evening ? "evening" : "daytime", groupCodeType: evening ? "CRN" : "TG", groupCode,
       eventKind: "CLASS", eventDate: semesterId === 1 ? "2026-01-05" : semesterId === 3 ? "2026-08-17" : "2027-01-04",
       dayOfWeek: 1, startTime: evening ? "19:00" : "09:00", endTime: evening ? "22:00" : "12:00",
-      eventMode: "On campus", venue: "Room 1", remarks: null,
+      eventMode: "On campus", campus: "CLE", remarks: null,
       weekId: semesterId * 10, weekNo: 1, weekType: "TEACHING", weekLabel: "Week 1",
     }],
   };
@@ -84,6 +84,7 @@ const JULY: SharedClassIdentifier = {
 };
 
 beforeEach(() => {
+  vi.clearAllMocks();
   vi.mocked(getSemesters).mockResolvedValue(semesters);
   vi.mocked(getSemestersWithWeeks).mockResolvedValue(semesters);
   vi.mocked(getSemesterById).mockImplementation(async (id) => semesters.find((semester) => semester.semesterId === id) ?? null);
@@ -93,6 +94,50 @@ beforeEach(() => {
 });
 
 describe("timetable continuation schedule resolution", () => {
+  it("provides all May cohort sessions for PDF exports from either May or July without borrowing a future run", async () => {
+    const may = { semesterId: 20, academicYear: "2026/2027", semesterNo: 3 as const,
+      semesterName: "May 2027", hasIntakeSchedule: true, weeks: [] };
+    const july = { semesterId: 21, academicYear: "2027/2028", semesterNo: 1 as const,
+      semesterName: "July 2027", hasIntakeSchedule: false, weeks: [] };
+    const originGroup = { ...group(20, "CRN06", 2006), continuationSemesterIds: [21] };
+    originGroup.events = [
+      { ...originGroup.events[0], eventDate: "2027-05-14", startSemesterId: 20 },
+      { ...originGroup.events[0], eventId: 20062, eventKind: "EXAM", eventDate: "2027-06-16", startSemesterId: 20 },
+    ];
+    const completion = { ...originGroup.events[0], semesterId: 21, eventId: 2106, eventDate: "2027-08-21" };
+    const targetGroup = { ...originGroup, semesterId: 21, events: [completion,
+      { ...completion, eventId: 2107 },
+      { ...completion, eventId: 2108, startSemesterId: 21, eventDate: "2027-08-09" },
+    ] };
+    vi.mocked(getSemesters).mockResolvedValue([may, july]);
+    vi.mocked(getSemesterById).mockImplementation(async id => id === 20 ? may : july);
+    vi.mocked(getSemesterWeeks).mockResolvedValue([]);
+    vi.mocked(getCourseSnapshot).mockResolvedValue({ ...course, offeredSemesters: [may], scheduledSemesters: [may, july] });
+    vi.mocked(getScheduleSnapshot).mockImplementation(async id => ({ semesterId: id, courseCode: "NIE301",
+      classes: [id === 20 ? originGroup : targetGroup] }));
+    const selected: SharedClassIdentifier = { courseCode: "NIE301", scheduleType: "evening", groupCodeType: "CRN", groupCode: "CRN06" };
+    const mayData = await getTimetableDataFromClassIdentifiers([selected], 20);
+    expect(mayData.events.map(event => event.eventDate)).toEqual(["2027-05-14", "2027-06-16"]);
+    expect(mayData.classSessionEvents?.map(event => event.eventDate)).toEqual(["2027-05-14", "2027-08-21"]);
+    const julyData = await getTimetableDataFromClassIdentifiers([{ ...selected, originSemesterId: 20 }], 21);
+    expect(julyData.events.map(event => event.eventDate)).toEqual(["2027-08-21"]);
+    expect(julyData.classSessionEvents?.map(event => event.eventDate)).toEqual(["2027-05-14", "2027-08-21"]);
+  });
+  it("resolves continuations but rejects new enrolments when the target intake is unavailable", async () => {
+    const unavailable = { ...semesters[2], hasIntakeSchedule: false };
+    vi.mocked(getSemesterById).mockResolvedValue(unavailable);
+    vi.mocked(getSemesters).mockResolvedValue(semesters.map(semester => semester.semesterId === 3 ? unavailable : semester));
+    vi.mocked(getSemestersWithWeeks).mockResolvedValue([unavailable]);
+    vi.mocked(getCourseSnapshot).mockResolvedValue({ ...course,
+      offeredSemesters: course.offeredSemesters.filter(semester => semester.semesterId !== 3),
+      scheduledSemesters: course.offeredSemesters,
+    });
+    const timetable = await getTimetableDataFromClassIdentifiers([JANUARY, JULY], 3);
+    expect(timetable.selections.map(selection => selection.identifier)).toEqual([JANUARY]);
+    expect(timetable.events.map(event => event.eventDate)).toEqual(["2026-09-12"]);
+    expect(timetable.unresolvedSelections).toEqual([JULY]);
+    expect(await getCourseClasses("NIE301", 3)).toEqual([]);
+  });
   it("sanitizes stale API responses before displaying schedule cards and clashes", async () => {
     const data = await getTimetableDataFromClassIdentifiers([{ ...JANUARY, originSemesterId: undefined }], 1);
     const julyEvent = { ...data.events[0], eventDate: "2026-08-17", eventKind: "EXAM" as const };
@@ -256,5 +301,32 @@ describe("timetable continuation schedule resolution", () => {
       expect(timetable.unresolvedSelections).toEqual([invalid]);
       expect(timetable.events).toEqual([]);
     }
+  });
+});
+
+
+describe("archived timetable access", () => {
+  it("does not resolve a direct archived timetable even when a saved selection exists", async () => {
+    vi.mocked(getSemesterById).mockResolvedValue(null);
+    const selected = { ...JANUARY, originSemesterId: undefined };
+    const result = await getTimetableDataFromClassIdentifiers([selected], 1);
+    expect(result.semester).toBeNull();
+    expect(result.semesterWeeks).toEqual([]);
+    expect(result.events).toEqual([]);
+    expect(result.selections).toEqual([]);
+    expect(result.unresolvedSelections).toEqual([selected]);
+    expect(getScheduleSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("restores active completion sessions without loading an archived origin", async () => {
+    const active = semesters.filter(semester => semester.semesterId !== 1);
+    vi.mocked(getSemesters).mockResolvedValue(active);
+    vi.mocked(getSemestersWithWeeks).mockResolvedValue(active);
+    const result = await getTimetableDataFromClassIdentifiers([JANUARY], 3);
+    expect(result.unresolvedSelections).toEqual([]);
+    expect(result.events.map(event => event.eventDate)).toEqual(["2026-09-12"]);
+    expect(result.selections[0].semesterId).toBe(3);
+    expect(result.selections[0].courseLabel).toBe("NIE301");
+    expect(getScheduleSnapshot).not.toHaveBeenCalledWith(1, "NIE301");
   });
 });

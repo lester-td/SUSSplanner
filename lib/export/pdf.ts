@@ -2,6 +2,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf
 
 import { DAY_LABELS, START_MINUTES, formatEventDate, formatTimeRange } from "@/lib/timetable/date-utils";
 import { buildExamCards, buildTimetableBlocks, getCourseColor } from "@/lib/timetable/timetable-utils";
+import { formatCampusCodes, formatCampusNames, formatCampusSummary, getClassCampusCodes, getEventCampusCodes } from "@/lib/timetable/campus";
 import { getExportExamLabel, getExportTimeRange, type ExportCourse } from "@/lib/export/timetable-model";
 import type { SemesterRecord, TimetableBlock, TimetableClash, TimetableEventRecord } from "@/lib/timetable/types";
 
@@ -17,6 +18,7 @@ const STRIPE = rgb(0xf4 / 255, 0xf3 / 255, 0xf1 / 255);
 const SUBTLE = STRIPE;
 
 type PdfOptions = {
+  classSessionEvents?: TimetableEventRecord[];
   selectedWeekId?: number | "all";
   weekLabel?: string;
   colorByShareKey?: Map<string, string>;
@@ -103,6 +105,7 @@ function buildFallbackCourses(events: TimetableEventRecord[], colors?: Map<strin
       courseLabel: event.courseLabel,
       courseName: event.courseName,
       groupCode: event.groupCode,
+      campuses: getClassCampusCodes(events.filter(candidate => candidate.shareKey === event.shareKey)),
       examDateLabel: exam ? formatEventDate(exam.eventDate) : "No Exam",
       examTimeLabel: exam ? exam.startTime.slice(0, 5) : null,
       examStatus: exam ? "dated" as const : "none" as const,
@@ -177,7 +180,7 @@ function drawRoundedCard(page: PDFPage, x: number, top: number, width: number, h
   page.drawSvgPath(path, { x, y: top, color, borderColor: GRID, borderWidth: 0.7 });
 }
 
-function drawCourseIcon(page: PDFPage, kind: "group" | "exam" | "credit", x: number, y: number)
+function drawCourseIcon(page: PDFPage, kind: "group" | "campus" | "exam" | "credit", x: number, y: number)
 {
   const color = MUTED;
   const line = (x1: number, y1: number, x2: number, y2: number) => page.drawLine({
@@ -190,6 +193,13 @@ function drawCourseIcon(page: PDFPage, kind: "group" | "exam" | "credit", x: num
       page.drawCircle({ x: x + 1.5, y: y + offset, size: 0.55, color });
       line(4, offset, 10, offset);
     }
+  }
+  else if (kind === "campus")
+  {
+    page.drawCircle({ x: x + 5.5, y: y + 6.5, size: 3, borderColor: color, borderWidth: 0.8 });
+    page.drawCircle({ x: x + 5.5, y: y + 6.5, size: 0.8, borderColor: color, borderWidth: 0.8 });
+    line(3, 4.5, 5.5, 0.5);
+    line(5.5, 0.5, 8, 4.5);
   }
   else if (kind === "exam")
   {
@@ -246,7 +256,8 @@ function drawBlock(
     });
   }
   if (showAllWeeks && height >= 43 && block.weekLabel) page.drawText(fitText(/^weeks?\b/i.test(block.weekLabel) ? block.weekLabel : `Weeks ${block.weekLabel}`, regular, 7.5, textWidth), { x: x + 4, y: top - 41, font: regular, size: 7.5, color: textColor });
-  if (height >= 53 && block.eventMode) page.drawText(fitText(block.eventMode.charAt(0).toUpperCase() + block.eventMode.slice(1).toLowerCase(), regular, 7.5, textWidth), { x: x + 4, y: top - 51, font: regular, size: 7.5, color: textColor });
+  const campuses = getEventCampusCodes(block);
+  if (height >= 53 && campuses.length) page.drawText(fitText(formatCampusCodes(campuses), regular, 7.5, textWidth), { x: x + 4, y: top - 51, font: regular, size: 7.5, color: textColor });
 }
 
 function drawClassGrid(
@@ -506,7 +517,9 @@ function courseRowHeights(courses: ExportCourse[], horizontal: boolean)
 {
   const columns = horizontal ? 4 : 1;
   return Array.from({ length: Math.ceil(courses.length / columns) }, (_, row) => (
-    courses.slice(row * columns, (row + 1) * columns).some((course) => course.examStatus === "undated") ? 97 : 75
+    Math.max(...courses.slice(row * columns, (row + 1) * columns).map(course => (
+      (course.examStatus === "undated" ? 97 : 75) + (formatCampusSummary(course.campuses ?? []) ? 12 : 0)
+    )))
   ));
 }
 
@@ -544,17 +557,28 @@ function drawCoursePanel(page: PDFPage, courses: ExportCourse[], x: number, top:
     drawCourseIcon(page, "group", cardX + 9, cardTop - 36);
     page.drawText("Group:", { x: rowX, y: cardTop - 35, font: bold, size: 8, color: INK });
     page.drawText(fitText(course.groupCode, regular, 8, rowWidth - 30), { x: rowX + 30, y: cardTop - 35, font: regular, size: 8, color: MUTED });
+    const campusLabel = formatCampusSummary(course.campuses ?? []);
+    const campusOffset = campusLabel ? 12 : 0;
+    if (campusLabel)
+    {
+      drawCourseIcon(page, "campus", cardX + 9, cardTop - 48);
+      page.drawText("Campus:", { x: rowX, y: cardTop - 47, font: bold, size: 8, color: INK });
+      const campusX = rowX + bold.widthOfTextAtSize("Campus:", 8) + 3;
+      page.drawText(fitText(campusLabel, regular, 8, cardX + cardWidth - campusX - 6), {
+        x: campusX, y: cardTop - 47, font: regular, size: 8, color: MUTED,
+      });
+    }
     const examLabel = course.examStatus === "dated" ? `Exam: ${getExportExamLabel(course)}` : getExportExamLabel(course);
     const examFont = course.examStatus === "dated" ? regular : bold;
-    drawCourseIcon(page, "exam", cardX + 9, cardTop - 48);
+    drawCourseIcon(page, "exam", cardX + 9, cardTop - 48 - campusOffset);
     page.drawText(fitText(examLabel, examFont, 8, rowWidth), {
-      x: rowX, y: cardTop - 47, font: examFont, size: 8, color: course.examStatus === "dated" ? MUTED : INK,
+      x: rowX, y: cardTop - 47 - campusOffset, font: examFont, size: 8, color: course.examStatus === "dated" ? MUTED : INK,
     });
     const guidanceLines = course.examGuidance ? wrapText(course.examGuidance, regular, 7.2, rowWidth).slice(0, 3) : [];
     guidanceLines.forEach((line, lineIndex) => {
-      page.drawText(line, { x: rowX, y: cardTop - 59 - lineIndex * 9, font: regular, size: 7.2, color: MUTED });
+      page.drawText(line, { x: rowX, y: cardTop - 59 - campusOffset - lineIndex * 9, font: regular, size: 7.2, color: MUTED });
     });
-    const creditsY = cardTop - 59 - (guidanceLines.length ? guidanceLines.length * 9 + 5 : 0);
+    const creditsY = cardTop - 59 - campusOffset - (guidanceLines.length ? guidanceLines.length * 9 + 5 : 0);
     drawCourseIcon(page, "credit", cardX + 9, creditsY - 1);
     page.drawText("Credit Units:", { x: rowX, y: creditsY, font: bold, size: 8, color: INK });
     page.drawText((course.creditUnits ?? 0).toFixed(1), {
@@ -671,8 +695,9 @@ function drawEventPages(pdf: PDFDocument, semester: SemesterRecord | null, event
   {
     const dateChanged = event.eventDate !== previousDate;
     const title = `${event.courseLabel ?? event.courseCode} (${event.groupCode})  ${formatTimeRange(event.startTime, event.endTime)}`;
+    const campuses = getEventCampusCodes(event);
     const details = [event.courseName, event.eventKind !== "CLASS" ? event.eventKind : null,
-      event.eventMode ? `Mode: ${event.eventMode}` : null, event.venue ? `Venue: ${event.venue}` : null,
+      campuses.length ? `Campus: ${formatCampusNames(campuses)}` : null,
       event.weekLabel ? `Week: ${event.weekLabel}` : null, event.remarks ? `Notes: ${event.remarks}` : null]
       .filter(Boolean).join("  |  ");
     const detailLines = wrapText(details, regular, 9, contentWidth - 14);
@@ -721,6 +746,6 @@ export async function buildTimetablePdf(
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   drawVisualPage(pdf, semester, events, bold, regular, options);
-  drawEventPages(pdf, semester, events, clashes, bold, regular);
+  drawEventPages(pdf, semester, options.classSessionEvents ?? events, clashes, bold, regular);
   return pdf.save();
 }

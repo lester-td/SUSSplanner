@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { ArrowUpRightIcon } from "@/components/planner/icons";
+import { formatCampusNames, getEventCampusCodes } from "@/lib/timetable/campus";
 import { formatEventDate, formatTimeRange } from "@/lib/timetable/date-utils";
 import type { ClassEventWithWeekRecord } from "@/lib/timetable/types";
 
@@ -25,16 +26,6 @@ function formatExamWeekLabel(event: ClassEventWithWeekRecord)
   }
 
   return "Exam";
-}
-
-function formatExamDeliveryMode(event: ClassEventWithWeekRecord)
-{
-  if (event.eventMode?.trim())
-  {
-    return event.eventMode;
-  }
-
-  return "Written Exam";
 }
 
 export function ClassScheduleModalContent({
@@ -62,6 +53,8 @@ export function ClassScheduleModalContent({
   const examEvent = events
     .filter((event) => event.eventKind === "EXAM")
     .sort((left, right) => `${left.eventDate}${left.startTime}`.localeCompare(`${right.eventDate}${right.startTime}`))[0] ?? null;
+  const showCampus = [...classEvents, ...(examEvent ? [examEvent] : [])]
+    .some(event => getEventCampusCodes(event).length > 0);
 
   return (
     <div className="relative space-y-3 sm:space-y-4">
@@ -97,7 +90,7 @@ export function ClassScheduleModalContent({
                 <th className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">Week</th>
                 <th className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">Date</th>
                 <th className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">Time</th>
-                <th className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">Delivery mode</th>
+                {showCampus ? <th className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">Campus</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -106,7 +99,7 @@ export function ClassScheduleModalContent({
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2">{event.weekLabel ?? "-"}</td>
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2">{formatEventDate(event.eventDate)}</td>
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2">{formatTimeRange(event.startTime, event.endTime)}</td>
-                  <td className="border-b border-[var(--outline-variant)] px-3 py-2">{event.eventMode ?? "-"}</td>
+                  {showCampus ? <td className="border-b border-[var(--outline-variant)] px-3 py-2">{formatCampusNames(getEventCampusCodes(event))}</td> : null}
                 </tr>
               ))}
               {examEvent ? (
@@ -114,7 +107,7 @@ export function ClassScheduleModalContent({
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-semibold">{formatExamWeekLabel(examEvent)}</td>
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-medium">{formatEventDate(examEvent.eventDate)}</td>
                   <td className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-medium">{formatTimeRange(examEvent.startTime, examEvent.endTime)}</td>
-                  <td className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-medium">{formatExamDeliveryMode(examEvent)}</td>
+                  {showCampus ? <td className="border-b border-[var(--outline-variant)] px-3 py-2.5 font-medium">{formatCampusNames(getEventCampusCodes(examEvent))}</td> : null}
                 </tr>
               ) : null}
             </tbody>

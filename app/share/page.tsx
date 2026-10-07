@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ShareClient } from "@/components/timetable/share-client";
@@ -87,6 +88,7 @@ export default async function SharePage({
   }
 
   const timetable = await getTimetableDataFromClassIdentifiers(decodedState.selectedClasses, decodedState.semesterId);
+  if (!timetable.semester) notFound();
 
   return (
     <AppShell

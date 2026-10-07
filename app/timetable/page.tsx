@@ -4,6 +4,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PlannerClient } from "@/components/timetable/planner-client";
 import { getLatestDataUpdatedAt, getSemesters, getSemestersWithClassesAndWeeks } from "@/lib/data/metadata";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
+import { getActiveSemesters } from "@/lib/timetable/semester-visibility";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +19,10 @@ export default async function TimetablePage()
     getSemesters(),
     getLatestDataUpdatedAt(),
   ]);
+  const visibleSemesters = getActiveSemesters(semesters);
   const currentSemesterContext = getCurrentSemesterContext(
-    semesters.map(({ weeks, ...semesterData }) => semesterData),
-    semesters.flatMap((item) => item.weeks),
+    visibleSemesters.map(({ weeks, ...semesterData }) => semesterData),
+    visibleSemesters.flatMap((item) => item.weeks),
   );
   const { semester, week } = currentSemesterContext;
 
@@ -34,7 +36,7 @@ export default async function TimetablePage()
       <PlannerClient
         semesters={semesters}
         allSemesters={allSemesters}
-        currentSemesterId={semester?.semesterId ?? semesters[0]?.semesterId ?? 0}
+        currentSemesterId={semester?.semesterId ?? visibleSemesters[0]?.semesterId ?? 0}
         currentWeekId={week?.weekId ?? null}
       />
     </AppShell>

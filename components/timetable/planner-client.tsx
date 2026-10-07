@@ -1,5 +1,7 @@
 "use client";
 
+import { getActiveSemesters } from "@/lib/timetable/semester-visibility";
+
 import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
@@ -13,6 +15,7 @@ import {
   EyeOffIcon,
   GridIcon,
   ListIcon,
+  PinIcon,
   RefreshIcon,
   RowsIcon,
   SchoolIcon,
@@ -23,6 +26,7 @@ import {
 } from "@/components/planner/icons";
 import { ActionButton, IconButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
+import { CampusLabel } from "@/components/timetable/campus-label";
 import { ClassScheduleModalContent, formatClassScheduleTitle } from "@/components/timetable/class-schedule-modal-content";
 import { ExamCalendar, ExamCalendarOverviewRail } from "@/components/timetable/exam-calendar";
 import { SelectorRail } from "@/components/timetable/selector-rail";
@@ -30,6 +34,7 @@ import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { TimetableExportCard } from "@/components/timetable/timetable-export-card";
 import { printTimetablePdf } from "@/lib/export/pdf-client";
+import { getPdfClassSessionEvents } from "@/lib/export/class-sessions";
 import { buildExportCourses, getTimetableExportFileName } from "@/lib/export/timetable-model";
 import { exportElementToPng } from "@/lib/export/png";
 import {
@@ -64,6 +69,7 @@ import {
 } from "@/lib/timetable/share-url";
 import { filterClassesForSemester, filterEventsForSemester, filterTimetableForSemester } from "@/lib/timetable/semester-events";
 import { resolveTimetableOpeningWeek } from "@/lib/timetable/opening-week";
+import { getTimetableActionAvailability } from "@/lib/timetable/timetable-actions";
 import {
   buildExamCards,
   buildSelectableWeeks,
@@ -422,7 +428,8 @@ export function PlannerClient({
   const pickerRequestRef = useRef(0);
   const deferredSearch = useDeferredValue(searchInput);
 
-  const selectedSemester = semesters.find((semester) => semester.semesterId === semesterId) ?? semesters[0] ?? null;
+  const semesterChoices = getActiveSemesters(semesters);
+  const selectedSemester = semesterChoices.find((semester) => semester.semesterId === semesterId) ?? semesterChoices[0] ?? null;
   const semesterWeeks = selectedSemester?.weeks ?? [];
   const selectableWeeks = buildSelectableWeeks(semesterWeeks, timetableData.events);
 
@@ -432,7 +439,7 @@ export function PlannerClient({
     const savedSemesterExists = Boolean(saved && semesters.some((semester) => semester.semesterId === saved.semesterId));
     const semesterIdToLoad = savedSemesterExists && saved
       ? saved.semesterId
-      : currentSemesterId || semesters[0]?.semesterId || 0;
+      : currentSemesterId || getActiveSemesters(semesters)[0]?.semesterId || 0;
     const savedSemesterState = savedSemesterExists && saved
       ? saved
       : getSavedSemesterState(saved, semesterIdToLoad);
@@ -689,6 +696,10 @@ export function PlannerClient({
     () => sortSelectedCards(buildSelectedCourseCards(timetableData), sortMode),
     [sortMode, timetableData],
   );
+  const { canShare, canDownload, canReset } = getTimetableActionAvailability(
+    selectedClasses,
+    ready && selectedClasses.length > 0 && timetableData.semester?.semesterId === semesterId ? selectedCards.length : 0,
+  );
   const themePalette = useMemo(() => getSettingsThemePalette(appSettings), [appSettings]);
   const defaultColorByCourseCode = useMemo(
     () => buildThemedCourseColorMap(selectedCards, themePalette),
@@ -816,7 +827,7 @@ export function PlannerClient({
   const timeSlots = buildTimeSlots(visibleEndMinutes);
   const totalCredits = selectedCards.reduce((sum, card) => sum + (card.creditUnits ?? 0), 0);
   const weekItems = buildWeekOptions(selectableWeeks);
-  const semesterItems = semesters.map((semester) => ({
+  const semesterItems = semesterChoices.map((semester) => ({
     id: String(semester.semesterId),
     title: formatSemesterRailMonthYear(semester),
     subtitle: `AY ${formatAcademicYearShort(semester.academicYear)} • ${formatSemesterRailTag(semester.semesterNo)}`,
@@ -1027,8 +1038,9 @@ export function PlannerClient({
       const continuationSemesters = getFollowingContinuationSemesters({
         courseCode: course.courseCode,
         semesterId,
-        offeredSemesters: course.offeredSemesters,
+        offeredSemesters: course.scheduledSemesters ?? course.offeredSemesters,
         semesters: allSemesters,
+        continuationSemesterIds: firstClass.continuationSemesterIds,
       });
       addClassSelection(toClassSelection(firstClass), continuationSemesters.map((item) => item.semesterId));
     }
@@ -1041,6 +1053,7 @@ export function PlannerClient({
 
   async function handleShare()
   {
+    if (!canShare) return;
     const shareUrl = `${window.location.origin}${encodeShareUrlState({ semesterId, selectedClasses })}`;
     try
     {
@@ -1055,6 +1068,7 @@ export function PlannerClient({
 
   async function triggerDownload(path: string, fileName: string)
   {
+    if (!canDownload || exportingFormat !== null) return;
     setDownloadOpen(false);
     setExportingFormat("ICS");
     try
@@ -1086,7 +1100,7 @@ export function PlannerClient({
 
   async function handlePngExport()
   {
-    if (!exportCaptureRef.current)
+    if (!canDownload || exportingFormat !== null || !exportCaptureRef.current)
     {
       return;
     }
@@ -1113,6 +1127,7 @@ export function PlannerClient({
 
   function handlePdfExport()
   {
+    if (!canDownload || exportingFormat !== null) return;
     const timetableCard = viewMode === "class" ? exportCaptureRef.current : alternateExportCaptureRef.current;
     const examCalendarCard = viewMode === "exam" ? exportCaptureRef.current : alternateExportCaptureRef.current;
     if (!timetableCard || !examCalendarCard) return;
@@ -1122,7 +1137,7 @@ export function PlannerClient({
       timetableCard,
       examCalendarCard,
       selectedSemester,
-      visibleEvents,
+      getPdfClassSessionEvents(timetableData, hiddenClasses),
       timetableData.clashes.filter((clash) => clash.events.every((event) => !hiddenClasses.includes(event.shareKey))),
       getTimetableExportFileName(selectedSemester, "pdf"),
       () => setExportingFormat(null),
@@ -1136,6 +1151,7 @@ export function PlannerClient({
 
   function resetPlanner()
   {
+    if (!canReset) return;
     setSelectedClasses((current) => current.filter((item) => item.originSemesterId !== undefined));
     setHiddenClasses([]);
     setCourseColorsByCourseCode({});
@@ -1175,17 +1191,17 @@ export function PlannerClient({
               selectedId={String(semesterId)}
               onSelect={(id) => handleSemesterChange(Number(id))}
               onPrev={() => {
-                const index = semesters.findIndex((semester) => semester.semesterId === semesterId);
+                const index = semesterChoices.findIndex((semester) => semester.semesterId === semesterId);
                 if (index > 0)
                 {
-                  handleSemesterChange(semesters[index - 1].semesterId);
+                  handleSemesterChange(semesterChoices[index - 1].semesterId);
                 }
               }}
               onNext={() => {
-                const index = semesters.findIndex((semester) => semester.semesterId === semesterId);
-                if (index >= 0 && index < semesters.length - 1)
+                const index = semesterChoices.findIndex((semester) => semester.semesterId === semesterId);
+                if (index >= 0 && index < semesterChoices.length - 1)
                 {
-                  handleSemesterChange(semesters[index + 1].semesterId);
+                  handleSemesterChange(semesterChoices[index + 1].semesterId);
                 }
               }}
               variant="semester"
@@ -1235,6 +1251,7 @@ export function PlannerClient({
           ) : null}
 
           <TimetableAlerts
+            semester={selectedSemester}
             events={timetableData.events}
             clashes={timetableData.clashes}
           />
@@ -1361,7 +1378,7 @@ export function PlannerClient({
           <div className="shrink-0 bg-[var(--surface-container-lowest)] px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3">
             <div className="space-y-1">
               <div className="grid grid-cols-3 gap-1">
-                <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share" onClick={handleShare} stretch />
+                <ActionButton variant="primary" icon={<ShareIcon className="h-[18px] w-[18px]" />} label="Share" onClick={handleShare} stretch disabled={!canShare} />
                 <div className="relative" data-download-popover-root>
                   <ActionButton
                     variant="ghost"
@@ -1369,10 +1386,10 @@ export function PlannerClient({
                     label={exportingFormat ? "Loading…" : "Download"}
                     onClick={() => setDownloadOpen((current) => !current)}
                     stretch
-                    disabled={exportingFormat !== null}
+                    disabled={!canDownload || exportingFormat !== null}
                   />
                   <span className="sr-only" role="status" aria-live="polite">{exportingFormat ? `Preparing ${exportingFormat} export` : ""}</span>
-                  {downloadOpen ? (
+                  {downloadOpen && canDownload ? (
                     <div className="elev-3 absolute left-0 top-full z-30 mt-1.5 w-full min-w-[9.5rem] rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                       <div
                         aria-hidden="true"
@@ -1398,7 +1415,7 @@ export function PlannerClient({
                   disabled={selectedWeekId === "all" && !thisWeek}
                 />
                 <ActionButton variant="ghost" icon={nextOrientationToggle.icon} label={nextOrientationToggle.label} onClick={nextOrientationToggle.onClick} stretch />
-                <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} stretch />
+                <ActionButton variant="ghost" icon={<RefreshIcon className="h-[18px] w-[18px]" />} label="Reset" onClick={() => setConfirmResetOpen(true)} stretch disabled={!canReset} />
               </div>
             </div>
 
@@ -1489,6 +1506,13 @@ export function PlannerClient({
                             <span className="shrink-0 font-semibold text-[var(--on-surface)]">Group:</span>
                             <span className="truncate">{formatClassGroupLabel(record.groupCode)}</span>
                           </div>
+                          {record.campuses.length > 0 ? (
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <PinIcon className="h-4 w-4 shrink-0" />
+                              <span className="shrink-0 font-semibold text-[var(--on-surface)]">Campus:</span>
+                              <CampusLabel campuses={record.campuses} />
+                            </div>
+                          ) : null}
                           <div className="flex min-w-0 items-center gap-1.5">
                             <CalendarIcon className="h-4 w-4 shrink-0" />
                             {record.examStatus !== "dated" ? (
@@ -1616,7 +1640,7 @@ export function PlannerClient({
         footer={(
           <>
             <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Cancel" onClick={() => setConfirmResetOpen(false)} />
-            <ActionButton variant="primary" icon={<RefreshIcon className="h-4 w-4" />} label="Reset" onClick={resetPlanner} />
+            <ActionButton variant="primary" icon={<RefreshIcon className="h-4 w-4" />} label="Reset" onClick={resetPlanner} disabled={!canReset} />
           </>
         )}
       >

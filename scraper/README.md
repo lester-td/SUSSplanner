@@ -56,6 +56,13 @@ The schedule PDF scraper populates:
 - `classes`
 - `class_events`
 
+`class_events.campus` stores the schedule's `CAMPUS` code (`CLE`, `AMK`,
+`EXT`, or `ONL`). The CSV parser also accepts older `VENUE` headers, and the
+JSON-to-SQL importer accepts legacy `venue` fields.
+`classes.language` stores the PDF's language of instruction. Older schedules
+without a `LANGUAGE` column leave it null; reimporting them preserves any known
+language already stored in the database.
+
 ### From online course synopsis PDFs
 
 The course synopsis scraper populates or updates:
@@ -95,6 +102,93 @@ pip install pdfplumber
 ---
 
 ## 2. Prepare Supabase database
+
+### Schema: schedule metadata and announcements
+
+`schema.sql` defines the database used by schedule imports and app snapshots:
+
+- `class_events.campus` and the corresponding view column store campus codes.
+- Nullable `classes.language` stores the language of instruction.
+- `semesters.is_archived NOT NULL DEFAULT false` controls semester visibility.
+  The scraper's semester upserts preserve this maintainer-controlled flag.
+- `announcements` stores a unique ID, message, optional link URL and label,
+  publication and expiry timestamps, enabled flag, display order, and update timestamp.
+  Announcements default to disabled. Links require both URL and label; expiry must
+  follow publication; blank messages are rejected.
+- The schema enables RLS on `announcements` and revokes table/sequence privileges from
+  `PUBLIC`, `anon`, and `authenticated` (when those roles exist). There are no
+  browser access policies: maintainers use the SQL editor, and builds read through
+  the privileged `DATABASE_URL` connection. If using a custom database role, it
+  must have the necessary permissions and either own the table or have `BYPASSRLS`.
+
+Rebuild app snapshots with `npm run data:build` from the repository root afterward.
+Snapshots exclude archived semesters, their schedule shards, and course offering
+metadata; the database retains those records. Active completion sessions keep only
+an ownership ID for restoring an active timetable. Snapshots also include
+announcement publication windows. The notification UI checks enabled announcements against the
+current time on mount, on focus, and every minute, so future publication and expiry
+work without another snapshot build.
+Existing snapshots remain readable with missing fields treated as unarchived,
+unknown language, and no announcements. Fresh databases can use `schema.sql` directly.
+
+Archived semesters cannot appear in the timetable, course search, course detail,
+or semester planner, including through old saved/shared links. To restore a term,
+clear its archive flag and rebuild. Announcements appear in the
+global notification stack and can be dismissed per browser. No semesters are
+automatically archived and the schema does not insert announcements.
+
+Manage these records directly in the database, then run `npm run build` and deploy.
+The existing `prebuild` hook regenerates snapshots before the Next.js build; a
+database edit becomes visible with the newly deployed build. The database must
+match `schema.sql` before building snapshots.
+
+To archive or restore a semester, set `is_archived` by its ID:
+
+```sql
+UPDATE semesters SET is_archived = true WHERE semester_id = YOUR_SEMESTER_ID;
+-- Restore it with is_archived = false.
+```
+
+Example announcement draft (enable it only after the schedules are imported and
+ready to publish):
+
+```sql
+INSERT INTO announcements (message, link_url, link_label, enabled)
+VALUES ('January & May 2027 course schedules are now available.',
+        '/courses', 'View courses', false);
+```
+
+Use the announcement ID as the browser dismissal key. A new announcement gets a
+new ID; editing an existing announcement keeps its dismissal identity. Publication
+timestamps are `TIMESTAMPTZ`; use an explicit `+08:00` offset for Singapore times.
+Set `enabled = true` when a draft is ready to publish, or `enabled = false` to
+withdraw it, then rebuild/deploy. Set `expires_at` to end its display automatically.
+
+### Intake schedule availability
+
+`schema.sql` defines `semesters.has_intake_schedule NOT NULL DEFAULT false`.
+Set this flag explicitly after importing and validating each intake's schedule.
+
+Offering filters and intake selectors hide semesters whose flag is `false`.
+The timetable keeps active continuation destinations accessible with unchanged
+rail labels and shows a notice in the existing timetable info section, alongside
+Week 0 and Study Week classes, with the same dismissal behavior. Course snapshots
+retain those destinations separately as `scheduledSemesters`, so adding a May
+class still creates its July continuation. New enrolments in an unavailable
+intake are rejected. Archived terms remain hidden from both uses.
+
+The flag is maintainer-controlled. Calendar and schedule imports preserve it;
+new semesters default to unavailable. After importing and checking a new intake's
+actual schedule, enable it explicitly, then rebuild and deploy:
+
+```sql
+UPDATE public.semesters
+SET has_intake_schedule = true
+WHERE academic_year = '2027/2028' AND semester_no = 1;
+```
+
+The July timetable notice disappears when that flag becomes `true`. Older
+snapshots without the field retain their previous visibility until rebuilt.
 
 ### Option A: fresh reset of public schema
 
@@ -199,6 +293,7 @@ data/
       daytime/
       evening/
     semester-weeks.2026.json
+    semester-weeks.2027.json
     schedule-manifest.json
   output/
 ```
@@ -222,41 +317,78 @@ Create or edit:
 data/input/schedule-manifest.json
 ```
 
-Example:
+The current combined PDF needs one entry:
 
 ```json
 {
   "schedules": [
     {
-      "pdf": "data/input/schedules/evening-jan26-may26.pdf",
-      "scheduleType": "evening"
-    },
-    {
-      "pdf": "data/input/schedules/daytime-jan26-may26.pdf",
-      "scheduleType": "daytime"
-    },
-    {
-      "pdf": "data/input/schedules/evening-jul26.pdf",
-      "scheduleType": "evening"
-    },
-    {
-      "pdf": "data/input/schedules/daytime-jul26.pdf",
-      "scheduleType": "daytime"
+      "pdf": "data/input/schedules/Full_Interim_Course_Schedule.pdf",
+      "scheduleType": "auto",
+      "intakes": {
+        "regular": "January 2027",
+        "special": "May 2027"
+      }
     }
   ]
 }
 ```
 
-Use:
+`auto` classifies each row by group code: `TG` is daytime and `CRN` is
+evening. It is also the default when `scheduleType` is omitted. Classification
+uses the group code, including for weekend classes and exams.
 
-```text
-daytime schedule PDF → "scheduleType": "daytime"
-evening schedule PDF → "scheduleType": "evening"
+Older separate files still support `"scheduleType": "daytime"` or
+`"scheduleType": "evening"`. These validate that every parsed row matches the
+specified type; a mismatch stops the import with an instruction to use `auto`.
+You can list multiple input files in the manifest when importing several intakes.
+Each entry needs a `pdf` or `csv` path, relative to the `scraper/` working directory,
+and explicit `intakes`. `regular` uses January or July; `special` uses May. For
+older January/May 2026 files, use `{ "regular": "January 2026", "special": "May 2026" }`;
+for July 2026 files, use `{ "regular": "July 2026" }`.
+
+The PDF's `SEMESTER TYPE` selects the declared intake for each row. December
+pre-term sessions of a January course stay under January; August completion of
+a May course stays under May. Event dates are preserved. Unknown semester types
+or missing intake mappings stop the import rather than guessing from dates.
+Each source represents at most one regular and one special intake; list separate
+sources for documents covering multiple regular intakes.
+
+For a single combined PDF, run:
+
+```bash
+npm run scrape:schedule -- \
+  --pdf data/input/schedules/Full_Interim_Course_Schedule.pdf \
+  --schedule-type auto \
+  --regular-semester "January 2027" \
+  --special-semester "May 2027" \
+  --out data/output/schedule-import.sql \
+  --json data/output/schedule-parsed.json
 ```
+
+`--schedule-type` is optional and defaults to `auto`. The batch importer and
+cohort generator use the same manifest and classification rules.
 
 ---
 
 ## 6. Generate and import semester weeks
+
+The 2027 manifest is `data/input/semester-weeks.2027.json`; the 2026 manifest
+remains available for older intakes. The 2027 dates follow the supplied academic
+calendar:
+
+| Semester | Teaching weeks | Study/revision | Examinations |
+| --- | --- | --- | --- |
+| January 2027 | 11 January–3 April | 4–10 April | 12–17 and 19–24 April |
+| May 2027 (special) | 3 May–12 June | 13–19 June, overlapping exams | 14–19 June |
+| July 2027 | 9 August–30 October | 1–6 November | 8–13 and 15–20 November |
+
+Each term also has a Week 0 for pre-term sessions: 4–10 January, 26 April–2 May,
+and 2–8 August. The special semester retains one Exam Week (week 7), rather than
+creating a separate overlapping Study Week. January and May belong to AY
+2026/2027; July belongs to AY 2027/2028. Week boundaries follow the marked calendar
+periods, so final teaching weeks and exam weeks end on Saturday, and unmarked
+Sundays can fall outside a week.
 
 The app uses continuous week numbers.
 
@@ -282,7 +414,7 @@ Generate SQL:
 
 ```bash
 npm run generate:weeks -- \
-  --input data/input/semester-weeks.2026.json \
+  --input data/input/semester-weeks.2027.json \
   --out data/output/semester-weeks-import.sql
 ```
 
@@ -315,10 +447,13 @@ data/output/course-codes.txt          unique course codes found in schedules
 ../data/schedule-cohorts.json         source cohort ownership of continuation sessions
 ```
 
-The cohort index preserves which intake owns each multi-semester session before
-documents with reused TG/CRN numbers are merged. Commit it with schedule changes;
-the app uses it when building and reading schedule snapshots. Override its output
-path with `--cohorts-out`. To regenerate it from existing extracted CSVs without
+The cohort index records explicitly assigned ownership of cross-term and pre-term
+sessions. Regeneration preserves older mappings and replaces mappings for events
+in the current input; it does not infer ownership from the first date or a course
+code list. Commit it with schedule changes. Later completion sessions appear in
+the later term's timetable without becoming new starting offerings; pre-term
+sessions stay in their originating timetable. Override its output path with
+`--cohorts-out`. To regenerate it from existing extracted CSVs without
 reimporting the database, run from `scraper/`:
 
 ```bash
@@ -541,7 +676,7 @@ For a fresh database:
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
 
 npm run generate:weeks -- \
-  --input data/input/semester-weeks.2026.json \
+  --input data/input/semester-weeks.2027.json \
   --out data/output/semester-weeks-import.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/semester-weeks-import.sql
 
@@ -570,8 +705,9 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/course-details-import.sql
 ### Publish the imported data to the application
 
 The production application serves build-time JSON snapshots and does not query
-Postgres during user requests. After verifying the import, return to the
-repository root and run:
+Postgres during user requests. After verifying the import, enable
+`semesters.has_intake_schedule` for the validated intakes as described above,
+then return to the repository root and run:
 
 ```bash
 cd ..

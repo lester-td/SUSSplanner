@@ -2,17 +2,12 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { parseArgs, requireString } from "../lib/args.js";
-import type { ScheduleType } from "../lib/types.js";
+import { parseArgs } from "../lib/args.js";
+import { parseScheduleIntakes, validateScheduleSourceType } from "../lib/scheduleManifest.js";
 import { parseScheduleCsv } from "../parsers/scheduleCsv.js";
 import { generateSql } from "../sql/generateSql.js";
 
 const execFileAsync = promisify(execFile);
-
-function validateScheduleType(value: string): ScheduleType {
-  if (value === "daytime" || value === "evening") return value;
-  throw new Error("--schedule-type must be either 'daytime' or 'evening'");
-}
 
 async function extractPdfTableToCsv(pdfPath: string, csvPath: string): Promise<void> {
   try {
@@ -30,7 +25,11 @@ async function extractPdfTableToCsv(pdfPath: string, csvPath: string): Promise<v
 
 async function main(): Promise<void> {
   const args = parseArgs();
-  const scheduleType = validateScheduleType(requireString(args, "schedule-type"));
+  const scheduleType = validateScheduleSourceType(args["schedule-type"]);
+  const intakes = parseScheduleIntakes({
+    ...(args["regular-semester"] !== undefined ? { regular: args["regular-semester"] } : {}),
+    ...(args["special-semester"] !== undefined ? { special: args["special-semester"] } : {}),
+  });
   const outSql = typeof args.out === "string" ? args.out : "data/output/schedule-import.sql";
   const outJson = typeof args.json === "string" ? args.json : "data/output/schedule-parsed.json";
   const csvPath = typeof args.csv === "string" ? args.csv : null;
@@ -51,7 +50,7 @@ async function main(): Promise<void> {
   }
 
   const csvText = await fs.readFile(finalCsvPath, "utf8");
-  const result = parseScheduleCsv(csvText, scheduleType);
+  const result = parseScheduleCsv(csvText, scheduleType, intakes);
   const sql = generateSql({
     semesters: result.semesters,
     courses: result.courses,

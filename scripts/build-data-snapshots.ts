@@ -5,11 +5,15 @@ import process from "node:process";
 import { loadEnvConfig } from "@next/env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { getPublishedScheduleClasses } from "../lib/data/published-schedules";
+import { isClassStartingInSemester } from "../lib/timetable/semester-events";
+import { getSemesterChoices } from "../lib/timetable/semester-visibility";
 import { annotateEventCohort } from "../lib/timetable/schedule-cohorts";
 
 import {
   academicCalendarEvents,
   academicCalendarEventSemesters,
+  announcements,
   assessmentComponents,
   classes,
   classEvents,
@@ -21,6 +25,7 @@ import {
   DATA_SNAPSHOT_FORMAT_VERSION,
   getDataSnapshotBucket,
   type AcademicCalendarEventRecord,
+  type AnnouncementRecord,
   type CourseIndexSnapshotRecord,
   type CourseOfferingSnapshot,
   type CourseSnapshot,
@@ -75,6 +80,8 @@ function mapSemester(row: typeof semesters.$inferSelect): SemesterRecord
     academicYear: row.academicYear,
     semesterNo: row.semesterNo as SemesterRecord["semesterNo"],
     semesterName: row.semesterName,
+    isArchived: row.isArchived,
+    hasIntakeSchedule: row.hasIntakeSchedule,
   };
 }
 
@@ -185,6 +192,7 @@ async function main()
     const classRows = await loadRows("classes", db.select().from(classes));
     const eventRows = await loadRows("class_events", db.select().from(classEvents));
     const assessmentRows = await loadRows("assessment_components", db.select().from(assessmentComponents));
+    const announcementRows = await loadRows("announcements", db.select().from(announcements));
 
     if (courseRows.length === 0 || semesterRows.length === 0)
     {
@@ -205,7 +213,7 @@ async function main()
       weeks.sort((left, right) => left.startDate.localeCompare(right.startDate) || left.weekId - right.weekId);
     }
 
-    const semesterTree = semesterRows
+    const allSemesterTree = semesterRows
       .map(mapSemester)
       .sort((left, right) => (
         left.academicYear.localeCompare(right.academicYear)
@@ -216,6 +224,7 @@ async function main()
         ...semester,
         weeks: weeksBySemesterId.get(semester.semesterId) ?? [],
       }));
+    const semesterTree = allSemesterTree.filter(semester => !semester.isArchived);
 
     const courseRowsByCode = new Map(courseRows.map((row) => [row.courseCode, row]));
     const assessmentsByCourseCode = new Map<string, AssessmentComponentRecord[]>();
@@ -235,13 +244,9 @@ async function main()
     }
 
     const classRowsById = new Map<number, typeof classRows[number]>();
-    const classRowsByCourseCode = new Map<string, typeof classRows>();
     for (const row of classRows)
     {
       classRowsById.set(row.classId, row);
-      const existing = classRowsByCourseCode.get(row.courseCode);
-      if (existing) existing.push(row);
-      else classRowsByCourseCode.set(row.courseCode, [row]);
     }
     const eventsByClassId = new Map<number, ClassEventWithWeekRecord[]>();
     const allSemesters = [...semestersById.values()];
@@ -269,7 +274,7 @@ async function main()
         startTime: row.startTime,
         endTime: row.endTime,
         eventMode: row.eventMode,
-        venue: row.venue,
+        campus: row.campus,
         remarks: row.remarks,
         weekId: week?.weekId ?? null,
         weekNo: week?.weekNo ?? null,
@@ -289,6 +294,7 @@ async function main()
       ));
     }
 
+    const mappedClasses: CourseClassRecord[] = [];
     const classesBySemesterAndCourse = new Map<string, CourseClassRecord[]>();
     for (const row of classRows)
     {
@@ -308,6 +314,7 @@ async function main()
         scheduleType: row.scheduleType as CourseClassRecord["scheduleType"],
         groupCodeType: row.groupCodeType as CourseClassRecord["groupCodeType"],
         groupCode: row.groupCode,
+        language: row.language,
         availableAsGsp: row.availableAsGsp,
         isRestricted: row.isRestricted,
         remarks: row.remarks,
@@ -317,7 +324,12 @@ async function main()
         presentationPattern: courseRow.presentationPattern,
         events: eventsByClassId.get(row.classId) ?? [],
       };
-      const key = `${row.semesterId}:${row.courseCode}`;
+      mappedClasses.push(mapped);
+    }
+    const publishedClasses = getPublishedScheduleClasses(mappedClasses, allSemesterTree);
+    for (const mapped of publishedClasses)
+    {
+      const key = `${mapped.semesterId}:${mapped.courseCode}`;
       const existing = classesBySemesterAndCourse.get(key);
       if (existing) existing.push(mapped);
       else classesBySemesterAndCourse.set(key, [mapped]);
@@ -353,9 +365,10 @@ async function main()
         sortOrder: row.sortOrder,
         semesters: (semesterIdsByCalendarEventId.get(row.eventId) ?? [])
           .map((semesterId) => semestersById.get(semesterId))
-          .filter((semester): semester is SemesterRecord => Boolean(semester))
+          .filter((semester): semester is SemesterRecord => semester !== undefined && !semester.isArchived)
           .sort((left, right) => left.semesterId - right.semesterId),
       }))
+      .filter(event => !(semesterIdsByCalendarEventId.get(event.eventId)?.length) || event.semesters.length > 0)
       .sort((left, right) => (
         left.startDate.localeCompare(right.startDate)
         || left.sortOrder - right.sortOrder
@@ -370,9 +383,9 @@ async function main()
 
     for (const courseRow of [...courseRows].sort((left, right) => left.courseCode.localeCompare(right.courseCode)))
     {
-      const relevantClasses = classRowsByCourseCode.get(courseRow.courseCode) ?? [];
+      const relevantClasses = publishedClasses.filter(group => group.courseCode === courseRow.courseCode);
       const offeredSemesterIds = unique(relevantClasses.map((row) => row.semesterId));
-      const offeredSemesters = offeredSemesterIds
+      const scheduledSemesters = offeredSemesterIds
         .map((semesterId) => semestersById.get(semesterId))
         .filter((semester): semester is SemesterRecord => Boolean(semester))
         .sort((left, right) => (
@@ -381,10 +394,9 @@ async function main()
           || right.semesterId - left.semesterId
         ));
       const courseAssessments = assessmentsByCourseCode.get(courseRow.courseCode) ?? [];
-      const startingClasses = relevantClasses.filter(row => {
-        const events = eventsByClassId.get(row.classId) ?? [];
-        return events.length === 0 || events.some(event => event.startSemesterId === row.semesterId);
-      });
+      const offeredSemesters = getSemesterChoices(scheduledSemesters);
+      const availableIntakeIds = new Set(offeredSemesters.map(semester => semester.semesterId));
+      const startingClasses = relevantClasses.filter(group => availableIntakeIds.has(group.semesterId) && isClassStartingInSemester(group));
       const offeringsByKey = new Map<string, CourseOfferingSnapshot>();
       for (const classRow of startingClasses)
       {
@@ -414,6 +426,7 @@ async function main()
         course: mapCourse(courseRow),
         assessments: courseAssessments,
         offeredSemesters,
+        scheduledSemesters,
       };
       courseBuckets[bucket] ??= {};
       courseBuckets[bucket][courseRow.courseCode] = courseSnapshot;
@@ -440,6 +453,7 @@ async function main()
         hasAvailableClasses: startingClasses.length > 0,
         availableClassCount: startingClasses.length,
         offeredSemesters,
+        scheduledSemesters,
         scheduleTypes: unique(startingClasses.map((row) => row.scheduleType)) as CourseIndexSnapshotRecord["scheduleTypes"],
         availableAsGsp: startingClasses.some((row) => row.availableAsGsp === true),
         assessmentModes: unique(courseAssessments.map((assessment) => assessment.assessmentMode?.trim()).filter((value): value is string => Boolean(value))).sort(),
@@ -477,6 +491,7 @@ async function main()
       classRows,
       eventRows,
       assessmentRows,
+      announcementRows,
     ];
     for (const rows of updatedRowGroups)
     {
@@ -496,12 +511,22 @@ async function main()
       dataUpdatedAt,
       coverage: {
         courseCount: courseRows.length,
-        classCount: classRows.length,
-        semesterCount: semesterRows.length,
+        classCount: publishedClasses.length,
+        semesterCount: semesterTree.length,
         assessmentCount: assessmentRows.length,
       },
       semesters: semesterTree,
       academicCalendarEvents: calendarEvents,
+      announcements: announcementRows.map((row): AnnouncementRecord => ({
+        announcementId: row.announcementId,
+        message: row.message,
+        linkUrl: row.linkUrl,
+        linkLabel: row.linkLabel,
+        publishAt: toIsoString(row.publishAt),
+        expiresAt: row.expiresAt ? toIsoString(row.expiresAt) : null,
+        enabled: row.enabled,
+        sortOrder: row.sortOrder,
+      })).sort((left, right) => left.sortOrder - right.sortOrder || left.announcementId - right.announcementId),
       courseBucketFiles,
       scheduleBucketFiles,
     };
@@ -523,7 +548,7 @@ async function main()
       0,
     );
     console.log(
-      `Generated snapshot ${generatedAt.toISOString()}: ${courseRows.length} courses, ${classRows.length} classes, ${eventRows.length} events, ${Object.keys(courseBucketFiles).length} course buckets, ${scheduleBucketCount} schedule buckets.`,
+      `Generated snapshot ${generatedAt.toISOString()}: ${courseRows.length} courses, ${publishedClasses.length} published classes, ${publishedClasses.reduce((count, group) => count + group.events.length, 0)} published events, ${Object.keys(courseBucketFiles).length} course buckets, ${scheduleBucketCount} schedule buckets.`,
     );
   }
   catch (error)

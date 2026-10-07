@@ -10,6 +10,7 @@ import {
   minutesToTimeString,
 } from "@/lib/timetable/date-utils";
 import { getCourseColor } from "@/lib/timetable/timetable-utils";
+import { formatCampusCodes, formatCampusNames, getEventCampusCodes } from "@/lib/timetable/campus";
 import type { TimetableBlock } from "@/lib/timetable/types";
 
 const OVERLAP_INSET_PX = 1;
@@ -199,17 +200,6 @@ function formatBlockWeekLabel(weekLabel: string)
   }
 
   return normalizeCommaSpacing(trimmed);
-}
-
-function formatEventModeLabel(mode: string)
-{
-  const trimmed = mode.trim();
-  if (!trimmed)
-  {
-    return "";
-  }
-  const lower = trimmed.toLowerCase();
-  return `${lower.charAt(0).toUpperCase()}${lower.slice(1)}`;
 }
 
 type TimetableLaneLayout = {
@@ -887,12 +877,17 @@ function TimetableBlockButton({
   const isTight = Number.isFinite(blockHeightPx) && blockHeightPx <= 58;
   const isVeryTight = Number.isFinite(blockHeightPx) && blockHeightPx <= 38;
   const classGroupLabel = formatClassGroupLabel(block.groupCode);
-  const weekLabel = block.weekLabel ? formatBlockWeekLabel(block.weekLabel) : "";
-  const modeLabel = block.eventMode ? formatEventModeLabel(block.eventMode) : "";
+  const fullWeekLabel = block.weekLabel ? formatBlockWeekLabel(block.weekLabel) : "";
+  const weekLabel = fullWeekLabel.replace(
+    /\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+(\d{1,2}\s+[A-Z][a-z]{2})\s+\d{4}\b/g,
+    "$2",
+  );
+  const campuses = getEventCampusCodes(block);
+  const campusLabel = formatCampusCodes(campuses);
   const continuationLabel = block.continuationLabel?.trim() ?? "";
-  const showWeeks = showAllWeeks && !isVeryTight && Boolean(weekLabel);
-  const showMode = !isTight && Boolean(modeLabel);
-  const showTime = !isVeryTight && !hideTime;
+  const showWeeks = showAllWeeks && Boolean(weekLabel);
+  const showCampus = !isTight && campuses.length > 0;
+  const showTime = !isTight && !hideTime;
   const showContinuation = !isVeryTight && Boolean(continuationLabel);
 
   return (
@@ -909,10 +904,10 @@ function TimetableBlockButton({
       onClick={clickable ? onClick : undefined}
       disabled={!clickable}
       title={`${block.courseLabel ?? block.courseCode} ${formatClassGroupLabel(block.groupCode)}
-${formatCompactMinuteRange(block.startMinutes, block.endMinutes)}${weekLabel ? `
-${weekLabel}` : ""}${continuationLabel ? `
-${continuationLabel}` : ""}${showMode ? `
-${modeLabel}` : ""}`}
+${formatCompactMinuteRange(block.startMinutes, block.endMinutes)}${fullWeekLabel ? `
+${fullWeekLabel}` : ""}${continuationLabel ? `
+${continuationLabel}` : ""}${campuses.length ? `
+Campus: ${formatCampusNames(campuses)}` : ""}`}
     >
       <div className="timetable-cell__content">
         <div className="timetable-cell__module">
@@ -928,18 +923,18 @@ ${modeLabel}` : ""}`}
 
         <div className="timetable-cell__meta">{classGroupLabel}</div>
 
+        {showWeeks ? (
+          <div className="timetable-cell__week">{weekLabel}</div>
+        ) : null}
+
         {showTime ? (
           <div className="timetable-cell__time">
             {formatCompactMinuteRange(block.startMinutes, block.endMinutes)}
           </div>
         ) : null}
 
-        {showWeeks ? (
-          <div className="timetable-cell__week">{weekLabel}</div>
-        ) : null}
-
-        {showMode ? (
-          <div className="timetable-cell__mode">{modeLabel}</div>
+        {showCampus ? (
+          <div className="timetable-cell__mode">{campusLabel}</div>
         ) : null}
 
         {showContinuation ? (

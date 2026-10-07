@@ -15,7 +15,7 @@ function assessment(assessmentMode: string): AssessmentComponentRecord
 
 const datedExam: TimetableEventRecord = {
   eventId: 1, classId: 1, eventKind: "EXAM", eventDate: "2026-11-18", dayOfWeek: 3,
-  startTime: "10:00:00", endTime: "12:00:00", eventMode: "PROCTORED ONLINE EXAM", venue: null, remarks: null,
+  startTime: "10:00:00", endTime: "12:00:00", eventMode: "PROCTORED ONLINE EXAM", campus: null, remarks: null,
   courseCode: "ICT235", semesterId: 3, scheduleType: "evening", groupCodeType: "CRN", groupCode: "CRN01",
   weekId: null, weekNo: null, weekType: null, weekLabel: null,
   courseName: "Software Design", schoolName: null, shareKey: "ICT235-evening-CRN-CRN01",

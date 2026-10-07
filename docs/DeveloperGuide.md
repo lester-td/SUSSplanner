@@ -198,10 +198,10 @@ The scraper README recommends Node.js 18+, Python 3.10+, and `psql`.
 │   ├── export/                  ICS, server PDF, browser PNG/PDF, and semester-planner print helpers
 │   ├── planner/                 Semester-planner types and local persistence
 │   ├── registration/            Registration schedule, reminder timing, storage, validation, and tests
-│   ├── settings/                App settings defaults, migration, storage, and update event helpers
+│   ├── settings/                App settings defaults, compatibility, storage, and update event helpers
 │   ├── timetable/               Domain types, URL encoding, storage, utilities
 │   └── validation/              Zod schemas
-├── drizzle/                     Intentionally empty migration-output directory
+├── drizzle/                     Intentionally empty Drizzle output directory
 ├── scraper/
 │   ├── data/input/              Tracked source manifests and source PDFs
 │   ├── src/cli/                 Scraper command entry points
@@ -298,7 +298,6 @@ npm run typecheck
 | `npm run typecheck` | Run root TypeScript checks without emitting files. |
 | `npm run build` | Create a production build. |
 | `npm run start` | Run the production build locally. |
-| `npm run db:generate` | Generate Drizzle migration files after an intentional schema change. |
 
 The setup validator checks supported Node/npm versions, installed dependencies,
 local environment files, and the shape of `DATABASE_URL`. Start validation
@@ -326,8 +325,8 @@ environment files except `.env.example`.
 
 `scraper/schema.sql` is the most complete database definition in the repository.
 `lib/db/schema.ts` manually mirrors the tables for the snapshot exporter and
-Drizzle tooling. The project does not maintain migrations for the existing academic
-tables; `drizzle/README.md` says the migration directory is intentionally empty.
+Drizzle tooling. `drizzle/README.md` documents the intentionally empty output
+directory.
 
 ### Entity Relationship Diagram
 
@@ -354,6 +353,8 @@ erDiagram
         varchar academic_year
         smallint semester_no
         varchar semester_name
+        boolean is_archived
+        boolean has_intake_schedule
         timestamptz last_updated
     }
 
@@ -375,6 +376,7 @@ erDiagram
         varchar schedule_type
         varchar group_code_type
         varchar group_code
+        varchar language
         boolean available_as_gsp
         boolean is_restricted
         text remarks
@@ -390,7 +392,7 @@ erDiagram
         time start_time
         time end_time
         varchar event_mode
-        varchar venue
+        varchar campus
         text remarks
         timestamptz last_updated
     }
@@ -403,6 +405,18 @@ erDiagram
         varchar component_group
         varchar assessment_mode
         numeric weight_percentage
+        integer sort_order
+        timestamptz last_updated
+    }
+
+    ANNOUNCEMENTS {
+        bigint announcement_id PK
+        text message
+        text link_url
+        varchar link_label
+        timestamptz publish_at
+        timestamptz expires_at
+        boolean enabled
         integer sort_order
         timestamptz last_updated
     }
@@ -440,11 +454,45 @@ class-group, semester, and optional week information.
 
 ### Data Access Behavior
 
+- `semesters.has_intake_schedule` controls offering filters and intake selectors.
+  A false flag preserves continuation schedule shards and timetable access, with
+  a notice in the existing timetable info section alongside Week 0 and Study Week
+  classes. It shares that section's dismissal behavior. The rail labels do not change.
+  `scheduledSemesters` preserves continuation destinations separately from
+  available `offeredSemesters`. Set the flag explicitly after validating a new
+  intake's schedule, then rebuild and deploy; scraper upserts preserve it.
+  New terms default to unavailable. Older snapshots without the flag retain their
+  previous behavior. The database must match `scraper/schema.sql` before building
+  snapshots.
+- `semesters.is_archived` excludes a semester from published snapshots and all
+  frontend readers. Its records remain in the database. Active completion sessions
+  retain only the ownership ID needed to restore an existing active timetable.
+- `classes.language` stores the offering's language of instruction and
+  `class_events.campus` stores each session's campus code.
+- `announcements` stores site messages and optional links with publication/expiry
+  timestamps. RLS is enabled with no browser policies, and client-role privileges
+  are revoked. SQL administration and snapshot generation use a privileged database
+  connection. Snapshots retain their windows; the global notification stack filters
+  enabled announcements against the current browser time, with checks on mount,
+  focus, and every minute. Dismissals are stored by announcement ID in localStorage.
+- Archived semesters have no frontend selector, schedule shard, or course offering
+  metadata. Direct saved/shared links cannot load an archived timetable. Restore a
+  semester by clearing its database flag and rebuilding.
+- Maintainers edit semester flags and announcement records directly in the database.
+  `npm run build` regenerates snapshots through `prebuild`; deploy the resulting
+  build to publish database changes. No admin page or runtime database write API
+  is required.
 - `scripts/build-data-snapshots.ts` requires `DATABASE_URL`, opens one
   short-lived connection with prepared statements disabled, and reads each
   academic table once per generation.
 - The category-specific readers in `lib/data/` resolve only paths declared by
   the manifest and memoize parsed files within each server process.
+- Schedule imports assign ownership from source-manifest `intakes` and the PDF's
+  Regular/Special column. Event dates never change class ownership. Snapshots
+  project completion sessions into later terms while retaining their origin;
+  explicitly owned pre-term sessions stay in the originating timetable.
+  Each published class also records `continuationSemesterIds` from its actual
+  completion sessions, so a separate offering cannot redirect its continuation.
 - Timetable assembly resolves semantic identifiers from schedule shards, loads
   events and semester data, derives ECA markers, detects clashes, and returns
   unresolved identifiers without silently removing them from the response.
@@ -491,7 +539,11 @@ PNG export captures a dedicated, content-sized timetable and course card layout 
 there is no `/api/export/png` route. The timetable/share PDF export clones that same rendered card into a hidden print frame,
 scales the timetable and exam calendar onto separate white landscape A4 pages, then uses
 portrait A4 pages for the selectable-text class-session listing. The PDF button opens
-the browser print dialog directly. Assessment modes are resolved for each selected
+the browser print dialog directly. The class-session listing includes all known
+sessions for each selected class cohort across active semesters, including
+spillovers, and respects hidden classes. Its source is `classSessionEvents` in
+the timetable payload; the visual timetable and exam calendar still use the
+selected semester's events. Assessment modes are resolved for each selected
 schedule type. If its class group has no dated exam event, the course and exam
 calendar show an undated exam status with Canvas/Learnova guidance. Dates from
 other class groups are not assigned to the selected group.
@@ -802,7 +854,7 @@ The UI integration points are:
   filtering, and one-banner selection.
 - `lib/registration/reminder-storage.ts` for local dismissal persistence,
   legacy snooze compatibility, and stale-record pruning.
-- `lib/settings/app-settings.ts` for settings defaults, migration, and
+- `lib/settings/app-settings.ts` for settings defaults, compatibility, and
   normalization.
 
 ### GPA Calculator Flow Diagram
@@ -981,8 +1033,11 @@ Importing a shared timetable:
   initially uses class view.
 - Leaves other saved semesters untouched.
 
-Resetting the timetable clears only the selected semester state. It does not
-touch other saved semesters.
+Resetting the timetable clears classes that start in the selected semester and
+preserves continuation selections. It does not touch other saved semesters.
+Reset is disabled when there are no starting selections. Share and Download are
+enabled whenever the timetable has resolved selected courses, including
+continuations in a semester whose intake schedule is unavailable.
 
 ### App Settings State
 
@@ -1519,7 +1574,7 @@ secret.
 | Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/data/course-search.ts`; do not accidentally add semester/class filters. |
 | Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, and this guide. Preserve support for existing public versions or reject them with a clear notice. |
 | Change semester-planner print output | Update `lib/export/semester-planner-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
-| Change app settings | Update `lib/settings/app-settings.ts`, `components/settings/settings-client.tsx`, `components/settings/settings-provider.tsx`, and tests that cover normalization/migration. |
+| Change app settings | Update `lib/settings/app-settings.ts`, `components/settings/settings-client.tsx`, `components/settings/settings-provider.tsx`, and tests that cover normalization and compatibility. |
 | Change course registration reminders | Update `lib/registration/schedule.ts`, `lib/registration/reminders.ts`, `lib/registration/reminder-storage.ts`, `components/registration/global-registration-reminders.tsx`, `components/registration/registration-reminder-banner.tsx`, settings controls, tests, and both guides. Verify timing boundaries around each changed event. |
 | Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review/import data, validate snapshots, then deploy. |
 

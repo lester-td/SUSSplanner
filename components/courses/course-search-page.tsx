@@ -1,5 +1,7 @@
 "use client";
 
+import { getSemesterChoices } from "@/lib/timetable/semester-visibility";
+
 import Link from "next/link";
 import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -212,7 +214,7 @@ function buildSemesterIndicators(course: CourseSearchResult)
 {
   const bySemesterNo = new Map<number, string>();
 
-  for (const semester of course.offeredSemesters)
+  for (const semester of getSemesterChoices(course.offeredSemesters))
   {
     if (semester.semesterNo === 1 && !bySemesterNo.has(1))
     {
@@ -318,7 +320,7 @@ function filterCourses(courses: CourseSearchResult[], filters: CourseSearchFilte
       }
 
       if (filters.semesterIds.length > 0
-        && !course.offeredSemesters.some((semester) => filters.semesterIds.includes(semester.semesterId)))
+        && !getSemesterChoices(course.offeredSemesters).some((semester) => filters.semesterIds.includes(semester.semesterId)))
       {
         return false;
       }
@@ -435,6 +437,7 @@ export function CourseSearchPage({
 })
 {
   const [filters, setFilters] = useState(initialFilters);
+  const semesterChoices = getSemesterChoices(semesters);
   const [allCourses, setAllCourses] = useState<CourseSearchResult[]>(cachedAllCourses ?? []);
   const [loading, setLoading] = useState(cachedAllCourses === null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -702,7 +705,7 @@ export function CourseSearchPage({
 
         <div className="course-search-filter-body divide-y divide-[var(--brand-divider)]">
           <FilterGroup title="Offered In">
-            {semesters.map((semester) => (
+            {semesterChoices.map((semester) => (
               <CheckboxRow
                 key={semester.semesterId}
                 label={formatSemesterFilterLabel(semester)}

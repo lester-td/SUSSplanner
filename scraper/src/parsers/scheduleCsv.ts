@@ -1,5 +1,6 @@
 import { parse } from "csv-parse/sync";
-import { inferSemesterFromIsoDate, parseSingaporePdfDate, parseTime12h, semesterKeyString } from "../lib/dates.js";
+import { parseSingaporePdfDate, parseTime12h, semesterKeyString } from "../lib/dates.js";
+import { validateScheduleSourceType } from "../lib/scheduleManifest.js";
 import type {
   ClassEventRecord,
   ClassRecord,
@@ -7,10 +8,13 @@ import type {
   EventKind,
   GroupCodeType,
   ScheduleParseResult,
-  ScheduleType
+  ScheduleSourceType,
+  ScheduleType,
+  ScheduleIntakes,
+  SemesterKey
 } from "../lib/types.js";
 
-const COURSE_CODE_RE = /^[A-Z]{2,5}[0-9]{3}[A-Z]?$/;
+const COURSE_CODE_RE = /^[A-Z]{2,5}[0-9]{3}[A-Z]{0,2}$/;
 const GROUP_RE = /^(CRN|TG)[0-9A-Z]{2,5}$/;
 
 function clean(value: unknown): string {
@@ -47,11 +51,13 @@ interface HeaderIndex {
   courseCode: number;
   groupCode: number;
   semesterType: number;
+  language: number;
   eventMode: number;
   day: number;
   date: number;
   start: number;
   end: number;
+  campus: number;
   availableAsGsp: number;
   remarks: number;
 }
@@ -66,11 +72,13 @@ function getHeaderIndex(row: string[]): HeaderIndex | null {
     courseCode: find("COURSE CODE"),
     groupCode: find("CRN TG", "CRN"),
     semesterType: find("SEMESTER TYPE"),
+    language: find("LANGUAGE"),
     eventMode: find("DELIVERY EXAM MODE", "DELIVERY"),
     day: find("DAY"),
     date: find("DATE"),
     start: find("START"),
     end: find("END"),
+    campus: find("CAMPUS", "VENUE"),
     availableAsGsp: find("AVAILABLE AS GSP100 UNE500", "AVAILABLE AS"),
     remarks: find("REMARKS")
   };
@@ -87,7 +95,8 @@ function cell(row: string[], index: number): string {
   return clean(row[index]);
 }
 
-export function parseScheduleCsv(csvText: string, scheduleType: ScheduleType): ScheduleParseResult {
+export function parseScheduleCsv(csvText: string, sourceType: ScheduleSourceType = "auto", intakes: ScheduleIntakes = {}): ScheduleParseResult {
+  const mode = validateScheduleSourceType(sourceType);
   const csvRows = parse(csvText, {
     relaxColumnCount: true,
     skipEmptyLines: true,
@@ -96,7 +105,7 @@ export function parseScheduleCsv(csvText: string, scheduleType: ScheduleType): S
 
   const rows = csvRows.map(row => row.map(clean));
   const warnings: string[] = [];
-  const semesters = new Map<string, ReturnType<typeof inferSemesterFromIsoDate>>();
+  const semesters = new Map<string, SemesterKey>();
   const courses = new Map<string, CourseRecord>();
   const classes = new Map<string, ClassRecord>();
   const classEvents: ClassEventRecord[] = [];
@@ -138,7 +147,14 @@ export function parseScheduleCsv(csvText: string, scheduleType: ScheduleType): S
       continue;
     }
 
-    const semester = inferSemesterFromIsoDate(eventDate);
+    const intakeType = cell(row, header.semesterType).toLowerCase();
+    if (intakeType !== "regular" && intakeType !== "special") {
+      throw new Error(`Row ${rowNo + 1} (${courseCode} ${groupCode}) has an unknown SEMESTER TYPE '${intakeType}'. Expected Regular or Special.`);
+    }
+    const semester = intakes[intakeType];
+    if (!semester) {
+      throw new Error(`Missing ${intakeType} intake for row ${rowNo + 1} (${courseCode} ${groupCode}). Specify the source intake in the manifest or --${intakeType}-semester.`);
+    }
     semesters.set(semesterKeyString(semester), semester);
 
     const eventMode = cell(row, header.eventMode).toUpperCase() || null;
@@ -147,6 +163,10 @@ export function parseScheduleCsv(csvText: string, scheduleType: ScheduleType): S
     const availableAsGsp = boolFromYesNo(cell(row, header.availableAsGsp));
     const remarks = cell(row, header.remarks) || null;
     const groupCodeType = inferGroupCodeType(groupCode);
+    const scheduleType: ScheduleType = groupCodeType === "TG" ? "daytime" : "evening";
+    if (mode !== "auto" && mode !== scheduleType) {
+      throw new Error(`Row ${rowNo + 1} (${courseCode} ${groupCode}) is ${scheduleType}, but the source is marked ${mode}. Use 'auto' for a combined schedule.`);
+    }
 
     const existingCourse = courses.get(courseCode);
     courses.set(courseCode, {
@@ -166,6 +186,7 @@ export function parseScheduleCsv(csvText: string, scheduleType: ScheduleType): S
         scheduleType,
         groupCodeType,
         groupCode,
+        language: cell(row, header.language).toUpperCase() || null,
         availableAsGsp,
         isRestricted: remarks?.toLowerCase().includes("restricted") ? true : null,
         remarks: null
@@ -184,7 +205,7 @@ export function parseScheduleCsv(csvText: string, scheduleType: ScheduleType): S
       startTime,
       endTime,
       eventMode,
-      venue: null,
+      campus: cell(row, header.campus) || null,
       remarks
     });
   }

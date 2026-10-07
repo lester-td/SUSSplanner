@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 
 import { getTimetableDataFromClassIdentifiers } from "@/lib/data/timetable";
 import { buildTimetablePdf } from "@/lib/export/pdf";
+import { getPdfClassSessionEvents } from "@/lib/export/class-sessions";
 import { buildExportCourses } from "@/lib/export/timetable-model";
 import { buildSelectedCourseCards } from "@/lib/timetable/timetable-utils";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest)
   const decoded = decodeShareUrlState(request.nextUrl.searchParams);
   const timetable = await getTimetableDataFromClassIdentifiers(decoded.selectedClasses, decoded.semesterId);
   const pdf = await buildTimetablePdf(timetable.semester, timetable.events, timetable.clashes, {
+    classSessionEvents: getPdfClassSessionEvents(timetable),
     courses: buildExportCourses(buildSelectedCourseCards(timetable), new Map()),
   });
 

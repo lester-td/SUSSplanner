@@ -48,7 +48,7 @@ const PREVIEW_SAMPLE_COURSES = [
     groupCode: "TG01",
     groupCodeType: "TG",
     weekLabel: "1-13",
-    venue: "SR 2.1",
+    campus: "CLE",
   },
   {
     courseCode: "PSY107",
@@ -56,7 +56,7 @@ const PREVIEW_SAMPLE_COURSES = [
     groupCode: "TG02",
     groupCodeType: "TG",
     weekLabel: "1-13",
-    venue: "SR 4.3",
+    campus: "CLE",
   },
   {
     courseCode: "ANL201",
@@ -64,7 +64,7 @@ const PREVIEW_SAMPLE_COURSES = [
     groupCode: "TG03",
     groupCodeType: "TG",
     weekLabel: "2,4,6,8,10,12",
-    venue: "Lab 5.2",
+    campus: "CLE",
   },
   {
     courseCode: "MTH212",
@@ -72,7 +72,7 @@ const PREVIEW_SAMPLE_COURSES = [
     groupCode: "TG04",
     groupCodeType: "TG",
     weekLabel: "1-13",
-    venue: "SR 6.1",
+    campus: "CLE",
   },
   {
     courseCode: "BUS105",
@@ -80,7 +80,7 @@ const PREVIEW_SAMPLE_COURSES = [
     groupCode: "TG05",
     groupCodeType: "TG",
     weekLabel: "1, 3, 5, 7, 9, 11, 13",
-    venue: "SR 3.2",
+    campus: "CLE",
   },
   {
     courseCode: "FIN306",
@@ -88,7 +88,7 @@ const PREVIEW_SAMPLE_COURSES = [
     groupCode: "TG06",
     groupCodeType: "TG",
     weekLabel: "1-13",
-    venue: "SR 2.8",
+    campus: "CLE",
   },
   {
     courseCode: "SWK356",
@@ -96,7 +96,7 @@ const PREVIEW_SAMPLE_COURSES = [
     groupCode: "TG07",
     groupCodeType: "TG",
     weekLabel: "2-12",
-    venue: "SR 1.4",
+    campus: "CLE",
   },
 ] as const;
 
@@ -191,7 +191,7 @@ const PREVIEW_TIMETABLE_BLOCKS = PREVIEW_SAMPLE_COURSES.map((course, index) => {
     startMinutes: slot.startMinutes,
     endMinutes: slot.startMinutes + 180,
     weekLabel: course.weekLabel,
-    venue: course.venue,
+    campus: course.campus,
     eventMode: null,
     occurrenceCount: 1,
     eventIds: [index + 1],

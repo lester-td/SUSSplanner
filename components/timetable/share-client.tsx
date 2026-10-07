@@ -13,6 +13,7 @@ import {
   EyeOffIcon,
   GridIcon,
   ListIcon,
+  PinIcon,
   RowsIcon,
   SchoolIcon,
   UploadIcon,
@@ -20,6 +21,7 @@ import {
 } from "@/components/planner/icons";
 import { ActionButton, IconButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
+import { CampusLabel } from "@/components/timetable/campus-label";
 import { ClassScheduleModalContent, formatClassScheduleTitle } from "@/components/timetable/class-schedule-modal-content";
 import { ExamCalendar, ExamCalendarOverviewRail } from "@/components/timetable/exam-calendar";
 import { SelectorRail } from "@/components/timetable/selector-rail";
@@ -27,6 +29,7 @@ import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { TimetableExportCard } from "@/components/timetable/timetable-export-card";
 import { printTimetablePdf } from "@/lib/export/pdf-client";
+import { getPdfClassSessionEvents } from "@/lib/export/class-sessions";
 import { buildExportCourses, getTimetableExportFileName } from "@/lib/export/timetable-model";
 import { exportElementToPng } from "@/lib/export/png";
 import {
@@ -38,6 +41,7 @@ import {
   loadSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import { encodeShareUrlState } from "@/lib/timetable/share-url";
+import { getTimetableActionAvailability } from "@/lib/timetable/timetable-actions";
 import {
   buildExamCards,
   buildSelectableWeeks,
@@ -97,6 +101,7 @@ export function ShareClient({
   const selectedSemester = timetable.semester;
 
   const selectedCards = useMemo(() => buildSelectedCourseCards(timetable), [timetable]);
+  const { canDownload } = getTimetableActionAvailability(sharedState.selectedClasses, selectedCards.length);
   const totalCredits = useMemo(
     () => selectedCards.reduce((sum, record) => sum + (record.creditUnits ?? 0), 0),
     [selectedCards],
@@ -145,6 +150,7 @@ export function ShareClient({
 
   function triggerDownload(path: string, fileName: string)
   {
+    if (!canDownload) return;
     const anchor = document.createElement("a");
     anchor.href = `${path}?${buildShareQuery()}`;
     anchor.download = fileName;
@@ -160,7 +166,7 @@ export function ShareClient({
 
   async function handlePngExport()
   {
-    if (!exportCaptureRef.current)
+    if (!canDownload || !exportCaptureRef.current)
     {
       return;
     }
@@ -170,6 +176,7 @@ export function ShareClient({
 
   function handlePdfExport()
   {
+    if (!canDownload) return;
     const timetableCard = viewMode === "class" ? exportCaptureRef.current : alternateExportCaptureRef.current;
     const examCalendarCard = viewMode === "exam" ? exportCaptureRef.current : alternateExportCaptureRef.current;
     if (!timetableCard || !examCalendarCard) return;
@@ -177,7 +184,7 @@ export function ShareClient({
       timetableCard,
       examCalendarCard,
       selectedSemester,
-      visibleEvents,
+      getPdfClassSessionEvents(timetable, hiddenClasses),
       timetable.clashes.filter((clash) => clash.events.every((event) => !hiddenClasses.includes(event.shareKey))),
       getTimetableExportFileName(selectedSemester, "pdf"),
     );
@@ -284,6 +291,7 @@ export function ShareClient({
           ) : null}
 
           <TimetableAlerts
+            semester={selectedSemester}
             events={timetable.events}
             clashes={timetable.clashes}
           />
@@ -335,8 +343,9 @@ export function ShareClient({
                   label="Download"
                   onClick={() => setDownloadOpen((current) => !current)}
                   stretch
+                  disabled={!canDownload}
                 />
-                {downloadOpen ? (
+                {downloadOpen && canDownload ? (
                   <div className="elev-3 absolute left-0 top-full z-30 mt-1.5 w-full min-w-[9.5rem] rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                     <div
                       aria-hidden="true"
@@ -393,6 +402,13 @@ export function ShareClient({
                             <span className="shrink-0 font-semibold text-[var(--on-surface)]">Group:</span>
                             <span className="truncate">{formatClassGroupLabel(record.groupCode)}</span>
                           </div>
+                          {record.campuses.length > 0 ? (
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <PinIcon className="h-4 w-4 shrink-0" />
+                              <span className="shrink-0 font-semibold text-[var(--on-surface)]">Campus:</span>
+                              <CampusLabel campuses={record.campuses} />
+                            </div>
+                          ) : null}
                           <div className="flex min-w-0 items-center gap-1.5">
                             <CalendarIcon className="h-4 w-4 shrink-0" />
                             {record.examStatus !== "dated" ? (

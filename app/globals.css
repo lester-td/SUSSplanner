@@ -338,6 +338,11 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.7rem 1rem;
+}
+
+.home-aero-panel-heading,
+.app-aero-panel-heading,
+.app-announcement-heading {
   border-bottom: 1px solid rgb(var(--suss-blue-rgb) / 0.11);
   background: #e1f3fa;
   color: var(--on-surface);
@@ -715,7 +720,8 @@
 }
 
 :root[data-color-scheme="dark"] .home-aero-panel-heading,
-:root[data-color-scheme="dark"] .app-aero-panel-heading {
+:root[data-color-scheme="dark"] .app-aero-panel-heading,
+:root[data-color-scheme="dark"] .app-announcement-heading {
   border-bottom-color: rgb(var(--suss-light-blue-rgb) / 0.16);
   background: #203b49;
   box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.18);
@@ -2096,7 +2102,19 @@
 .timetable-cell.is-tight {
   padding: 0.22rem 0.28rem;
   font-size: 0.68rem;
-  line-height: 0.82rem;
+  line-height: 0.68rem;
+}
+
+.timetable-cell.is-tight .timetable-cell__content {
+  gap: 0;
+}
+
+.timetable-cell.is-tight .timetable-cell__week {
+  margin-top: 0;
+}
+
+.timetable-cell.is-tight .timetable-cell__continuation {
+  padding-top: 0;
 }
 
 .timetable-cell.is-tight .timetable-cell__module {
@@ -2106,13 +2124,19 @@
 
 .timetable-cell.is-tight .timetable-cell__time,
 .timetable-cell.is-tight .timetable-cell__title,
-.timetable-cell.is-tight .timetable-cell__week,
 .timetable-cell.is-tight .timetable-cell__mode {
   display: none;
 }
 
 .timetable-cell.is-very-tight {
   padding: 0.16rem 0.24rem;
+  font-size: 0.56rem;
+  line-height: 0.56rem;
+}
+
+.timetable-cell.is-very-tight .timetable-cell__module {
+  font-size: 0.62rem;
+  line-height: 0.6rem;
 }
 
 .timetable-cell.is-very-tight .timetable-cell__meta {

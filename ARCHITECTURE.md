@@ -48,7 +48,7 @@ Snapshot generation reads these existing relations without changing them:
 - `class_events`
 - `assessment_components`
 
-No new table or migration is required for the snapshot architecture.
+Snapshot generation reads the existing database schema without changing it.
 `lib/db/schema.ts` remains the Drizzle mapping used by the build-time exporter
 and database tooling.
 

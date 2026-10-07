@@ -11,7 +11,9 @@ import {
 } from "@/lib/timetable/date-utils";
 import { Modal } from "@/components/ui/modal";
 import { getExceptionalClassEvents } from "@/lib/timetable/timetable-utils";
+import { getIntakeScheduleNotice } from "@/lib/timetable/semester-visibility";
 import type {
+  SemesterRecord,
   TimetableClash,
   TimetableEventRecord,
 } from "@/lib/timetable/types";
@@ -328,13 +330,16 @@ function ClashDetailsModal({
 }
 
 export function TimetableAlerts({
+  semester = null,
   events,
   clashes,
 }: {
+  semester?: SemesterRecord | null;
   events: TimetableEventRecord[];
   clashes: TimetableClash[];
 })
 {
+  const intakeScheduleNotice = getIntakeScheduleNotice(semester);
   const {
     weekZeroClasses,
     studyWeekClasses,
@@ -344,12 +349,13 @@ export function TimetableAlerts({
     examClashes,
   } = splitClashes(clashes);
   const infoSignature = [
+    ...(intakeScheduleNotice ? [`intake:${semester!.semesterId}:${intakeScheduleNotice}`] : []),
     ...weekZeroClasses.map(getEventSignature),
     ...studyWeekClasses.map(getEventSignature),
   ].sort().join("|");
   const [isClashesModalOpen, setIsClashesModalOpen] = useState(false);
   const [infoDismissed, setInfoDismissed] = useState(() => loadDismissedInfoSignature() === infoSignature);
-  const hasInfo = weekZeroClasses.length > 0 || studyWeekClasses.length > 0;
+  const hasInfo = Boolean(intakeScheduleNotice) || weekZeroClasses.length > 0 || studyWeekClasses.length > 0;
   const hasClassClashes = classClashes.length > 0;
   const hasExamClashes = examClashes.length > 0;
 
@@ -368,7 +374,7 @@ export function TimetableAlerts({
     {
       clearDismissedInfoSignature();
     }
-  }, [infoSignature]);
+  }, [hasInfo, infoSignature]);
 
   const hasVisibleInfo = hasInfo && !infoDismissed;
   const hasVisibleSections = hasVisibleInfo || hasClassClashes || hasExamClashes;
@@ -428,6 +434,16 @@ export function TimetableAlerts({
         {hasVisibleInfo ? (
           <section className="relative min-w-0 px-2.5 py-2 sm:px-3 sm:py-2.5">
             <div className="min-w-0 space-y-3 pr-16 sm:pr-20">
+              {intakeScheduleNotice ? (
+                <div role="status">
+                  <p className="text-[16px] font-semibold leading-normal text-[var(--on-surface)]">
+                    Intake schedule unavailable
+                  </p>
+                  <p className="mt-1.5 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                    {intakeScheduleNotice}
+                  </p>
+                </div>
+              ) : null}
               {weekZeroClasses.length > 0 ? (
                 <div>
                   <p className="text-[16px] font-semibold leading-normal text-[var(--on-surface)]">

@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS semesters (
     academic_year     VARCHAR(9) NOT NULL,
     semester_no       SMALLINT NOT NULL CHECK (semester_no IN (1, 2, 3)),
     semester_name     VARCHAR(100) NOT NULL,
+    is_archived       BOOLEAN NOT NULL DEFAULT false,
+    has_intake_schedule BOOLEAN NOT NULL DEFAULT false,
     last_updated      TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_semester UNIQUE (academic_year, semester_no)
 );
@@ -71,6 +73,49 @@ CREATE TABLE IF NOT EXISTS academic_calendar_event_semesters (
     PRIMARY KEY (event_id, semester_id)
 );
 
+CREATE TABLE IF NOT EXISTS announcements (
+    announcement_id   BIGSERIAL PRIMARY KEY,
+    message           TEXT NOT NULL,
+    link_url          TEXT,
+    link_label        VARCHAR(100),
+    publish_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at        TIMESTAMPTZ,
+    enabled           BOOLEAN NOT NULL DEFAULT false,
+    sort_order        INT NOT NULL DEFAULT 1,
+    last_updated      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_announcement_message CHECK (btrim(message) <> ''),
+    CONSTRAINT chk_announcement_dates CHECK (expires_at IS NULL OR expires_at > publish_at),
+    CONSTRAINT chk_announcement_link CHECK (
+        (link_url IS NULL AND link_label IS NULL)
+        OR (link_url IS NOT NULL AND link_label IS NOT NULL
+            AND btrim(link_url) <> '' AND btrim(link_label) <> '')
+    )
+);
+
+-- Announcements are read through build-time snapshots, not the browser Data API.
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.announcements FROM PUBLIC;
+
+-- Supabase client roles may not exist on a standalone PostgreSQL installation.
+DO $$
+DECLARE
+    client_role TEXT;
+    id_sequence TEXT := pg_get_serial_sequence('public.announcements', 'announcement_id');
+BEGIN
+    IF id_sequence IS NOT NULL THEN
+        EXECUTE format('REVOKE ALL ON SEQUENCE %s FROM PUBLIC', id_sequence);
+    END IF;
+    FOREACH client_role IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = client_role) THEN
+            EXECUTE format('REVOKE ALL ON TABLE public.announcements FROM %I', client_role);
+            IF id_sequence IS NOT NULL THEN
+                EXECUTE format('REVOKE ALL ON SEQUENCE %s FROM %I', id_sequence, client_role);
+            END IF;
+        END IF;
+    END LOOP;
+END;
+$$;
+
 CREATE TABLE IF NOT EXISTS classes (
     class_id          BIGSERIAL PRIMARY KEY,
     course_code       VARCHAR(20) NOT NULL REFERENCES courses(course_code) ON DELETE RESTRICT,
@@ -78,6 +123,7 @@ CREATE TABLE IF NOT EXISTS classes (
     schedule_type     VARCHAR(20) NOT NULL CHECK (schedule_type IN ('daytime', 'evening')),
     group_code_type   VARCHAR(10) NOT NULL CHECK (group_code_type IN ('TG', 'CRN')),
     group_code        VARCHAR(20) NOT NULL,
+    language          VARCHAR(50),
     available_as_gsp  BOOLEAN,
     is_restricted     BOOLEAN,
     remarks           TEXT,
@@ -100,7 +146,7 @@ CREATE TABLE IF NOT EXISTS class_events (
     start_time        TIME NOT NULL,
     end_time          TIME NOT NULL,
     event_mode        VARCHAR(100),
-    venue             VARCHAR(255),
+    campus            VARCHAR(255),
     remarks           TEXT,
     last_updated      TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_class_event_time CHECK (end_time > start_time),
@@ -137,6 +183,9 @@ CREATE TABLE IF NOT EXISTS assessment_components (
 
 CREATE INDEX IF NOT EXISTS idx_courses_school_name
 ON courses (school_name);
+
+CREATE INDEX IF NOT EXISTS idx_announcements_publication
+ON announcements (publish_at, sort_order) WHERE enabled = true;
 
 CREATE INDEX IF NOT EXISTS idx_courses_course_level
 ON courses (course_level);
@@ -265,7 +314,7 @@ SELECT
     ce.start_time,
     ce.end_time,
     ce.event_mode,
-    ce.venue,
+    ce.campus,
     ce.remarks,
     sw.week_id,
     sw.week_no,
@@ -314,6 +363,12 @@ BEFORE UPDATE ON academic_calendar_events
 FOR EACH ROW
 EXECUTE FUNCTION set_last_updated();
 
+DROP TRIGGER IF EXISTS trg_announcements_last_updated ON announcements;
+CREATE TRIGGER trg_announcements_last_updated
+BEFORE UPDATE ON announcements
+FOR EACH ROW
+EXECUTE FUNCTION set_last_updated();
+
 DROP TRIGGER IF EXISTS trg_classes_last_updated ON classes;
 CREATE TRIGGER trg_classes_last_updated
 BEFORE UPDATE ON classes
@@ -337,6 +392,7 @@ ANALYZE semesters;
 ANALYZE semester_weeks;
 ANALYZE academic_calendar_events;
 ANALYZE academic_calendar_event_semesters;
+ANALYZE announcements;
 ANALYZE classes;
 ANALYZE class_events;
 ANALYZE assessment_components;

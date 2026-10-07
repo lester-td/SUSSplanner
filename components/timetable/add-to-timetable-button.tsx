@@ -13,6 +13,7 @@ import {
   upsertClassInSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import { getFollowingContinuationSemesters } from "@/lib/timetable/course-continuation";
+import { getSemesterChoices } from "@/lib/timetable/semester-visibility";
 import { readAppSettings } from "@/lib/settings/app-settings";
 import type {
   CourseClassRecord,
@@ -23,6 +24,7 @@ import type {
 type TimetableCourseLike = {
   courseCode: string;
   offeredSemesters?: SemesterRecord[];
+  scheduledSemesters?: SemesterRecord[];
 };
 
 type ClassesResponse = {
@@ -46,17 +48,19 @@ function resolveTargetSemesterId({
   fallbackSemesterId?: number | null;
 })
 {
-  const offeredIds = new Set(offeredSemesters?.map((semester) => semester.semesterId) ?? []);
+  const intakeSemesters = offeredSemesters ? getSemesterChoices(offeredSemesters) : undefined;
+  const offeredIds = new Set(intakeSemesters?.map((semester) => semester.semesterId) ?? []);
   const candidates = [preferredSemesterId, savedSemesterId, fallbackSemesterId]
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
 
-  if (offeredIds.size === 0)
+  if (intakeSemesters && offeredIds.size === 0) return null;
+  if (!intakeSemesters)
   {
     return candidates[0] ?? null;
   }
 
   return candidates.find((semesterId) => offeredIds.has(semesterId))
-    ?? offeredSemesters?.[0]?.semesterId
+    ?? intakeSemesters[0]?.semesterId
     ?? null;
 }
 
@@ -187,8 +191,9 @@ export function AddToTimetableButton({
       const continuationSemesters = getFollowingContinuationSemesters({
         courseCode,
         semesterId: nextTargetSemesterId,
-        offeredSemesters: course.offeredSemesters ?? [],
-        semesters: course.offeredSemesters ?? [],
+        offeredSemesters: course.scheduledSemesters ?? course.offeredSemesters ?? [],
+        semesters: course.scheduledSemesters ?? course.offeredSemesters ?? [],
+        continuationSemesterIds: selectedClass.continuationSemesterIds,
       });
       const next = upsertClassInSavedTimetable(loadSavedTimetable(), nextTargetSemesterId, toClassSelection(selectedClass), continuationSemesters.map((item) => item.semesterId));
       saveTimetableToLocalStorage(next);

@@ -5,8 +5,10 @@ import path from "node:path";
 
 import { getSnapshotManifest } from "./manifest-reader";
 import { readCachedJson } from "./snapshot-cache";
+import { getActiveSemesters, getSemesterChoices } from "@/lib/timetable/semester-visibility";
 import {
   getDataSnapshotBucket,
+  type CourseSnapshot,
   type CourseSnapshotBucket,
 } from "./snapshot-types";
 
@@ -23,7 +25,7 @@ function courseSnapshotFileName(relativePath: string)
   return fileName;
 }
 
-export async function getCourseSnapshot(courseCode: string)
+export async function getCourseSnapshot(courseCode: string): Promise<CourseSnapshot | null>
 {
   const normalizedCourseCode = courseCode.trim().toUpperCase();
   const bucket = getDataSnapshotBucket(normalizedCourseCode);
@@ -38,5 +40,19 @@ export async function getCourseSnapshot(courseCode: string)
     relativePath,
     () => readFile(path.join(courseSnapshotRoot, fileName), "utf8"),
   );
-  return snapshots[normalizedCourseCode] ?? null;
+  const snapshot = snapshots[normalizedCourseCode];
+  if (!snapshot) return null;
+  const activeById = new Map(getActiveSemesters(manifest.semesters).map(semester => {
+    const { weeks: _weeks, ...record } = semester;
+    return [semester.semesterId, record] as const;
+  }));
+  const availableIds = new Set(getSemesterChoices(manifest.semesters).map(semester => semester.semesterId));
+  return {
+    ...snapshot,
+    offeredSemesters: snapshot.offeredSemesters.filter(semester => availableIds.has(semester.semesterId) && !semester.isArchived)
+      .map(semester => activeById.get(semester.semesterId)!),
+    scheduledSemesters: (snapshot.scheduledSemesters ?? snapshot.offeredSemesters)
+      .filter(semester => activeById.has(semester.semesterId) && !semester.isArchived)
+      .map(semester => activeById.get(semester.semesterId)!),
+  };
 }

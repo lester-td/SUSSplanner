@@ -31,13 +31,19 @@ export function getFollowingContinuationSemesters({
   semesterId,
   offeredSemesters,
   semesters,
+  continuationSemesterIds,
 }: {
   courseCode: string;
   semesterId: number;
   offeredSemesters: SemesterRecord[];
   semesters: SemesterRecord[];
+  continuationSemesterIds?: number[];
 })
 {
+  if (continuationSemesterIds !== undefined) {
+    return semesters.filter(semester => !semester.isArchived && continuationSemesterIds.includes(semester.semesterId))
+      .sort((left, right) => left.academicYear.localeCompare(right.academicYear) || left.semesterNo - right.semesterNo);
+  }
   const remainingSemesterCount = inferCatalogSemesterSpan(courseCode) - 1;
   if (remainingSemesterCount <= 0)
   {

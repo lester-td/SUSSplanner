@@ -14,7 +14,7 @@ import type { RegistrationReminder } from "@/lib/registration/types";
 type RegistrationReminderBannerProps = {
   reminders: RegistrationReminder[];
   onCloseReminder?: (reminder: RegistrationReminder) => void;
-  variant?: "inline" | "notification";
+  variant?: "inline" | "notification" | "stacked";
   className?: string;
 };
 
@@ -25,12 +25,12 @@ function RegistrationReminderItem({
 }: {
   reminder: RegistrationReminder;
   onCloseReminder?: (reminder: RegistrationReminder) => void;
-  variant: "inline" | "notification";
+  variant: "inline" | "notification" | "stacked";
 })
 {
-  const isNotification = variant === "notification";
+  const isNotification = variant !== "inline";
   const itemClassName = isNotification
-    ? "relative h-[6.75rem] overflow-hidden rounded-[0.35rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-2 pl-3 pr-[3.25rem] text-[var(--on-surface)] shadow-[var(--shadow-elev-3)]"
+    ? "relative h-[6.75rem] overflow-hidden rounded-[0.35rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-2 pl-3 pr-[3.25rem] text-[var(--on-surface)] shadow-[var(--shadow-elev-1)]"
     : "relative overflow-hidden rounded-[0.5rem] border border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] py-3 pl-3 pr-[3.25rem] text-[var(--on-surface)] shadow-[var(--shadow-elev-1)]";
   const detailListClassName = isNotification
     ? "mt-1.5 grid text-[12px] leading-[18px] text-[var(--on-surface-variant)]"
@@ -110,7 +110,9 @@ export function RegistrationReminderBanner({
 
   const variantClassName = variant === "notification"
     ? "pointer-events-auto fixed right-3 top-[6.75rem] z-50 w-[min(calc(100vw-1.5rem),18rem)] space-y-2.5 sm:right-4 sm:top-[7.25rem] xl:top-[4.75rem]"
-    : "space-y-2 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] p-2.5";
+    : variant === "stacked"
+      ? "space-y-2.5"
+      : "space-y-2 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] p-2.5";
 
   return (
     <section

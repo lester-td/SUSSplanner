@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-import { GlobalRegistrationReminders } from "@/components/registration/global-registration-reminders";
+import { GlobalNotifications } from "@/components/layout/global-notifications";
+import { getSnapshotManifest } from "@/lib/data/manifest-reader";
 import { SettingsProvider } from "@/components/settings/settings-provider";
 import { APP_SETTINGS_STORAGE_KEY, DEFAULT_APP_SETTINGS } from "@/lib/settings/app-settings";
 import "./globals.css";
@@ -44,8 +45,9 @@ const settingsBootstrapScript = `
 })();
 `;
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>)
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>)
 {
+  const announcements = (await getSnapshotManifest()).announcements?.filter(announcement => announcement.enabled) ?? [];
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
@@ -60,7 +62,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         />
         <SettingsProvider>
           {children}
-          <GlobalRegistrationReminders />
+          <GlobalNotifications announcements={announcements} />
         </SettingsProvider>
         <Analytics />
         <SpeedInsights />

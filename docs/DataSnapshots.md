@@ -6,7 +6,10 @@ Supabase Postgres remains the normalized academic-data source of truth. Public
 application requests do not connect to it. A build-time exporter creates split,
 read-only JSON snapshots that are bundled into each Vercel deployment.
 
-No database schema change is required.
+The database must match `scraper/schema.sql` before building snapshots. Set
+`semesters.has_intake_schedule` explicitly for validated intake schedules;
+new semesters default to unavailable. Calendar weeks and continuation sessions
+do not establish intake availability.
 
 ## A-to-Z Publication Workflow
 

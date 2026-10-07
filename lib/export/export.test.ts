@@ -22,7 +22,7 @@ const event: TimetableEventRecord = {
   startTime: "08:30:00",
   endTime: "10:30:00",
   eventMode: "Face to face",
-  venue: "SR 1",
+  campus: "CLE",
   remarks: null,
   courseCode: "ICT235",
   semesterId: 1,

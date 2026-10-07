@@ -55,6 +55,40 @@ function state(semesterId: number, courseCode: string): PlannerSemesterState
 }
 
 describe("course continuation", () => {
+  it("creates a saved continuation even when the destination has no intake schedule", () => {
+    const july = { ...JULY, hasIntakeSchedule: false };
+    const following = getFollowingContinuationSemesters({
+      courseCode: "NIE351", semesterId: MAY.semesterId,
+      offeredSemesters: [MAY], semesters: [MAY, july], continuationSemesterIds: [july.semesterId],
+    });
+    expect(following).toEqual([july]);
+    const selection = state(MAY.semesterId, "NIE351").selectedClasses[0];
+    const saved = upsertClassInSavedTimetable(null, MAY.semesterId, selection, following.map(semester => semester.semesterId));
+    expect(saved.semesterStates?.[String(july.semesterId)].selectedClasses).toEqual([
+      { ...selection, originSemesterId: MAY.semesterId },
+    ]);
+  });
+  it("uses the selected class's actual continuation instead of a separate May offering", () => {
+    expect(getFollowingContinuationSemesters({
+      courseCode: "NIE351", semesterId: JANUARY.semesterId,
+      offeredSemesters: SEMESTERS, semesters: SEMESTERS,
+      continuationSemesterIds: [JULY.semesterId],
+    })).toEqual([JULY]);
+  });
+
+  it("uses explicit session targets for courses without a hardcoded semester span", () => {
+    expect(getFollowingContinuationSemesters({
+      courseCode: "CDO355", semesterId: JANUARY.semesterId,
+      offeredSemesters: SEMESTERS, semesters: SEMESTERS,
+      continuationSemesterIds: [JULY.semesterId],
+    })).toEqual([JULY]);
+    expect(getFollowingContinuationSemesters({
+      courseCode: "NIE351", semesterId: JANUARY.semesterId,
+      offeredSemesters: SEMESTERS, semesters: SEMESTERS,
+      continuationSemesterIds: [],
+    })).toEqual([]);
+  });
+
   it("chooses the next offered semester for a multi-semester course", () => {
     expect(getFollowingContinuationSemesters({
       courseCode: "NIE301",

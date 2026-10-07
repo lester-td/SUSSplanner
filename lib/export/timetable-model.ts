@@ -8,6 +8,7 @@ export type ExportCourse = {
   courseLabel?: string;
   courseName: string | null;
   groupCode: string;
+  campuses?: string[];
   examDateLabel: string;
   examTimeLabel: string | null;
   examStatus: ExamStatus;
@@ -30,6 +31,7 @@ export function buildExportCourses(
     courseLabel: card.courseLabel,
     courseName: card.courseName,
     groupCode: card.groupCode,
+    campuses: card.campuses,
     examDateLabel: card.examDateLabel,
     examTimeLabel: card.examTimeLabel,
     examStatus: card.examStatus,

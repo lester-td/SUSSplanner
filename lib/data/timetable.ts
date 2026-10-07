@@ -14,6 +14,7 @@ import type {
 import { getCourseSnapshot } from "./course-snapshot-reader";
 import { getSemesterById, getSemesterWeeks, getSemesters } from "./metadata";
 import { getScheduleSnapshot } from "./schedule-snapshot-reader";
+import type { ScheduleSnapshot } from "./snapshot-types";
 
 function normalizeCourseCode(courseCode: string)
 {
@@ -45,21 +46,27 @@ export async function getTimetableDataFromClassIdentifiers(
     getSemesters(),
   ]);
 
-  if (normalizedSelections.length === 0)
+  if (!semester || semester.isArchived || normalizedSelections.length === 0)
   {
     return {
-      semester,
-      semesterWeeks,
+      semester: semester?.isArchived ? null : semester,
+      semesterWeeks: semester && !semester.isArchived ? semesterWeeks : [],
       selections: [],
       events: [],
       clashes: [],
-      unresolvedSelections: [],
+      unresolvedSelections: normalizedSelections,
     } satisfies TimetableData;
   }
 
   const courseCodes = [...new Set(normalizedSelections.map((selection) => selection.courseCode))];
+  const snapshotCache = new Map<string, Promise<ScheduleSnapshot | null>>();
+  const readSchedule = (id: number, courseCode: string) => {
+    const key = `${id}:${courseCode}`;
+    if (!snapshotCache.has(key)) snapshotCache.set(key, getScheduleSnapshot(id, courseCode));
+    return snapshotCache.get(key)!;
+  };
   const [scheduleSnapshots, courseSnapshots] = await Promise.all([
-    Promise.all(courseCodes.map((courseCode) => getScheduleSnapshot(semesterId, courseCode))),
+    Promise.all(courseCodes.map((courseCode) => readSchedule(semesterId, courseCode))),
     Promise.all(courseCodes.map((courseCode) => getCourseSnapshot(courseCode))),
   ]);
   const scheduleByCourseCode = new Map(courseCodes.map((courseCode, index) => [courseCode, scheduleSnapshots[index]]));
@@ -68,6 +75,8 @@ export async function getTimetableDataFromClassIdentifiers(
   const resolvedSelections: TimetableSelectionRecord[] = [];
   const unresolvedSelections: SharedClassIdentifier[] = [];
   const events: TimetableEventRecord[] = [];
+  const classSessionEvents: TimetableEventRecord[] = [];
+  const activeSemesterIds = new Set(semesters.filter(item => !item.isArchived).map(item => item.semesterId));
 
   for (const selectedClass of normalizedSelections)
   {
@@ -82,34 +91,41 @@ export async function getTimetableDataFromClassIdentifiers(
     let matchingClass = targetClass;
     if (selectedClass.originSemesterId !== undefined)
     {
-      const originSchedule = await getScheduleSnapshot(originId, selectedClass.courseCode);
+      // An archived origin has no published schedule or semester metadata. Its
+      // active completion sessions carry the ownership ID needed for restoration.
+      const publishedContinuation = originId !== semesterId && targetClass?.events.some(event => event.startSemesterId === originId);
+      const originSchedule = originSemester && !originSemester.isArchived
+        ? await readSchedule(originId, selectedClass.courseCode) : null;
       matchingClass = originSchedule?.classes.find((item) => (
         item.semesterId === originId
         && item.scheduleType === selectedClass.scheduleType
         && item.groupCodeType === selectedClass.groupCodeType
         && item.groupCode === selectedClass.groupCode
-      ));
+      )) ?? (publishedContinuation ? targetClass : undefined);
       const validTarget = getFollowingContinuationSemesters({
         courseCode: selectedClass.courseCode,
         semesterId: originId,
-        offeredSemesters: courseByCourseCode.get(selectedClass.courseCode)?.offeredSemesters ?? [],
+        offeredSemesters: courseByCourseCode.get(selectedClass.courseCode)?.scheduledSemesters
+          ?? courseByCourseCode.get(selectedClass.courseCode)?.offeredSemesters ?? [],
         semesters,
+        continuationSemesterIds: matchingClass?.continuationSemesterIds,
       }).some((item) => item.semesterId === semesterId);
-      if (!originSemester || !validTarget)
+      if (originId === semesterId || (originSemester && !originSemester.isArchived ? !validTarget : !publishedContinuation))
       {
         unresolvedSelections.push(selectedClass);
         continue;
       }
     }
 
-    if (!matchingClass || (selectedClass.originSemesterId === undefined && !isClassStartingInSemester(matchingClass)))
+    if (!matchingClass || (selectedClass.originSemesterId === undefined
+      && (semester.hasIntakeSchedule === false || !isClassStartingInSemester(matchingClass))))
     {
       unresolvedSelections.push(selectedClass);
       continue;
     }
 
     const shareKey = buildSharedClassIdentifier(selectedClass);
-    const courseLabel = originSemester
+    const courseLabel = originSemester && !originSemester.isArchived
       ? `${selectedClass.courseCode} (${formatContinuationSemesterShort(originSemester.semesterName)})`
       : selectedClass.courseCode;
     const candidates = selectedClass.originSemesterId === undefined
@@ -140,6 +156,33 @@ export async function getTimetableDataFromClassIdentifiers(
         courseLabel,
         originSemesterId: selectedClass.originSemesterId,
       } satisfies TimetableEventRecord));
+    const courseSnapshot = courseByCourseCode.get(selectedClass.courseCode);
+    const sessionSemesterIds = new Set([
+      originId, semesterId,
+      ...(courseSnapshot?.scheduledSemesters ?? courseSnapshot?.offeredSemesters ?? []).map(item => item.semesterId),
+      ...(matchingClass.continuationSemesterIds ?? []),
+    ]);
+    const sessionSnapshots = await Promise.all([...sessionSemesterIds]
+      .filter(id => activeSemesterIds.has(id))
+      .map(id => readSchedule(id, selectedClass.courseCode)));
+    const sessionCandidates = [
+      ...matchingClass.events,
+      ...sessionSnapshots.flatMap(snapshot => snapshot?.classes
+        .filter(group => group.scheduleType === selectedClass.scheduleType
+          && group.groupCodeType === selectedClass.groupCodeType && group.groupCode === selectedClass.groupCode)
+        .flatMap(group => group.events) ?? []),
+    ].filter(event => event.eventKind !== "EXAM" && (event.startSemesterId ?? event.semesterId) === originId);
+    const uniqueSessions = new Map(sessionCandidates.map(event => [
+      [event.eventKind, event.eventDate, event.startTime, event.endTime].join("|"), event,
+    ]));
+    classSessionEvents.push(...[...uniqueSessions.values()].map(event => ({
+      ...event,
+      courseName: matchingClass.courseName,
+      schoolName: matchingClass.schoolName,
+      shareKey,
+      courseLabel,
+      originSemesterId: selectedClass.originSemesterId,
+    })));
     const assessments = courseByCourseCode.get(selectedClass.courseCode)?.assessments.filter((assessment) => (
       assessment.scheduleType === selectedClass.scheduleType
     )) ?? [];
@@ -166,12 +209,15 @@ export async function getTimetableDataFromClassIdentifiers(
     left.eventDate.localeCompare(right.eventDate)
     || left.startTime.localeCompare(right.startTime)
   ));
+  classSessionEvents.sort((left, right) => left.eventDate.localeCompare(right.eventDate)
+    || left.startTime.localeCompare(right.startTime) || left.courseCode.localeCompare(right.courseCode));
 
   return {
     semester,
     semesterWeeks,
     selections: resolvedSelections,
     events,
+    classSessionEvents,
     clashes: detectTimetableClashes(events),
     unresolvedSelections,
   } satisfies TimetableData;

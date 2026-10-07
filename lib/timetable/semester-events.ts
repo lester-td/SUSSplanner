@@ -11,11 +11,7 @@ export function isClassStartingInSemester(group: CourseClassRecord): boolean
 
 // A class can contain sessions spanning terms. Its semesterId alone does not
 // establish that every attached session belongs in the displayed timetable.
-export function filterEventsForSemester<T extends ClassEventWithWeekRecord>(
-  events: T[],
-  semester: SemesterRecord,
-  weeks: SemesterWeekRecord[] = [],
-): T[]
+export function getSemesterDateRange(semester: SemesterRecord)
 {
   const academicYear = semester.academicYear.match(/^(\d{4})\s*\/\s*(\d{4})$/);
   const nameYear = semester.semesterName.match(/\b(\d{4})$/)?.[1];
@@ -27,8 +23,20 @@ export function filterEventsForSemester<T extends ClassEventWithWeekRecord>(
       : `${year}-${semester.semesterNo === 2 ? "07" : "08"}-01`
     : null;
 
+  return { startDate, endDate };
+}
+
+export function filterEventsForSemester<T extends ClassEventWithWeekRecord>(
+  events: T[],
+  semester: SemesterRecord,
+  weeks: SemesterWeekRecord[] = [],
+): T[]
+{
+  const { startDate, endDate } = getSemesterDateRange(semester);
   return events.filter((event) => {
     if (event.semesterId !== semester.semesterId) return false;
+    if (event.isPreTerm && event.startSemesterId === semester.semesterId
+      && startDate && event.eventDate < startDate) return true;
     // Keep calendar-defined sessions, including a week zero that precedes the
     // nominal semester start. Match the date rather than trusting a week ID.
     if (weeks.some((week) => (

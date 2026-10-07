@@ -2,9 +2,10 @@
 
 import { forwardRef } from "react";
 
-import { CalendarIcon, ListIcon, SchoolIcon } from "@/components/planner/icons";
+import { CalendarIcon, ListIcon, PinIcon, SchoolIcon } from "@/components/planner/icons";
 import { ExamCalendar } from "@/components/timetable/exam-calendar";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
+import { formatCampusSummary } from "@/lib/timetable/campus";
 import { buildTimeSlots } from "@/lib/timetable/date-utils";
 import { getExportExamLabel, getExportTimeRange, type ExportCourse } from "@/lib/export/timetable-model";
 import type { ExamCard, SemesterRecord, TimetableBlock } from "@/lib/timetable/types";
@@ -94,6 +95,9 @@ export const TimetableExportCard = forwardRef<HTMLDivElement, TimetableExportCar
                     ) : null}
                     <div className="mt-1 space-y-0.5 text-[12px] leading-[18px] text-[var(--on-surface-variant)]">
                       <div className="flex items-start gap-1.5"><ListIcon className="mt-px h-4 w-4 shrink-0" /><span><span className="font-semibold text-[var(--on-surface)]">Group:</span> {course.groupCode}</span></div>
+                      {formatCampusSummary(course.campuses ?? []) ? (
+                        <div className="flex items-start gap-1.5"><PinIcon className="mt-px h-4 w-4 shrink-0" /><span><span className="font-semibold text-[var(--on-surface)]">Campus:</span> {formatCampusSummary(course.campuses ?? [])}</span></div>
+                      ) : null}
                       <div className="flex items-start gap-1.5"><CalendarIcon className="mt-px h-4 w-4 shrink-0" /><span>{course.examStatus === "dated" ? <><span className="font-semibold text-[var(--on-surface)]">Exam:</span> {getExportExamLabel(course)}</> : <span className="font-bold text-[var(--on-surface)]">{getExportExamLabel(course)}</span>}</span></div>
                       {course.examGuidance ? <div className="pl-[22px] text-[11px] leading-4">{course.examGuidance}</div> : null}
                       <div className="flex items-start gap-1.5"><SchoolIcon className="mt-px h-4 w-4 shrink-0" /><span><span className="font-semibold text-[var(--on-surface)]">Credit Units:</span> {(course.creditUnits ?? 0).toFixed(1)}</span></div>

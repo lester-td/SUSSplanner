@@ -1,7 +1,11 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
+  bigserial,
   boolean,
+  check,
   date,
+  index,
   integer,
   jsonb,
   numeric,
@@ -34,6 +38,8 @@ export const semesters = pgTable("semesters", {
   academicYear: varchar("academic_year", { length: 9 }).notNull(),
   semesterNo: smallint("semester_no").notNull(),
   semesterName: varchar("semester_name", { length: 100 }).notNull(),
+  isArchived: boolean("is_archived").notNull().default(false),
+  hasIntakeSchedule: boolean("has_intake_schedule").notNull().default(false),
   lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
 });
 
@@ -68,6 +74,27 @@ export const academicCalendarEventSemesters = pgTable("academic_calendar_event_s
   semesterId: bigint("semester_id", { mode: "number" }).notNull(),
 });
 
+export const announcements = pgTable("announcements", {
+  announcementId: bigserial("announcement_id", { mode: "number" }).primaryKey(),
+  message: text("message").notNull(),
+  linkUrl: text("link_url"),
+  linkLabel: varchar("link_label", { length: 100 }),
+  publishAt: timestamp("publish_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  enabled: boolean("enabled").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(1),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  check("chk_announcement_message", sql`btrim(${table.message}) <> ''`),
+  check("chk_announcement_dates", sql`${table.expiresAt} IS NULL OR ${table.expiresAt} > ${table.publishAt}`),
+  check("chk_announcement_link", sql`
+    (${table.linkUrl} IS NULL AND ${table.linkLabel} IS NULL)
+    OR (${table.linkUrl} IS NOT NULL AND ${table.linkLabel} IS NOT NULL
+      AND btrim(${table.linkUrl}) <> '' AND btrim(${table.linkLabel}) <> '')
+  `),
+  index("idx_announcements_publication").on(table.publishAt, table.sortOrder).where(sql`${table.enabled} = true`),
+]).enableRLS();
+
 export const classes = pgTable("classes", {
   classId: bigint("class_id", { mode: "number" }).primaryKey(),
   courseCode: varchar("course_code", { length: 20 }).notNull(),
@@ -75,6 +102,7 @@ export const classes = pgTable("classes", {
   scheduleType: varchar("schedule_type", { length: 20 }).notNull(),
   groupCodeType: varchar("group_code_type", { length: 10 }).notNull(),
   groupCode: varchar("group_code", { length: 20 }).notNull(),
+  language: varchar("language", { length: 50 }),
   availableAsGsp: boolean("available_as_gsp"),
   isRestricted: boolean("is_restricted"),
   remarks: text("remarks"),
@@ -90,7 +118,7 @@ export const classEvents = pgTable("class_events", {
   startTime: time("start_time").notNull(),
   endTime: time("end_time").notNull(),
   eventMode: varchar("event_mode", { length: 100 }),
-  venue: varchar("venue", { length: 255 }),
+  campus: varchar("campus", { length: 255 }),
   remarks: text("remarks"),
   lastUpdated: timestamp("last_updated", { withTimezone: true }).notNull(),
 });
@@ -121,7 +149,7 @@ export const vClassEventsWithWeek = pgTable("v_class_events_with_week", {
   startTime: time("start_time"),
   endTime: time("end_time"),
   eventMode: varchar("event_mode", { length: 100 }),
-  venue: varchar("venue", { length: 255 }),
+  campus: varchar("campus", { length: 255 }),
   remarks: text("remarks"),
   weekId: bigint("week_id", { mode: "number" }),
   weekNo: smallint("week_no"),

@@ -1,6 +1,7 @@
 "use client";
 
 import { formatEventDate, formatTimeRange } from "@/lib/timetable/date-utils";
+import { formatCampusNames, getEventCampusCodes } from "@/lib/timetable/campus";
 import type { SemesterRecord, TimetableClash, TimetableEventRecord } from "@/lib/timetable/types";
 
 function addTextElement(parent: HTMLElement, tag: string, className: string, value: string)
@@ -40,8 +41,9 @@ function buildEventListing(doc: Document, semester: SemesterRecord | null, event
     addTextElement(heading, "strong", "", `${event.courseLabel ?? event.courseCode} (${event.groupCode})`);
     addTextElement(heading, "span", "", formatTimeRange(event.startTime, event.endTime));
     row.appendChild(heading);
-    const details = [event.courseName, event.eventMode ? `Mode: ${event.eventMode}` : null,
-      event.venue ? `Venue: ${event.venue}` : null, event.weekLabel ? `Week: ${event.weekLabel}` : null,
+    const campuses = getEventCampusCodes(event);
+    const details = [event.courseName, campuses.length ? `Campus: ${formatCampusNames(campuses)}` : null,
+      event.weekLabel ? `Week: ${event.weekLabel}` : null,
       event.remarks ? `Notes: ${event.remarks}` : null].filter(Boolean).join(" · ");
     if (details) addTextElement(row, "p", "print-events__details", details);
     listing.appendChild(row);
