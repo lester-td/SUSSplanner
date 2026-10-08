@@ -754,8 +754,10 @@ without `--force`), `stale` (retained after a failed refresh), `missing` (no cou
 PDF available), and `failed` (download failed with no retained input).
 
 Missing responses, including HTTP 404/410 and the endpoint's No Record Found
-responses, remove any existing target PDF. Network errors, server errors, and
-unexpected HTML retain the old PDF as `stale` and exclude it from manifest-based
+responses, remove any existing target PDF. PDFs under 5 KB are classified as
+missing only when their extracted text contains only No Record Found; otherwise
+they are failed refreshes. Network errors, server errors, unverified small PDFs,
+and unexpected HTML retain the old PDF as `stale` and exclude it from manifest-based
 parsing. Download failures return a non-zero exit status after writing the reports.
 The interactive course refresh stops before parsing when a download fails.
 

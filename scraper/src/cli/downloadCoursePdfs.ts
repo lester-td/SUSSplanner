@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs, optionalBool, optionalString } from "../lib/args.js";
 import { resolveInputCourseCodes } from "../lib/courseCodeFilter.js";
 import { COURSE_DOWNLOAD_MANIFEST, type VariantDownloadResult } from "../lib/courseDownloadManifest.js";
+import { extractPdfTextFromBuffer } from "../lib/pdf.js";
 import type { ScheduleType } from "../lib/types.js";
 import { buildCourseDetailPdfUrl, isftForScheduleType } from "../parsers/courseDetailPdf.js";
 
@@ -77,10 +78,18 @@ async function fetchPdf(url: string): Promise<{ status: "ok" | "not_found" | "fa
     return { status: noRecord ? "not_found" : "failed", reason };
   }
 
-  // The SUSS endpoint can return a tiny valid PDF containing only "No Record Found".
-  // Real course PDFs are much larger; do not save these placeholder PDFs as course data.
+  // Size alone cannot prove that a course is missing. Verify small placeholders
+  // through their extracted text before allowing an existing PDF to be removed.
   if (buffer.length < 5_000) {
-    return { status: "not_found", reason: `PDF is only ${buffer.length} bytes; likely No Record Found placeholder` };
+    try {
+      const text = await extractPdfTextFromBuffer(buffer);
+      if (/^\s*No\s+Record\s+Found\s*$/i.test(text)) {
+        return { status: "not_found", reason: "PDF contains only No Record Found" };
+      }
+    } catch (error) {
+      return { status: "failed", reason: `Could not verify small PDF (${buffer.length} bytes): ${(error as Error).message}` };
+    }
+    return { status: "failed", reason: `Unverified small PDF (${buffer.length} bytes); missing course not confirmed` };
   }
 
   return { status: "ok", buffer };

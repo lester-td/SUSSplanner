@@ -6,6 +6,7 @@ import path from "node:path";
 import { it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { deflateSync } from "node:zlib";
 import { downloadVariant } from "./downloadCoursePdfs.js";
 import { loadCourseDownloadManifest, type VariantDownloadResult } from "../lib/courseDownloadManifest.js";
 import { loadCourseCodeFilter } from "../lib/courseCodeFilter.js";
@@ -15,11 +16,41 @@ const loader = import.meta.resolve("tsx");
 const freshPdf = `%PDF${"fresh content ".repeat(500)}`;
 const oldPdf = "%PDF old course details";
 
+// Real compressed PDFs exercise content verification without extra dependencies.
+function smallPdf(text: string): Buffer {
+  const stream = deflateSync(Buffer.from(`BT /F1 12 Tf 30 400 Td (${text}) Tj ET`));
+  const objects = [
+    Buffer.from("<< /Type /Catalog /Pages 2 0 R >>"),
+    Buffer.from("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+    Buffer.from("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>"),
+    Buffer.from("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),
+    Buffer.concat([Buffer.from(`<< /Length ${stream.length} /Filter /FlateDecode >>\nstream\n`), stream, Buffer.from("\nendstream")]),
+  ];
+  const chunks = [Buffer.from("%PDF-1.4\n")];
+  const offsets = [0];
+  let length = chunks[0].length;
+  for (const [index, object] of objects.entries()) {
+    offsets.push(length);
+    const chunk = Buffer.concat([Buffer.from(`${index + 1} 0 obj\n`), object, Buffer.from("\nendobj\n")]);
+    chunks.push(chunk);
+    length += chunk.length;
+  }
+  chunks.push(Buffer.from(`xref\n0 ${offsets.length}\n0000000000 65535 f \n${offsets.slice(1).map(offset =>
+    `${String(offset).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${length}\n%%EOF\n`));
+  return Buffer.concat(chunks);
+}
+
+const smallCoursePdf = smallPdf("ACC201 Accounting: 5 Credit Units. Course Synopsis: Financial accounting.");
+const placeholderPdf = smallPdf("No Record Found");
+
 for (const scenario of [
   { name: "HTTP 404", response: () => new Response("missing", { status: 404 }), status: "not_found", state: "missing" },
   { name: "HTTP 410", response: () => new Response("gone", { status: 410 }), status: "not_found", state: "missing" },
   { name: "No Record Found HTML", response: () => new Response("<p>No Record Found</p>", { headers: { "content-type": "text/html" } }), status: "not_found", state: "missing" },
-  { name: "placeholder PDF", response: () => new Response("%PDF No Record Found"), status: "not_found", state: "missing" },
+  { name: "compressed placeholder PDF", response: () => new Response(placeholderPdf), status: "not_found", state: "missing" },
+  { name: "small genuine PDF", response: () => new Response(smallCoursePdf), status: "failed", state: "stale" },
+  { name: "truncated PDF", response: () => new Response("%PDF-1.4\ntruncated"), status: "failed", state: "stale" },
+  { name: "unreadable PDF mentioning No Record Found", response: () => new Response("%PDF No Record Found"), status: "failed", state: "stale" },
   { name: "HTTP 503", response: () => new Response("unavailable", { status: 503 }), status: "failed", state: "stale" },
   { name: "HTTP 429", response: () => new Response("rate limited", { status: 429 }), status: "failed", state: "stale" },
   { name: "unexpected HTML", response: () => new Response("<p>Temporary maintenance</p>", { headers: { "content-type": "text/html" } }), status: "failed", state: "stale" },
@@ -54,7 +85,7 @@ it("a non-forced download accepts an existing valid PDF without fetching", async
   assert.equal(fetchMock.mock.callCount(), 0);
 });
 
-it("the downloader writes fresh, stale, missing and failed states before returning non-zero", async t => {
+it("the downloader reports unverified small PDFs as stale or failed before returning non-zero", async t => {
   const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "suss-course-report-"));
   t.after(() => fs.rm(cwd, { recursive: true, force: true }));
   await fs.mkdir(path.join(cwd, "pdfs/daytime"), { recursive: true });
@@ -66,7 +97,7 @@ it("the downloader writes fresh, stale, missing and failed states before returni
     const url = new URL(input);
     if (url.searchParams.get('crsecd') === 'BUS101') return new Response('missing', { status: 404 });
     if (url.searchParams.get('crsecd') === 'ACC201' && url.searchParams.get('isft') === '1') return new Response(${JSON.stringify(freshPdf)});
-    throw new Error('network unavailable');
+    return new Response(Buffer.from('${smallCoursePdf.toString("base64")}', 'base64'));
   };`);
   await assert.rejects(execFileAsync(process.execPath, [
     "--import", mockPath, "--import", loader, fileURLToPath(new URL("./downloadCoursePdfs.ts", import.meta.url)),
@@ -74,6 +105,9 @@ it("the downloader writes fresh, stale, missing and failed states before returni
   ], { cwd }), (error: unknown) => (error as { code: number }).code === 1);
   const manifest: VariantDownloadResult[] = JSON.parse(await fs.readFile(path.join(cwd, "data/output/courses/downloads.json"), "utf8"));
   assert.deepEqual(manifest.map(row => row.inputState), ["fresh", "stale", "missing", "missing", "failed", "failed"]);
+  for (const row of manifest.filter(row => row.status === "failed")) {
+    assert.match(row.error ?? "", /Unverified small PDF/);
+  }
   assert.equal(await fs.readFile(path.join(cwd, "pdfs/evening/ACC201.pdf"), "utf8"), oldPdf);
   await assert.rejects(fs.access(path.join(cwd, "pdfs/daytime/BUS101.pdf")));
   const report = await fs.readFile(path.join(cwd, "data/output/courses/download-report.tsv"), "utf8");
