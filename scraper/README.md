@@ -617,9 +617,10 @@ Curriculum parsing processes all plans and does not apply course filters:
 --code-prefix TLL           every course code beginning with the prefix
 ```
 
-Multiple prefixes can be comma-separated, for example `--code-prefix TLL,TSL`. On conversion
-commands, multiple selectors use union semantics: a course is included when it matches any
-exact code or prefix.
+Multiple prefixes can be comma-separated, for example `--code-prefix TLL,TSL`. Multiple
+selectors use union semantics across these commands: a course is included when it matches
+any exact code from `--codes` or an explicit `--codes-file`, or any prefix. Duplicate codes
+are removed case-insensitively when resolving download inputs.
 
 For example, generate schedule JSON and SQL containing only `TLL` courses:
 
@@ -636,6 +637,8 @@ The filters are supported by `scrape:schedule`, `scrape:all`, `download:courses`
 `parse:courses`, `courses-json-to-sql`, and `schedule-json-to-sql`. Commands that load
 course codes for downloading use `data/output/schedules/course-codes.txt` as the prefix-search
 universe unless another `--codes-file` is supplied; inline `--codes` are added to that universe.
+An explicit `--codes-file` contributes all of its codes, even when inline codes or prefixes
+are also supplied. Inline `--codes` alone are self-contained and do not read the default file.
 
 Run:
 
