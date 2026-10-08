@@ -739,13 +739,22 @@ data/output/courses/download-report.tsv
 data/output/courses/downloads.json
 ```
 
-The report has three main columns:
+The report includes availability, download status, and input state for each variant:
 
 ```text
-course_code    daytime    evening
+course_code    daytime    evening    daytime_status    evening_status    daytime_input_state    evening_input_state
 ```
 
-A tick/check means that version was downloaded.
+A tick/check means that version was downloaded or accepted from the local cache.
+Input states are `fresh` (downloaded this run), `cached` (valid local PDF accepted
+without `--force`), `stale` (retained after a failed refresh), `missing` (no course
+PDF available), and `failed` (download failed with no retained input).
+
+Missing responses, including HTTP 404/410 and the endpoint's No Record Found
+responses, remove any existing target PDF. Network errors, server errors, and
+unexpected HTML retain the old PDF as `stale` and exclude it from manifest-based
+parsing. Download failures return a non-zero exit status after writing the reports.
+The interactive course refresh stops before parsing when a download fails.
 
 Review it before parsing or importing course data:
 
@@ -770,12 +779,26 @@ Run:
 
 ```bash
 npm run parse:courses -- \
+  --download-manifest data/output/courses/downloads.json \
   --pdf-dir data/input/courses \
   --codes-file data/output/schedules/course-codes.txt \
   --out data/output/courses/course-details.sql \
   --json data/output/courses/course-details.json \
   --issues-out data/output/courses/parse-issues.tsv
 ```
+
+`--download-manifest` makes the current download run the source of truth: only
+`downloaded` and `skipped` course variants are parsed, using their recorded PDF
+paths. Paths in new manifests are absolute; relative paths in older manifests
+resolve from the command's working directory. Course filters can further restrict
+these accepted entries. Stale, missing, and failed entries appear in the parse
+issues report. Failed downloads also make this parse command return non-zero,
+even when it writes partial output from accepted inputs. An empty manifest never
+falls back to scanning the PDF directory.
+
+The interactive workflow always passes this manifest. Omit `--download-manifest`
+only for a standalone parse of manually selected local PDFs; directory scanning
+does not establish whether those files were refreshed successfully.
 
 ### Automatically OCR unresolved Tamil CID glyphs
 
@@ -1056,6 +1079,7 @@ npm run download:courses -- \
 npm run parse:courses -- \
   --pdf-dir data/input/courses \
   --codes-file data/output/schedules/course-codes.txt \
+  --download-manifest data/output/courses/downloads.json \
   --out data/output/courses/course-details.sql \
   --json data/output/courses/course-details.json \
   --issues-out data/output/courses/parse-issues.tsv

@@ -1,18 +1,12 @@
 import fs from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs, optionalBool, optionalString } from "../lib/args.js";
 import { resolveInputCourseCodes } from "../lib/courseCodeFilter.js";
+import { COURSE_DOWNLOAD_MANIFEST, type VariantDownloadResult } from "../lib/courseDownloadManifest.js";
 import type { ScheduleType } from "../lib/types.js";
 import { buildCourseDetailPdfUrl, isftForScheduleType } from "../parsers/courseDetailPdf.js";
-
-interface VariantDownloadResult {
-  courseCode: string;
-  scheduleType: ScheduleType;
-  url: string;
-  pdfPath: string;
-  status: "downloaded" | "skipped" | "not_found" | "failed";
-  error?: string;
-}
 
 interface CourseDownloadReportRow {
   courseCode: string;
@@ -20,6 +14,8 @@ interface CourseDownloadReportRow {
   evening: boolean;
   daytimeStatus: string;
   eveningStatus: string;
+  daytimeInputState: string;
+  eveningInputState: string;
 }
 
 const VARIANTS: Array<{ scheduleType: ScheduleType; isft: 0 | 1 }> = [
@@ -39,8 +35,9 @@ async function readExistingPdfStatus(filePath: string): Promise<"missing" | "val
   try {
     const buffer = await fs.readFile(filePath);
     return looksLikePdf(buffer) ? "valid" : "invalid";
-  } catch {
-    return "missing";
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return "missing";
+    throw error;
   }
 }
 
@@ -59,17 +56,25 @@ async function fetchPdf(url: string): Promise<{ status: "ok" | "not_found" | "fa
   }
 
   const contentType = response.headers.get("content-type") ?? "";
-  const buffer = Buffer.from(await response.arrayBuffer());
-
   if (!response.ok) {
-    return { status: "failed", reason: `HTTP ${response.status} ${response.statusText}` };
+    return {
+      status: response.status === 404 || response.status === 410 ? "not_found" : "failed",
+      reason: `HTTP ${response.status} ${response.statusText}`
+    };
   }
 
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(await response.arrayBuffer());
+  } catch (error) {
+    return { status: "failed", reason: (error as Error).message };
+  }
   if (!looksLikePdf(buffer)) {
     const reason = contentType.toLowerCase().includes("html")
       ? `HTML response (${contentType || "unknown content-type"})`
       : `Non-PDF response (${contentType || "unknown content-type"})`;
-    return { status: "not_found", reason };
+    const noRecord = /\bNo\s+Record\s+Found\b/i.test(buffer.toString("utf8"));
+    return { status: noRecord ? "not_found" : "failed", reason };
   }
 
   // The SUSS endpoint can return a tiny valid PDF containing only "No Record Found".
@@ -81,7 +86,7 @@ async function fetchPdf(url: string): Promise<{ status: "ok" | "not_found" | "fa
   return { status: "ok", buffer };
 }
 
-async function downloadVariant(
+export async function downloadVariant(
   courseCode: string,
   scheduleType: ScheduleType,
   outDir: string,
@@ -90,13 +95,13 @@ async function downloadVariant(
   const isft = isftForScheduleType(scheduleType);
   const url = buildCourseDetailPdfUrl(courseCode, isft);
   const pdfDir = path.join(outDir, scheduleType);
-  const pdfPath = path.join(pdfDir, `${courseCode}.pdf`);
+  const pdfPath = path.resolve(pdfDir, `${courseCode}.pdf`);
 
   await fs.mkdir(pdfDir, { recursive: true });
 
   const existingStatus = await readExistingPdfStatus(pdfPath);
   if (!force && existingStatus === "valid") {
-    return { courseCode, scheduleType, url, pdfPath, status: "skipped" };
+    return { courseCode, scheduleType, url, pdfPath, status: "skipped", inputState: "cached" };
   }
 
   if (existingStatus === "invalid") {
@@ -106,8 +111,32 @@ async function downloadVariant(
   const fetched = await fetchPdf(url);
 
   if (fetched.status === "ok" && fetched.buffer) {
-    await fs.writeFile(pdfPath, fetched.buffer);
-    return { courseCode, scheduleType, url, pdfPath, status: "downloaded" };
+    const temporaryPath = `${pdfPath}.${randomUUID()}.tmp`;
+    try {
+      await fs.writeFile(temporaryPath, fetched.buffer);
+      await fs.rename(temporaryPath, pdfPath);
+    } catch (error) {
+      return {
+        courseCode, scheduleType, url, pdfPath, status: "failed",
+        inputState: existingStatus === "missing" ? "failed" : "stale",
+        error: `Could not save PDF: ${(error as Error).message}`
+      };
+    } finally {
+      await fs.rm(temporaryPath, { force: true }).catch(() => {});
+    }
+    return { courseCode, scheduleType, url, pdfPath, status: "downloaded", inputState: "fresh" };
+  }
+
+  if (fetched.status === "not_found") {
+    try {
+      await fs.rm(pdfPath, { force: true });
+    } catch (error) {
+      return {
+        courseCode, scheduleType, url, pdfPath, status: "failed",
+        inputState: existingStatus === "missing" ? "failed" : "stale",
+        error: `${fetched.reason}; could not remove obsolete PDF: ${(error as Error).message}`
+      };
+    }
   }
 
   return {
@@ -116,6 +145,7 @@ async function downloadVariant(
     url,
     pdfPath,
     status: fetched.status === "failed" ? "failed" : "not_found",
+    inputState: fetched.status === "not_found" ? "missing" : existingStatus === "missing" ? "failed" : "stale",
     error: fetched.reason
   };
 }
@@ -140,21 +170,24 @@ function buildReportRows(courseCodes: string[], results: VariantDownloadResult[]
       daytime: isAvailable(daytime),
       evening: isAvailable(evening),
       daytimeStatus: daytime?.status ?? "not_run",
-      eveningStatus: evening?.status ?? "not_run"
+      eveningStatus: evening?.status ?? "not_run",
+      daytimeInputState: daytime?.inputState ?? "not_run",
+      eveningInputState: evening?.inputState ?? "not_run"
     };
   });
 }
 
 function formatReport(rows: CourseDownloadReportRow[]): string {
-  const header = ["course_code", "daytime", "evening"].join("\t");
-  const body = rows.map(row => [row.courseCode, row.daytime ? "✓" : "", row.evening ? "✓" : ""].join("\t"));
+  const header = ["course_code", "daytime", "evening", "daytime_status", "evening_status", "daytime_input_state", "evening_input_state"].join("\t");
+  const body = rows.map(row => [row.courseCode, row.daytime ? "✓" : "", row.evening ? "✓" : "",
+    row.daytimeStatus, row.eveningStatus, row.daytimeInputState, row.eveningInputState].join("\t"));
   return [header, ...body].join("\n") + "\n";
 }
 
 async function main(): Promise<void> {
   const args = parseArgs();
   const outDir = optionalString(args, "out-dir") ?? "data/input/courses";
-  const manifestOut = optionalString(args, "manifest-out") ?? "data/output/courses/downloads.json";
+  const manifestOut = optionalString(args, "manifest-out") ?? COURSE_DOWNLOAD_MANIFEST;
   const reportOut = optionalString(args, "report-out") ?? "data/output/courses/download-report.tsv";
   const force = optionalBool(args, "force");
   const delayMs = Number(optionalString(args, "delay-ms") ?? "250");
@@ -179,7 +212,7 @@ async function main(): Promise<void> {
       } else if (result.status === "skipped") {
         console.log(`Skipping ${courseCode} (${variant.scheduleType}); valid PDF already exists at ${result.pdfPath}`);
       } else {
-        console.warn(`No valid PDF for ${courseCode} (${variant.scheduleType}): ${result.error ?? result.status}`);
+        console.warn(`Excluded ${courseCode} (${variant.scheduleType}, ${result.inputState}): ${result.error ?? result.status}`);
       }
 
       if (delayMs > 0) await sleep(delayMs);
@@ -203,13 +236,20 @@ async function main(): Promise<void> {
   console.log(`Course codes processed: ${courseCodes.length}`);
   console.log(`Downloaded: ${counts.downloaded ?? 0}`);
   console.log(`Skipped existing valid PDFs: ${counts.skipped ?? 0}`);
-  console.log(`No PDF / HTML response: ${counts.not_found ?? 0}`);
+  console.log(`Missing PDFs: ${counts.not_found ?? 0}`);
   console.log(`Failed: ${counts.failed ?? 0}`);
+  console.log(`Stale PDFs retained and excluded: ${results.filter(item => item.inputState === "stale").length}`);
   console.log(`Download JSON written to: ${manifestOut}`);
   console.log(`Download report written to: ${reportOut}`);
+  if (counts.failed) {
+    console.error("Course downloads failed; refresh is incomplete. Review the reports and retry before parsing.");
+    process.exitCode = 1;
+  }
 }
 
-main().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
