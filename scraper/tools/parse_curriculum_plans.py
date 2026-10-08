@@ -35,7 +35,7 @@ except ModuleNotFoundError:
 
 
 COURSE_CODE_RE = re.compile(r"^([A-Z]{2,6}[0-9]{3}[A-Za-z0-9]*)(?:\s+|$)(.*)$")
-COURSE_CODE_IN_TEXT_RE = re.compile(r"\b[A-Z]{2,6}[0-9]{3}[A-Za-z0-9]*\b")
+COURSE_CODE_IN_TEXT_RE = re.compile(r"\b[A-Z]{2,6}[0-9]{3}[A-Za-z0-9]*\b", re.IGNORECASE)
 SECTION_CU_RE = re.compile(r"(?:-|–)\s*([0-9]+(?:\.[0-9]+)?)\s*cu\b", re.IGNORECASE)
 SECTION_NAME_RE = re.compile(
     r"\b(compulsory|elective|core|major|minor|track|specialisation|specialization|basket|"
@@ -88,6 +88,10 @@ def course_codes(value: str | None) -> list[str]:
         return []
     repaired = repair_course_code_spacing(value)
     return list(dict.fromkeys(match.group(0) for match in COURSE_CODE_IN_TEXT_RE.finditer(repaired)))
+
+
+def normalized_course_code(value: str) -> str:
+    return repair_course_code_spacing(clean(value).upper())
 
 
 def parse_presentation_periods(header: str) -> list[dict[str, Any]]:
@@ -686,6 +690,11 @@ def prerequisite_condition(raw_text: str, residual: str) -> dict[str, Any]:
 
 
 def prerequisite_rule(raw_text: str, codes: list[str]) -> tuple[str, str, dict[str, Any]]:
+    source_condition = prerequisite_condition(raw_text, clean(raw_text))
+    if "co_enrollment" in source_condition["conditionTypes"]:
+        # Course references in these passages do not establish prior completion.
+        # Preserve the whole passage for review rather than guessing clause scope.
+        return "condition", "review_required", source_condition
     residual = prerequisite_residual(raw_text, codes)
     has_and = re.search(r"\band\b|&", raw_text, flags=re.IGNORECASE) is not None
     has_or = re.search(r"\bor\b", raw_text, flags=re.IGNORECASE) is not None
@@ -710,6 +719,12 @@ def prerequisite_rule(raw_text: str, codes: list[str]) -> tuple[str, str, dict[s
         "type": node_type,
         "children": children,
     }
+
+
+def prerequisite_rule_codes(rule: dict[str, Any]) -> list[str]:
+    if rule["type"] == "course":
+        return [rule["courseCode"]]
+    return [code for child in rule.get("children", []) for code in prerequisite_rule_codes(child)]
 
 
 def active_replacement_pairs(current_course_code: str, remarks: str | None) -> list[tuple[str, str]]:
@@ -863,8 +878,13 @@ def build_product_models(
 
         raw_prerequisite = entry.get("prerequisite")
         if raw_prerequisite:
-            codes = course_codes(raw_prerequisite)
+            extracted_codes = course_codes(raw_prerequisite)
+            self_references = [code for code in extracted_codes
+                               if normalized_course_code(code) == normalized_course_code(course_code)]
+            codes = [code for code in extracted_codes if code not in self_references]
             operator, parse_status, rule_json = prerequisite_rule(raw_prerequisite, codes)
+            if self_references:
+                parse_status = "review_required"
             if issues is not None and parse_status != "parsed":
                 conditions = [rule_json] if rule_json["type"] == "condition" else [
                     node for node in rule_json.get("children", []) if node["type"] == "condition"
@@ -876,6 +896,11 @@ def build_product_models(
                     f"Unsupported prerequisite conditions retained for review: {details}"
                     if conditions else f"Unsupported prerequisite course logic requires review: {raw_prerequisite}"
                 )
+                if self_references:
+                    message = (
+                        f"Self-reference to {course_code} excluded from prerequisite courses "
+                        f"(review_required). {message}"
+                    )
                 issues.append({
                     "planKey": plan_key_value,
                     "courseCode": course_code,
@@ -897,7 +922,7 @@ def build_product_models(
                 "ruleKey": rule_key,
                 "prerequisiteCourseCode": prerequisite_code,
                 "sortOrder": index,
-            } for index, prerequisite_code in enumerate(codes, start=1))
+            } for index, prerequisite_code in enumerate(prerequisite_rule_codes(rule_json), start=1))
 
         raw_exclusion = entry.get("excludedCombination")
         for excluded_code in course_codes(raw_exclusion):
@@ -968,7 +993,23 @@ def sql_number(value: object) -> str:
     return "NULL" if value is None else str(value)
 
 
+def validate_prerequisites(models: dict[str, list[dict[str, Any]]]) -> None:
+    rules = {rule["ruleKey"]: rule for rule in models["prerequisiteRules"]}
+    for rule in rules.values():
+        for code in prerequisite_rule_codes(rule["rule"]):
+            if normalized_course_code(code) == normalized_course_code(rule["courseCode"]):
+                raise ValueError(f"Self-prerequisite in rule {rule['ruleKey']}: {code}")
+    for prerequisite in models["prerequisites"]:
+        rule = rules.get(prerequisite["ruleKey"])
+        if rule is None:
+            raise ValueError(f"Unknown prerequisite rule: {prerequisite['ruleKey']}")
+        code = prerequisite["prerequisiteCourseCode"]
+        if normalized_course_code(code) == normalized_course_code(rule["courseCode"]):
+            raise ValueError(f"Self-prerequisite in rule {rule['ruleKey']}: {code}")
+
+
 def generate_sql(models: dict[str, list[dict[str, Any]]]) -> str:
+    validate_prerequisites(models)
     plan_keys = [plan["planKey"] for plan in models["plans"]]
     plan_key_list = ", ".join(sql_string(value) for value in plan_keys)
     lines = [

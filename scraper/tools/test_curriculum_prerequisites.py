@@ -83,6 +83,87 @@ class CurriculumPrerequisiteTests(unittest.TestCase):
                 self.assertEqual(rule["text"], text)
                 self.assertEqual(rule["sourceText"], text)
 
+    def test_ece_co_enrollment_never_creates_prerequisite_edges(self):
+        fixture = next(item for item in FIXTURES if item["courseCode"] == "ECE490")
+        for code in ["ECE490", "ECE499", "ece490", "ece499"]:
+            with self.subTest(course=code):
+                entry = source_entry({**fixture, "courseCode": code})
+                issues = []
+                models = curriculum.build_product_models([PLAN], [entry], issues)
+                rule = models["prerequisiteRules"][0]
+                self.assertEqual(rule["parseStatus"], "review_required")
+                self.assertEqual(rule["operator"], "condition")
+                self.assertEqual(curriculum.prerequisite_rule_codes(rule["rule"]), [])
+                self.assertEqual(models["prerequisites"], [])
+                self.assertEqual(rule["rule"]["text"], fixture["prerequisite"])
+                self.assertIn("co_enrollment", rule["rule"]["conditionTypes"])
+                self.assertEqual(len(issues), 1)
+                self.assertIn("Self-reference", issues[0]["issue"])
+                self.assertIn("review_required", issues[0]["issue"])
+                self.assertIn("co_enrollment", issues[0]["issue"])
+                self.assertEqual(issues[0]["sourcePage"], fixture["sourcePage"])
+                sql = curriculum.generate_sql(models)
+                self.assertNotIn("INSERT INTO curriculum_prerequisites", sql)
+                self.assertIn(fixture["prerequisite"], sql)
+                with tempfile.TemporaryDirectory() as directory:
+                    report = Path(directory) / "issues.tsv"
+                    curriculum.write_issues(report, issues)
+                    self.assertIn(f"fixture-plan\t{code}\t3\twarning\tSelf-reference", report.read_text())
+
+    def test_self_references_are_removed_but_real_prerequisites_remain(self):
+        for code, text, expected in [
+            ("ECE490", "ECE490", []),
+            ("ECE490", "ece490 and ACC201", ["ACC201"]),
+            ("ece490", "ECE490 and ACC201", ["ACC201"]),
+            ("HB C105", "HBC105 and ACC201", ["ACC201"]),
+            ("bus557ae", "BUS557Ae and ACC201", ["ACC201"]),
+        ]:
+            with self.subTest(course=code, text=text):
+                issues = []
+                models = curriculum.build_product_models([PLAN], [source_entry({
+                    "courseCode": code, "prerequisite": text,
+                })], issues)
+                rule = models["prerequisiteRules"][0]
+                self.assertEqual(rule["parseStatus"], "review_required")
+                self.assertEqual(curriculum.prerequisite_rule_codes(rule["rule"]), expected)
+                self.assertEqual([edge["prerequisiteCourseCode"] for edge in models["prerequisites"]], expected)
+                self.assertEqual(rule["rawText"], text)
+                self.assertIn("Self-reference", issues[0]["issue"])
+                curriculum.generate_sql(models)
+
+    def test_co_enrollment_without_self_reference_preserves_the_whole_passage(self):
+        for text in ["Co-enrol in ACC201 and BUS101",
+                     "ACC201 with concurrent enrollment in BUS101",
+                     "Complete ACC201 and take BUS101 at the same time"]:
+            with self.subTest(text=text):
+                issues = []
+                models = curriculum.build_product_models([PLAN], [source_entry({
+                    "courseCode": "ECE490", "prerequisite": text,
+                })], issues)
+                self.assertEqual(models["prerequisites"], [])
+                rule = models["prerequisiteRules"][0]
+                self.assertEqual(rule["rule"]["text"], text)
+                self.assertEqual(rule["parseStatus"], "review_required")
+                self.assertIn("co_enrollment", issues[0]["issue"])
+
+    def test_sql_generation_rejects_self_edges_and_nested_course_nodes(self):
+        entry = source_entry({"courseCode": "ECE499", "prerequisite": "ECE490"})
+        issues = []
+        models = curriculum.build_product_models([PLAN], [entry], issues)
+        self.assertEqual(models["prerequisiteRules"][0]["parseStatus"], "parsed")
+        self.assertEqual(models["prerequisites"][0]["prerequisiteCourseCode"], "ECE490")
+        self.assertEqual(issues, [])
+        curriculum.generate_sql(models)
+        models["prerequisites"][0]["prerequisiteCourseCode"] = " ece499 "
+        with self.assertRaisesRegex(ValueError, "Self-prerequisite"):
+            curriculum.generate_sql(models)
+        models["prerequisites"][0]["prerequisiteCourseCode"] = "ECE490"
+        models["prerequisiteRules"][0]["rule"]["children"].append({
+            "type": "any", "children": [{"type": "course", "courseCode": "ece499"}],
+        })
+        with self.assertRaisesRegex(ValueError, "Self-prerequisite"):
+            curriculum.generate_sql(models)
+
     def test_course_only_rules_remain_parsed(self):
         cases = [
             ("ACC201", "single"),
@@ -171,6 +252,10 @@ class CurriculumPrerequisiteTests(unittest.TestCase):
             self.assertEqual(payload["metadata"]["issueCount"], len(FIXTURES))
             self.assertEqual(len(payload["review"]["issues"]), len(FIXTURES))
             self.assertTrue(all(rule["parseStatus"] == "review_required" for rule in payload["prerequisiteRules"]))
+            ece_rule = next(rule for rule in payload["prerequisiteRules"] if rule["courseCode"] == "ECE490")
+            self.assertEqual(ece_rule["rule"]["type"], "condition")
+            self.assertFalse(any(edge["ruleKey"] == ece_rule["ruleKey"] for edge in payload["prerequisites"]))
+            self.assertIn("Self-reference to ECE490", (root / "issues.tsv").read_text(encoding="utf-8"))
             self.assertIn("prior_learning", (root / "issues.tsv").read_text(encoding="utf-8"))
 
 

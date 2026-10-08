@@ -933,6 +933,13 @@ checks; unfamiliar conditions also require review. The original text remains in 
 and the condition's `sourceText`, and the issue report includes the residual wording and
 source page. Only fully represented course-only rules use `parsed`.
 
+Self-references are excluded from prerequisite rules and edges and produce a
+`review_required` issue. Co-enrollment wording (including "at the same time") is retained
+as a condition with its full source text and emits no prerequisite edges. Passages mixing
+completion and co-enrollment requirements remain entirely under review until their clause
+scope can be established. SQL generation also rejects self-dependencies in rule nodes or
+edges before producing an import.
+
 Run the curriculum prerequisite regression tests with the Python virtual environment
 activated:
 
