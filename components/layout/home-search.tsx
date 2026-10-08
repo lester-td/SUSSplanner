@@ -1,16 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Fuse from "fuse.js";
 
-import { ArrowUpRightIcon, SearchIcon } from "@/components/planner/icons";
+import { SearchIcon } from "@/components/planner/icons";
 
 export type HomeSearchItem = {
   label: string;
   description: string;
   href: string;
   keywords?: readonly string[];
+};
+
+type CourseSearchApiResult = {
+  courseCode: string;
+  courseName: string | null;
+  schoolName: string | null;
+  creditUnits: number | null;
 };
 
 type HomeSearchDocument = {
@@ -66,6 +73,39 @@ function isMailLink(href: string)
   return href.startsWith("mailto:");
 }
 
+function getResultType(href: string)
+{
+  if (isMailLink(href))
+  {
+    return "Email";
+  }
+
+  if (isInternalLink(href))
+  {
+    if (href.startsWith("/#upcoming-date-"))
+    {
+      return "Upcoming Dates";
+    }
+
+    return href === "/courses" || href.startsWith("/courses/") || href.startsWith("/courses?")
+      ? "Course Search"
+      : "SUSS Planner";
+  }
+
+  try
+  {
+    const hostname = new URL(href).hostname.toLowerCase();
+
+    return hostname.includes("suss")
+      ? "SUSS Website"
+      : "External Link";
+  }
+  catch
+  {
+    return "External Link";
+  }
+}
+
 export function HomeSearch({
   items,
   placeholder = "Search pages, actions, courses, or useful links",
@@ -80,6 +120,7 @@ export function HomeSearch({
 {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [courseMatches, setCourseMatches] = useState<HomeSearchItem[]>([]);
   const trimmedQuery = query.trim();
   const normalizedQuery = normalizeSearchText(query);
   const compactQuery = compactSearchText(query);
@@ -134,16 +175,77 @@ export function HomeSearch({
       .slice(0, 6)
       .map(({ item }) => item);
   }, [compactQuery, fuse, items, normalizedQuery, showSuggestionsOnEmpty]);
+
+  useEffect(() => {
+    if (trimmedQuery.length < 2)
+    {
+      setCourseMatches([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      const requestQuery = new URLSearchParams({ q: trimmedQuery });
+
+      fetch(`/api/courses/search?${requestQuery}`, { signal: controller.signal })
+        .then((response) => {
+          if (!response.ok)
+          {
+            throw new Error("Unable to search courses.");
+          }
+
+          return response.json() as Promise<{ courses: CourseSearchApiResult[] }>;
+        })
+        .then((payload) => {
+          setCourseMatches(payload.courses.slice(0, 3).map((course) => ({
+            label: course.courseName
+              ? `${course.courseCode} — ${course.courseName}`
+              : course.courseCode,
+            description: [
+              course.schoolName,
+              course.creditUnits === null ? null : `${course.creditUnits} CU`,
+            ].filter(Boolean).join(" · ") || "View course details.",
+            href: `/courses/${encodeURIComponent(course.courseCode)}`,
+            keywords: ["course", "module", course.courseCode, course.courseName ?? ""],
+          })));
+        })
+        .catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === "AbortError"))
+          {
+            setCourseMatches([]);
+          }
+        });
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [trimmedQuery]);
+
+  const combinedMatches = useMemo(() => {
+    const itemsByHref = new Map<string, HomeSearchItem>();
+
+    for (const item of [...matches, ...courseMatches])
+    {
+      if (!itemsByHref.has(item.href))
+      {
+        itemsByHref.set(item.href, item);
+      }
+    }
+
+    return [...itemsByHref.values()];
+  }, [courseMatches, matches]);
   const courseSearchItem = trimmedQuery
     ? {
-      label: `Search courses for "${trimmedQuery}"`,
-      description: "Search course codes, names, schools, and synopses.",
+      label: `View all course results for "${trimmedQuery}"`,
+      description: "Open the complete course search with this query.",
       href: `/courses?q=${encodeURIComponent(trimmedQuery)}`,
     } satisfies HomeSearchItem
     : null;
   const visibleItems = courseSearchItem
-    ? [...matches.slice(0, 5), courseSearchItem]
-    : matches;
+    ? [...combinedMatches.slice(0, 5), courseSearchItem]
+    : combinedMatches.slice(0, 6);
 
   function openItem(item: HomeSearchItem)
   {
@@ -167,7 +269,7 @@ export function HomeSearch({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          const bestMatch = matches[0];
+          const bestMatch = combinedMatches[0];
 
           if (trimmedQuery && bestMatch)
           {
@@ -179,7 +281,7 @@ export function HomeSearch({
         }}
         className="relative"
       >
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)] sm:left-4 sm:h-5 sm:w-5" />
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)] sm:left-4 sm:h-5 sm:w-5" />
         <input
           type="search"
           value={query}
@@ -199,8 +301,7 @@ export function HomeSearch({
           aria-label="Search suggestions"
         >
           {visibleItems.map((item) => {
-            const isExternal = !isInternalLink(item.href);
-            const isCourseSearchSuggestion = courseSearchItem?.href === item.href;
+            const resultType = getResultType(item.href);
 
             return (
               <button
@@ -209,7 +310,7 @@ export function HomeSearch({
                 onClick={() => openItem(item)}
                 className="group flex min-h-[3.5rem] w-full items-start justify-between gap-2.5 border-b border-[var(--outline-variant)] px-3 py-2.5 text-left transition last:border-b-0 hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--primary-ring-soft)] sm:min-h-[4.25rem] sm:gap-3 sm:px-4 sm:py-3"
               >
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block text-[13px] font-bold leading-5 text-[var(--on-surface)] group-hover:text-[var(--primary)] sm:text-[14px]">
                     {item.label}
                   </span>
@@ -217,11 +318,9 @@ export function HomeSearch({
                     {item.description}
                   </span>
                 </span>
-                {isExternal ? (
-                  <ArrowUpRightIcon className="h-3.5 w-3.5 shrink-0 text-[var(--on-surface-variant)] group-hover:text-[var(--primary)] sm:h-4 sm:w-4" />
-                ) : isCourseSearchSuggestion ? (
-                  <SearchIcon className="h-3.5 w-3.5 shrink-0 text-[var(--on-surface-variant)] group-hover:text-[var(--primary)] sm:h-4 sm:w-4" />
-                ) : null}
+                <span className="shrink-0 self-start whitespace-nowrap text-[10px] font-semibold leading-5 text-[var(--on-surface-variant)]">
+                  {resultType}
+                </span>
               </button>
             );
           })}

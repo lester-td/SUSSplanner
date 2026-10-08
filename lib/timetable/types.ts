@@ -1,6 +1,8 @@
 export type ScheduleType = "daytime" | "evening";
 export type GroupCodeType = "TG" | "CRN";
 export type EventKind = "CLASS" | "EXAM" | "OTHER";
+export type ExamAssessmentMode = "Proctored Online Exam" | "Online Exam" | "Written Exam" | "Exam";
+export type ExamStatus = "dated" | "undated" | "eca" | "none";
 export type WeekType = "TEACHING" | "STUDY" | "EXAM";
 export type PlannerSection = "planner" | "semester-planner" | "courses" | "share";
 export type PlannerViewMode = "class" | "exam";
@@ -12,6 +14,7 @@ export type SharedClassIdentifier = {
   scheduleType: ScheduleType;
   groupCodeType: GroupCodeType;
   groupCode: string;
+  originSemesterId?: number;
 };
 
 export type SharedTimetableState = {
@@ -36,6 +39,10 @@ export type SemesterRecord = {
   academicYear: string;
   semesterNo: 1 | 2 | 3;
   semesterName: string;
+  // Older generated snapshots do not contain this field.
+  isArchived?: boolean;
+  // Missing in older snapshots; false means only continuation sessions are available.
+  hasIntakeSchedule?: boolean;
 };
 
 export type SemesterWeekRecord = {
@@ -60,6 +67,8 @@ export type CourseSearchResult = {
   hasAvailableClasses: boolean;
   availableClassCount: number;
   offeredSemesters: SemesterRecord[];
+  // Includes continuation destinations, even when their intake schedule is unavailable.
+  scheduledSemesters?: SemesterRecord[];
   scheduleTypes: ScheduleType[];
   availableAsGsp: boolean;
   assessmentModes: string[];
@@ -97,6 +106,8 @@ export type ClassRecord = {
   scheduleType: ScheduleType;
   groupCodeType: GroupCodeType;
   groupCode: string;
+  // Older generated snapshots do not contain this field.
+  language?: string | null;
   availableAsGsp: boolean | null;
   isRestricted: boolean | null;
   remarks: string | null;
@@ -111,13 +122,16 @@ export type ClassEventRecord = {
   startTime: string;
   endTime: string;
   eventMode: string | null;
-  venue: string | null;
+  campus: string | null;
   remarks: string | null;
 };
 
 export type ClassEventWithWeekRecord = ClassEventRecord & {
   courseCode: string;
   semesterId: number;
+  startSemesterId?: number;
+  // Explicitly owned sessions before the intake's nominal calendar start.
+  isPreTerm?: boolean;
   scheduleType: ScheduleType;
   groupCodeType: GroupCodeType;
   groupCode: string;
@@ -128,6 +142,8 @@ export type ClassEventWithWeekRecord = ClassEventRecord & {
 };
 
 export type CourseClassRecord = ClassRecord & {
+  // Explicit continuation targets in newly generated snapshots.
+  continuationSemesterIds?: number[];
   courseName: string | null;
   schoolName: string | null;
   creditUnits: number | null;
@@ -135,16 +151,21 @@ export type CourseClassRecord = ClassRecord & {
   events: ClassEventWithWeekRecord[];
 };
 
-export type TimetableSelectionRecord = CourseClassRecord & {
+export type TimetableSelectionRecord = Omit<CourseClassRecord, "events"> & {
+  events: TimetableEventRecord[];
   identifier: SharedClassIdentifier;
   shareKey: string;
   hasEca: boolean;
+  examAssessmentMode: ExamAssessmentMode | null;
+  courseLabel?: string;
 };
 
 export type TimetableEventRecord = ClassEventWithWeekRecord & {
   courseName: string | null;
   schoolName: string | null;
   shareKey: string;
+  originSemesterId?: number;
+  courseLabel?: string;
 };
 
 export type TimetableClash = {
@@ -160,6 +181,8 @@ export type TimetableData = {
   semesterWeeks: SemesterWeekRecord[];
   selections: TimetableSelectionRecord[];
   events: TimetableEventRecord[];
+  // Complete sessions for the resolved class cohorts, used by the PDF listing.
+  classSessionEvents?: TimetableEventRecord[];
   clashes: TimetableClash[];
   unresolvedSelections: SharedClassIdentifier[];
 };
@@ -175,7 +198,10 @@ export type TimetableBlock = {
   startMinutes: number;
   endMinutes: number;
   weekLabel: string;
-  venue: string | null;
+  continuationLabel?: string;
+  originSemesterId?: number;
+  courseLabel?: string;
+  campus: string | null;
   eventMode: string | null;
   occurrenceCount: number;
   eventIds: number[];
@@ -185,6 +211,7 @@ export type ExamCard = {
   id: string;
   shareKey: string;
   courseCode: string;
+  courseLabel?: string;
   courseName: string | null;
   groupCode: string;
   eventDate: string;

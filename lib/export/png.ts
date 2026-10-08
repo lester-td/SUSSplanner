@@ -5,7 +5,7 @@ export async function renderElementToPngDataUrl(element: HTMLElement)
   return toPng(element, {
     cacheBust: true,
     pixelRatio: 2,
-    backgroundColor: "#ffffff",
+    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--background").trim() || "#fcfbf8",
   });
 }
 

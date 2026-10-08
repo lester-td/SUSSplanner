@@ -10,7 +10,7 @@ import type {
   SemesterKey
 } from "../lib/types.js";
 
-const COURSE_CODE_RE = "[A-Z]{2,5}[0-9]{3}[A-Z]?";
+const COURSE_CODE_RE = "[A-Z]{2,5}[0-9]{3}[A-Z]{0,2}";
 const GROUP_RE = "(?:CRN|TG)[0-9A-Z]{2,5}";
 const DATE_RE = "\\d{1,2}\\/\\d{1,2}\\/\\d{4}";
 const TIME_RE = "\\d{1,2}:\\d{2}(?::\\d{2})?\\s*[AP]M";
@@ -220,7 +220,7 @@ export function parseSchedulePdfText(text: string, scheduleType: ScheduleType): 
       startTime,
       endTime,
       eventMode: row.mode,
-      venue: null,
+      campus: null,
       remarks
     });
   }

@@ -1,3 +1,5 @@
+import { getUndatedExamLabel, UNDATED_EXAM_GUIDANCE } from "./exam-status";
+import { getClassCampusCodes, getEventCampusCodes, normalizeCampusCodes } from "./campus";
 import {
   buildSharedClassIdentifier,
 } from "./share-url";
@@ -145,17 +147,19 @@ export function buildTimetableBlocks(
     return classEvents
       .filter((event) => event.weekId === selectedWeekId)
       .map((event) => ({
-        id: `${event.eventId}`,
+        id: `${event.shareKey}:${event.eventId}`,
         shareKey: event.shareKey,
         courseCode: event.courseCode,
         courseName: event.courseName,
+        courseLabel: event.courseLabel,
+        originSemesterId: event.originSemesterId,
         groupCode: event.groupCode,
         groupCodeType: event.groupCodeType,
         dayOfWeek: event.dayOfWeek,
         startMinutes: toMinutes(event.startTime),
         endMinutes: toMinutes(event.endTime),
         weekLabel: event.weekLabel ?? formatEventDate(event.eventDate),
-        venue: event.venue,
+        campus: getEventCampusCodes(event).join("/") || null,
         eventMode: event.eventMode,
         occurrenceCount: 1,
         eventIds: [event.eventId],
@@ -173,7 +177,6 @@ export function buildTimetableBlocks(
       event.dayOfWeek,
       stripSeconds(event.startTime),
       stripSeconds(event.endTime),
-      event.venue ?? "",
     ].join("|");
 
     const existing = grouped.get(groupKey);
@@ -181,6 +184,9 @@ export function buildTimetableBlocks(
     {
       existing.occurrenceCount += 1;
       existing.eventIds.push(event.eventId);
+      existing.campus = normalizeCampusCodes([
+        existing.campus ?? "", ...getEventCampusCodes(event),
+      ]).join("/") || null;
       const existingMode = existing.eventMode?.trim() ?? "";
       const nextMode = event.eventMode?.trim() ?? "";
       if (existingMode && nextMode && existingMode !== nextMode)
@@ -206,13 +212,15 @@ export function buildTimetableBlocks(
       shareKey: event.shareKey,
       courseCode: event.courseCode,
       courseName: event.courseName,
+      courseLabel: event.courseLabel,
+      originSemesterId: event.originSemesterId,
       groupCode: event.groupCode,
       groupCodeType: event.groupCodeType,
       dayOfWeek: event.dayOfWeek,
       startMinutes: toMinutes(event.startTime),
       endMinutes: toMinutes(event.endTime),
       weekLabel: formatWeekSummary([event]),
-      venue: event.venue,
+      campus: getEventCampusCodes(event).join("/") || null,
       eventMode: event.eventMode?.trim() || null,
       occurrenceCount: 1,
       eventIds: [event.eventId],
@@ -222,14 +230,15 @@ export function buildTimetableBlocks(
   return [...grouped.values()].sort((left, right) => left.dayOfWeek - right.dayOfWeek || left.startMinutes - right.startMinutes || left.courseCode.localeCompare(right.courseCode));
 }
 
-export function buildExamCards(events: TimetableEventRecord[])
+export function buildExamCards(events: TimetableEventRecord[]): ExamCard[]
 {
   return events
     .filter((event) => event.eventKind === "EXAM")
     .map((event) => ({
-      id: `${event.eventId}`,
+      id: `${event.shareKey}:${event.eventId}`,
       shareKey: event.shareKey,
       courseCode: event.courseCode,
+      courseLabel: event.courseLabel,
       courseName: event.courseName,
       groupCode: event.groupCode,
       eventDate: event.eventDate,
@@ -263,10 +272,15 @@ export function buildSelectedCourseCards(data: TimetableData)
       .sort((left, right) => `${left.eventDate}${left.startTime}`.localeCompare(`${right.eventDate}${right.startTime}`))[0] ?? null;
     return {
       ...selection,
+      campuses: getClassCampusCodes(selection.events),
       shareKey: buildSharedClassIdentifier(selection.identifier),
       color: colorMap.get(selection.courseCode) ?? getCourseColor(selection.courseCode),
-      examDateLabel: exam ? formatEventDate(exam.eventDate) : selection.hasEca ? "ECA" : "No Exam",
+      examStatus: exam ? "dated" as const : selection.examAssessmentMode ? "undated" as const : selection.hasEca ? "eca" as const : "none" as const,
+      examDateLabel: exam ? formatEventDate(exam.eventDate)
+        : selection.examAssessmentMode ? getUndatedExamLabel(selection.examAssessmentMode)
+          : selection.hasEca ? "ECA" : "No Exam",
       examTimeLabel: exam ? stripSeconds(exam.startTime) : null,
+      examGuidance: !exam && selection.examAssessmentMode ? UNDATED_EXAM_GUIDANCE : null,
     };
   });
 }

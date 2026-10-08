@@ -3,14 +3,14 @@
 ## Contents
 
 - [Introduction](#introduction)
-  - [App Stack and Data Storage](#app-stack-and-data-storage)
 - [Getting Started](#getting-started)
-- [Main Features](#main-features)
 - [Planning Courses](#planning-courses)
   - [Search for Courses](#search-for-courses)
   - [View Course Information](#view-course-information)
   - [Add Courses to Your Semester Planner](#add-courses-to-your-semester-planner)
   - [Organise Your Semester Planner](#organise-your-semester-planner)
+  - [Share Your Semester Planner](#share-your-semester-planner)
+  - [Back Up or Restore Your Semester Planner](#back-up-or-restore-your-semester-planner)
 - [Calculating GPA](#calculating-gpa)
   - [Add Current-Semester Modules](#add-current-semester-modules)
   - [Enter Grades and Credit Units](#enter-grades-and-credit-units)
@@ -20,13 +20,13 @@
   - [Create a Timetable](#create-a-timetable)
   - [Change a Class Group](#change-a-class-group)
   - [Resolve a Timetable Clash](#resolve-a-timetable-clash)
+  - [Timetable Downloads](#timetable-downloads)
 - [Sharing Timetables](#sharing-timetables)
 - [Managing Settings and Course Registration Reminders](#managing-settings-and-course-registration-reminders)
   - [Change Timetable Appearance](#change-timetable-appearance)
   - [Use Course Registration Reminders](#use-course-registration-reminders)
-  - [Snooze a Reminder](#snooze-a-reminder)
+  - [Dismiss a Reminder](#dismiss-a-reminder)
 - [Common Workflows](#common-workflows)
-- [Tips and Best Practices](#tips-and-best-practices)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Troubleshooting](#troubleshooting)
 - [Limitations](#limitations)
@@ -48,9 +48,9 @@ You do not need an account or sign-in.
 | **Planner** | Arrange courses across semesters, back up or restore the plan, download a PDF, and see upcoming registration reminders. |
 | **GPA Calculator** | Calculate current and cumulative GPA and compare a Pass/Fail strategy. |
 | **Timetable** | Build a semester timetable and check for schedule clashes. |
-| **Share** | Send a read-only timetable preview to a friend. |
+| **Share** | Send a timetable preview or semester-plan snapshot to a friend. |
 | **Download** | Save your timetable as a PNG, PDF, or calendar file. |
-| **Settings** | Change appearance, timetable orientation, and course registration reminder preferences. |
+| **Settings** | Change appearance, timetable defaults, and registration reminders. |
 
 ### Before You Start
 
@@ -63,21 +63,6 @@ settings, and reminder dismissals in your current browser.
   window.
 - There is no account-based or online backup. Export a Planner JSON backup if
   you may need to restore the plan later or move it to another browser.
-
-### App Stack and Data Storage
-
-SUSSPlanner runs as a Next.js and React web app. Course, class, assessment, and
-semester data are loaded from a maintained academic database, while your
-personal planning state stays in your browser.
-
-| Area | What It Means for You |
-|---|---|
-| Web app | Use SUSSPlanner in a browser; no installation or account is required. |
-| Academic data | Course and timetable information is loaded from the app's maintained data source. |
-| Local storage | Timetable, Planner, GPA Calculator, settings, and reminder dismissals stay in this browser only. |
-| Planner backup | Export a Planner JSON file when you want a restorable local backup. |
-| Sharing | Timetable share links are read-only until the receiver imports them. |
-| Registration reminders | Reminder notifications use the registration schedule bundled with SUSSPlanner. |
 
 ## Getting Started
 
@@ -92,16 +77,15 @@ personal planning state stays in your browser.
    - **Planner** for your multi-semester course plan.
    - **Calculators** for GPA estimates.
    - **Settings** for appearance and course registration reminder preferences.
-
-No installation is required.
+   - **Feedback** to report bugs, incorrect data, or feature requests.
 
 ### Browser and Device
 
 Use a current version of Chrome, Edge, Firefox, or Safari. You will need an
 internet connection to load course and timetable information.
 
-The **Planner** uses drag and drop. A desktop or laptop is recommended when
-organising courses across semesters.
+The **Planner** supports drag and drop on desktop and tap-to-assign controls on
+mobile.
 
 Make sure your browser allows:
 
@@ -111,153 +95,6 @@ Make sure your browser allows:
 
 If automatic copying is blocked, SUSSPlanner displays the link for you to copy
 manually.
-
-## Main Features
-
-### Course Search
-
-Use **Courses** when you want to explore courses before adding them to your
-semester planner or timetable.
-
-1. Open **Courses**.
-2. Browse the course list or enter a course code, title, or description.
-3. Use the pagination controls to move through the results. Courses are shown
-   10 per page.
-4. Use **Search Settings** to narrow the results.
-5. Select a course title to view its details.
-6. Select **Add to Planner** if you want to include it in your semester planner.
-
-The search filters include:
-
-- **Offered In**
-- **Schedule**: Daytime or Evening
-- **Course Level**
-- **Course Type**: Undergraduate Courses, Postgraduate Courses, and Available as GSP/UNE
-- **Assessments**: TMA, GBA, Quiz, ECA, Written Exam, Proctored Online Exam, and Online Exam
-- **School**
-
-Select **Reset all** to clear all filters.
-
-[Screenshot: Module Search Page]
-
-### Semester Planner
-
-Use **Planner** to map out courses and credit units across your degree.
-
-1. Open **Planner**.
-2. Set your **Target Credits**.
-3. Set the number of **Semesters**.
-4. Add courses using Search or Custom mode.
-5. Drag courses from the **Module Bank** into semesters.
-6. Review **Credits Allocated** and each semester's credit-unit total.
-
-A new plan starts with 130 target credit units and 8 semesters. You can plan
-between 1 and 20 semesters.
-
-[Screenshot: Degree Semester Planner]
-
-### Timetable Builder
-
-Use **Timetable** when you are planning classes for a specific semester.
-
-1. Open **Timetable**.
-2. Choose the semester you want to plan.
-3. Select **FT** or **PT** in **My Courses**.
-4. Search for a course.
-5. Select a search result to add it.
-6. Repeat for the other courses you are considering.
-7. Review the timetable and any clash warnings.
-
-When you add a course, SUSSPlanner selects an available class group and tries
-to avoid clashes with your current timetable.
-
-[Screenshot: Timetable Builder]
-
-### GPA Calculator
-
-Use **GPA Calculator** to estimate your current-semester GPA, combine it with
-your prior academic record, and compare which current modules to mark
-Pass/Fail.
-
-1. Open **Calculators**.
-2. Search the full course catalog or switch **Add a Module** to Custom mode.
-3. Add current-semester modules.
-4. Check each module's credits, Grade, and GPV.
-5. Enter your previous cumulative GPA and previously completed CUs.
-6. Select **Pass/Fail** beside a module to exclude it from the GPA calculation.
-
-The calculator is saved automatically in the current browser.
-
-[Screenshot: GPA Calculator]
-
-### Timetable Sharing
-
-Use **Share** to send your selected timetable to a friend.
-
-1. Open the timetable you want to share.
-2. Select **Share**.
-3. Wait for **Share link copied**.
-4. If the link was not copied automatically, copy the displayed link.
-5. Send the full link to your friend.
-
-Your friend sees a read-only preview. Their saved timetable does not change
-unless they choose to import yours.
-
-[Screenshot: Share Timetable]
-
-### Timetable Downloads
-
-1. Open **Timetable**.
-2. Choose the view you want to save.
-3. Select **Download**.
-4. Choose a format.
-
-| Format | What You Receive |
-|---|---|
-| **PNG** | An image of the timetable or exam view currently on screen. |
-| **PDF** | A PDF of the timetable or exam view currently on screen. |
-| **ICS** | A calendar file that can be opened or imported into a calendar app. |
-
-### Settings
-
-Use **Settings** to adjust local preferences for this browser.
-
-1. Open **Settings**.
-2. Choose **Night mode**: **Auto**, **On**, or **Off**.
-3. Choose a timetable colour theme.
-4. Choose the default timetable orientation: **Horizontal** or **Vertical**.
-5. Adjust **Course Registration Reminders**.
-
-Settings are saved automatically in the current browser. They do not sync to
-other browsers or devices.
-
-### Course Registration Reminders
-
-Course registration reminders appear as top-right notifications when an eCR or
-add-drop window is approaching, open, or closing soon. SUSSPlanner shows one
-registration reminder at a time.
-
-The reminder status uses:
-
-- **Upcoming** when registration starts within the next 7 days.
-- **Open** when registration is open and not yet in its final 24 hours.
-- **Closing Soon** during the final 24 hours before registration ends.
-
-The reminder schedule is:
-
-- **Upcoming:** 7 days, 3 days, 2 days, 1 day, 12 hours, 6 hours, and 1 hour
-  before the window opens.
-- **Open:** when the window opens, then every 24 hours while it remains open.
-- **Closing Soon:** 24 hours, 12 hours, 6 hours, and 1 hour before the window
-  closes.
-
-Closing a notification hides that specific reminder threshold. The same
-threshold will not reappear, but a later threshold may appear as the window gets
-closer, while it remains open, or as it approaches closing.
-
-Reminders and dismissals are local to your browser and are based on the
-registration schedule bundled with SUSSPlanner. Always confirm official dates
-through SUSS before making registration decisions.
 
 ## Planning Courses
 
@@ -279,6 +116,17 @@ There are four places where you can search:
 3. Use **Search Settings** to narrow the results.
 4. Use the pagination controls to move through results, 10 courses at a time.
 5. Select a course title to view more information.
+
+The search filters include:
+
+- **Offered In**
+- **Schedule**: Daytime or Evening
+- **Course Level**
+- **Course Type**: Undergraduate Courses, Postgraduate Courses, and Available as GSP/UNE
+- **Assessments**: TMA, GBA, Quiz, ECA, Written Exam, Proctored Online Exam, and Online Exam
+- **School**
+
+Select **Reset all** to clear the filters.
 
 #### Search in the Planner
 
@@ -336,13 +184,15 @@ Use a custom course for a course that is not listed, a work attachment, or a
 future requirement.
 
 1. Open **Planner**.
-2. Switch **Add a Course** to Custom mode.
+2. On desktop, switch **Module Bank** to Custom mode. On mobile, tap
+   **Add Course** at the bottom, then switch to Custom mode.
 3. Enter a course code or name.
 4. Enter the credit units.
 5. Enter the semester span.
 6. Select **Add Custom Module**.
 
-The custom course appears in the **Module Bank**.
+The custom course appears in the **Module Bank**. On mobile, choose a semester
+to assign it immediately, or select **Keep in Module Bank**.
 
 ### Remove Courses
 
@@ -360,9 +210,15 @@ The course and its classes are removed from the timetable.
 2. Drag the course to the red trash area.
 3. Release it when the area says **Release to delete course**.
 
+On mobile, tap the course’s **⋯** menu, select **Remove course**, then confirm.
+The same menu is available beside unassigned courses in the Module Bank.
+
 This cannot be undone.
 
 ### Organise Your Semester Planner
+
+A new plan starts with 130 target credit units and 8 semesters. Adjust **Target
+Credits** and **Semesters** to match your degree; plans support 1–20 semesters.
 
 1. Add courses to the **Module Bank**.
 2. Drag each course into the semester when you plan to take it.
@@ -370,7 +226,8 @@ This cannot be undone.
 4. Drag a course back to the **Module Bank** to leave it unassigned.
 5. Select **Add Semester** if you need more semesters.
 6. Delete a semester only when it is empty.
-7. Use the edit button on a custom course to change its name, credit units, or
+7. Review **Credits Allocated** and each semester’s credit-unit total.
+8. Use the edit button on a custom course to change its name, credit units, or
    semester span.
 
 Select **Show All** to see every added course in the Module Bank. Select **Show
@@ -379,18 +236,50 @@ Available** to show only courses that have not been assigned.
 Courses that span more than one semester are shown as continuing in later
 semesters.
 
+#### Planning on Mobile
+
+- Tap **Plan settings** under Progress to expand the credit target, semester
+  count, PDF, backup, and reset controls.
+- Tap a semester header to expand or collapse its course list.
+- Tap **Add Course** at the bottom to search the catalog or enter a custom course.
+  After adding it, choose a semester or keep it in the Module Bank.
+- Tap **Module Bank** at the bottom to see unassigned courses. Select **Assign**
+  beside a course, then choose its destination semester. The page opens and
+  scrolls to that semester.
+- Use a course’s **⋯** menu to move it, return it to the bank, edit a custom course,
+  or remove it. Continuing courses use the same menu. The panel shows the course’s
+  current semester or semester range.
+- Destinations that cannot accommodate the full semester span are disabled.
+- Swiping over courses scrolls the page. Drag-and-drop remains available on
+  desktop. While a bottom panel is open, the page behind it stays still.
+
+### Share Your Semester Planner
+
+1. Select **Share** in Progress.
+2. Select **Copy link**, or **Share** on a supported phone to choose an app.
+3. Send the link to the recipient.
+
+The link contains a snapshot of your courses, credit target, semesters and Module
+Bank. Later edits do not change a link you have already shared.
+
+Opening a link shows **Save shared plan?**, with a credit summary and collapsible
+semester groups. Expand each semester or the Module Bank to inspect its courses.
+The summary and save controls stay visible while the preview scrolls.
+Select **Save shared plan** to replace the current planner on that device, or
+**Cancel** to keep the existing plan. Once saved, it can be edited or reset normally.
+
 ### Back Up or Restore Your Semester Planner
 
 To download a restorable backup:
 
 1. Open **Planner**.
-2. Select **Backup Plan**.
+2. Select **Backup**.
 3. Select **Export**.
 
 To restore a backup:
 
 1. Open **Planner**.
-2. Select **Backup Plan**.
+2. Select **Backup**.
 3. Select **Import**, then choose a SUSSPlanner semester-plan JSON backup.
 4. Review the module and semester counts.
 5. Select **Replace Current Plan** to confirm.
@@ -409,7 +298,7 @@ Allow the new tab if your browser blocks it.
 ### Reset Your Semester Planner
 
 1. Open **Planner**.
-2. Select **Reset Planner**.
+2. Select **Reset** under Progress.
 3. Read the warning.
 4. Select **Reset Planner** again to confirm.
 
@@ -423,8 +312,6 @@ be undone.
 1. Open SUSSPlanner.
 2. Select **Calculators** in the navigation.
 
-For local development, open `http://localhost:3000/calculators`.
-
 ### Add Current-Semester Modules
 
 #### Search the Course Catalog
@@ -434,8 +321,7 @@ For local development, open `http://localhost:3000/calculators`.
 3. Select a result to add it.
 
 Calculator search checks the full course catalog. A module can be selected even
-when it is not presented in the current semester. Search results use only the
-module code, module name, and credit units.
+when it is not presented in the current semester.
 
 #### Add a Custom Module
 
@@ -519,14 +405,34 @@ completed CUs. The clear-all confirmation cannot be undone.
 
 1. Open **Timetable**.
 2. Choose your semester.
-3. Choose **FT** or **PT**.
+3. In **Settings**, set **Default class type** to **Full-time** or **Part-time**
+   if you want to change the preferred class groups.
 4. Search for a course under **My Courses**.
 5. Select the course to add it.
 6. Continue adding courses.
 7. Review **Total Credit Units**.
 8. Check for **Detected timetable clashes**.
 
-Your timetable is saved automatically in the current browser.
+Your timetable is saved automatically in the current browser. When you add a
+course, SUSSPlanner picks an available class group and tries to avoid clashes.
+
+For example, when a listed course spans multiple semesters, selecting its starting class also
+adds a continuation in the next offered semester. Its block shows **Continues
+Jul '26** at the bottom. In July, the carried-over block is labelled **NIE301
+(Jan '26)** and its class can only be switched in the starting semester. You can remove it
+from either semester; removing a carried-over entry removes its linked starting
+selection and continuation, while preserving a separate July start.
+
+You can also add a separate July start of NIE301. Course search and class
+switching show classes from the selected semester, and the July start stays
+separate from the January continuation. Continuations retain the exact schedule
+type and TG/CRN chosen in the starting semester, and show only sessions belonging
+to that original cohort. A reused July TG/CRN does not supply sessions for the
+January continuation. If no continuation sessions are published, its entry stays
+saved without adding sessions from another cohort.
+
+Continuation labels can name a later semester before its calendar weeks are
+available in the timetable selector.
 
 ### Change a Class Group
 
@@ -566,7 +472,16 @@ be available.
 - Use **Order by Code**, **Order by Exam**, or **Order by CU** to organise
   **My Courses**.
 
-Courses with no written exam may show **No Exam** or **ECA**.
+A course with a scheduled exam shows its date and time. If the selected class group has
+an exam assessment but no dated exam event, the course instead shows **Proctored
+Online Exam**, **Online Exam**, or **Has an Exam**, followed by **Check
+Canvas/Learnova for exam details.** These courses appear in **Exams without
+timetable dates** below the dated exam calendar; no date is inferred from another
+class group. Courses without an exam assessment may show **No Exam** or **ECA**.
+
+On narrow screens, the vertical **All weeks** view allows sideways scrolling
+when classes overlap in time. The time column stays pinned, and overlapping
+classes keep a readable width. Other vertical views fit the screen width.
 
 ### Hide, Show, or Recolour a Course
 
@@ -589,8 +504,22 @@ Hiding a course does not remove it and does not resolve its clashes.
 2. Read the warning.
 3. Select **Reset** again to confirm.
 
-This clears selected courses, hidden-course settings, and custom colours. Your
+This clears courses starting in this semester, hidden-course settings, and custom
+colours. Carried-over courses remain after reset and can be removed individually. Your
 current semester, selected week, layout, and timetable or exam view remain.
+
+### Timetable Downloads
+
+1. Open **Timetable**.
+2. Choose the view you want to save.
+3. Select **Download**.
+4. Choose a format.
+
+| Format | What You Receive |
+|---|---|
+| **PNG** | An image of the selected timetable or exam view. |
+| **PDF** | Opens the browser print dialog. Save as PDF to get the timetable and exam calendar on white landscape A4 pages, followed by a selectable-text class-session list on portrait A4 pages. |
+| **ICS** | A calendar file that can be opened or imported into a calendar app. |
 
 ## Sharing Timetables
 
@@ -609,8 +538,7 @@ It does not include:
 - Vertical or horizontal layout.
 - Timetable or exam view.
 
-Only semester timetables can be shared. The multi-semester Planner cannot
-currently be shared.
+For multi-semester plans, use [Share in the Planner](#share-your-semester-planner).
 
 ### Send a Timetable to a Friend
 
@@ -634,7 +562,9 @@ Opening the link does not change your saved timetable.
 
 ### Import a Shared Timetable
 
-Importing replaces your currently saved timetable and cannot be undone.
+Importing replaces your saved timetable for the shared semester. Other saved
+semesters are kept. Save a share link for your existing timetable before importing
+if you want to restore it later.
 
 1. Open the shared link.
 2. Review the timetable.
@@ -642,7 +572,7 @@ Importing replaces your currently saved timetable and cannot be undone.
 4. Read the warning.
 5. Select **Confirm import**.
 
-The shared semester and classes replace your saved selections. Hidden courses
+The shared classes replace your saved selections for that semester. Hidden courses
 are cleared, and the view returns to **All Weeks**.
 
 ## Managing Settings and Course Registration Reminders
@@ -650,11 +580,14 @@ are cleared, and the view returns to **All Weeks**.
 ### Change Timetable Appearance
 
 1. Open **Settings**.
-2. Under **Appearance**, choose the colour scheme for this browser.
-3. Under **Timetable**, choose the default orientation.
-4. Under **Theme**, choose a timetable colour palette.
-5. Use **Reset** if you want to restore all settings on this page to their
-   defaults.
+2. Under **Appearance**, choose **Color mode**: **Auto**, **Light**, or **Dark**,
+   and a timetable theme.
+3. Under **Timetable**, choose **Horizontal** or **Vertical** orientation.
+4. Set **Open timetable to**: **All weeks**, **This week**, or **Last viewed**.
+   **Last viewed** remembers each semester; **This week** falls back to
+   **All weeks** when unavailable.
+5. Set **Default class type** to **Full-time** or **Part-time**.
+6. Use **Reset** to restore this page’s defaults.
 
 The preview updates as you change settings. Existing timetable selections are
 not removed when you change appearance settings.
@@ -662,7 +595,7 @@ not removed when you change appearance settings.
 ### Use Course Registration Reminders
 
 1. Open **Settings**.
-2. Go to **Course Registration Reminders**.
+2. Go to **Reminders**.
 3. Set **In-app reminders** to **On**.
 4. Open SUSSPlanner near an eCR or add-drop period.
 
@@ -671,17 +604,29 @@ SUSSPlanner shows only one active registration reminder at a time. The reminder
 can change from **Upcoming** to **Open** to **Closing Soon** as the registration
 window moves through those phases.
 
-Use **Reminder schedule** beside the setting to see the exact Upcoming, Open,
-and Closing Soon cadence.
+The reminder status uses:
+
+- **Upcoming** when registration starts within the next 7 days.
+- **Open** when registration is open and not yet in its final 24 hours.
+- **Closing Soon** during the final 24 hours before registration ends.
+
+The reminder schedule is:
+
+- **Upcoming:** 7 days, 3 days, 2 days, 1 day, 12 hours, 6 hours, and 1 hour
+  before the window opens.
+- **Open:** when the window opens, then every 24 hours while it remains open.
+- **Closing Soon:** 24 hours, 12 hours, 6 hours, and 1 hour before the window
+  closes.
+
+Use **Reminder schedule** beside the setting to review these intervals.
+Reminders use the bundled schedule; confirm registration dates with SUSS.
 
 Turn **In-app reminders** off to disable all course registration reminders in
 this browser.
 
-### Snooze a Reminder
+### Dismiss a Reminder
 
-Use the close button to hide the currently displayed reminder threshold,
-similar to NUSMods CourseReg reminders. This action is stored only in the
-current browser.
+Close a notification to dismiss its current reminder threshold in this browser.
 
 A dismissed threshold stays hidden for the matching registration window. A
 reminder can appear again when:
@@ -696,24 +641,13 @@ reminder can appear again when:
 
 ## Common Workflows
 
-### Plan Your Entire Degree
-
-1. Open **Planner**.
-2. Set your **Target Credits** and expected number of **Semesters**.
-3. Add required and elective courses to the **Module Bank**.
-4. Add custom placeholders for future requirements when needed.
-5. Drag courses into the semesters when you expect to take them.
-6. Review each semester's course load and credit units.
-7. Move courses until the plan feels balanced.
-
-Your degree plan is saved in your current browser.
-
 ### Plan the Next Semester
 
 1. Open **Planner** and review the courses planned for your next semester.
 2. Open **Courses** to check details, assessments, and available classes.
 3. Open **Timetable** and choose the upcoming semester.
-4. Select **FT** or **PT**.
+4. Check **Default class type** in **Settings** if you want to change the
+   preferred class groups.
 5. Add your planned courses.
 6. Review clashes and try alternative class groups.
 7. Share or download the final timetable.
@@ -731,67 +665,11 @@ Your degree plan is saved in your current browser.
 
 SUSSPlanner keeps one multi-semester course plan at a time. To compare options:
 
-1. Take a screenshot of your current Planner arrangement before changing it.
+1. Export a JSON backup of your current Planner before changing it.
 2. Rearrange courses and compare semester credit-unit totals.
 3. For timetable options, download a PNG or PDF before trying another
    combination.
 4. Compare the saved images and clash warnings.
-
-### Compare Pass/Fail Strategies
-
-1. Open `/calculators`.
-2. Add your current-semester modules and expected grades.
-3. Enter your prior cumulative GPA and GPA-counted CUs.
-4. Toggle **Pass/Fail** for different modules.
-5. Compare the Current GPA, Cumulative GPA, and counted-CU summaries.
-
-### Share a Timetable with a Friend
-
-1. Build the timetable you want to share.
-2. Select **Share**.
-3. Send the copied link.
-4. Ask your friend to review the read-only preview.
-5. Your friend should select **Import** only if they want to replace their
-   saved timetable.
-
-## Tips and Best Practices
-
-### Avoid Timetable Conflicts
-
-- Add courses one at a time and check for clashes after each addition.
-- Try a different class group before removing a course.
-- Check individual weeks as well as **All Weeks**.
-- Review the exam calendar before finalising your timetable.
-- Open **View class schedule** for detailed dates and times.
-
-### Compare Course Combinations
-
-- Download a PNG or PDF before changing a timetable.
-- Use colours to make courses easier to identify.
-- Hide a course temporarily to make the timetable easier to read.
-- Share possible timetables with classmates for comparison.
-
-### Plan Ahead
-
-- Add known required courses to the Planner early.
-- Keep possible electives in the **Module Bank** until you decide.
-- Use custom courses as placeholders for future requirements.
-- Check credit units across each semester, not only the total.
-- Keep course registration reminders on if you want notifications near eCR and
-  add-drop periods.
-- Recheck course availability closer to registration because information may
-  change.
-
-### Protect Your Plans
-
-- Avoid clearing browser data if you want to keep your plans.
-- Do not rely on private or incognito windows for long-term saving.
-- Download or share important timetables as a reference.
-- Select **Backup Plan**, then **Export**, to download a restorable JSON backup.
-- Select **Backup Plan**, then **Import**, to validate a backup and review its
-  module and semester counts before replacing the current plan.
-- Select **Download PDF** to open an A4-formatted plan in a new tab, then use
-  **Print / Save as PDF**.
 
 ## Frequently Asked Questions
 
@@ -810,13 +688,13 @@ No. Plans do not automatically sync between devices or browsers.
 
 ### Can I recover a plan after clearing browser data?
 
-Only if you exported a JSON backup before clearing the browser data. Open
-**Planner**, select **Backup Plan**, then select **Import** to restore it.
-SUSSPlanner does not provide online or account-based recovery.
+Restore a semester plan from an exported JSON backup or saved Planner share
+link. Restore a timetable by importing a saved timetable share link. Without
+a backup or share link, SUSSPlanner cannot recover cleared plans.
 
 ### Can I share my multi-semester course plan?
 
-No. Only semester timetables can currently be shared.
+Yes. Use **Share** in the Planner. See [Share Your Semester Planner](#share-your-semester-planner).
 
 ### Does opening a shared link replace my timetable?
 
@@ -825,8 +703,8 @@ No. It opens a read-only preview. Your timetable changes only if you select
 
 ### What happens when I import a shared timetable?
 
-It replaces your saved semester and classes, clears hidden courses, and returns
-the timetable to **All Weeks**. Importing cannot be undone.
+It replaces the shared semester’s saved classes, clears hidden courses, and
+returns that timetable to **All Weeks**. Other saved semesters are kept.
 
 ### What is the difference between hiding and removing a course?
 
@@ -842,10 +720,10 @@ No. The course remains selected, so its clashes remain.
 No. It shows clashes and available class groups, but a clash-free combination
 may not exist.
 
-### What do FT and PT do?
+### How is the default class group chosen?
 
-They help SUSSPlanner choose a more suitable class-group type when you add a
-course automatically.
+**Default class type** in **Settings** makes new timetable entries prefer
+full-time TG groups or part-time CRN groups. You can switch groups afterward.
 
 ### Can I add a course that is not listed?
 
@@ -893,7 +771,7 @@ Always check official SUSS registration information before registering.
 3. Try a current version of another browser.
 4. If one saved course is affected, remove it and add it again.
 5. If the problem continues, report it through the **Git Repo** link at the
-   bottom of SUSSPlanner.
+   bottom of SUSSPlanner, or use **Feedback**.
 
 ### A Shared Link Is Not Working
 
@@ -922,14 +800,15 @@ Always check official SUSS registration information before registering.
 
 This can happen if browser data was cleared, a private-browsing session ended,
 or you changed browsers or devices. If you previously exported a JSON backup,
-open **Planner**, select **Backup Plan**, then select **Import** to restore it.
-SUSSPlanner cannot recover a plan without an exported backup.
+open **Planner**, select **Backup**, then select **Import** to restore it.
+A saved Planner share link can also restore its snapshot. Without a backup or
+share link, SUSSPlanner cannot recover a cleared plan.
 
 ### My GPA Calculator Entries Disappeared
 
 Calculator entries are stored only in the current browser. They may disappear
 if browser data is cleared, a private-browsing session ends, or you change
-browsers or devices. The calculator does not currently provide an export or
+browsers or devices. The calculator does not provide an export or
 restore feature.
 
 ### Course Information Is Missing
@@ -949,17 +828,16 @@ information available in SUSSPlanner.
 
 ## Limitations
 
-- SUSSPlanner has no accounts, online syncing, or recovery without an exported
-  JSON backup.
-- Your plans are saved only in your current browser.
-- Settings and reminder dismissals are also saved only in your current browser.
-- Calculator entries are browser-local and cannot currently be exported,
+- Plans, settings, and reminder dismissals stay in the current browser. There
+  are no accounts or automatic sync. Back up plans or save share links before
+  clearing browser data.
+- Calculator entries are browser-local and cannot be exported,
   imported, shared, or recovered after browser data is cleared.
 - GPA and Pass/Fail results are planning estimates. Confirm official GPA and
   Pass/Fail rules with SUSS before making academic decisions.
 - The Planner keeps one semester planner at a time.
-- Multi-semester semester planners can be imported/exported as JSON and downloaded
-  through the PDF print view, but they cannot be shared through a URL.
+- Planner share links contain fixed snapshots; later edits do not update them.
+  Unsupported browsers and plans too large for a link can use JSON backups.
 - Shared timetable links do not include hidden courses, custom colours,
   selected week, layout, or view.
 - Shared links support up to 50 selected classes.
@@ -968,14 +846,13 @@ information available in SUSSPlanner.
 - Course registration reminders depend on the bundled registration schedule and
   are not a replacement for official SUSS notices.
 - SUSSPlanner can detect clashes but cannot guarantee a clash-free combination.
-- Organising the Planner is best done on a desktop or laptop.
+- The Planner uses drag-and-drop on desktop and tap-to-assign controls on mobile.
 
 ## Support
 
-Use the **Git Repo** link at the bottom of SUSSPlanner to report a problem or
-provide feedback:
-
-[SUSSPlanner Git Repository](https://github.com/Simplificatedd/SUSSplanner)
+Open **Feedback** to send a private report to the maintainers, or use
+[GitHub Issues](https://github.com/Simplificatedd/SUSSplanner/issues) for a public
+bug report or feature request.
 
 When reporting an issue:
 

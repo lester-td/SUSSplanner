@@ -1,0 +1,952 @@
+[
+  {
+    "text": "A realistic plan beats an ambitious fantasy with no room for Tuesday.",
+    "category": "planning"
+  },
+  {
+    "text": "Plan the week while you still have choices, not after everything becomes urgent.",
+    "category": "planning"
+  },
+  {
+    "text": "A deadline becomes less threatening when it has smaller deadlines in front of it.",
+    "category": "planning"
+  },
+  {
+    "text": "Put the important work on the calendar before the easy work fills it.",
+    "category": "planning"
+  },
+  {
+    "text": "A good plan includes enough space for something to go wrong.",
+    "category": "planning"
+  },
+  {
+    "text": "If three tasks cannot fit into one hour, the calendar is not the problem.",
+    "category": "planning"
+  },
+  {
+    "text": "Schedule the difficult work for the version of you that still has energy.",
+    "category": "planning"
+  },
+  {
+    "text": "The point of planning is not to predict the week perfectly; it is to make better choices when it changes.",
+    "category": "planning"
+  },
+  {
+    "text": "A useful plan tells you what to do next, not merely what you hope to finish.",
+    "category": "planning"
+  },
+  {
+    "text": "Leave buffers between important tasks; reality has terrible respect for perfect schedules.",
+    "category": "planning"
+  },
+  {
+    "text": "Read the assignment brief before your imagination invents a harder assignment.",
+    "category": "study"
+  },
+  {
+    "text": "Revision works better when it starts before panic becomes the study method.",
+    "category": "study"
+  },
+  {
+    "text": "A good study session ends with something you can explain without looking.",
+    "category": "study"
+  },
+  {
+    "text": "Do not just reread the page; make your brain retrieve what was on it.",
+    "category": "study"
+  },
+  {
+    "text": "Your notes should make tomorrow clearer, not merely prove that today happened.",
+    "category": "study"
+  },
+  {
+    "text": "A difficult chapter becomes easier when you turn each heading into a question.",
+    "category": "study"
+  },
+  {
+    "text": "Studying feels less endless when every session has a specific finish line.",
+    "category": "study"
+  },
+  {
+    "text": "If you cannot explain the idea simply, find the part you are still borrowing from the textbook.",
+    "category": "study"
+  },
+  {
+    "text": "Past papers are most useful when you study your mistakes, not just your score.",
+    "category": "study"
+  },
+  {
+    "text": "A lecture is easier to remember when you review it before the next one arrives.",
+    "category": "study"
+  },
+  {
+    "text": "Learning begins when you notice the difference between recognising an answer and producing one.",
+    "category": "learning"
+  },
+  {
+    "text": "A good question can reveal more understanding than a quick correct answer.",
+    "category": "learning"
+  },
+  {
+    "text": "Confusion becomes useful when you can name exactly what is confusing.",
+    "category": "learning"
+  },
+  {
+    "text": "The fastest learner is not always the one who understands first, but the one who checks what they misunderstood.",
+    "category": "learning"
+  },
+  {
+    "text": "Knowledge becomes durable when you connect it to something you already know.",
+    "category": "learning"
+  },
+  {
+    "text": "If you can teach the idea, compare it, and apply it, you probably understand it.",
+    "category": "learning"
+  },
+  {
+    "text": "Understanding grows when examples stop feeling like exceptions and start revealing the rule.",
+    "category": "learning"
+  },
+  {
+    "text": "Mistakes are most valuable when you keep the reason, not just the correction.",
+    "category": "learning"
+  },
+  {
+    "text": "Ask what would change your mind; that question keeps learning honest.",
+    "category": "learning"
+  },
+  {
+    "text": "A concept becomes yours when you can use it somewhere the lecturer never showed you.",
+    "category": "learning"
+  },
+  {
+    "text": "Rest is part of the system, not a reward for surviving it.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "A schedule that repeatedly destroys your sleep is not disciplined; it is badly designed.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "You do better work when your body is not negotiating basic needs in the background.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "A break should return some attention to you, not quietly consume the rest of the evening.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "You are allowed to protect time that has no measurable output.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Ambition works better when it has somewhere to recover.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Eating, sleeping, moving, and seeing people are not interruptions to a productive life.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "A sustainable routine should still work during an ordinary bad week.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Not every tired day needs a motivational speech; some need an earlier night.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "If your plan only works when nothing goes wrong, it is borrowing energy from future you.",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Start with what you can do before negotiating with everything you cannot.",
+    "category": "motivation"
+  },
+  {
+    "text": "A small finished thing has more momentum than a perfect imaginary one.",
+    "category": "motivation"
+  },
+  {
+    "text": "You do not need to feel ready to begin behaving like someone who is learning.",
+    "category": "motivation"
+  },
+  {
+    "text": "The next useful action is usually smaller than the story you are telling yourself about the task.",
+    "category": "motivation"
+  },
+  {
+    "text": "Progress often looks unimpressive while it is happening.",
+    "category": "motivation"
+  },
+  {
+    "text": "Motivation is welcome, but a clear next step is more reliable.",
+    "category": "motivation"
+  },
+  {
+    "text": "You can have doubts and still submit the application, open the document, or make the call.",
+    "category": "motivation"
+  },
+  {
+    "text": "A bad first attempt is evidence that the work has finally become real.",
+    "category": "motivation"
+  },
+  {
+    "text": "Keep going long enough for effort to become evidence.",
+    "category": "motivation"
+  },
+  {
+    "text": "The distance between stuck and moving can be one deliberately small action.",
+    "category": "motivation"
+  },
+  {
+    "text": "Do the task that removes the most uncertainty first.",
+    "category": "productivity"
+  },
+  {
+    "text": "A shorter list with clear priorities is more useful than a complete inventory of your anxiety.",
+    "category": "productivity"
+  },
+  {
+    "text": "Finish the important work before optimising the system that tracks the important work.",
+    "category": "productivity"
+  },
+  {
+    "text": "If a task keeps moving between lists, either schedule it, shrink it, delegate it, or delete it.",
+    "category": "productivity"
+  },
+  {
+    "text": "Productivity improves when fewer things are allowed to be half-started.",
+    "category": "productivity"
+  },
+  {
+    "text": "Make the next action obvious enough that you can begin without another planning session.",
+    "category": "productivity"
+  },
+  {
+    "text": "A clean workflow reduces decisions you should not have to make twice.",
+    "category": "productivity"
+  },
+  {
+    "text": "Batch the small tasks so they stop interrupting the work that needs a whole brain.",
+    "category": "productivity"
+  },
+  {
+    "text": "Use tools to remove friction, not to create a hobby out of organising friction.",
+    "category": "productivity"
+  },
+  {
+    "text": "One completed priority is worth more than six tasks touched for five minutes.",
+    "category": "productivity"
+  },
+  {
+    "text": "Teams move faster when nobody has to guess who owns the next step.",
+    "category": "teamwork"
+  },
+  {
+    "text": "Share context early; surprises become more expensive as deadlines get closer.",
+    "category": "teamwork"
+  },
+  {
+    "text": "A useful update says what changed, what is blocked, and what happens next.",
+    "category": "teamwork"
+  },
+  {
+    "text": "Good collaboration makes information easier to find than blame.",
+    "category": "teamwork"
+  },
+  {
+    "text": "Disagreement improves the work when everyone is arguing about the problem instead of each other.",
+    "category": "teamwork"
+  },
+  {
+    "text": "A team should not need a detective to reconstruct its decisions.",
+    "category": "teamwork"
+  },
+  {
+    "text": "Trust grows when people say what they will do and then either do it or update the plan.",
+    "category": "teamwork"
+  },
+  {
+    "text": "The best handoff leaves the next person fewer questions, not more files.",
+    "category": "teamwork"
+  },
+  {
+    "text": "Ask for help while there is still time for the answer to matter.",
+    "category": "teamwork"
+  },
+  {
+    "text": "A quiet teammate may still be holding the question the whole group needs.",
+    "category": "teamwork"
+  },
+  {
+    "text": "Leadership starts by making reality easier for other people to see.",
+    "category": "leadership"
+  },
+  {
+    "text": "A leader does not need every answer, but should know which question the team must answer next.",
+    "category": "leadership"
+  },
+  {
+    "text": "Clarity is a service: people work better when priorities do not need to be reverse-engineered.",
+    "category": "leadership"
+  },
+  {
+    "text": "Take responsibility for the decision without pretending you made it alone.",
+    "category": "leadership"
+  },
+  {
+    "text": "Good leaders surface problems early enough that the team still has choices.",
+    "category": "leadership"
+  },
+  {
+    "text": "A calm response to bad news teaches people whether they should tell you the truth next time.",
+    "category": "leadership"
+  },
+  {
+    "text": "Set standards clearly before judging people for missing them.",
+    "category": "leadership"
+  },
+  {
+    "text": "Leadership is partly deciding what the team will not spend energy on.",
+    "category": "leadership"
+  },
+  {
+    "text": "The person with authority should create room for disagreement, not just permission to agree.",
+    "category": "leadership"
+  },
+  {
+    "text": "A useful leader turns uncertainty into a process instead of a performance.",
+    "category": "leadership"
+  },
+  {
+    "text": "Readable code is a favour to the person debugging it at 2 a.m., who may be you.",
+    "category": "technology"
+  },
+  {
+    "text": "A good abstraction hides complexity without hiding the truth.",
+    "category": "technology"
+  },
+  {
+    "text": "If the error message is useful, the system has already helped with half the debugging.",
+    "category": "technology"
+  },
+  {
+    "text": "The best architecture makes common changes boring.",
+    "category": "technology"
+  },
+  {
+    "text": "Optimise after you can measure what is actually slow.",
+    "category": "technology"
+  },
+  {
+    "text": "A test is cheaper than rediscovering the same bug after every change.",
+    "category": "technology"
+  },
+  {
+    "text": "Name things so the code explains more than the comments have to.",
+    "category": "technology"
+  },
+  {
+    "text": "An API is easier to trust when its behaviour is boringly consistent.",
+    "category": "technology"
+  },
+  {
+    "text": "Good software removes decisions users should never have needed to make.",
+    "category": "technology"
+  },
+  {
+    "text": "A clever solution becomes expensive when nobody else can safely change it.",
+    "category": "technology"
+  },
+  {
+    "text": "Creativity gets easier when the first idea is allowed to be ordinary.",
+    "category": "creativity"
+  },
+  {
+    "text": "A constraint can give imagination something solid to push against.",
+    "category": "creativity"
+  },
+  {
+    "text": "Make a rough version early enough that reality can argue with it.",
+    "category": "creativity"
+  },
+  {
+    "text": "A blank page becomes less powerful after one imperfect sentence.",
+    "category": "creativity"
+  },
+  {
+    "text": "Good ideas often appear after the obvious ideas have been exhausted.",
+    "category": "creativity"
+  },
+  {
+    "text": "Collect references to understand the landscape, then make choices that belong to your problem.",
+    "category": "creativity"
+  },
+  {
+    "text": "A prototype is a question you can put in someone's hands.",
+    "category": "creativity"
+  },
+  {
+    "text": "Creative confidence comes from making, not waiting to feel original.",
+    "category": "creativity"
+  },
+  {
+    "text": "Keep the strange idea long enough to discover whether it is useless or merely unfamiliar.",
+    "category": "creativity"
+  },
+  {
+    "text": "Editing is where inspiration learns manners.",
+    "category": "creativity"
+  },
+  {
+    "text": "A portfolio is stronger when it shows what changed because you were there.",
+    "category": "career"
+  },
+  {
+    "text": "Learn to explain your work to people who do not share your vocabulary.",
+    "category": "career"
+  },
+  {
+    "text": "A career grows through useful skills, visible evidence, and people who trust you.",
+    "category": "career"
+  },
+  {
+    "text": "Apply before you feel like the finished version of the candidate.",
+    "category": "career"
+  },
+  {
+    "text": "The best interview examples have decisions, trade-offs, mistakes, and outcomes.",
+    "category": "career"
+  },
+  {
+    "text": "Keep a record of work you are proud of before memory turns every project into a blur.",
+    "category": "career"
+  },
+  {
+    "text": "Professionalism is often ordinary reliability repeated until people stop worrying.",
+    "category": "career"
+  },
+  {
+    "text": "A useful network is built from genuine conversations, not collected contacts.",
+    "category": "career"
+  },
+  {
+    "text": "Ask what a role will teach you, not only what title it gives you.",
+    "category": "career"
+  },
+  {
+    "text": "Do work that creates stories you can tell clearly later.",
+    "category": "career"
+  },
+  {
+    "text": "Your calendar has reviewed your plan and would like to discuss the laws of physics.",
+    "category": "humor"
+  },
+  {
+    "text": "The assignment brief was opened, which statistically counts as progress in several households.",
+    "category": "humor"
+  },
+  {
+    "text": "Your browser tabs have unionised and are demanding a closure policy.",
+    "category": "humor"
+  },
+  {
+    "text": "Coffee can support the study plan, but it has declined the position of study plan.",
+    "category": "humor"
+  },
+  {
+    "text": "The printer can detect urgency and uses this information recreationally.",
+    "category": "humor"
+  },
+  {
+    "text": "If the file is named final_final_REAL_v3, the project has entered its folklore era.",
+    "category": "humor"
+  },
+  {
+    "text": "The group chat is quiet enough to hear the deadline approaching.",
+    "category": "humor"
+  },
+  {
+    "text": "Your to-do list would like to remind you that changing fonts is not a task dependency.",
+    "category": "humor"
+  },
+  {
+    "text": "The lecture recording remains patient, which is more than can be said for the exam date.",
+    "category": "humor"
+  },
+  {
+    "text": "A five-minute break has requested an extension and accidentally booked the evening.",
+    "category": "humor"
+  },
+  {
+    "text": "All people by nature desire to know.",
+    "author": "Aristotle",
+    "category": "learning"
+  },
+  {
+    "text": "For the things we have to learn before we can do them, we learn by doing them.",
+    "author": "Aristotle",
+    "category": "learning"
+  },
+  {
+    "text": "The unexamined life is not worth living.",
+    "author": "Socrates, as recorded by Plato",
+    "category": "learning"
+  },
+  {
+    "text": "Well done is better than well said.",
+    "author": "Benjamin Franklin",
+    "category": "productivity"
+  },
+  {
+    "text": "Lost time is never found again.",
+    "author": "Benjamin Franklin",
+    "category": "planning"
+  },
+  {
+    "text": "Nothing great was ever achieved without enthusiasm.",
+    "author": "Ralph Waldo Emerson",
+    "category": "motivation"
+  },
+  {
+    "text": "Hitch your wagon to a star.",
+    "author": "Ralph Waldo Emerson",
+    "category": "motivation"
+  },
+  {
+    "text": "Our life is frittered away by detail.",
+    "author": "Henry David Thoreau",
+    "category": "productivity"
+  },
+  {
+    "text": "Simplify, simplify.",
+    "author": "Henry David Thoreau",
+    "category": "productivity"
+  },
+  {
+    "text": "It takes two to speak the truth—one to speak, and another to hear.",
+    "author": "Henry David Thoreau",
+    "category": "teamwork"
+  },
+  {
+    "text": "Courage is resistance to fear, mastery of fear—not absence of fear.",
+    "author": "Mark Twain",
+    "category": "motivation"
+  },
+  {
+    "text": "When angry, count four; when very angry, swear.",
+    "author": "Mark Twain",
+    "category": "humor"
+  },
+  {
+    "text": "When in doubt, strike out the adjective.",
+    "author": "Mark Twain",
+    "category": "creativity"
+  },
+  {
+    "text": "Great works are performed not by strength, but by perseverance.",
+    "author": "Samuel Johnson",
+    "category": "motivation"
+  },
+  {
+    "text": "If I have seen further than others, it is because I have stood on the shoulders of giants.",
+    "author": "Isaac Newton",
+    "category": "learning"
+  },
+  {
+    "text": "The only way to have a friend is to be one.",
+    "author": "Ralph Waldo Emerson",
+    "category": "teamwork"
+  },
+  {
+    "text": "The noblest question in the world is: What good may I do in it?",
+    "author": "Benjamin Franklin",
+    "category": "motivation"
+  },
+  {
+    "text": "The masterpiece of a person is to live with purpose.",
+    "author": "Benjamin Franklin",
+    "category": "motivation"
+  },
+  {
+    "text": "Do not do what you would not want known.",
+    "author": "Benjamin Franklin",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Who has deceived you so often as yourself?",
+    "author": "Benjamin Franklin",
+    "category": "learning"
+  },
+  {
+    "text": "Search others for their virtues, yourself for your vices.",
+    "author": "Benjamin Franklin",
+    "category": "learning"
+  },
+  {
+    "text": "Whoever can have patience can have what they want.",
+    "author": "Benjamin Franklin",
+    "category": "motivation"
+  },
+  {
+    "text": "After hardships and losses, people grow humbler and wiser.",
+    "author": "Benjamin Franklin",
+    "category": "learning"
+  },
+  {
+    "text": "Wealth belongs not to the person who has it, but to the person who enjoys it.",
+    "author": "Benjamin Franklin",
+    "category": "wellbeing"
+  },
+  {
+    "text": "There is no better relationship than a prudent and faithful friend.",
+    "author": "Benjamin Franklin",
+    "category": "teamwork"
+  },
+  {
+    "text": "A person who can compose themselves is wiser than one who composes books.",
+    "author": "Benjamin Franklin",
+    "category": "wellbeing"
+  },
+  {
+    "text": "A person who can rest is greater than one who can conquer cities.",
+    "author": "Benjamin Franklin",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Read much, but not too many books.",
+    "author": "Benjamin Franklin",
+    "category": "study"
+  },
+  {
+    "text": "None preaches better than the ant, and she says nothing.",
+    "author": "Benjamin Franklin",
+    "category": "productivity"
+  },
+  {
+    "text": "Forewarned, forearmed.",
+    "author": "Benjamin Franklin",
+    "category": "planning"
+  },
+  {
+    "text": "Read not to contradict and confute, nor to believe and take for granted, but to weigh and consider.",
+    "author": "Francis Bacon",
+    "category": "learning"
+  },
+  {
+    "text": "Some books are to be tasted, others swallowed, and some few chewed and digested.",
+    "author": "Francis Bacon",
+    "category": "study"
+  },
+  {
+    "text": "Reading makes a full person; conversation a ready person; and writing an exact person.",
+    "author": "Francis Bacon",
+    "category": "learning"
+  },
+  {
+    "text": "Histories make people wise; poets witty; mathematics subtle; natural philosophy deep; moral philosophy serious; logic and rhetoric able to contend.",
+    "author": "Francis Bacon",
+    "category": "learning"
+  },
+  {
+    "text": "Studies serve for delight, for ornament, and for ability.",
+    "author": "Francis Bacon",
+    "category": "study"
+  },
+  {
+    "text": "Studies perfect nature, and are perfected by experience.",
+    "author": "Francis Bacon",
+    "category": "learning"
+  },
+  {
+    "text": "A foolish consistency is the hobgoblin of little minds.",
+    "author": "Ralph Waldo Emerson",
+    "category": "learning"
+  },
+  {
+    "text": "To be great is to be misunderstood.",
+    "author": "Ralph Waldo Emerson",
+    "category": "motivation"
+  },
+  {
+    "text": "Insist on yourself; never imitate.",
+    "author": "Ralph Waldo Emerson",
+    "category": "motivation"
+  },
+  {
+    "text": "Nothing can bring you peace but yourself.",
+    "author": "Ralph Waldo Emerson",
+    "category": "wellbeing"
+  },
+  {
+    "text": "The reward of a thing well done is to have done it.",
+    "author": "Ralph Waldo Emerson",
+    "category": "motivation"
+  },
+  {
+    "text": "To fill the hour—that is happiness.",
+    "author": "Ralph Waldo Emerson",
+    "category": "wellbeing"
+  },
+  {
+    "text": "To finish the moment, to find the journey's end in every step of the road, to live the greatest number of good hours, is wisdom.",
+    "author": "Ralph Waldo Emerson",
+    "category": "wellbeing"
+  },
+  {
+    "text": "The mass of people lead lives of quiet desperation.",
+    "author": "Henry David Thoreau",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Brevity is the soul of wit.",
+    "author": "William Shakespeare",
+    "category": "creativity"
+  },
+  {
+    "text": "Give every person your ear, but few your voice.",
+    "author": "William Shakespeare",
+    "category": "teamwork"
+  },
+  {
+    "text": "This above all: be true to yourself.",
+    "author": "William Shakespeare",
+    "category": "wellbeing"
+  },
+  {
+    "text": "The fault, dear Brutus, is not in our stars, but in ourselves.",
+    "author": "William Shakespeare",
+    "category": "motivation"
+  },
+  {
+    "text": "People at some time are masters of their fates.",
+    "author": "William Shakespeare",
+    "category": "motivation"
+  },
+  {
+    "text": "There is a tide in human affairs which, taken at the flood, leads on to fortune.",
+    "author": "William Shakespeare",
+    "category": "motivation"
+  },
+  {
+    "text": "Cowards die many times before their deaths; the valiant never taste of death but once.",
+    "author": "William Shakespeare",
+    "category": "motivation"
+  },
+  {
+    "text": "Not that I loved Caesar less, but that I loved Rome more.",
+    "author": "William Shakespeare",
+    "category": "leadership"
+  },
+  {
+    "text": "Experience is the name everyone gives to their mistakes.",
+    "author": "Oscar Wilde",
+    "category": "learning"
+  },
+  {
+    "text": "The truth is rarely pure and never simple.",
+    "author": "Oscar Wilde",
+    "category": "learning"
+  },
+  {
+    "text": "We teach people how to remember; we never teach them how to grow.",
+    "author": "Oscar Wilde",
+    "category": "learning"
+  },
+  {
+    "text": "A cynic is someone who knows the price of everything and the value of nothing.",
+    "author": "Oscar Wilde",
+    "category": "learning"
+  },
+  {
+    "text": "There are only two tragedies in life: one is not getting what one wants, and the other is getting it.",
+    "author": "Oscar Wilde",
+    "category": "humor"
+  },
+  {
+    "text": "Know your own happiness.",
+    "author": "Jane Austen",
+    "category": "wellbeing"
+  },
+  {
+    "text": "There is no charm equal to tenderness of heart.",
+    "author": "Jane Austen",
+    "category": "wellbeing"
+  },
+  {
+    "text": "There is no enjoyment like reading.",
+    "author": "Jane Austen",
+    "category": "study"
+  },
+  {
+    "text": "We want you to help somebody else.",
+    "author": "Booker T. Washington",
+    "category": "teamwork"
+  },
+  {
+    "text": "We want you not to think of yourselves alone.",
+    "author": "Booker T. Washington",
+    "category": "leadership"
+  },
+  {
+    "text": "The more you do to make somebody else happy, the more happiness you will receive in turn.",
+    "author": "Booker T. Washington",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Do something for somebody else.",
+    "author": "Booker T. Washington",
+    "category": "motivation"
+  },
+  {
+    "text": "The world is a succession of changes; life is but thought.",
+    "author": "Marcus Aurelius",
+    "category": "learning"
+  },
+  {
+    "text": "Suppress the thought 'I am hurt,' and you suppress the injury.",
+    "author": "Marcus Aurelius",
+    "category": "wellbeing"
+  },
+  {
+    "text": "The best revenge is not to copy the person who wronged you.",
+    "author": "Marcus Aurelius",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Look within.",
+    "author": "Marcus Aurelius",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Dwell not on what you lack so much as on what you have already.",
+    "author": "Marcus Aurelius",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Confine your energies to the present time.",
+    "author": "Marcus Aurelius",
+    "category": "productivity"
+  },
+  {
+    "text": "It is the present moment only that one can live or lose.",
+    "author": "Marcus Aurelius",
+    "category": "wellbeing"
+  },
+  {
+    "text": "If a thing is not right, do not do it; if it is not true, do not say it.",
+    "author": "Marcus Aurelius",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Today I escaped from all trouble—or rather, I cast all trouble out of myself.",
+    "author": "Marcus Aurelius",
+    "category": "wellbeing"
+  },
+  {
+    "text": "All things are in change.",
+    "author": "Marcus Aurelius",
+    "category": "learning"
+  },
+  {
+    "text": "Changing your course to follow someone who can set you right is no compromise of your freedom.",
+    "author": "Marcus Aurelius",
+    "category": "learning"
+  },
+  {
+    "text": "Life is short. Make the best of the present with reason and justice.",
+    "author": "Marcus Aurelius",
+    "category": "motivation"
+  },
+  {
+    "text": "Wisdom is a right understanding: a faculty of discerning good from evil.",
+    "author": "Seneca",
+    "category": "learning"
+  },
+  {
+    "text": "We must practice what we preach.",
+    "author": "Seneca",
+    "category": "motivation"
+  },
+  {
+    "text": "Philosophy is the health of the mind.",
+    "author": "Seneca",
+    "category": "learning"
+  },
+  {
+    "text": "No one is born wise.",
+    "author": "Seneca",
+    "category": "learning"
+  },
+  {
+    "text": "How long I live may be in the power of others, but how well I live is in my own.",
+    "author": "Seneca",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Whoever has enough is at rest.",
+    "author": "Seneca",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Let our undertakings be neither petty nor presumptuous and reckless.",
+    "author": "Seneca",
+    "category": "planning"
+  },
+  {
+    "text": "Choose straightforward, good-natured, steady people who will not provoke your anger and will bear with it.",
+    "author": "Seneca",
+    "category": "teamwork"
+  },
+  {
+    "text": "More matter with less art.",
+    "author": "William Shakespeare",
+    "category": "creativity"
+  },
+  {
+    "text": "Take each person's criticism, but reserve your judgment.",
+    "author": "William Shakespeare",
+    "category": "learning"
+  },
+  {
+    "text": "Neither a borrower nor a lender be.",
+    "author": "William Shakespeare",
+    "category": "planning"
+  },
+  {
+    "text": "Good reasons must give place to better.",
+    "author": "William Shakespeare",
+    "category": "learning"
+  },
+  {
+    "text": "The evil that people do lives after them; the good is often buried with their bones.",
+    "author": "William Shakespeare",
+    "category": "learning"
+  },
+  {
+    "text": "The majority of people spoil their lives by an unhealthy and exaggerated altruism.",
+    "author": "Oscar Wilde",
+    "category": "wellbeing"
+  },
+  {
+    "text": "Sensations are the details that build up the stories of our lives.",
+    "author": "Oscar Wilde",
+    "category": "creativity"
+  },
+  {
+    "text": "To know nothing about our great men is one of the necessary elements of English education.",
+    "author": "Oscar Wilde",
+    "category": "humor"
+  },
+  {
+    "text": "The hands, the head, and the heart together should be made to help one another.",
+    "author": "Booker T. Washington",
+    "category": "learning"
+  },
+  {
+    "text": "If you want to live a life of genuine pleasure, do something for somebody else.",
+    "author": "Booker T. Washington",
+    "category": "motivation"
+  }
+]

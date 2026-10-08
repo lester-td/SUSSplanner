@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { AppWordmark } from "@/components/layout/app-wordmark";
 import {
   BookIcon,
   CalculatorIcon,
@@ -106,7 +106,7 @@ export function AppShell({
   const currentWeekLabelMobile = formatCurrentWeekChipForMobile(currentWeekLabel);
 
   useEffect(() => {
-    if (!showHeader || !showNav)
+    if (!showHeader || !showNav || activeSection === "home")
     {
       setIsMobileHeaderCollapsed(false);
       return;
@@ -147,7 +147,7 @@ export function AppShell({
         window.cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [showHeader, showNav]);
+  }, [activeSection, showHeader, showNav]);
 
   function renderNavItem(item: NavItem, variant: "desktop" | "mobile")
   {
@@ -182,23 +182,16 @@ export function AppShell({
         <header
           className="app-navbar sticky top-0 z-40 border-b border-[color:var(--header-divider)] bg-[var(--header-surface)] shadow-[0_4px_18px_rgba(15,23,42,0.08)] backdrop-blur"
           data-has-nav={showNav ? "true" : "false"}
-          data-mobile-collapsed={showNav && isMobileHeaderCollapsed ? "true" : "false"}
+          data-mobile-collapsed={showNav && activeSection !== "home" && isMobileHeaderCollapsed ? "true" : "false"}
         >
           <div className="app-navbar__inner px-3 py-2.5 md:px-[16px] md:py-3">
             <div className="app-navbar__desktop mx-auto hidden max-w-7xl items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2.5 xl:gap-3">
-                <Link prefetch href="/" aria-label="SUSS Planner home" className="hidden shrink-0 lg:inline-flex">
-                  <span className="relative block h-7 w-[190px] sm:h-8 sm:w-[220px]">
-                    <Image
-                      src="/suss_planner_full_white.png"
-                      alt="SUSS Planner"
-                      fill
-                      priority
-                      sizes="(min-width: 640px) 220px, 190px"
-                      className="object-contain"
-                    />
-                  </span>
-                </Link>
+                {activeSection !== "home" ? (
+                  <Link prefetch href="/" aria-label="SUSS Planner home" className="hidden shrink-0 lg:inline-flex">
+                    <AppWordmark appearance="inverse" className="h-7 sm:h-8" decorative />
+                  </Link>
+                ) : null}
 
                 {showNav ? (
                   <nav className="-mx-1 flex min-w-0 items-center gap-1 overflow-x-auto px-1 sm:gap-1.5 md:gap-2" aria-label="Primary">
@@ -215,30 +208,23 @@ export function AppShell({
             </div>
 
             <div className="app-navbar__mobile mx-auto hidden max-w-7xl">
-              <div className="app-navbar__mobile-top" aria-hidden={showNav && isMobileHeaderCollapsed ? true : undefined}>
-                <Link
-                  prefetch
-                  href="/"
-                  aria-label="SUSS Planner home"
-                  tabIndex={showNav && isMobileHeaderCollapsed ? -1 : undefined}
-                  className="app-navbar__mobile-brand inline-flex shrink-0"
-                >
-                  <span className="app-navbar__mobile-logo relative block h-7 w-[170px] sm:h-8 sm:w-[210px]">
-                    <Image
-                      src="/suss_planner_full_white.png"
-                      alt="SUSS Planner"
-                      fill
-                      priority
-                      sizes="(min-width: 640px) 210px, 170px"
-                      className="object-contain"
-                    />
-                  </span>
-                </Link>
+              {activeSection !== "home" ? (
+                <div className="app-navbar__mobile-top" aria-hidden={showNav && isMobileHeaderCollapsed ? true : undefined}>
+                  <Link
+                    prefetch
+                    href="/"
+                    aria-label="SUSS Planner home"
+                    tabIndex={showNav && isMobileHeaderCollapsed ? -1 : undefined}
+                    className="app-navbar__mobile-brand inline-flex shrink-0"
+                  >
+                    <AppWordmark appearance="inverse" className="app-navbar__mobile-logo h-7 sm:h-8" decorative />
+                  </Link>
 
-                <div className="app-navbar__mobile-context app-navbar-context min-w-0 flex-1 truncate whitespace-nowrap px-1 py-1 text-right text-[11px] font-semibold leading-4 text-[var(--header-text-muted)] sm:text-[13px] sm:leading-5">
-                  {currentWeekLabelMobile}
+                  <div className="app-navbar__mobile-context app-navbar-context min-w-0 flex-1 truncate whitespace-nowrap px-1 py-1 text-right text-[11px] font-semibold leading-4 text-[var(--header-text-muted)] sm:text-[13px] sm:leading-5">
+                    {currentWeekLabelMobile}
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               {showNav ? (
                 <nav className="app-navbar__mobile-nav" aria-label="Primary">
@@ -253,9 +239,9 @@ export function AppShell({
       <section
         className={`app-content-surface flex min-h-0 flex-1 flex-col bg-[var(--surface-container-lowest)] ${activeSection === "planner" && contentLayout === "full-bleed" ? "app-content-surface--planner-full-bleed" : ""}`}
       >
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className={`flex min-h-0 flex-1 flex-col ${showFooter && activeSection !== "planner" ? "app-footer-gap" : ""}`.trim()}>
           {contentLayout === "framed" ? (
-            <div className={`px-3 pb-3 pt-3 md:px-[16px] md:pt-8 ${contentFrameClassName}`.trim()}>
+            <div className={`px-3 ${showFooter ? "" : "pb-3"} pt-3 md:px-[16px] md:pt-8 ${contentFrameClassName}`.trim()}>
               <div className={`mx-auto w-full max-w-7xl ${contentContainerClassName}`.trim()}>
                 {children}
               </div>
@@ -266,17 +252,17 @@ export function AppShell({
         </div>
 
         {showFooter ? (
-          <footer className={`border-t border-[var(--brand-divider)] bg-[var(--footer-surface)] ${activeSection === "home" ? "hidden sm:block" : ""}`}>
+          <footer className={`border-t border-[var(--header-divider)] bg-[var(--footer-surface)] ${activeSection === "home" ? "hidden sm:block" : ""}`}>
             <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold leading-5 text-[var(--on-surface)]">
+                <p className="text-[13px] font-semibold leading-5 text-[var(--header-text)]">
                   SUSS Planner
                 </p>
-                <div className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                <div className="mt-1 text-[12px] leading-5 text-[var(--header-text-muted)]">
                   <p>
                     This is a student developed web application in beta phase. The information is provided with absolutely no warranties, although it has been checked to the best of our ability.
                   </p>
-                  <p className="mt-1 font-semibold text-[var(--on-surface)]">
+                  <p className="mt-1 font-semibold text-[var(--header-text)]">
                     Data last updated: {formatDataUpdatedValue(dataUpdatedAt)}
                   </p>
                   {footerContent ? <div className="mt-1">{footerContent}</div> : null}
@@ -287,13 +273,13 @@ export function AppShell({
                 <Link
                   prefetch
                   href="/feedback"
-                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-white/20 bg-white/10 px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--header-text)] transition-colors hover:bg-white/20"
                 >
                   <EditIcon className="h-4 w-4" />
                   Feedback
                 </Link>
                 <a
-                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--on-surface)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                  className="inline-flex items-center gap-1.5 rounded-[0.5rem] border border-white/20 bg-white/10 px-2.5 py-1.5 text-[12px] font-semibold leading-4 text-[var(--header-text)] transition-colors hover:bg-white/20"
                   href="https://github.com/Simplificatedd/SUSSplanner"
                   target="_blank"
                   rel="noreferrer"

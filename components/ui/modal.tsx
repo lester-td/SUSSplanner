@@ -14,6 +14,8 @@ export function Modal({
   maxWidthClassName = "max-w-2xl",
   bodyClassName = "",
   showCloseButton = false,
+  headerIcon,
+  headerContent,
 }: {
   open: boolean;
   title: string;
@@ -24,6 +26,8 @@ export function Modal({
   maxWidthClassName?: string;
   bodyClassName?: string;
   showCloseButton?: boolean;
+  headerIcon?: ReactNode;
+  headerContent?: ReactNode;
 })
 {
   const titleId = useId();
@@ -85,7 +89,7 @@ export function Modal({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
       >
-        {showCloseButton ? (
+        {showCloseButton && !headerIcon ? (
           <button
             type="button"
             onClick={onClose}
@@ -96,10 +100,27 @@ export function Modal({
             <XIcon className="h-4 w-4" />
           </button>
         ) : null}
-        <div className="shrink-0 px-5 pb-0 pt-5">
-          <h2 id={titleId} className="text-[20px] font-semibold leading-7 text-[var(--on-surface)]">{title}</h2>
-          {description ? (
-            <p id={descriptionId} className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{description}</p>
+        <div className={headerIcon ? "app-aero-panel-heading shrink-0" : "shrink-0 px-5 pb-0 pt-5"}>
+          <div className="min-w-0 flex-1">
+            <h2 id={titleId} className={headerIcon ? "flex items-center gap-2.5 text-[16px] font-semibold leading-5 text-[var(--on-surface)]" : "text-[20px] font-semibold leading-7 text-[var(--on-surface)]"}>
+              {headerIcon}
+              {title}
+            </h2>
+            {description ? (
+              <p id={descriptionId} className="mt-2 text-[14px] leading-5 text-[var(--on-surface-variant)]">{description}</p>
+            ) : null}
+            {headerContent}
+          </div>
+          {showCloseButton && headerIcon ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="app-modal-header-close inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.375rem] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+              aria-label="Close modal"
+              title="Close"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
           ) : null}
         </div>
         {children ? <div className={`min-h-0 flex-1 overflow-y-auto px-5 py-3 ${bodyClassName}`}>{children}</div> : null}

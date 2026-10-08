@@ -17,6 +17,7 @@ import {
   TbCornerDownRight,
   TbColumns3,
   TbDownload,
+  TbDeviceFloppy,
   TbEye,
   TbEyeOff,
   TbFilter,
@@ -24,10 +25,13 @@ import {
   TbLayoutGrid,
   TbLayoutRows,
   TbLayersIntersect,
+  TbLink,
   TbList,
+  TbListCheck,
   TbMail,
   TbMapPin,
   TbMoon,
+  TbPalette,
   TbPencil,
   TbPlus,
   TbRefresh,
@@ -86,6 +90,11 @@ export function DownloadIcon({ className }: IconProps)
   return renderIcon(TbDownload, className);
 }
 
+export function BackupIcon({ className }: IconProps)
+{
+  return renderIcon(TbDeviceFloppy, className);
+}
+
 export function UploadIcon({ className }: IconProps)
 {
   return renderIcon(TbUpload, className);
@@ -131,6 +140,11 @@ export function LayersIcon({ className }: IconProps)
   return renderIcon(TbLayersIntersect, className);
 }
 
+export function LinkIcon({ className }: IconProps)
+{
+  return renderIcon(TbLink, className);
+}
+
 export function SwapIcon({ className }: IconProps)
 {
   return renderIcon(TbSwitchHorizontal, className);
@@ -144,6 +158,11 @@ export function SchoolIcon({ className }: IconProps)
 export function ListIcon({ className }: IconProps)
 {
   return renderIcon(TbList, className);
+}
+
+export function AssessmentIcon({ className }: IconProps)
+{
+  return renderIcon(TbListCheck, className);
 }
 
 export function ClockIcon({ className }: IconProps)
@@ -219,6 +238,11 @@ export function SunIcon({ className }: IconProps)
 export function MoonIcon({ className }: IconProps)
 {
   return renderIcon(TbMoon, className);
+}
+
+export function PaletteIcon({ className }: IconProps)
+{
+  return renderIcon(TbPalette, className);
 }
 
 export function CodeIcon({ className }: IconProps)

@@ -11,7 +11,9 @@ import {
 } from "@/lib/timetable/date-utils";
 import { Modal } from "@/components/ui/modal";
 import { getExceptionalClassEvents } from "@/lib/timetable/timetable-utils";
+import { getIntakeScheduleNotice } from "@/lib/timetable/semester-visibility";
 import type {
+  SemesterRecord,
   TimetableClash,
   TimetableEventRecord,
 } from "@/lib/timetable/types";
@@ -74,9 +76,9 @@ function ClassList({ events }: { events: TimetableEventRecord[] })
   return (
     <ul className="flex flex-wrap gap-1.5">
       {events.map((event) => (
-        <li key={event.eventId} className="timetable-alert-chip w-fit max-w-full rounded-[0.35rem] border border-[var(--outline-variant)] bg-white px-2 py-1 shadow-sm">
+        <li key={`${event.shareKey}:${event.eventId}`} className="timetable-alert-chip w-fit max-w-full rounded-[0.35rem] border border-[var(--outline-variant)] bg-[var(--background)] px-2 py-1 shadow-sm">
           <p className="text-[12px] font-semibold leading-4 text-[var(--on-surface)]">
-            {event.courseCode} {formatClassGroupLabel(event.groupCode)}
+            {event.courseLabel ?? event.courseCode} {formatClassGroupLabel(event.groupCode)}
           </p>
           <p className="text-[11px] leading-4 text-[var(--on-surface-variant)]">
             {formatEventDate(event.eventDate)} · {formatTimeRange(event.startTime, event.endTime)}
@@ -90,7 +92,7 @@ function ClassList({ events }: { events: TimetableEventRecord[] })
 function getEventSignature(event: TimetableEventRecord)
 {
   return [
-    event.courseCode,
+    event.shareKey,
     event.groupCode,
     event.eventDate,
     event.startTime,
@@ -157,7 +159,7 @@ function getExamClashSummary(clashes: TimetableClash[])
 
 function formatClashEventLabel(event: TimetableEventRecord, includeMode: boolean)
 {
-  const base = `${event.courseCode} ${formatClassGroupLabel(event.groupCode)}`;
+  const base = `${event.courseLabel ?? event.courseCode} ${formatClassGroupLabel(event.groupCode)}`;
   if (!includeMode)
   {
     return base;
@@ -174,7 +176,7 @@ function ClassClashBadges({ clashes }: { clashes: TimetableClash[] })
       {participants.map((event) => (
         <span
           key={event.shareKey}
-          className="timetable-alert-chip rounded-full border border-[var(--outline-variant)] bg-white px-2 py-1 text-[11px] font-semibold leading-none text-[var(--on-surface)] shadow-sm"
+          className="timetable-alert-chip rounded-full border border-[var(--outline-variant)] bg-[var(--background)] px-2 py-1 text-[11px] font-semibold leading-none text-[var(--on-surface)] shadow-sm"
         >
           {formatClashEventLabel(event, false)}
         </span>
@@ -186,7 +188,7 @@ function ClassClashBadges({ clashes }: { clashes: TimetableClash[] })
 function ExamClashTile({ clash }: { clash: TimetableClash })
 {
   return (
-    <article className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-white px-2 py-1.5 shadow-sm">
+    <article className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-[var(--background)] px-2 py-1.5 shadow-sm">
       <p className="text-[10px] font-semibold leading-[13px] text-[var(--on-surface)] sm:text-[11px] sm:leading-[14px]">
         {formatEventDate(clash.eventDate)} · {formatTimeRange(clash.startTime, clash.endTime)}
       </p>
@@ -194,7 +196,7 @@ function ExamClashTile({ clash }: { clash: TimetableClash })
         {clash.events
           .filter((event) => event.eventKind === "EXAM")
           .map((event) => (
-            <li key={event.eventId} className="flex gap-1 text-[10px] font-normal text-[var(--on-surface)] sm:text-[11px]">
+            <li key={`${event.shareKey}:${event.eventId}`} className="flex gap-1 text-[10px] font-normal text-[var(--on-surface)] sm:text-[11px]">
               <span aria-hidden="true">•</span>
               <span>{formatClashEventLabel(event, true)}</span>
             </li>
@@ -277,7 +279,7 @@ function ClashScheduleSection({
                 <td className="border-b border-[var(--outline-variant)] px-3 py-2.5">
                   <div className="flex flex-wrap gap-1.5">
                     {clash.events.map((event) => (
-                      <span key={event.eventId} className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-white px-2 py-1 text-[12px] font-semibold text-[var(--on-surface)] shadow-sm">
+                      <span key={`${event.shareKey}:${event.eventId}`} className="timetable-alert-chip rounded-[0.4rem] border border-[var(--outline-variant)] bg-[var(--background)] px-2 py-1 text-[12px] font-semibold text-[var(--on-surface)] shadow-sm">
                         {formatClashEventLabel(event, isExam)}
                       </span>
                     ))}
@@ -328,13 +330,16 @@ function ClashDetailsModal({
 }
 
 export function TimetableAlerts({
+  semester = null,
   events,
   clashes,
 }: {
+  semester?: SemesterRecord | null;
   events: TimetableEventRecord[];
   clashes: TimetableClash[];
 })
 {
+  const intakeScheduleNotice = getIntakeScheduleNotice(semester);
   const {
     weekZeroClasses,
     studyWeekClasses,
@@ -344,12 +349,13 @@ export function TimetableAlerts({
     examClashes,
   } = splitClashes(clashes);
   const infoSignature = [
+    ...(intakeScheduleNotice ? [`intake:${semester!.semesterId}:${intakeScheduleNotice}`] : []),
     ...weekZeroClasses.map(getEventSignature),
     ...studyWeekClasses.map(getEventSignature),
   ].sort().join("|");
   const [isClashesModalOpen, setIsClashesModalOpen] = useState(false);
   const [infoDismissed, setInfoDismissed] = useState(() => loadDismissedInfoSignature() === infoSignature);
-  const hasInfo = weekZeroClasses.length > 0 || studyWeekClasses.length > 0;
+  const hasInfo = Boolean(intakeScheduleNotice) || weekZeroClasses.length > 0 || studyWeekClasses.length > 0;
   const hasClassClashes = classClashes.length > 0;
   const hasExamClashes = examClashes.length > 0;
 
@@ -368,7 +374,7 @@ export function TimetableAlerts({
     {
       clearDismissedInfoSignature();
     }
-  }, [infoSignature]);
+  }, [hasInfo, infoSignature]);
 
   const hasVisibleInfo = hasInfo && !infoDismissed;
   const hasVisibleSections = hasVisibleInfo || hasClassClashes || hasExamClashes;
@@ -428,6 +434,16 @@ export function TimetableAlerts({
         {hasVisibleInfo ? (
           <section className="relative min-w-0 px-2.5 py-2 sm:px-3 sm:py-2.5">
             <div className="min-w-0 space-y-3 pr-16 sm:pr-20">
+              {intakeScheduleNotice ? (
+                <div role="status">
+                  <p className="text-[16px] font-semibold leading-normal text-[var(--on-surface)]">
+                    Intake schedule unavailable
+                  </p>
+                  <p className="mt-1.5 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                    {intakeScheduleNotice}
+                  </p>
+                </div>
+              ) : null}
               {weekZeroClasses.length > 0 ? (
                 <div>
                   <p className="text-[16px] font-semibold leading-normal text-[var(--on-surface)]">

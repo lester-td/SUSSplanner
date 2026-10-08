@@ -3,23 +3,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { optionalString, parseArgs } from "../lib/args.js";
+import type { ScheduleParseResult } from "../lib/types.js";
+import { parseScheduleManifest, type ScheduleManifestItem } from "../lib/scheduleManifest.js";
 import { filterScheduleResult, loadCourseCodeFilter } from "../lib/courseCodeFilter.js";
 import { parseOutputFormat, writesJson, writesSql } from "../lib/outputFormat.js";
-import type { ScheduleParseResult, ScheduleType } from "../lib/types.js";
 import { parseScheduleCsv } from "../parsers/scheduleCsv.js";
 import { generateSql } from "../sql/generateSql.js";
+import { buildScheduleCohortIndex, readScheduleCohortIndex } from "../lib/scheduleCohorts.js";
 
 const execFileAsync = promisify(execFile);
-
-interface ScheduleManifestItem {
-  pdf?: string;
-  csv?: string;
-  scheduleType: ScheduleType;
-}
-
-interface ScheduleManifest {
-  schedules: ScheduleManifestItem[];
-}
 
 function emptyResult(): ScheduleParseResult {
   return { semesters: [], courses: [], classes: [], classEvents: [], warnings: [] };
@@ -93,17 +85,24 @@ async function main(): Promise<void> {
   await fs.mkdir(path.dirname(courseCodesOut), { recursive: true });
   await fs.mkdir(csvDir, { recursive: true });
 
-  const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8")) as ScheduleManifest;
+  const manifest = parseScheduleManifest(await fs.readFile(manifestPath, "utf8"));
   const results: ScheduleParseResult[] = [];
+  const sources: Array<{ source: string; result: ScheduleParseResult }> = [];
 
   for (const item of manifest.schedules) {
     const source = item.pdf ?? item.csv;
     console.log(`Parsing ${source} (${item.scheduleType})...`);
     const csvPath = await getCsvForManifestItem(item, csvDir);
     const csvText = await fs.readFile(csvPath, "utf8");
-    results.push(parseScheduleCsv(csvText, item.scheduleType));
+    const result = parseScheduleCsv(csvText, item.scheduleType, item.intakes);
+    results.push(result);
+    sources.push({ source: source!, result });
   }
 
+  const cohortsPath = typeof args["cohorts-out"] === "string" ? args["cohorts-out"] : "data/schedule-cohorts.json";
+  await fs.mkdir(path.dirname(cohortsPath), { recursive: true });
+  const cohortIndex = buildScheduleCohortIndex(sources, await readScheduleCohortIndex(cohortsPath));
+  await fs.writeFile(cohortsPath, `${JSON.stringify(cohortIndex, null, 2)}\n`, "utf8");
   const courseCodeFilter = await loadCourseCodeFilter(args);
   const merged = filterScheduleResult(mergeResults(results), courseCodeFilter);
   if (writesJson(format)) await fs.writeFile(outJson, JSON.stringify(merged, null, 2) + "\n", "utf8");

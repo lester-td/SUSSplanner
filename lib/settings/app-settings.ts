@@ -2,6 +2,7 @@ import { COURSE_COLOR_PALETTE } from "@/lib/timetable/timetable-utils";
 import type { TimetableOrientation, TimetableStudyMode } from "@/lib/timetable/types";
 
 export type ColorSchemePreference = "system" | "light" | "dark";
+export type TimetableOpeningView = "all-weeks" | "this-week" | "last-viewed";
 
 export type RegistrationReminderPreferences = {
   enabled: boolean;
@@ -11,6 +12,7 @@ export type SettingsState = {
   colorScheme: ColorSchemePreference;
   themeId: string;
   timetableOrientation: TimetableOrientation;
+  timetableOpeningView: TimetableOpeningView;
   registrationReminders: RegistrationReminderPreferences;
   timetableStudyMode: TimetableStudyMode;
 };
@@ -29,9 +31,10 @@ export const DEFAULT_REGISTRATION_REMINDER_PREFERENCES: RegistrationReminderPref
 };
 
 export const DEFAULT_APP_SETTINGS: SettingsState = {
-  colorScheme: "system",
+  colorScheme: "light",
   themeId: "current-timetable",
-  timetableOrientation: "horizontal",
+  timetableOrientation: "vertical",
+  timetableOpeningView: "last-viewed",
   registrationReminders: DEFAULT_REGISTRATION_REMINDER_PREFERENCES,
   timetableStudyMode: "full-time",
 };
@@ -72,6 +75,11 @@ function isColorSchemePreference(value: unknown): value is ColorSchemePreference
 function isTimetableOrientation(value: unknown): value is TimetableOrientation
 {
   return value === "horizontal" || value === "vertical";
+}
+
+function isTimetableOpeningView(value: unknown): value is TimetableOpeningView
+{
+  return value === "all-weeks" || value === "this-week" || value === "last-viewed";
 }
 
 function getDefaultRegistrationReminderPreferences(): RegistrationReminderPreferences
@@ -131,6 +139,9 @@ export function normalizeAppSettings(value: unknown): SettingsState
     timetableOrientation: isTimetableOrientation(candidate.timetableOrientation)
       ? candidate.timetableOrientation
       : DEFAULT_APP_SETTINGS.timetableOrientation,
+    timetableOpeningView: isTimetableOpeningView(candidate.timetableOpeningView)
+      ? candidate.timetableOpeningView
+      : DEFAULT_APP_SETTINGS.timetableOpeningView,
     registrationReminders: normalizeRegistrationReminderPreferences(candidate.registrationReminders),
     timetableStudyMode: isTimetableStudyMode(candidate.timetableStudyMode)
       ? candidate.timetableStudyMode

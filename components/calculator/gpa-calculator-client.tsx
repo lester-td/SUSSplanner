@@ -2,15 +2,22 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { CourseSearchResultButton } from "@/components/calculator/course-search-result-button";
+import { SussGradeScale } from "@/components/calculator/suss-grade-scale";
+
 import {
   BookIcon,
+  CalendarIcon,
+  ClockIcon,
+  DownloadIcon,
   PlusIcon,
   SearchIcon,
+  SchoolIcon,
   TrashIcon,
-  UploadIcon,
   XIcon,
 } from "@/components/planner/icons";
 import { Modal } from "@/components/ui/modal";
+import { CourseModeSwitch } from "@/components/ui/course-mode-switch";
 import {
   SEMESTER_PLANNER_UPDATED_EVENT,
   loadSemesterPlannerState,
@@ -263,7 +270,6 @@ export function GpaCalculatorClient()
   const [includeCustomPlannerModules, setIncludeCustomPlannerModules] = useState(true);
   const [selectedPlannerCourseIds, setSelectedPlannerCourseIds] = useState<string[]>([]);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
-  const [priorRecordExpanded, setPriorRecordExpanded] = useState(false);
   const [ready, setReady] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebouncedValue(searchQuery, 250);
@@ -630,42 +636,32 @@ export function GpaCalculatorClient()
 
   return (
     <div className="calculator-page calculator-section calculator-section--gpa w-full pb-6">
-      <section className="mb-2 md:mb-3">
-        <div className="grid gap-2.5 md:grid-cols-2 lg:hidden">
-          <div className="calculator-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5">
-            <MobileSummaryCell label="Current Semester" value={formatGpa(currentGpa)} />
-            <div className="mt-2 grid grid-cols-1 gap-y-1.5 border-t border-[var(--outline-variant)] pt-2">
-              <MobileSummaryDetail label="Courses" value={String(modules.length)} />
-              <MobileSummaryDetail label="GPA Credits" value={currentGpaCredits.toFixed(1)} />
-              <MobileSummaryDetail label="Credit Units" value={currentCredits.toFixed(1)} />
-            </div>
-          </div>
-          <div className="calculator-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2.5">
-            <MobileSummaryCell label="Cumulative" value={formatGpa(cumulativeGpa)} />
-            <div className="mt-2 grid grid-cols-1 gap-y-1.5 border-t border-[var(--outline-variant)] pt-2">
-              <MobileSummaryDetail label="Total GPA Credits" value={totalGpaCredits.toFixed(1)} />
-              <MobileSummaryDetail label="Total Credit Units" value={totalCompletedCredits.toFixed(1)} />
-            </div>
-          </div>
-        </div>
-        <div className="hidden lg:grid lg:grid-cols-[repeat(4,minmax(0,1fr))_1px_repeat(3,minmax(0,1fr))] lg:items-stretch lg:gap-3">
-          <StatItem label="Semester GPA" value={formatGpa(currentGpa)} tone="semester" />
-          <StatItem label="Courses" value={String(modules.length)} tone="semester" />
-          <StatItem label="Credit Units" value={currentCredits.toFixed(1)} tone="semester" />
-          <StatItem label="GPA Credits" value={currentGpaCredits.toFixed(1)} tone="semester" />
-          <div className="hidden self-stretch justify-self-center bg-[var(--outline-variant)] lg:block lg:w-px" aria-hidden="true" />
-          <StatItem label="Cumulative GPA" value={formatGpa(cumulativeGpa)} tone="all-time" />
-          <StatItem label="Total GPA Credits" value={totalGpaCredits.toFixed(1)} tone="all-time" />
-          <StatItem label="Total Credit Units" value={totalCompletedCredits.toFixed(1)} tone="all-time" />
-        </div>
-      </section>
-
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section className="min-w-0">
+          <section className="mb-4" aria-label="GPA and credit unit statistics">
+            <div className="calculator-gpa-summary grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
+              <div className="app-aero-panel calculator-panel calculator-summary-panel px-2 py-3 sm:px-5 sm:py-4">
+                <SummaryCell icon={<CalendarIcon className="h-4 w-4 shrink-0 text-[var(--primary)]" />} label="Current Semester" value={formatGpa(currentGpa)} />
+                <div className="mt-2 grid grid-cols-1 gap-y-1.5 border-t border-[var(--outline-variant)] pt-2">
+                  <SummaryDetail label="Courses" value={String(modules.length)} />
+                  <SummaryDetail label="GPA Credits" value={currentGpaCredits.toFixed(1)} />
+                  <SummaryDetail label="Credit Units" value={currentCredits.toFixed(1)} />
+                </div>
+              </div>
+              <div className="app-aero-panel calculator-panel calculator-summary-panel px-2 py-3 sm:px-5 sm:py-4">
+                <SummaryCell icon={<SchoolIcon className="h-4 w-4 shrink-0 text-[var(--primary)]" />} label="Cumulative" value={formatGpa(cumulativeGpa)} />
+                <div className="mt-2 grid grid-cols-1 gap-y-1.5 border-t border-[var(--outline-variant)] pt-2">
+                  <SummaryDetail label="Total GPA Credits" value={totalGpaCredits.toFixed(1)} />
+                  <SummaryDetail label="Total Credit Units" value={totalCompletedCredits.toFixed(1)} />
+                </div>
+              </div>
+            </div>
+          </section>
+
           <div ref={searchContainerRef} className="relative z-20 mb-3">
-            <div className="calculator-panel calculator-major-panel rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-2.5 sm:py-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-center gap-3">
+            <div className="app-aero-panel calculator-panel calculator-major-panel">
+              <div className="app-aero-panel-heading calculator-panel-heading flex-wrap gap-3 justify-between">
+                <div className="flex items-center gap-2">
                   {isCustomModule ? (
                     <BookIcon className="h-5 w-5 text-[var(--primary)]" />
                   ) : (
@@ -675,169 +671,143 @@ export function GpaCalculatorClient()
                     Add courses
                   </h2>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={openPlannerImport}
-                    className="inline-flex h-[34px] items-center justify-center gap-1.5 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 text-[12px] font-semibold leading-4 text-[var(--on-surface-variant)] transition-colors hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                    className="calculator-planner-import inline-flex h-8 items-center justify-center gap-1.5 px-2.5 text-[12px] font-semibold leading-4"
                   >
-                    <UploadIcon className="h-4 w-4" />
+                    <DownloadIcon className="h-4 w-4" />
                     <span>Planner</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCustomModule((current) => !current);
+                  <CourseModeSwitch
+                    isCustom={isCustomModule}
+                    onChange={(custom) => {
+                      setIsCustomModule(custom);
                       setSearchQuery("");
                       setSearchResults([]);
                       setCustomModuleNotice("");
                     }}
-                    className="calculator-segmented-control relative inline-grid h-[34px] grid-cols-2 self-start overflow-hidden rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-[2px]"
-                    aria-pressed={isCustomModule}
-                    aria-label={`Add module mode: ${isCustomModule ? "Custom" : "Search"}. Click to toggle.`}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`calculator-segmented-control__thumb absolute bottom-[2px] left-[2px] top-[2px] w-[calc(50%-2px)] rounded-[0.3rem] bg-[var(--primary)] shadow-sm transition-transform duration-300 ease-out ${isCustomModule ? "translate-x-full" : "translate-x-0"}`}
-                    />
-                    <span
-                      aria-hidden="true"
-                      className={`calculator-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${!isCustomModule ? "calculator-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
-                    >
-                      Search
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className={`calculator-segmented-label relative z-10 flex min-w-[4.25rem] items-center justify-center rounded-[0.3rem] px-2.5 py-2 text-[12px] font-semibold leading-4 transition-colors duration-300 ${isCustomModule ? "calculator-segmented-label--active text-on-primary" : "text-[var(--on-surface-variant)]"}`}
-                    >
-                      Custom
-                    </span>
-                  </button>
+                  />
                 </div>
               </div>
 
-              {plannerImportNotice ? (
-                <p className="mt-3 rounded-[0.6rem] border border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] px-3 py-2 text-[12px] font-semibold leading-5 text-[var(--primary)]">
-                  {plannerImportNotice}
-                </p>
-              ) : null}
-
-              {isCustomModule ? (
-                <form
-                  className="relative mt-3 h-[40px]"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    addCustomModule();
-                  }}
-                >
-                  <div className="grid h-full grid-cols-[minmax(0,1fr)_7rem_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_8rem_auto] sm:gap-3">
-                    <input
-                      type="text"
-                      value={customModuleLabel}
-                      onChange={(event) => {
-                        setCustomModuleLabel(event.target.value);
-                        setCustomModuleNotice("");
-                      }}
-                      placeholder="Module code or name"
-                      className="h-full min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      value={customModuleCredits}
-                      onChange={(event) => {
-                        setCustomModuleCredits(event.target.value);
-                        setCustomModuleNotice("");
-                      }}
-                      placeholder="Credit units"
-                      className="h-full min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:px-3"
-                    />
-                    <button
-                      type="submit"
-                      className="calculator-primary-action inline-flex h-full items-center justify-center gap-2 rounded-[0.6rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)] sm:px-4"
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                      <span className="hidden sm:inline">Add Module</span>
-                    </button>
-                  </div>
-                  {customModuleNotice ? (
-                    <p className="absolute mt-1 text-[12px] font-semibold text-[var(--error)]">{customModuleNotice}</p>
-                  ) : null}
-                </form>
-              ) : (
-                <div className="relative mt-3 h-[40px]">
-                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
-                  <input
-                    id="calculator-course-search"
-                    type="search"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search by module code or title..."
-                    autoComplete="off"
-                    className="h-full w-full rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  />
-                  {searchQuery ? (
-                    <button
-                      type="button"
-                      aria-label="Clear search"
-                      onClick={() => {
-                        setSearchQuery("");
-                        setSearchResults([]);
-                      }}
-                      className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </button>
-                  ) : null}
-
-                  {searchQuery.trim() ? (
-                    <div className="elev-3 absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
-                      {searchLoading ? (
-                        <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">Searching modules...</p>
-                      ) : searchResults.length > 0 ? (
-                        <ul className="max-h-80 overflow-y-auto py-1">
-                          {searchResults.map((course) => {
-                            const alreadyAdded = modules.some((module) => module.courseCode === course.courseCode);
-                            return (
-                              <li key={course.courseCode}>
-                                <button
-                                  type="button"
-                                  disabled={alreadyAdded}
-                                  onClick={() => addModule(course)}
-                                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--surface-container-low)] disabled:cursor-not-allowed disabled:opacity-45"
-                                >
-                                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[var(--primary)]">
-                                    <PlusIcon className="h-4 w-4" />
-                                  </span>
-                                  <span className="min-w-0 flex-1">
-                                    <span className="block text-[13px] font-bold text-[var(--on-surface)]">{course.courseCode}</span>
-                                    <span className="block truncate text-[12px] text-[var(--on-surface-variant)]">
-                                      {course.courseName ?? "Course name unavailable"}
-                                    </span>
-                                  </span>
-                                  <span className="shrink-0 text-[12px] font-semibold text-[var(--on-surface-variant)]">
-                                    {alreadyAdded ? "Added" : formatCreditUnits(course.creditUnits)}
-                                  </span>
-                                </button>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : (
-                        <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">No matching modules found.</p>
-                      )}
+              <div className="calculator-panel-body p-4 sm:p-5">
+                {plannerImportNotice ? (
+                  <p className="mb-3 rounded-[0.6rem] border border-[var(--brand-divider)] bg-[var(--brand-chip-bg)] px-3 py-2 text-[12px] font-semibold leading-5 text-[var(--primary)]">
+                    {plannerImportNotice}
+                  </p>
+                ) : null}
+                {isCustomModule ? (
+                  <form
+                    className="relative h-[40px]"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      addCustomModule();
+                    }}
+                  >
+                    <div className="grid h-full grid-cols-[minmax(0,1fr)_5.5rem_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_8rem_auto] sm:gap-3">
+                      <input
+                        type="text"
+                        value={customModuleLabel}
+                        onChange={(event) => {
+                          setCustomModuleLabel(event.target.value);
+                          setCustomModuleNotice("");
+                        }}
+                        aria-label="Module code or name"
+                        placeholder="Module code or name"
+                        className="h-full min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={customModuleCredits}
+                        onChange={(event) => {
+                          setCustomModuleCredits(event.target.value);
+                          setCustomModuleNotice("");
+                        }}
+                        aria-label="Custom module credit units"
+                        placeholder="Credit units"
+                        className="h-full min-w-0 rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2 py-2 text-[13px] leading-5 text-[var(--on-surface)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] sm:px-3"
+                      />
+                      <button
+                        type="submit"
+                        aria-label="Add module"
+                        className="calculator-primary-action inline-flex h-full items-center justify-center gap-2 rounded-[0.6rem] bg-[var(--primary)] px-3 py-2 text-[13px] font-semibold leading-5 text-on-primary transition-colors hover:bg-[var(--primary-container)] sm:px-4"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                        <span className="hidden sm:inline">Add Module</span>
+                      </button>
                     </div>
-                  ) : null}
-                </div>
-              )}
+                    {customModuleNotice ? (
+                      <p className="absolute mt-1 text-[12px] font-semibold text-[var(--error)]">{customModuleNotice}</p>
+                    ) : null}
+                  </form>
+                ) : (
+                  <div className="relative h-[40px]">
+                    <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
+                    <input
+                      id="calculator-course-search"
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      aria-label="Search courses for GPA"
+                      placeholder="Search by module code or title..."
+                      autoComplete="off"
+                      className="h-full w-full rounded-[0.6rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] py-2.5 pl-10 pr-11 text-[13px] leading-5 text-[var(--on-surface)] outline-none placeholder:text-[var(--on-surface-variant)] focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    />
+                    {searchQuery ? (
+                      <button
+                        type="button"
+                        aria-label="Clear search"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSearchResults([]);
+                        }}
+                        className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    ) : null}
+
+                    {searchQuery.trim() ? (
+                      <div className="elev-3 absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
+                        {searchLoading ? (
+                          <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">Searching modules...</p>
+                        ) : searchResults.length > 0 ? (
+                          <ul className="max-h-80 overflow-y-auto py-1">
+                            {searchResults.map((course) => {
+                              const alreadyAdded = modules.some((module) => module.courseCode === course.courseCode);
+                              return (
+                                <li key={course.courseCode}>
+                                  <CourseSearchResultButton
+                                    course={course}
+                                    disabled={alreadyAdded}
+                                    onClick={() => addModule(course)}
+                                  />
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : (
+                          <p className="px-4 py-4 text-[13px] text-[var(--on-surface-variant)]">No matching modules found.</p>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="calculator-panel calculator-major-panel overflow-hidden rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--brand-divider)] bg-[var(--surface-container-low)] px-3 py-3 sm:px-4 sm:py-3.5">
+          <div className="app-aero-panel calculator-panel calculator-major-panel overflow-hidden">
+            <div className="app-aero-panel-heading calculator-panel-heading justify-between">
               <div>
-                <h2 className="text-[15px] font-bold text-[var(--on-surface)]">Selected Courses</h2>
+                <h2 className="flex items-center gap-2.5 text-[15px] font-bold text-[var(--on-surface)]">
+                  <BookIcon className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                  Selected Courses
+                </h2>
               </div>
               {modules.length > 0 ? (
                 <button
@@ -1057,49 +1027,35 @@ export function GpaCalculatorClient()
         </section>
 
         <aside className="space-y-4">
-          <section className="calculator-panel calculator-major-panel relative rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-2.5 sm:p-3">
-            <div className="group absolute right-3 top-3">
-              <button
-                type="button"
-                aria-label="Previously completed credit units information"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[13px] font-extrabold italic leading-none text-[var(--primary)] ring-1 ring-inset ring-[var(--brand-divider)] transition-all hover:bg-[var(--primary)] hover:text-on-primary hover:shadow-[var(--shadow-elev-1)] focus:bg-[var(--primary)] focus:text-on-primary focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring-soft)]"
-              >
-                i
-              </button>
-              <div
-                role="tooltip"
-                className="calculator-primary-popover pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-64 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-on-primary shadow-[var(--shadow-elev-2)] group-hover:block group-focus-within:block"
-              >
-                <span className="mb-0.5 block font-bold">Calculating completed CUs</span>
-                Completed CUs include graded, pass/fail, and automatically pass/fail courses such as external certification modules. GPA credits exclude pass/fail CUs.
+          <section className="app-aero-panel calculator-panel calculator-major-panel relative">
+            <div className="app-aero-panel-heading calculator-panel-heading calculator-record-heading relative block">
+              <div className="group absolute right-3 top-2">
+                <button
+                  type="button"
+                  aria-label="Previously completed credit units information"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-chip-bg)] text-[13px] font-extrabold italic leading-none text-[var(--primary)] ring-1 ring-inset ring-[var(--brand-divider)] transition-all hover:bg-[var(--primary)] hover:text-on-primary hover:shadow-[var(--shadow-elev-1)] focus:bg-[var(--primary)] focus:text-on-primary focus:outline-none focus:ring-2 focus:ring-[var(--primary-ring-soft)]"
+                >
+                  i
+                </button>
+                <div
+                  role="tooltip"
+                  className="calculator-primary-popover pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-64 rounded-[0.75rem] border border-[var(--brand-divider)] bg-[var(--primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-on-primary shadow-[var(--shadow-elev-2)] group-hover:block group-focus-within:block"
+                >
+                  <span className="mb-0.5 block font-bold">Calculating completed CUs</span>
+                  Completed CUs include graded, pass/fail, and automatically pass/fail courses such as external certification modules. GPA credits exclude pass/fail CUs.
+                </div>
               </div>
-            </div>
-            <button
-              type="button"
-              aria-expanded={priorRecordExpanded}
-              aria-controls="prior-record-fields"
-              onClick={() => setPriorRecordExpanded((current) => !current)}
-              className="flex w-full items-start justify-between gap-3 pr-10 text-left lg:hidden"
-            >
-              <span className="min-w-0">
-                <span className="block text-[15px] font-bold text-[var(--on-surface)]">Prior academic record</span>
-                <span className="mt-1 block text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                  Prev GPA {formatGpa(priorGpa)} · GPA credits {priorGpaCredits.toFixed(1)} · P/F CUs {priorPassFailCredits.toFixed(1)}
-                </span>
-              </span>
-              <span className="mt-0.5 shrink-0 rounded-full border border-[var(--outline-variant)] px-2 py-1 text-[11px] font-bold uppercase leading-3 text-[var(--primary)]">
-                {priorRecordExpanded ? "Hide" : "Edit"}
-              </span>
-            </button>
-            <div className="hidden lg:block">
-              <h2 className="pr-10 text-[15px] font-bold text-[var(--on-surface)]">Prior academic record</h2>
-              <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+              <h2 className="flex items-center gap-2.5 pr-10 text-[15px] font-bold text-[var(--on-surface)]">
+                <ClockIcon className="h-5 w-5 shrink-0 text-[var(--primary)]" />
+                Prior academic record
+              </h2>
+              <p className="mt-1 hidden text-[12px] leading-5 text-[var(--on-surface-variant)] lg:block">
                 Add your record before this semester to calculate cumulative GPA.
               </p>
             </div>
             <div
               id="prior-record-fields"
-              className={`${priorRecordExpanded ? "mt-4 space-y-3" : "hidden"} lg:mt-4 lg:block lg:space-y-3`}
+              className="calculator-panel-body space-y-4 p-4 sm:p-5"
             >
               <CalculatorField label="Previous cumulative GPA">
                 <input
@@ -1135,17 +1091,7 @@ export function GpaCalculatorClient()
             </div>
           </section>
 
-          <section className="calculator-panel calculator-nested-panel rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-2.5 sm:p-3">
-            <h2 className="text-[13px] font-bold text-[var(--on-surface)]">SUSS grade scale</h2>
-            <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-1.5 text-[12px]">
-              {GRADE_OPTIONS.map((option) => (
-                <div key={option.grade} className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-[var(--on-surface)]">{option.grade}</span>
-                  <span className="text-[var(--on-surface-variant)]">{option.point.toFixed(1)}</span>
-                </div>
-              ))}
-            </div>
-          </section>
+          <SussGradeScale />
         </aside>
       </div>
 
@@ -1282,6 +1228,7 @@ export function GpaCalculatorClient()
       <Modal
         open={clearConfirmOpen}
         title="Clear All Modules?"
+        headerIcon={<TrashIcon className="h-5 w-5 shrink-0 text-[var(--error)]" />}
         description="This will remove every module from the current semester GPA calculation."
         onClose={() => setClearConfirmOpen(false)}
         maxWidthClassName="max-w-md"
@@ -1324,8 +1271,8 @@ function CalculatorField({
 })
 {
   return (
-    <label className="grid min-w-0 grid-rows-[1rem_2.25rem] gap-1">
-      <span className="block whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.04em] text-[var(--on-surface-variant)]">
+    <label className="grid min-w-0 gap-1.5">
+      <span className="block text-[11px] font-bold uppercase leading-4 tracking-[0.04em] text-[var(--on-surface-variant)]">
         {label}
       </span>
       {children}
@@ -1333,27 +1280,30 @@ function CalculatorField({
   );
 }
 
-function MobileSummaryCell({
+function SummaryCell({
+  icon,
   label,
   value,
 }: {
+  icon: React.ReactNode;
   label: string;
   value: string;
 })
 {
   return (
     <div className="min-w-0 text-center">
-      <p className="truncate text-[10px] font-bold uppercase leading-3 tracking-[0.04em] text-[var(--on-surface-variant)]">
+      <p className="flex min-h-6 items-center justify-center gap-1 text-[9px] font-bold uppercase leading-3 tracking-[0.04em] text-[var(--on-surface-variant)] sm:min-h-4 sm:gap-1.5 sm:text-[10px]">
+        {icon}
         {label}
       </p>
-      <p className="mt-1 text-[32px] font-extrabold leading-9 text-[var(--on-surface)]">
+      <p className="mt-1 text-[28px] font-extrabold leading-9 text-[var(--on-surface)] sm:text-[32px]">
         {value}
       </p>
     </div>
   );
 }
 
-function MobileSummaryDetail({
+function SummaryDetail({
   label,
   value,
 }: {
@@ -1362,43 +1312,11 @@ function MobileSummaryDetail({
 })
 {
   return (
-    <div className="flex min-w-0 items-baseline justify-between gap-3">
-      <p className="min-w-0 truncate text-[10px] font-bold uppercase leading-4 tracking-[0.04em] text-[var(--on-surface-variant)]">
+    <div className="flex min-w-0 items-baseline justify-between gap-2 sm:gap-3">
+      <p className="min-w-0 text-[9px] font-bold uppercase leading-4 tracking-[0.04em] text-[var(--on-surface-variant)] sm:text-[10px]">
         {label}
       </p>
-      <p className="shrink-0 text-[16px] font-extrabold leading-5 text-[var(--on-surface)]">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function StatItem({
-  label,
-  value,
-  tone = "default",
-  className = "",
-  compact = false,
-}: {
-  label: string;
-  value: string;
-  tone?: "default" | "semester" | "all-time";
-  className?: string;
-  compact?: boolean;
-})
-{
-  const toneClasses = tone === "semester"
-    ? "border-[var(--outline-variant)] bg-[var(--surface-container-low)]"
-    : tone === "all-time"
-      ? "border-[var(--outline-variant)] bg-[color-mix(in_srgb,var(--surface-container-lowest),var(--surface-container-high) 18%)]"
-      : "border-[var(--outline-variant)] bg-[color-mix(in_srgb,var(--surface-container-lowest),var(--surface-container-low) 35%)]";
-
-  return (
-    <div className={`min-w-0 rounded-[0.75rem] border ${compact ? "px-2 py-1.5" : "px-3 py-2.5"} ${toneClasses} ${className}`}>
-      <p className={`${compact ? "text-[9px] font-medium leading-3 tracking-normal" : "text-[11px] font-semibold tracking-[0.06em]"} uppercase text-[var(--on-surface-variant)]`}>
-        {label}
-      </p>
-      <p className={`${compact ? "mt-0.5 text-[19px] font-bold leading-6" : "mt-1 text-[28px] font-extrabold leading-8"} text-[var(--on-surface)]`}>
+      <p className="shrink-0 text-[14px] font-extrabold leading-5 text-[var(--on-surface)] sm:text-[16px]">
         {value}
       </p>
     </div>

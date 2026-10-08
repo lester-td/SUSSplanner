@@ -1,20 +1,12 @@
 {
   "schedules": [
     {
-      "pdf": "data/input/schedules/evening-jan26-may26.pdf",
-      "scheduleType": "evening"
-    },
-    {
-      "pdf": "data/input/schedules/daytime-jan26-may26.pdf",
-      "scheduleType": "daytime"
-    },
-    {
-      "pdf": "data/input/schedules/evening-jul26.pdf",
-      "scheduleType": "evening"
-    },
-    {
-      "pdf": "data/input/schedules/daytime-jul26.pdf",
-      "scheduleType": "daytime"
+      "pdf": "data/input/schedules/Full_Interim_Course_Schedule.pdf",
+      "scheduleType": "auto",
+      "intakes": {
+        "regular": "January 2027",
+        "special": "May 2027"
+      }
     }
   ]
 }

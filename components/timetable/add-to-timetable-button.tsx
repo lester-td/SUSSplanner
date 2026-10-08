@@ -12,6 +12,8 @@ import {
   saveTimetableToLocalStorage,
   upsertClassInSavedTimetable,
 } from "@/lib/timetable/local-storage";
+import { getFollowingContinuationSemesters } from "@/lib/timetable/course-continuation";
+import { getSemesterChoices } from "@/lib/timetable/semester-visibility";
 import { readAppSettings } from "@/lib/settings/app-settings";
 import type {
   CourseClassRecord,
@@ -22,6 +24,7 @@ import type {
 type TimetableCourseLike = {
   courseCode: string;
   offeredSemesters?: SemesterRecord[];
+  scheduledSemesters?: SemesterRecord[];
 };
 
 type ClassesResponse = {
@@ -45,17 +48,19 @@ function resolveTargetSemesterId({
   fallbackSemesterId?: number | null;
 })
 {
-  const offeredIds = new Set(offeredSemesters?.map((semester) => semester.semesterId) ?? []);
+  const intakeSemesters = offeredSemesters ? getSemesterChoices(offeredSemesters) : undefined;
+  const offeredIds = new Set(intakeSemesters?.map((semester) => semester.semesterId) ?? []);
   const candidates = [preferredSemesterId, savedSemesterId, fallbackSemesterId]
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
 
-  if (offeredIds.size === 0)
+  if (intakeSemesters && offeredIds.size === 0) return null;
+  if (!intakeSemesters)
   {
     return candidates[0] ?? null;
   }
 
   return candidates.find((semesterId) => offeredIds.has(semesterId))
-    ?? offeredSemesters?.[0]?.semesterId
+    ?? intakeSemesters[0]?.semesterId
     ?? null;
 }
 
@@ -96,7 +101,11 @@ export function AddToTimetableButton({
 })
 {
   const [added, setAdded] = useState(false);
-  const [targetSemesterId, setTargetSemesterId] = useState<number | null>(null);
+  const [targetSemesterId, setTargetSemesterId] = useState<number | null>(() => resolveTargetSemesterId({
+    offeredSemesters: course.offeredSemesters,
+    preferredSemesterId,
+    fallbackSemesterId,
+  }));
   const [busy, setBusy] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const courseCode = useMemo(() => normalizeCourseCode(course.courseCode), [course.courseCode]);
@@ -173,13 +182,20 @@ export function AddToTimetableButton({
 
       const payload = await response.json() as ClassesResponse;
       const preferredGroupType = readAppSettings().timetableStudyMode === "part-time" ? "CRN" : "TG";
-      const selectedClass = pickPreferredClass(payload.classes, preferredGroupType);
+      const selectedClass = pickPreferredClass(payload.classes.filter((group) => group.semesterId === nextTargetSemesterId), preferredGroupType);
       if (!selectedClass)
       {
         throw new Error("No class groups are available for this course in the selected semester.");
       }
 
-      const next = upsertClassInSavedTimetable(current, nextTargetSemesterId, toClassSelection(selectedClass));
+      const continuationSemesters = getFollowingContinuationSemesters({
+        courseCode,
+        semesterId: nextTargetSemesterId,
+        offeredSemesters: course.scheduledSemesters ?? course.offeredSemesters ?? [],
+        semesters: course.scheduledSemesters ?? course.offeredSemesters ?? [],
+        continuationSemesterIds: selectedClass.continuationSemesterIds,
+      });
+      const next = upsertClassInSavedTimetable(loadSavedTimetable(), nextTargetSemesterId, toClassSelection(selectedClass), continuationSemesters.map((item) => item.semesterId));
       saveTimetableToLocalStorage(next);
       announceTimetableUpdated();
       setTargetSemesterId(nextTargetSemesterId);

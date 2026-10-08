@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { AppShell } from "@/components/layout/app-shell";
 import { CourseSearchPage } from "@/components/courses/course-search-page";
 import { getCourseSearchFacets } from "@/lib/data/course-search";
@@ -8,6 +10,10 @@ import {
 } from "@/lib/data/metadata";
 import { parseCourseSearchFilters } from "@/lib/timetable/course-search";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
+
+export const metadata: Metadata = {
+  title: "Courses | SUSS Planner",
+};
 
 export default async function CoursesPage({
   searchParams,

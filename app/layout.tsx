@@ -5,9 +5,10 @@ import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-import { GlobalRegistrationReminders } from "@/components/registration/global-registration-reminders";
+import { GlobalNotifications } from "@/components/layout/global-notifications";
+import { getSnapshotManifest } from "@/lib/data/manifest-reader";
 import { SettingsProvider } from "@/components/settings/settings-provider";
-import { APP_SETTINGS_STORAGE_KEY } from "@/lib/settings/app-settings";
+import { APP_SETTINGS_STORAGE_KEY, DEFAULT_APP_SETTINGS } from "@/lib/settings/app-settings";
 import "./globals.css";
 
 const inter = Inter({
@@ -31,7 +32,7 @@ const settingsBootstrapScript = `
   try {
     const raw = window.localStorage.getItem(${JSON.stringify(APP_SETTINGS_STORAGE_KEY)});
     const settings = raw ? JSON.parse(raw) : {};
-    const preference = settings.colorScheme === "dark" || settings.colorScheme === "light" ? settings.colorScheme : "system";
+    const preference = settings.colorScheme === "dark" || settings.colorScheme === "light" || settings.colorScheme === "system" ? settings.colorScheme : ${JSON.stringify(DEFAULT_APP_SETTINGS.colorScheme)};
     const resolved = preference === "system"
       ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
       : preference;
@@ -44,12 +45,14 @@ const settingsBootstrapScript = `
 })();
 `;
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>)
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>)
 {
+  const announcements = (await getSnapshotManifest()).announcements?.filter(announcement => announcement.enabled) ?? [];
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         <meta name="darkreader-lock" />
+        <link rel="icon" type="image/png" sizes="64x64" href="/brand/favicon-dark.png?v=2" />
       </head>
       <body>
         <Script
@@ -59,7 +62,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         />
         <SettingsProvider>
           {children}
-          <GlobalRegistrationReminders />
+          <GlobalNotifications announcements={announcements} />
         </SettingsProvider>
         <Analytics />
         <SpeedInsights />

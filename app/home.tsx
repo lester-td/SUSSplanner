@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
+import quotes from "@/app/data/quotes.json";
+import {
+  CompactUpcomingDates,
+  type UpcomingDateAudience,
+  type UpcomingDateItem,
+  type UpcomingDateState,
+} from "@/components/home/upcoming-dates";
+import { AppWordmark } from "@/components/layout/app-wordmark";
 import { AppShell } from "@/components/layout/app-shell";
 import { HomeSearch, type HomeSearchItem } from "@/components/layout/home-search";
 import {
   ArrowUpRightIcon,
-  BookIcon,
   CalendarWeekIcon,
   EditIcon,
-  HomeIcon,
-  MailIcon,
+  LinkIcon,
 } from "@/components/planner/icons";
 import {
   getLatestDataUpdatedAt,
@@ -18,13 +25,13 @@ import {
   type AcademicCalendarEventRecord,
 } from "@/lib/data/metadata";
 import { homeQuickResources, studentResources } from "@/lib/student-resources";
-import type { RegistrationReminderWindowState } from "@/lib/registration/reminder-status";
 import {
   buildWeekLabel,
   formatCompactDate,
+  formatCurrentWeekChipForMobile,
   formatDataUpdatedValue,
-  formatDateRange,
   getCurrentSemesterContext,
+  getCurrentWeekChip,
   getSingaporeDateString,
   type CurrentSemesterContext,
 } from "@/lib/timetable/date-utils";
@@ -36,6 +43,12 @@ export const metadata: Metadata = {
 };
 
 const appSearchItems = [
+  {
+    label: "Home",
+    description: "Return to the SUSS Planner home page.",
+    href: "/",
+    keywords: ["home", "dashboard", "start"],
+  },
   {
     label: "Timetable",
     description: "Plan your schedule with a visual timetable and catch clashes early. Sync with your calendar or export to PDF for easy access.",
@@ -66,45 +79,41 @@ const appSearchItems = [
     href: "/settings",
     keywords: ["theme", "appearance", "preferences"],
   },
+  {
+    label: "Feedback",
+    description: "Report outdated data, broken links, or workflow issues.",
+    href: "/feedback",
+    keywords: ["feedback", "report", "issue", "bug", "suggestion", "help"],
+  },
 ] as const satisfies readonly HomeSearchItem[];
 
-const homeQuickResourceIcons: Record<string, typeof BookIcon> = {
-  "suss-portal": HomeIcon,
-  canvas: BookIcon,
-  mymail: MailIcon,
-  istudyguide: BookIcon,
-  "exam-timetable": CalendarWeekIcon,
-  "discussion-room-booking": BookIcon,
+const homeQuickResourceIcons: Record<string, string> = {
+  "suss-eservices": "/home-icons/suss-eservices.png",
+  mymail: "/home-icons/mymail.png",
+  canvas: "/home-icons/canvas.png",
+  learnova: "/home-icons/learnova.png",
+  ismartguide: "/home-icons/ismartguide.png",
+  library: "/home-icons/library.png",
+  "discussion-room-booking": "/home-icons/discussion-room-booking.png",
+  "success-gateway": "/home-icons/success-gateway.png",
 } as const;
 
-const audienceLabels: Record<AcademicCalendarEventRecord["audience"], string> = {
-  FTUG: "Full-time UG",
-  PTUG: "Part-time UG",
-  LAW: "Law",
-  GRAD: "Graduate",
+const homeQuickResourceIconScales: Partial<Record<string, number>> = {
+  learnova: 1.28,
+  ismartguide: 1.28,
+  "discussion-room-booking": 0.95,
+  "success-gateway": 0.91,
 };
-const audienceSortOrder = new Map(Object.values(audienceLabels).map((label, index) => [label, index]));
+
+const audienceLabels: Record<AcademicCalendarEventRecord["audience"], UpcomingDateAudience> = {
+  FTUG: { id: "FTUG", label: "Full-time UG" },
+  PTUG: { id: "PTUG", label: "Part-time UG" },
+  LAW: { id: "LAW", label: "Law" },
+  GRAD: { id: "GRAD", label: "Graduate" },
+};
+const audienceSortOrder = new Map(Object.keys(audienceLabels).map((id, index) => [id, index]));
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const UPCOMING_DATE_NOTICE_WINDOW_MS = 7 * DAY_IN_MS;
-
-type UpcomingDateDotState = Exclude<RegistrationReminderWindowState, "ended"> | "default";
-
-type UpcomingDateItem = {
-  label: string;
-  detail: string;
-  date: string;
-  startDate: string;
-  endDate: string;
-  dotState: UpcomingDateDotState;
-  audiences?: string[];
-};
-
-const upcomingDateDotClassNames: Record<UpcomingDateDotState, string> = {
-  default: "upcoming-date-dot--default",
-  upcoming: "upcoming-date-dot--upcoming",
-  open: "upcoming-date-dot--open",
-  closing: "upcoming-date-dot--closing",
-};
 
 function formatUpcomingCalendarDate(event: Pick<AcademicCalendarEventRecord, "startDate" | "endDate">)
 {
@@ -113,7 +122,18 @@ function formatUpcomingCalendarDate(event: Pick<AcademicCalendarEventRecord, "st
     return formatCompactDate(event.startDate);
   }
 
-  return formatDateRange(event.startDate, event.endDate);
+  const start = new Date(`${event.startDate}T00:00:00`);
+  const end = new Date(`${event.endDate}T00:00:00`);
+  const monthFormat = new Intl.DateTimeFormat("en-SG", { month: "short" });
+  const dayFormat = new Intl.DateTimeFormat("en-SG", { day: "numeric" });
+  const startMonth = monthFormat.format(start);
+  const endMonth = monthFormat.format(end);
+  const startDay = dayFormat.format(start);
+  const endDay = dayFormat.format(end);
+
+  return startMonth === endMonth
+    ? `${startDay} – ${endDay} ${endMonth}`
+    : `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
 }
 
 function parseSingaporeDateStart(date: string)
@@ -123,7 +143,7 @@ function parseSingaporeDateStart(date: string)
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
-function getUpcomingDateDotState(startDate: string, endDate: string, now: Date): UpcomingDateDotState
+function getUpcomingDateDotState(startDate: string, endDate: string, now: Date): UpcomingDateState
 {
   const startTimestamp = parseSingaporeDateStart(startDate);
   const endTimestamp = parseSingaporeDateStart(endDate);
@@ -146,12 +166,7 @@ function getUpcomingDateDotState(startDate: string, endDate: string, now: Date):
     return "upcoming";
   }
 
-  if (startDate === endDate)
-  {
-    return "open";
-  }
-
-  return endExclusiveTimestamp - nowTimestamp <= DAY_IN_MS ? "closing" : "open";
+  return "open";
 }
 
 function getSemesterScopeLabel(event: AcademicCalendarEventRecord)
@@ -174,36 +189,44 @@ function getUpcomingCalendarDates(
 ): UpcomingDateItem[]
 {
   const groups = new Map<string, {
-    label: string;
-    startDate: string;
+    detail: string;
     endDate: string;
-    status: AcademicCalendarEventRecord["status"];
+    label: string;
+    schedules: Map<string, {
+      audiences: Map<UpcomingDateAudience["id"], UpcomingDateAudience>;
+      endDate: string;
+      startDate: string;
+    }>;
     sortOrder: number;
-    audiences: Set<string>;
-    semesterScopes: Set<string>;
+    startDate: string;
+    status: AcademicCalendarEventRecord["status"];
   }>();
 
   for (const event of calendarEvents)
   {
-    const key = [
-      event.eventTitle,
-      event.startDate,
-      event.endDate,
-      event.status,
-    ].join("\u0000");
+    const detail = getSemesterScopeLabel(event);
+    const key = [event.eventTitle, event.calendarYear, detail, event.status].join("\u0000");
     const existing = groups.get(key);
     const group = existing ?? {
-      label: event.eventTitle,
-      startDate: event.startDate,
+      detail,
       endDate: event.endDate,
-      status: event.status,
+      label: event.eventTitle,
+      schedules: new Map(),
       sortOrder: event.sortOrder,
-      audiences: new Set<string>(),
-      semesterScopes: new Set<string>(),
+      startDate: event.startDate,
+      status: event.status,
+    };
+    const scheduleKey = `${event.startDate}\u0000${event.endDate}`;
+    const schedule = group.schedules.get(scheduleKey) ?? {
+      audiences: new Map(),
+      endDate: event.endDate,
+      startDate: event.startDate,
     };
 
-    group.audiences.add(audienceLabels[event.audience]);
-    group.semesterScopes.add(getSemesterScopeLabel(event));
+    schedule.audiences.set(event.audience, audienceLabels[event.audience]);
+    group.schedules.set(scheduleKey, schedule);
+    group.startDate = event.startDate < group.startDate ? event.startDate : group.startDate;
+    group.endDate = event.endDate > group.endDate ? event.endDate : group.endDate;
     group.sortOrder = Math.min(group.sortOrder, event.sortOrder);
     groups.set(key, group);
   }
@@ -217,24 +240,24 @@ function getUpcomingCalendarDates(
         || left.sortOrder - right.sortOrder
         || left.label.localeCompare(right.label);
     })
-    .slice(0, 6)
-    .map((group): UpcomingDateItem => {
-      const scopes = [...group.semesterScopes].sort((left, right) => left.localeCompare(right));
-      const audiences = [...group.audiences].sort((left, right) => (
-        (audienceSortOrder.get(left) ?? Number.MAX_SAFE_INTEGER)
-        - (audienceSortOrder.get(right) ?? Number.MAX_SAFE_INTEGER)
-      ));
-
-      return {
-        label: group.status === "tentative" ? `${group.label} (TBC)` : group.label,
-        detail: scopes.join(", "),
-        date: formatUpcomingCalendarDate(group),
-        startDate: group.startDate,
-        endDate: group.endDate,
-        dotState: getUpcomingDateDotState(group.startDate, group.endDate, now),
-        audiences,
-      };
-    });
+    .map((group): UpcomingDateItem => ({
+      detail: group.detail,
+      endDate: group.endDate,
+      label: group.status === "tentative" ? `${group.label} (TBC)` : group.label,
+      schedules: [...group.schedules.values()]
+        .sort((left, right) => left.startDate.localeCompare(right.startDate) || left.endDate.localeCompare(right.endDate))
+        .map((schedule) => ({
+          audiences: [...schedule.audiences.values()].sort((left, right) => (
+            (audienceSortOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER)
+            - (audienceSortOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+          )),
+          date: formatUpcomingCalendarDate(schedule),
+          dotState: getUpcomingDateDotState(schedule.startDate, schedule.endDate, now),
+          endDate: schedule.endDate,
+          startDate: schedule.startDate,
+        })),
+      startDate: group.startDate,
+    }));
 }
 
 function getUpcomingSemesterDates(
@@ -254,10 +277,15 @@ function getUpcomingSemesterDates(
     items.push({
       label: `${buildWeekLabel(currentSemesterContext.week)} ends`,
       detail: `${currentSemesterContext.semester.semesterName}, AY${currentSemesterContext.semester.academicYear}`,
-      date: formatCompactDate(currentSemesterContext.week.endDate),
       startDate: currentSemesterContext.week.endDate,
       endDate: currentSemesterContext.week.endDate,
-      dotState: getUpcomingDateDotState(currentSemesterContext.week.endDate, currentSemesterContext.week.endDate, now),
+      schedules: [{
+        audiences: [],
+        date: formatCompactDate(currentSemesterContext.week.endDate),
+        dotState: getUpcomingDateDotState(currentSemesterContext.week.endDate, currentSemesterContext.week.endDate, now),
+        startDate: currentSemesterContext.week.endDate,
+        endDate: currentSemesterContext.week.endDate,
+      }],
     });
   }
 
@@ -272,10 +300,15 @@ function getUpcomingSemesterDates(
     items.push({
       label: isSemesterStart ? "Semester begins" : `${buildWeekLabel(week)} starts`,
       detail: `${semester.semesterName}, AY${semester.academicYear}`,
-      date: formatCompactDate(week.startDate),
       startDate: week.startDate,
       endDate: week.startDate,
-      dotState: getUpcomingDateDotState(week.startDate, week.startDate, now),
+      schedules: [{
+        audiences: [],
+        date: formatCompactDate(week.startDate),
+        dotState: getUpcomingDateDotState(week.startDate, week.startDate, now),
+        startDate: week.startDate,
+        endDate: week.startDate,
+      }],
     });
 
     if (items.length >= 6)
@@ -296,10 +329,38 @@ function getUpcomingDates(
 ): UpcomingDateItem[]
 {
   const calendarDates = getUpcomingCalendarDates(calendarEvents, today, now);
-
-  return calendarDates.length > 0
+  const dates = calendarDates.length > 0
     ? calendarDates
     : getUpcomingSemesterDates(semesterTree, currentSemesterContext, today, now);
+  const horizonEnd = new Date(`${today}T00:00:00Z`);
+  horizonEnd.setUTCMonth(horizonEnd.getUTCMonth() + 3);
+  const horizonEndDate = horizonEnd.toISOString().slice(0, 10);
+
+  return dates.flatMap((item): UpcomingDateItem[] => {
+    const schedules = item.schedules.filter((schedule) => schedule.startDate <= horizonEndDate);
+
+    if (schedules.length === 0)
+    {
+      return [];
+    }
+
+    return [{
+      ...item,
+      schedules,
+      startDate: schedules[0].startDate,
+      endDate: schedules.reduce((latest, schedule) => schedule.endDate > latest ? schedule.endDate : latest, schedules[0].endDate),
+    }];
+  });
+}
+
+function getQuoteOfTheDay(today: string)
+{
+  const dateHash = [...today].reduce((hash, character) => (
+    ((hash * 31) + character.charCodeAt(0)) >>> 0
+  ), 0);
+
+  return quotes[dateHash % quotes.length]
+    ?? { text: "A clear plan turns a crowded week into a sequence of possible steps." };
 }
 
 export default async function HomePage()
@@ -316,8 +377,30 @@ export default async function HomePage()
     semesterTree.flatMap((item) => item.weeks),
     now,
   );
+  const currentWeekLabel = formatCurrentWeekChipForMobile(getCurrentWeekChip(
+    currentSemesterContext.semester,
+    currentSemesterContext.week,
+    currentSemesterContext.isVacation,
+  ));
+  const upcomingDates = getUpcomingDates(academicCalendarEvents, semesterTree, currentSemesterContext, today, now);
   const searchItems = [
     ...appSearchItems,
+    ...upcomingDates.map((item, index) => ({
+      label: item.label,
+      description: [
+        item.schedules.map((schedule) => schedule.date).join(" / "),
+        [...new Set(item.schedules.flatMap((schedule) => schedule.audiences.map((audience) => audience.label)))].join(" • "),
+        item.detail,
+      ].filter(Boolean).join(" · "),
+      href: `/#upcoming-date-${index + 1}`,
+      keywords: [
+        "upcoming date",
+        "academic calendar",
+        ...item.schedules.map((schedule) => schedule.date),
+        item.detail,
+        ...item.schedules.flatMap((schedule) => schedule.audiences.map((audience) => audience.label)),
+      ],
+    })),
     ...studentResources.map((resource) => ({
       label: resource.label,
       description: resource.description,
@@ -330,150 +413,87 @@ export default async function HomePage()
       ],
     })),
   ] satisfies HomeSearchItem[];
-  const upcomingDates = getUpcomingDates(academicCalendarEvents, semesterTree, currentSemesterContext, today, now);
-  const disclaimerSection = (
-    <section
-      className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm"
-      aria-labelledby="home-disclaimer"
-    >
-      <h2 id="home-disclaimer" className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
-        Disclaimer
-      </h2>
-      <p className="mt-3 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-        SUSS Planner is currently in beta. Please cross-reference official materials for critical academic decisions.
-      </p>
-      <p className="mt-2 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-        If classes or schedules have changed since the last update, refer to the SUSS Backpack app or Canvas LMS for the latest official information.
-      </p>
-      <div className="mt-4 border-t border-[var(--outline-variant)] pt-3">
-        <p className="text-[12px] font-semibold leading-5 text-[var(--on-surface)]">
-          Data last updated: {formatDataUpdatedValue(latestDataUpdatedAt)}
-        </p>
-      </div>
-    </section>
-  );
-  function renderQuickLinksSection({
-    className = "",
-    headingId = "quick-links",
-    sectionId = "portal-links",
-  }: {
-    className?: string;
-    headingId?: string;
-    sectionId?: string;
-  } = {})
+  const quoteOfTheDay = getQuoteOfTheDay(today);
+  function renderQuickLinksSection()
   {
     return (
-    <section
-      id={sectionId}
-      aria-labelledby={headingId}
-      className={`rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm ${className}`}
-    >
-      <h2 id={headingId} className="text-[15px] font-bold leading-5 tracking-[-0.02em] text-[var(--on-surface)]">
-        Quick Links
-      </h2>
+      <section id="portal-links" aria-labelledby="quick-links" className="home-aero-panel home-main-section relative z-10 overflow-hidden">
+        <div className="home-aero-panel-heading">
+          <LinkIcon className="h-5 w-5 text-[var(--primary)]" />
+          <h2 id="quick-links" className="text-[15px] font-bold leading-5 tracking-[-0.02em] sm:text-[17px]">
+            Quick Links
+          </h2>
+        </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-1 xl:grid-cols-2">
-        {homeQuickResources.map((item) => {
-          const Icon = homeQuickResourceIcons[item.id];
-          const content = (
-            <>
-              <span className="home-shortcut-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.5rem] bg-[var(--brand-chip-bg)] text-[var(--primary)] transition-transform group-hover:scale-105">
-                <Icon className="h-4 w-4" />
-              </span>
-              <span className="min-w-0 flex-1 text-left leading-5">{item.label}</span>
-              {!item.href.startsWith("/") ? (
-                <ArrowUpRightIcon className="h-3.5 w-3.5 shrink-0 text-[var(--on-surface-variant)] transition-colors group-hover:text-[var(--primary)]" />
-              ) : null}
-            </>
-          );
-          const className = "home-shortcut-card group flex min-h-[3rem] items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-2.5 py-2 text-[12px] font-semibold text-[var(--on-surface)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]";
-
-          if (item.href.startsWith("/"))
-          {
-            return (
-              <Link
-                key={item.label}
-                prefetch
-                href={item.href}
-                className={className}
-              >
-                {content}
-              </Link>
+        <div className="grid grid-cols-2 gap-2.5 p-3 sm:gap-3 sm:p-4 lg:grid-cols-4">
+          {homeQuickResources.map((item) => {
+            const iconSrc = homeQuickResourceIcons[item.id];
+            const content = (
+              <>
+                <span className="home-aero-shortcut-icon flex h-8 w-8 items-center justify-center sm:h-12 sm:w-12">
+                  <Image
+                    src={iconSrc}
+                    alt=""
+                    width={96}
+                    height={96}
+                    sizes="72px"
+                    className="h-full w-full object-contain"
+                    style={{ transform: `scale(${homeQuickResourceIconScales[item.id] ?? 1})` }}
+                  />
+                </span>
+                <span className="flex min-w-0 flex-1 items-center justify-between gap-1 sm:gap-2">
+                  <span className="min-w-0 break-words text-left text-[11px] font-bold leading-[0.9rem] sm:text-[13px] sm:leading-5">
+                    {item.label}
+                  </span>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center text-[var(--primary)] transition group-hover:translate-x-0.5 sm:h-6 sm:w-6">
+                    <ArrowUpRightIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  </span>
+                </span>
+              </>
             );
-          }
+            const className = "home-aero-shortcut group flex min-h-[4rem] items-center gap-1.5 rounded-[0.9rem] border px-2 py-2 text-[var(--on-surface)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)] sm:min-h-[4.75rem] sm:gap-3 sm:px-3.5 sm:py-3";
 
-          return (
-            <a
-              key={item.label}
-              href={item.href}
-              target="_blank"
-              rel="noreferrer"
-              className={className}
-            >
-              {content}
-            </a>
-          );
-        })}
-      </div>
-    </section>
+            if (item.href.startsWith("/"))
+            {
+              return (
+                <Link key={item.label} prefetch href={item.href} className={className}>
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <a key={item.label} href={item.href} target="_blank" rel="noreferrer" className={className}>
+                {content}
+              </a>
+            );
+          })}
+        </div>
+      </section>
     );
   }
 
-  function renderUpcomingDatesSection({
-    className = "",
-    headingId = "upcoming-dates",
-  }: {
-    className?: string;
-    headingId?: string;
-  } = {})
+  function renderUpcomingDatesSection()
   {
     return (
-    <section className={className} aria-labelledby={headingId}>
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 id={headingId} className="text-[17px] font-bold leading-6 tracking-[-0.03em] text-[var(--on-surface)] sm:text-[24px] sm:leading-7 sm:tracking-[-0.035em]">
+      <section className="home-aero-panel home-main-section h-full overflow-hidden" aria-labelledby="upcoming-dates">
+        <div className="home-aero-panel-heading">
+          <CalendarWeekIcon className="h-5 w-5 text-[var(--primary)]" />
+          <h2 id="upcoming-dates" className="text-[15px] font-bold leading-5 tracking-[-0.02em] sm:text-[17px]">
             Upcoming Dates
           </h2>
         </div>
-      </div>
 
-      <div className="mt-3 sm:mt-4">
         {upcomingDates.length > 0 ? (
-          <ol className="relative divide-y divide-[color-mix(in_srgb,var(--on-surface),transparent_94%)] before:absolute before:bottom-1.5 before:left-2 before:top-1.5 before:hidden before:w-px before:bg-[color-mix(in_srgb,var(--brand-divider),transparent_60%)] sm:space-y-5 sm:divide-y-0 sm:before:block sm:before:bottom-2 sm:before:left-[0.625rem] sm:before:top-2">
-            {upcomingDates.map((item) => (
-              <li key={`${item.label}-${item.detail}-${item.date}`} className="relative py-3 first:pt-0 last:pb-0 sm:py-0 sm:pl-9">
-                <span className={`absolute left-0 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full sm:flex sm:h-5 sm:w-5 ${upcomingDateDotClassNames[item.dotState]}`}>
-                  <span
-                    className="h-2 w-2 rounded-full sm:h-2.5 sm:w-2.5"
-                    style={{ backgroundColor: "currentColor" }}
-                  />
-                </span>
-
-                <div className="sm:border-b sm:border-[color-mix(in_srgb,var(--outline-variant),transparent_65%)] sm:pb-5 sm:last:border-b-0 sm:last:pb-0">
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 sm:gap-x-3 sm:gap-y-1">
-                    <p className="text-[12px] font-bold leading-4 text-[var(--primary)] sm:text-[14px] sm:leading-5">
-                      {item.date}
-                    </p>
-                  </div>
-
-                  <p className="mt-0.5 text-[13px] font-bold leading-5 text-[var(--on-surface)] sm:mt-1 sm:text-[15px] sm:leading-6">
-                    {item.label}
-                  </p>
-                  <p className="mt-0.5 text-[11px] leading-4 text-[var(--on-surface-variant)] sm:mt-1 sm:text-[12px] sm:leading-5">
-                    {item.audiences && item.audiences.length > 0 ? `${item.audiences.join(" • ")} · ` : ""}
-                    {item.detail}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <CompactUpcomingDates items={upcomingDates} today={today} />
         ) : (
-          <p className="text-[12px] leading-5 text-[var(--on-surface-variant)]">
-            No upcoming academic calendar dates are loaded.
-          </p>
+          <div className="px-3 py-1 sm:px-4 sm:py-2">
+            <p className="px-1 py-8 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+              No upcoming academic calendar dates are loaded.
+            </p>
+          </div>
         )}
-      </div>
-    </section>
+      </section>
     );
   }
 
@@ -482,83 +502,97 @@ export default async function HomePage()
       activeSection="home"
       currentSemesterContext={currentSemesterContext}
       dataUpdatedAt={latestDataUpdatedAt}
+      contentFrameClassName="home-aero-frame"
+      showFooter={false}
     >
-      <div className="home-page grid gap-6 sm:gap-8">
-        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start lg:gap-8 xl:gap-10">
-          <div className="min-w-0">
-            <section className="pt-1 sm:pt-2" aria-labelledby="home-hero-title">
-              <div className="max-w-4xl">
-                <h1 id="home-hero-title" className="text-[22px] font-bold leading-[1.15] tracking-[-0.03em] text-[var(--on-surface)] sm:text-[32px] sm:leading-[1.12] sm:tracking-[-0.035em] lg:text-[34px]">
-                  Welcome to SUSS Planner.
-                </h1>
-                <p className="mt-2 max-w-2xl text-[13px] leading-5 text-[var(--on-surface-variant)] sm:mt-3 sm:text-[18px] sm:leading-7">
-                  Find courses, timetable slots, calculators, portals, and key dates in one place.
-                </p>
-              </div>
+      <div className="home-page grid gap-0 sm:gap-5 lg:gap-6">
+        <section className="home-aero-hero relative" aria-labelledby="home-hero-title">
+          <div className="home-aero-hero-copy relative z-20 flex min-w-0 flex-col justify-center px-1 py-4 sm:px-2 sm:py-6 lg:min-h-[20rem] lg:w-[53%] lg:py-8">
+            <h1 id="home-hero-title" className="home-hero-title flex max-w-2xl flex-wrap items-center gap-x-2 gap-y-2 text-[27px] font-extrabold leading-[1.08] tracking-[-0.04em] text-[var(--on-surface)] sm:text-[34px] lg:text-[38px]">
+              <span>Welcome to</span>{" "}
+              <AppWordmark
+                appearance="adaptive"
+                className="home-hero-wordmark h-10 gap-2.5 sm:h-12 lg:h-14"
+                iconPosition="right"
+                size="hero"
+              />
+            </h1>
 
-              <div className="mt-3 max-w-4xl sm:mt-4">
-                <HomeSearch
-                  items={searchItems}
-                  placeholder="Search courses, pages, deadlines, portals..."
-                  prominent
-                  showSuggestionsOnEmpty={false}
-                />
-              </div>
-            </section>
+            <p className="mt-0.5 flex max-w-2xl items-center gap-1 text-[12px] font-semibold leading-5 text-[var(--on-surface-variant)] sm:mt-3 sm:gap-2 sm:text-[13px] xl:hidden">
+              <span aria-hidden="true" className="home-week-logo app-wordmark__icon block h-5 w-5 shrink-0 sm:hidden" />
+              {currentWeekLabel}
+            </p>
 
-            <div className="mt-6 sm:mt-8 lg:hidden">
-              {renderQuickLinksSection({
-                headingId: "quick-links-mobile",
-                sectionId: "portal-links-mobile",
-              })}
-            </div>
-            <div className="mt-6 hidden sm:mt-8 lg:block">
-              {renderUpcomingDatesSection()}
+            <figure className="home-aero-quote mt-3 max-w-2xl border-l-2 border-[var(--secondary)] pl-4 text-[15px] leading-6 text-[var(--on-surface-variant)] sm:text-[17px] sm:leading-7 xl:mt-5">
+              <blockquote className="font-medium italic">“{quoteOfTheDay.text}”</blockquote>
+              {"author" in quoteOfTheDay && quoteOfTheDay.author && (
+                <figcaption className="mt-1 text-[13px] font-normal not-italic sm:text-[14px]">
+                  — {quoteOfTheDay.author}
+                </figcaption>
+              )}
+            </figure>
+
+            <div className="mt-3 max-w-2xl sm:mt-5">
+              <HomeSearch
+                items={searchItems}
+                placeholder="Search anything..."
+                prominent
+                showSuggestionsOnEmpty={false}
+              />
             </div>
           </div>
 
-          <aside className="grid gap-4 lg:sticky lg:top-24" aria-label="Home page utilities">
-            {renderUpcomingDatesSection({
-              className: "order-first lg:hidden",
-              headingId: "upcoming-dates-mobile",
-            })}
-            {disclaimerSection}
-            <div className="hidden lg:block">
-              {renderQuickLinksSection()}
-            </div>
+          <div className="home-aero-hero-art absolute inset-y-0 right-0 w-full overflow-hidden lg:w-[72%]" aria-hidden="true">
+            <div className="home-aero-hero-shine absolute inset-0" aria-hidden="true" />
+          </div>
+        </section>
 
-            <section className="rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-sm" aria-labelledby="feedback-cta">
-              <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.65rem] bg-[var(--accent-soft)] text-[var(--primary)]">
-                  <EditIcon className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <h2 id="feedback-cta" className="text-[15px] font-bold leading-5 text-[var(--on-surface)]">
-                    Improve the planner
-                  </h2>
-                  <p className="mt-1 text-[12px] leading-5 text-[var(--on-surface-variant)]">
-                    Report outdated data, broken links, or workflow issues.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Link
-                      prefetch
-                      href="/feedback"
-                      className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-bold leading-4 text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
-                    >
-                      <EditIcon className="h-4 w-4" />
-                      Send feedback
-                    </Link>
-                    <a
-                      href="https://github.com/Simplificatedd/SUSSplanner/issues"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-[0.5rem] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-bold leading-4 text-[var(--on-surface)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
-                    >
-                      GitHub Issues
-                      <ArrowUpRightIcon className="h-4 w-4" />
-                    </a>
-                  </div>
-                </div>
+        {renderQuickLinksSection()}
+
+        <div className="grid items-stretch gap-0 sm:gap-5 lg:grid-cols-[minmax(0,1.9fr)_minmax(18rem,0.78fr)] lg:gap-6">
+          {renderUpcomingDatesSection()}
+
+          <aside className="grid content-start gap-0 sm:gap-5" aria-label="Home page utilities">
+            <section className="home-aero-panel home-aero-panel--subtle home-main-section overflow-hidden" aria-labelledby="home-disclaimer">
+              <div className="home-aero-panel-heading home-aero-panel-heading--warning">
+                <span className="home-aero-warning-icon text-[22px] font-black leading-none text-amber-800" aria-hidden="true">!</span>
+                <h2 id="home-disclaimer" className="text-[15px] font-bold leading-5">Important</h2>
+              </div>
+              <div className="p-4">
+                <h3 className="text-[13px] font-bold leading-5 text-[var(--on-surface)]">Beta disclaimer</h3>
+                <p className="mt-2 text-[11px] leading-5 text-[var(--on-surface-variant)] sm:text-[12px]">
+                  SUSS Planner is currently in beta. Please cross-reference official materials for critical academic decisions.
+                </p>
+                <p className="mt-2 text-[11px] leading-5 text-[var(--on-surface-variant)] sm:text-[12px]">
+                  If classes or schedules have changed, refer to the SUSS Backpack app or Canvas/Learnova for the latest official information.
+                </p>
+                <p className="mt-4 border-t border-[var(--outline-variant)] pt-3 text-[11px] font-bold leading-4 text-[var(--on-surface)]">
+                  Data last updated: {formatDataUpdatedValue(latestDataUpdatedAt)}
+                </p>
+              </div>
+            </section>
+
+            <section className="home-aero-feedback home-main-section relative overflow-hidden rounded-[1rem] border p-4 shadow-[var(--shadow-elev-1)] sm:p-5" aria-labelledby="feedback-cta">
+              <span className="home-aero-feedback-bubble home-aero-feedback-bubble--one" aria-hidden="true" />
+              <span className="home-aero-feedback-bubble home-aero-feedback-bubble--two" aria-hidden="true" />
+              <span className="home-aero-feedback-icon relative flex h-10 w-10 items-center justify-center rounded-[0.8rem] border border-white/60 bg-[color-mix(in_srgb,var(--background)_65%,transparent)] text-[var(--primary)] shadow-sm">
+                <EditIcon className="h-5 w-5" />
+              </span>
+              <div className="relative mt-4">
+                <h2 id="feedback-cta" className="text-[18px] font-extrabold leading-6 tracking-[-0.025em] text-[var(--on-surface)]">
+                  Help us grow.
+                </h2>
+                <p className="mt-1.5 text-[12px] leading-5 text-[var(--on-surface-variant)]">
+                  Spot outdated data or a rough edge? Your feedback helps make planning better for everyone.
+                </p>
+                <Link
+                  prefetch
+                  href="/feedback"
+                  className="app-feedback-button mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-bold leading-4 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-ring-soft)]"
+                >
+                  Send feedback
+                  <ArrowUpRightIcon className="h-4 w-4" />
+                </Link>
               </div>
             </section>
           </aside>

@@ -34,6 +34,7 @@ export const sharedClassIdentifierSchema = z.object({
   scheduleType: scheduleTypeSchema,
   groupCodeType: groupCodeTypeSchema,
   groupCode: groupCodeSchema,
+  originSemesterId: semesterIdSchema.optional(),
 });
 
 export const sharedTimetableStateSchema = z.object({

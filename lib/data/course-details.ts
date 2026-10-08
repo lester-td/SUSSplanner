@@ -2,6 +2,9 @@ import "server-only";
 
 import { getCourseSnapshot } from "./course-snapshot-reader";
 import { getScheduleSnapshot } from "./schedule-snapshot-reader";
+import { getSemesterById, getSemestersWithWeeks } from "./metadata";
+import { filterEventsForSemester, isClassStartingInSemester } from "@/lib/timetable/semester-events";
+import { getSemesterChoices } from "@/lib/timetable/semester-visibility";
 
 function normalizeCourseCode(courseCode: string)
 {
@@ -16,6 +19,12 @@ export async function getCourseByCode(courseCode: string)
 export async function getCourseOfferedSemesters(courseCode: string)
 {
   return (await getCourseSnapshot(normalizeCourseCode(courseCode)))?.offeredSemesters ?? [];
+}
+
+export async function getCourseScheduledSemesters(courseCode: string)
+{
+  const snapshot = await getCourseSnapshot(normalizeCourseCode(courseCode));
+  return snapshot?.scheduledSemesters ?? snapshot?.offeredSemesters ?? [];
 }
 
 export async function getAssessmentComponents(
@@ -45,13 +54,22 @@ export async function getCourseClasses(
   const semesterIds = semesterId
     ? [semesterId]
     : course.offeredSemesters.map((semester) => semester.semesterId);
-  const snapshots = await Promise.all(
-    semesterIds.map((id) => getScheduleSnapshot(id, normalizedCourseCode)),
-  );
+  const [snapshots, semesters] = await Promise.all([
+    Promise.all(semesterIds.map((id) => getScheduleSnapshot(id, normalizedCourseCode))),
+    getSemestersWithWeeks(),
+  ]);
+  const availableIntakeIds = new Set(getSemesterChoices(semesters).map(semester => semester.semesterId));
 
   return snapshots
     .flatMap((snapshot) => snapshot?.classes ?? [])
-    .filter((item) => !scheduleType || item.scheduleType === scheduleType)
+    .filter((item) => availableIntakeIds.has(item.semesterId)
+      && (!semesterId || item.semesterId === semesterId) && (!scheduleType || item.scheduleType === scheduleType))
+    .filter(isClassStartingInSemester)
+    .map((item) => {
+      const semester = semesters.find((entry) => entry.semesterId === item.semesterId);
+      const ownEvents = item.events.filter(event => (event.startSemesterId ?? event.semesterId) === item.semesterId);
+      return { ...item, events: semester ? filterEventsForSemester(ownEvents, semester, semester.weeks) : [] };
+    })
     .sort((left, right) => (
       left.scheduleType.localeCompare(right.scheduleType)
       || left.groupCodeType.localeCompare(right.groupCodeType)
@@ -62,12 +80,17 @@ export async function getCourseClasses(
 export async function getClassCountsByCourseCodes(courseCodes: string[], semesterId: number)
 {
   const normalizedCourseCodes = [...new Set(courseCodes.map(normalizeCourseCode))];
+  const semester = await getSemesterById(semesterId);
+  if (!semester || semester.hasIntakeSchedule === false)
+  {
+    return Object.fromEntries(normalizedCourseCodes.map(courseCode => [courseCode, 0]));
+  }
   const schedules = await Promise.all(
     normalizedCourseCodes.map((courseCode) => getScheduleSnapshot(semesterId, courseCode)),
   );
 
   return Object.fromEntries(normalizedCourseCodes.map((courseCode, index) => [
     courseCode,
-    schedules[index]?.classes.length ?? 0,
+    schedules[index]?.classes.filter(isClassStartingInSemester).length ?? 0,
   ]));
 }

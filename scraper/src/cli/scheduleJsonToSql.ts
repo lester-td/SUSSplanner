@@ -46,6 +46,7 @@ function normalizeClass(klass: any): ClassRecord {
     scheduleType: klass.scheduleType ?? klass.schedule_type,
     groupCodeType: klass.groupCodeType ?? klass.group_code_type,
     groupCode: String(klass.groupCode ?? klass.group_code ?? "").trim(),
+    language: typeof klass.language === "string" ? klass.language.trim().toUpperCase() || null : null,
     availableAsGsp: klass.availableAsGsp ?? klass.available_as_gsp ?? null,
     isRestricted: klass.isRestricted ?? klass.is_restricted ?? null,
     remarks: klass.remarks ?? null
@@ -65,7 +66,7 @@ function normalizeClassEvent(event: any): ClassEventRecord {
     startTime: event.startTime ?? event.start_time,
     endTime: event.endTime ?? event.end_time,
     eventMode: event.eventMode ?? event.event_mode ?? null,
-    venue: event.venue ?? null,
+    campus: event.campus ?? event.venue ?? null,
     remarks: event.remarks ?? null
   } as ClassEventRecord;
 }

@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ShareClient } from "@/components/timetable/share-client";
@@ -6,6 +8,10 @@ import { getLatestDataUpdatedAt, getSemestersWithWeeks } from "@/lib/data/metada
 import { getTimetableDataFromClassIdentifiers } from "@/lib/data/timetable";
 import { getCurrentSemesterContext } from "@/lib/timetable/date-utils";
 import { decodeShareUrlState } from "@/lib/timetable/share-url";
+
+export const metadata: Metadata = {
+  title: "Shared Timetable | SUSS Planner",
+};
 
 export default async function SharePage({
   searchParams,
@@ -82,6 +88,7 @@ export default async function SharePage({
   }
 
   const timetable = await getTimetableDataFromClassIdentifiers(decodedState.selectedClasses, decodedState.semesterId);
+  if (!timetable.semester) notFound();
 
   return (
     <AppShell

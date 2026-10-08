@@ -36,6 +36,17 @@ export type AcademicCalendarEventRecord = {
   semesters: SemesterRecord[];
 };
 
+export type AnnouncementRecord = {
+  announcementId: number;
+  message: string;
+  linkUrl: string | null;
+  linkLabel: string | null;
+  publishAt: string;
+  expiresAt: string | null;
+  enabled: boolean;
+  sortOrder: number;
+};
+
 export type CourseOfferingSnapshot = {
   semesterId: number;
   scheduleType: ScheduleType;
@@ -51,6 +62,7 @@ export type CourseSnapshot = {
   course: CourseRecord;
   assessments: AssessmentComponentRecord[];
   offeredSemesters: SemesterRecord[];
+  scheduledSemesters?: SemesterRecord[];
 };
 
 export type CourseSnapshotBucket = Record<string, CourseSnapshot>;
@@ -78,6 +90,8 @@ export type DataSnapshotManifest = {
   };
   semesters: Array<SemesterRecord & { weeks: SemesterWeekRecord[] }>;
   academicCalendarEvents: AcademicCalendarEventRecord[];
+  // Optional for compatibility with existing snapshots.
+  announcements?: AnnouncementRecord[];
   courseBucketFiles: Record<string, string>;
   scheduleBucketFiles: Record<string, Record<string, string>>;
 };

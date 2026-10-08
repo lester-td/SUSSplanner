@@ -1,9 +1,7 @@
 # SUSSPlanner Developer Guide
 
-This guide is an onboarding reference for developers working on SUSSPlanner. It
-describes the architecture and workflows that are verifiable in this repository.
-Where the intended production process is not represented in code, it is called
-out under [Assumptions / Gaps](#assumptions--gaps).
+This guide covers application architecture, setup, state formats, and maintainer
+workflows. For data publication and rollback, see [Data Snapshot Operations](./DataSnapshots.md).
 
 ## Project Overview
 
@@ -26,11 +24,13 @@ Normal users do not have accounts. Timetable, semester planner, GPA-calculator,
 settings, and course-registration reminder interaction state are stored in
 browser `localStorage`. Semester planners can additionally be backed up to and
 restored from a local JSON file, or opened as an A4 print view for saving as
-PDF. A timetable can be shared through a semantic URL that contains a semester
-ID and selected class identifiers. The shared page remains read-only until the
+PDF. Semester planners can also be shared as compressed snapshots embedded in
+`/planner#plan=...`; recipients confirm **Save shared plan?** before replacing
+their local plan. A timetable can be shared through a semantic URL that contains
+a semester ID and selected class identifiers. The shared page remains read-only until the
 recipient explicitly imports it into their local timetable.
 
-The repository contains two cooperating workspaces:
+The repository contains two parts:
 
 - **Web application:** the root Next.js application in `app/`, `components/`,
   and `lib/`.
@@ -103,22 +103,21 @@ flowchart LR
 
 | Boundary | Responsibilities | Key files |
 |---|---|---|
-| Browser | Interactive timetable, course search UI, semester planner, GPA calculator, settings, in-app registration reminders, `localStorage`, JSON plan backup/restore, rendered timetable PNG/PDF export, A4 semester-planner print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `lib/settings/app-settings.ts`, `lib/registration/`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/semester-planner-print.ts` |
+| Browser | Interactive timetable, course search UI, semester planner, GPA calculator, settings, in-app registration reminders, `localStorage`, JSON plan backup/restore, content-sized timetable PNG and browser print PDF export, A4 semester-planner print view | `components/`, `lib/timetable/local-storage.ts`, `lib/planner/storage.ts`, `lib/settings/app-settings.ts`, `lib/registration/`, `components/calculator/gpa-calculator-client.tsx`, `lib/export/png.ts`, `lib/export/pdf-client.ts`, `lib/export/semester-planner-print.ts` |
 | Next.js server | Server-rendered pages, validation, API route handlers, server-side ICS/PDF endpoints | `app/`, `lib/validation/`, `lib/export/ics.ts`, `lib/export/pdf.ts` |
 | Snapshot data layer | Reads deployment-local JSON shards, searches catalog data in memory, assembles timetables, and detects clashes | `lib/data/`, `lib/timetable/clash-detection.ts` |
 | Snapshot generator | Reads Postgres during development/build and writes deployable JSON | `scripts/build-data-snapshots.ts`, `lib/db/schema.ts` |
 | Postgres | Source of truth for academic catalog, semester, class, event, and assessment data | `scraper/schema.sql`, mirrored by `lib/db/schema.ts` |
 | Local scraper | Extracts source PDFs, creates review artifacts, and generates transactional SQL | `scraper/src/`, `scraper/tools/` |
 
-### Architectural Rules Visible in the Code
+### Architectural Rules
 
 - UI components and production route handlers do not query Postgres. Reads go
   through `lib/data/queries.ts` and deployment-local snapshot files.
 - `DATABASE_URL` is used by snapshot generation, Drizzle tooling, validation,
   and maintainer `psql` commands; it is not required by `npm run start`.
-- Anonymous user state is not persisted server-side.
-- App settings and course-registration reminder dismissals are local browser
-  preferences; they are not persisted server-side.
+- Planner, calculator, settings, and reminder state stays in the browser. Feedback
+  submissions are emailed through Resend.
 - Share URLs use semantic class identifiers instead of database `class_id`
   values, making links independent of raw surrogate IDs.
 - The application runtime is read-only with respect to academic tables.
@@ -141,7 +140,7 @@ flowchart LR
 | Database | Supabase-compatible PostgreSQL |
 | Validation | Zod 4 |
 | Server PDF generation | `pdf-lib` |
-| Browser image/PDF export | `html-to-image` and `pdf-lib` |
+| Browser image/PDF export | `html-to-image` for PNG; HTML print view and native print dialog for PDF |
 | Drag and drop | `@dnd-kit/core` in the semester planner |
 | Semester-planner backup and print export | Browser `Blob`/object URLs, native print dialog, and Zod validation |
 | Settings and registration reminders | Browser `localStorage`, validated preference normalization, bundled registration-event data, phase-based reminder thresholds |
@@ -167,7 +166,7 @@ The root `package.json` declares:
 - npm `>=10`
 
 The setup validator rejects Node.js below 20 but only warns for npm below 10.
-The scraper README recommends Node.js 20+, npm 10+, Python 3.10+, and `psql`.
+Use the same Node/npm versions for the scraper, plus Python 3.10+ and `psql`.
 
 ## Repository Structure
 
@@ -177,29 +176,31 @@ The scraper README recommends Node.js 20+, npm 10+, Python 3.10+, and `psql`.
 │   ├── api/                     JSON and export routes
 │   ├── calculators/             GPA and OCAS calculator page
 │   ├── courses/                 Course search and detail pages
+│   ├── feedback/                Feedback form
 │   ├── planner/                 Multi-semester semester planner page
 │   ├── share/                   Read-only shared timetable page
 │   ├── settings/                Local app settings page
 │   └── timetable/               Interactive timetable page
 ├── components/
-│   ├── calculator/              GPA calculator client UI and browser-local state
+│   ├── calculator/              GPA and OCAS calculator clients
 │   ├── courses/                 Course search/detail client components
 │   ├── layout/                  Shared application shell and navigation
 │   ├── planner/                 Semester planner UI, add button, and shared icons
-│   │   └── semester-planner/    Client, panel, drag/drop, and formatting helpers
+│   │   └── semester-planner/    Desktop/mobile controls and share preview
 │   ├── registration/            Course-registration reminder notification
 │   ├── settings/                Settings UI and settings provider
 │   ├── timetable/               Timetable, exam, selection, and share UI
 │   └── ui/                      Reusable actions and modal
 ├── lib/
-│   ├── db/                      Drizzle client, schema mirror, and queries
+│   ├── data/                    Snapshot readers, search, and timetable assembly
+│   ├── db/                      Drizzle schema mirror for build-time export
 │   ├── export/                  ICS, server PDF, browser PNG/PDF, and semester-planner print helpers
-│   ├── planner/                 Semester-planner types and local persistence
+│   ├── planner/                 Semester-planner types, persistence, and share links
 │   ├── registration/            Registration schedule, reminder timing, storage, validation, and tests
-│   ├── settings/                App settings defaults, migration, storage, and update event helpers
+│   ├── settings/                App settings defaults, compatibility, storage, and update event helpers
 │   ├── timetable/               Domain types, URL encoding, storage, utilities
 │   └── validation/              Zod schemas
-├── drizzle/                     Intentionally empty migration-output directory
+├── drizzle/                     Generated migrations (gitignored)
 ├── scraper/
 │   ├── data/input/              Tracked source manifests and source PDFs
 │   ├── src/cli/                 Scraper command entry points
@@ -208,16 +209,14 @@ The scraper README recommends Node.js 20+, npm 10+, Python 3.10+, and `psql`.
 │   ├── tools/                   Python PDF extraction helpers
 │   ├── curriculum-schema-extension.sql  Optional preliminary curriculum tables
 │   └── schema.sql               Complete database DDL used by scraper setup
+├── scripts/build-data-snapshots.ts Build-time academic-data export
 ├── scripts/validate-project.mjs Environment and toolchain validation
-├── ARCHITECTURE.md              Existing shorter architecture summary
+├── ARCHITECTURE.md              Architecture summary
 ├── README.md                    Project overview and quick reference
 ├── drizzle.config.ts            Drizzle Kit configuration
 ├── next.config.js               Allowed development origins
 └── vercel.json                  Vercel region configuration
 ```
-
-`frontend/react/` currently contains only a `.gitignore` and is not part of the
-application runtime.
 
 ## Setup Instructions
 
@@ -279,11 +278,15 @@ curriculum PDFs expose their text as Unicode and do not require OCR.
 
 The scraper needs `psql` only when importing generated SQL or running database
 checks. It needs network access when downloading current course synopsis PDFs.
+Its package, tests, and TypeScript configuration are independent of the app.
+Default scraper output paths remain inside `scraper/`; publishing the cohort
+index into the app is an explicit file copy documented in the scraper guide.
 
 ### Verification Commands
 
-The root app has a Vitest suite for registration reminders and settings
-normalization, plus TypeScript and production-build checks:
+The Vitest suite covers snapshot readers, timetables, sharing, exports,
+announcements, reminders, and state validation. Run it alongside TypeScript
+and production-build checks:
 
 ```bash
 npm test
@@ -292,6 +295,7 @@ npm run typecheck
 npm run build
 
 cd scraper
+npm test
 npm run typecheck
 ```
 
@@ -308,7 +312,6 @@ npm run typecheck
 | `npm run typecheck` | Run root TypeScript checks without emitting files. |
 | `npm run build` | Create a production build. |
 | `npm run start` | Run the production build locally. |
-| `npm run db:generate` | Generate Drizzle migration files after an intentional schema change. |
 
 The setup validator checks supported Node/npm versions, installed dependencies,
 local environment files, and the shape of `DATABASE_URL`. Start validation
@@ -320,13 +323,16 @@ schema change is intentional and reviewed.
 
 ## Environment Variables
 
-The root `.env.example` defines the complete documented environment surface:
+The root [`.env.example`](../.env.example) lists these variables:
 
 | Variable | Required | Used by | Notes |
 |---|---:|---|---|
 | `DATABASE_URL` | Yes for snapshot generation and database tooling; no at runtime | `scripts/build-data-snapshots.ts`, `drizzle.config.ts`, setup validator, maintainer `psql` commands | Must be a `postgres://` or `postgresql://` URL. Keep server-side and secret. Use Supabase's transaction pooler for Vercel builds. |
-| `NEXT_PUBLIC_SUPABASE_URL` | No | Setup validator only | Present for compatibility/future browser integrations; not used by runtime application code. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No | Setup validator only | Present for compatibility/future browser integrations; not used by runtime application code. |
+| `NEXT_PUBLIC_SUPABASE_URL` | No | Setup validator only | Optional; not used by runtime application code. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No | Setup validator only | Optional; not used by runtime application code. |
+| `RESEND_API_KEY` | Yes for feedback email | `/api/feedback` | Server-side Resend API key. |
+| `FEEDBACK_EMAIL_FROM` | Yes for feedback email | `/api/feedback` | Sender address. |
+| `FEEDBACK_EMAIL_TO` | Yes for feedback email | `/api/feedback` | Comma-separated recipient addresses. |
 | `NEXT_ALLOWED_DEV_ORIGINS` | No | `next.config.js`, setup validator | Comma-separated extra hostnames or HTTP(S) origins allowed during development. |
 
 Never commit `.env.local` or real credentials. `.gitignore` excludes local
@@ -334,10 +340,9 @@ environment files except `.env.example`.
 
 ## Database and Schema
 
-`scraper/schema.sql` is the most complete database definition in the repository.
+`scraper/schema.sql` defines the academic database schema.
 `lib/db/schema.ts` manually mirrors the tables for the snapshot exporter and
-Drizzle tooling. The project does not maintain migrations for the existing academic
-tables; `drizzle/README.md` says the migration directory is intentionally empty.
+Drizzle tooling. Generated migrations under `drizzle/` are gitignored.
 
 The preliminary curriculum tables are deliberately excluded from both active schema files.
 Their standalone DDL is kept in `scraper/curriculum-schema-extension.sql` for evaluation in
@@ -368,6 +373,8 @@ erDiagram
         varchar academic_year
         smallint semester_no
         varchar semester_name
+        boolean is_archived
+        boolean has_intake_schedule
         timestamptz last_updated
     }
 
@@ -389,6 +396,7 @@ erDiagram
         varchar schedule_type
         varchar group_code_type
         varchar group_code
+        varchar language
         boolean available_as_gsp
         boolean is_restricted
         text remarks
@@ -404,7 +412,7 @@ erDiagram
         time start_time
         time end_time
         varchar event_mode
-        varchar venue
+        varchar campus
         text remarks
         timestamptz last_updated
     }
@@ -421,6 +429,18 @@ erDiagram
         timestamptz last_updated
     }
 
+    ANNOUNCEMENTS {
+        bigint announcement_id PK
+        text message
+        text link_url
+        varchar link_label
+        timestamptz publish_at
+        timestamptz expires_at
+        boolean enabled
+        integer sort_order
+        timestamptz last_updated
+    }
+
     COURSES ||--o{ CLASSES : offers
     SEMESTERS ||--o{ CLASSES : contains
     SEMESTERS ||--o{ SEMESTER_WEEKS : defines
@@ -432,10 +452,11 @@ erDiagram
 
 `v_class_events_with_week` joins `class_events` to `classes` and left-joins
 `semester_weeks` when an event date falls within a semester-week date range.
-Most class/timetable query paths read this view so events already carry course,
-class-group, semester, and optional week information.
+This view is available for database inspection. The snapshot exporter reads
+the underlying tables; runtime readers assemble class and week metadata from
+JSON snapshots.
 
-### Important Constraints
+### Constraints
 
 - `semesters` is unique by `(academic_year, semester_no)`.
 - `semester_weeks` is unique by semester/week number, label, and date range.
@@ -449,35 +470,78 @@ class-group, semester, and optional week information.
 - `group_code_type` is `TG` or `CRN`.
 - `event_kind` is `CLASS`, `EXAM`, or `OTHER`.
 - `week_type` is `TEACHING`, `STUDY`, or `EXAM`.
-- `assessment_components` is intentionally not semester-specific because the
-  source synopsis endpoint exposes only the latest/current assessment strategy.
+- `assessment_components` is not semester-specific because the source synopsis
+  endpoint exposes only the latest assessment strategy.
 
 ### Data Access Behavior
 
+- `semesters.has_intake_schedule` controls offering filters and intake selectors.
+  A false flag preserves continuation schedule shards and timetable access, with
+  a dismissible notice alongside Week 0 and Study Week classes.
+  `scheduledSemesters` preserves continuation destinations separately from
+  available `offeredSemesters`. Set the flag explicitly after validating a new
+  intake's schedule, then rebuild and deploy; scraper upserts preserve it.
+  New terms default to unavailable. Older snapshots without the flag retain their
+  previous behavior. The database must match `scraper/schema.sql` before building
+  snapshots.
+- `semesters.is_archived` excludes a semester from published snapshots and all
+  frontend readers. Its records remain in the database. Active completion sessions
+  retain only the ownership ID needed to restore an existing active timetable.
+- `classes.language` stores the offering's language of instruction and
+  `class_events.campus` stores each session's campus code.
+- `announcements` stores site messages and optional links with publication/expiry
+  timestamps. RLS is enabled with no browser policies, and client-role privileges
+  are revoked. SQL administration and snapshot generation use a privileged database
+  connection. Snapshots retain their windows; the global notification stack filters
+  enabled announcements against the current browser time, with checks on mount,
+  focus, and every minute. Dismissals are stored by announcement ID in localStorage.
+- Archived semesters have no frontend selector, schedule shard, or course offering
+  metadata. Direct saved/shared links cannot load an archived timetable. Restore a
+  semester by clearing its database flag and rebuilding.
+- Maintainers edit semester flags and announcement records directly in the database.
+  `npm run build` regenerates snapshots through `prebuild`; deploy the resulting
+  build to publish database changes. No admin page or runtime database write API
+  is required.
 - `scripts/build-data-snapshots.ts` requires `DATABASE_URL`, opens one
   short-lived connection with prepared statements disabled, and reads each
   academic table once per generation.
 - The category-specific readers in `lib/data/` resolve only paths declared by
   the manifest and memoize parsed files within each server process.
+- Schedule imports assign ownership from source-manifest `intakes` and the PDF's
+  Regular/Special column. Event dates never change class ownership. Snapshots
+  project completion sessions into later terms while retaining their origin;
+  explicitly owned pre-term sessions stay in the originating timetable.
+  Each published class also records `continuationSemesterIds` from its actual
+  completion sessions, so a separate offering cannot redirect its continuation.
 - Timetable assembly resolves semantic identifiers from schedule shards, loads
   events and semester data, derives ECA markers, detects clashes, and returns
   unresolved identifiers without silently removing them from the response.
+- Multi-semester event ownership comes from `data/schedule-cohorts.json`, generated
+  from each source document before schedules are merged. The scraper maintains
+  its own `scraper/data/schedule-cohorts.json`; copy the reviewed index into the
+  app's `data/schedule-cohorts.json` when publishing schedule changes. Snapshot generation
+  records `startSemesterId`; the schedule reader also annotates older snapshots.
+  Continued selections use their `originSemesterId` to select events and remap
+  their dates into the viewed semester's weeks. A reused TG/CRN supplies only
+  events belonging to the original cohort; class pickers expose new starts only.
+  Keep this generated ownership index with the source schedule changes.
 
 ## Frontend Routes and Pages
 
 | Route | Rendering and behavior |
 |---|---|
-| `/` | Static home page with links to Timetable, Courses, Planner, Calculators, and placeholder school portal shortcuts. |
+| `/` | Force-dynamic home page with app links, student resources, search, and upcoming academic dates. |
 | `/timetable` | Server-loads semesters with classes/weeks, then `PlannerClient` restores local state and fetches timetable/course/class data interactively. |
-| `/planner` | Server-loads semester metadata, then `SemesterPlannerClient` manages a browser-local multi-semester course plan, JSON backup/restore, and A4 print/PDF view. |
+| `/planner` | Server-loads semester metadata, then `SemesterPlannerClient` manages a browser-local multi-semester course plan, compressed share links, JSON backup/restore, and A4 print/PDF view. |
 | `/calculators` | Force-dynamic, `noindex` page. Server-loads semester/week metadata for `AppShell`; `GpaCalculatorClient` and `OcasCalculatorClient` manage browser-local GPA calculation and OCAS assessment simulation. |
+| `/feedback` | Force-dynamic, `noindex` page with public GitHub Issues and a private feedback form. |
 | `/settings` | Server-loads semester/week metadata for `AppShell`, then `SettingsClient` manages browser-local colour-scheme, theme, timetable-orientation, and course-registration reminder preferences. |
 | `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` fetches the full catalog, caches it in memory for return navigation, refreshes stale cached data after 15 minutes, filters/searches the cached catalog client-side, and paginates results at 10 courses per page. |
 | `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
 | `/share?sem=...&classes=...` | Validates and resolves the shared timetable on the server, then renders a read-only `ShareClient` with explicit import. Missing or malformed parameters get explanatory UI. |
 
 The shared `AppShell` provides navigation to Home, Timetable, Courses, Planner,
-Calculators, and Settings. `/share` is reached through a share URL.
+Calculators, Settings, and Feedback. `/share` is reached through a share URL.
 
 ## API and Backend Routes
 
@@ -492,17 +556,28 @@ All route handlers explicitly use the Node.js runtime.
 | `GET /api/classes` | Mode B: share query `sem` plus optional comma-separated `classes` | `{ timetable: TimetableData }`; resolves selections, events, clashes, weeks, and unresolved selections. |
 | `GET /api/classes/counts` | Required `semesterId`, comma-separated `courseCodes` | `{ counts }`; used to show whether selected courses have alternative class groups. |
 | `GET /api/export/ics` | Required `sem`; optional `classes` list | Downloadable `text/calendar` attachment containing all resolved events in `Asia/Singapore` timezone. |
-| `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable `application/pdf` event-list attachment with clash summary. The current timetable/share UI instead creates its PDF from a browser-rendered PNG. |
+| `POST /api/feedback` | `type`, `message`; optional `contact`, `pageUrl`, and empty `website` honeypot | Sends email through Resend. BotID checks and per-process IP rate limits protect the route; returns `{ ok: true }` or an error. |
+| `GET /api/export/pdf` | Required `sem`; optional `classes` list | Downloadable server-generated `application/pdf` with a vector timetable and selectable-text event listing. The timetable and share UI PDF buttons use a separate browser print view built from the same export card as PNG. |
 
-PNG export is intentionally browser-side so it can preserve the rendered
-timetable view; there is no `/api/export/png` route.
+PNG export captures a dedicated, content-sized timetable and course card layout in the browser;
+there is no `/api/export/png` route. The timetable/share PDF export clones that same rendered card into a hidden print frame,
+scales the timetable and exam calendar onto separate white landscape A4 pages, then uses
+portrait A4 pages for the selectable-text class-session listing. The PDF button opens
+the browser print dialog directly. The class-session listing includes all known
+sessions for each selected class cohort across active semesters, including
+spillovers, and respects hidden classes. Its source is `classSessionEvents` in
+the timetable payload; the visual timetable and exam calendar still use the
+selected semester's events. Assessment modes are resolved for each selected
+schedule type. If its class group has no dated exam event, the course and exam
+calendar show an undated exam status with Canvas/Learnova guidance. Dates from
+other class groups are not assigned to the selected group.
 
 Semester-planner JSON backup/import and the A4 print view are also browser-only.
 There are no semester planner export/import/print API routes, and semester planner data is
 not sent to the server during these flows.
 
-GPA calculations are browser-side. The calculator search API is the only
-calculator request and returns the minimum catalog fields needed by the UI.
+GPA and OCAS calculations run in the browser. Both search through the calculator
+API; OCAS also fetches course details to load assessment components.
 
 ### Share URL Contract
 
@@ -513,7 +588,7 @@ calculator request and returns the minimum catalog fields needed by the UI.
 Each class identifier is:
 
 ```text
-COURSECODE:groupCode
+COURSECODE:groupCode[@originSemesterId]
 ```
 
 Example:
@@ -522,18 +597,23 @@ Example:
 /share?sem=3&classes=ANL303:TG01,ICT233:CRN01
 ```
 
+The optional `@originSemesterId` suffix identifies a continued class’s starting
+semester, keeping it distinct from a new intake with the same group code.
+
 Share links infer daytime classes from `TG` group codes and evening classes
 from `CRN` group codes. Encoders place TG classes first, followed by CRN
 classes, and sort each group by course code and group code. The resolved
 timetable reads the same versioned snapshot as the rest of the deployment.
 
-Zod validation in `lib/validation/timetable.ts` enforces:
+The URL parser in `lib/timetable/share-url.ts` and Zod schemas in
+`lib/validation/timetable.ts` enforce:
 
 - Positive integer semester ID.
 - Course code containing 3-20 uppercase alphanumeric characters.
 - Group code in `TG01` or `CRN01` form.
 - Daytime schedule type for TG classes and evening schedule type for CRN classes.
 - At most 50 selected classes.
+- A positive integer origin semester ID when a continuation suffix is present.
 
 ## Authentication and Authorization
 
@@ -542,6 +622,7 @@ Zod validation in `lib/validation/timetable.ts` enforces:
 There is no user authentication or account model in the web application.
 Anonymous users can access all pages and all read/export API routes. Their
 timetable, semester planner, and GPA-calculator data remains in their browser.
+Feedback submissions pass BotID and rate-limit checks before email delivery.
 
 ### Maintainer Controls
 
@@ -558,9 +639,6 @@ The `NEXT_PUBLIC_SUPABASE_*` variables do not implement browser authentication
 and are not used by runtime code.
 
 ### Use Case Diagram
-
-Mermaid does not provide a dedicated UML use-case syntax, so this uses a
-GitHub-renderable flowchart with actors and use cases.
 
 ```mermaid
 flowchart LR
@@ -587,7 +665,7 @@ flowchart LR
         Parse["Parse source PDFs and semester-week JSON"]
         Review["Review generated JSON / TSV / SQL"]
         Import["Import academic data with psql"]
-        Invalidate["Revalidate application caches"]
+        Publish["Build and deploy academic-data snapshots"]
     end
 
     Student --> Build
@@ -607,7 +685,7 @@ flowchart LR
     Maintainer --> Parse
     Maintainer --> Review
     Maintainer --> Import
-    Maintainer --> Invalidate
+    Maintainer --> Publish
 ```
 
 ## Core User Flows
@@ -742,7 +820,7 @@ surface a user notice.
 
 The planner header provides these data-protection and presentation actions:
 
-- **Backup Plan** opens a menu containing the JSON **Export** and **Import**
+- **Backup** opens a menu containing the JSON **Export** and **Import**
   actions.
 - **Export** serializes the current normalized plan into a versioned JSON backup
   and downloads it as
@@ -753,7 +831,7 @@ The planner header provides these data-protection and presentation actions:
 - **Download PDF** uses the same normalized `SemesterPlannerState` as JSON export to
   create an escaped A4 HTML document. It opens the document through a temporary
   Blob URL in a new tab, where the user selects **Print / Save as PDF**.
-- **Reset Planner** still requires confirmation and replaces the plan with the
+- **Reset Planner** requires confirmation and replaces the plan with the
   default state.
 
 ### Course Registration Reminder Flow Diagram
@@ -788,8 +866,8 @@ flowchart TD
     Render --> Close --> Dismiss --> SaveInteraction --> Tick
 ```
 
-Registration reminder banners are intentionally in-app only today. User
-settings expose only the in-app banner toggle.
+Registration reminders appear in the app and are controlled by the **In-app
+reminders** toggle.
 
 The UI integration points are:
 
@@ -803,7 +881,7 @@ The UI integration points are:
   filtering, and one-banner selection.
 - `lib/registration/reminder-storage.ts` for local dismissal persistence,
   legacy snooze compatibility, and stale-record pruning.
-- `lib/settings/app-settings.ts` for settings defaults, migration, and
+- `lib/settings/app-settings.ts` for settings defaults, compatibility, and
   normalization.
 
 ### GPA Calculator Flow Diagram
@@ -817,10 +895,11 @@ flowchart TD
     Add{"Add current-semester module"}
     Catalog["Search full catalog through<br/>GET /api/calculator/courses"]
     Custom["Enter custom module label and credits"]
+    PlannerImport["Select saved semester-planner modules<br/>and skip duplicate course codes"]
     Grade["Set Credits, Grade, or GPV"]
     Sync["Synchronize Grade and GPV"]
     PF["Toggle Pass/Fail strategy"]
-    Prior["Set previous cumulative GPA<br/>and GPA-counted completed CUs"]
+    Prior["Set previous cumulative GPA,<br/>total completed CUs, and Pass/Fail CUs"]
     Calculate["Recalculate weighted current<br/>and cumulative GPA"]
     Persist["Persist calculator JSON to localStorage"]
     Clear["Confirm clearing all current modules"]
@@ -832,6 +911,8 @@ flowchart TD
     Ready --> Add
     Add --> Catalog
     Add --> Custom
+    Add --> PlannerImport
+    PlannerImport --> Grade
     Catalog --> Grade
     Custom --> Grade
     Ready --> Grade
@@ -897,7 +978,7 @@ flowchart TD
     Deploy --> Public
 ```
 
-## Important State Models
+## State Models
 
 ### Timetable Persistence State
 
@@ -912,17 +993,15 @@ Persisted fields:
 - `selectedWeekId`
 - `orientation`
 - `viewMode`
-- `semesterStates`, a record of per-semester planner slices with the same
-  fields as the active semester state
+- `semesterStates`, per-semester slices containing semester ID, selections,
+  hidden classes, colors, and selected week. Orientation and view mode are global.
 
 Related local keys and events:
 
 - `sussplanner:timetable-updated` is the custom event used after timetable
   writes in this browser.
-- `sussplanner.timetable.study-mode.v1` stores the global FT/PT study mode as
-  `full-time` or `part-time`.
-- `sussplanner:timetable-study-mode-updated` is dispatched after study-mode
-  changes so mounted timetable controls can refresh without a page reload.
+- Class-type preferences use `timetableStudyMode` in app settings and the
+  `sussplanner:settings-updated` event.
 - `sussplanner.timetable-alerts.info-dismissal.v1` stores the signature for the
   currently dismissed informational timetable alert. It is component-local to
   `components/timetable/timetable-alerts.tsx` and is cleared when the relevant
@@ -930,8 +1009,8 @@ Related local keys and events:
 
 The active semester state is mirrored at the top level for compatibility. Each
 semester keeps its own timetable selection, hidden block list, colors, and week
-selection. Switching semesters loads the matching slice; reset clears only the
-current semester slice.
+selection. Switching semesters loads the matching slice; reset clears starting
+selections, hidden classes, and colors in that slice while preserving continuations.
 
 ```mermaid
 stateDiagram-v2
@@ -952,7 +1031,7 @@ stateDiagram-v2
 
     Ready --> ResetPending: user requests reset
     ResetPending --> Ready: cancel
-    ResetPending --> Ready: confirm and clear selections, hidden classes, and colors
+    ResetPending --> Ready: confirm and clear starting selections, hidden classes, and colors
 ```
 
 ### Shared Timetable State
@@ -982,8 +1061,11 @@ Importing a shared timetable:
   initially uses class view.
 - Leaves other saved semesters untouched.
 
-Resetting the timetable clears only the selected semester state. It does not
-touch other saved semesters.
+Resetting the timetable clears classes that start in the selected semester and
+preserves continuation selections. It does not touch other saved semesters.
+Reset is disabled when there are no starting selections. Share and Download are
+enabled whenever the timetable has resolved selected courses, including
+continuations in a semester whose intake schedule is unavailable.
 
 ### App Settings State
 
@@ -994,15 +1076,17 @@ Persisted fields:
 - `colorScheme`: `system`, `light`, or `dark`
 - `themeId`
 - `timetableOrientation`: `horizontal` or `vertical`
+- `timetableOpeningView`: `all-weeks`, `this-week`, or `last-viewed`
+- `timetableStudyMode`: `full-time` or `part-time`
 - `registrationReminders`
 
 `registrationReminders` contains:
 
 - `enabled`
 
-`lib/settings/app-settings.ts` normalizes reminder settings into the simplified
-`{ enabled }` shape, then dispatches `sussplanner:settings-updated` after
-saves. The `SettingsProvider` listens for that event and browser `storage`
+`lib/settings/app-settings.ts` normalizes reminder settings into the
+`{ enabled }` shape. Callers save settings and dispatch
+`sussplanner:settings-updated`. The `SettingsProvider` listens for that event and browser `storage`
 events to apply the resolved light/dark colour scheme to the document root.
 
 ```mermaid
@@ -1052,7 +1136,7 @@ registrationReminder:add-drop-2026-07:closing:6h
 and `sourceUpdatedAt`. This lets stale dismissals be ignored when the bundled
 registration schedule changes.
 
-Default offset reminders still exist for compatibility and non-floating
+Default offset reminders exist for compatibility and non-floating
 candidate generation:
 
 | Offset minutes | Label |
@@ -1061,14 +1145,8 @@ candidate generation:
 | `1440` | 1 day before |
 | `0` | At opening time |
 
-Current bundled registration events in `REGISTRATION_EVENTS` are:
-
-| Event ID | Title | Starts | Ends | Schedule version |
-|---|---|---|---|---|
-| `ecr-2026-03` | eCR Period | `2026-03-17T00:00:00+08:00` | `2026-03-24T23:59:59+08:00` | `ecr-2026-03-v1` |
-| `ecr-2026-10` | eCR Period | `2026-10-12T00:00:00+08:00` | `2026-10-23T23:59:59+08:00` | `ecr-2026-10-v1` |
-| `add-drop-2026-07` | Add-Drop Period | `2026-07-03T00:00:00+08:00` | `2026-07-28T23:59:59+08:00` | `add-drop-2026-07-v1` |
-| `add-drop-2026-12` | Add-Drop Period | `2026-12-18T00:00:00+08:00` | `2026-12-29T23:59:59+08:00` | `add-drop-2026-12-v1` |
+Registration event IDs, dates, and versions are maintained in
+[`lib/registration/schedule.ts`](../lib/registration/schedule.ts).
 
 The active floating in-app reminder path uses these rules:
 
@@ -1087,10 +1165,9 @@ The active floating in-app reminder path uses these rules:
 - Prefer closing reminders over open reminders, and open reminders over
   upcoming reminders when more than one event is eligible.
 
-The floating notification follows NUSMods' CourseReg-reminder style: closing it
-dismisses the current threshold for the matching event version. The same
-threshold stays hidden, but a later threshold or next 24-hour open interval can
-appear. The storage layer still normalizes older dismissed-reminder and
+Closing the notification dismisses the current threshold for the matching event
+version. The same threshold stays hidden, but a later threshold or next 24-hour open interval can
+appear. The storage layer normalizes older dismissed-reminder and
 snoozed-event records for compatibility.
 
 ```mermaid
@@ -1164,14 +1241,24 @@ Persisted JSON fields:
 - `modules`
 - `priorGpa`
 - `priorCredits`
+- `priorPassFailCredits`
 - Per-module `courseCode`, `courseName`, `creditUnits`, `grade`, `gradePoint`,
-  and `isPassFail`
+  `isPassFail`, and `creditUnitsEditable`
 
 The calculator is implemented directly in
-`components/calculator/gpa-calculator-client.tsx`; it does not currently have a
+`components/calculator/gpa-calculator-client.tsx`; it does not have a
 separate type, validation, or storage module. Hydration catches malformed JSON
 and starts clean when parsing fails. Every subsequent module/prior-record
 change is written back to `localStorage`.
+
+The **Planner** button reads the saved semester plan in the same browser and opens
+a module-selection modal. Users can sort by course code/name or assigned semester,
+include/exclude custom modules, and select which modules to add. Existing course
+codes and repeated planner entries are disabled to prevent duplicates. Imported
+modules copy names and credits, start at grade `A` / GPV `5.0`, and are not Pass/Fail
+until the user selects it. Import appends modules without replacing the calculator
+or changing the saved planner. The available planner list refreshes on browser
+`storage` and `sussplanner:semester-planner-updated` events.
 
 Grade and GPV are bidirectionally synchronized through the fixed SUSS scale.
 Both `A+` and `A` map to `5.0`; selecting GPV `5.0` uses `A` as the canonical
@@ -1184,24 +1271,27 @@ selected.
 
 ```text
 currentGpaCredits = sum(module.creditUnits where !module.isPassFail)
+priorGpaCredits = max(0, priorCredits - priorPassFailCredits)
 
 currentGpa =
   sum(module.creditUnits * module.gradePoint where !module.isPassFail)
   / currentGpaCredits
 
 cumulativeGpa =
-  (priorGpa * priorCredits
+  (priorGpa * priorGpaCredits
     + sum(module.creditUnits * module.gradePoint where !module.isPassFail))
-  / (priorCredits + currentGpaCredits)
+  / (priorGpaCredits + currentGpaCredits)
 ```
 
 Current GPA is empty when `currentGpaCredits` is zero. Cumulative GPA is empty
-only when `priorCredits + currentGpaCredits` is zero. Users are instructed to
-exclude historical Pass/Fail modules from `priorCredits`; the UI cannot verify
-that input.
+only when `priorGpaCredits + currentGpaCredits` is zero. `priorCredits` is total
+previously completed CUs, including Pass/Fail; the separate Pass/Fail input is
+capped at that total and subtracted for the GPA denominator. Total completed CUs
+include both prior and current Pass/Fail modules. The app cannot verify these
+user-entered values against academic records.
 
 `Clear all` opens the shared `Modal` confirmation and removes only current
-modules. It preserves `priorGpa` and `priorCredits`.
+modules. It preserves `priorGpa`, `priorCredits`, and `priorPassFailCredits`.
 
 ### Semester Planner Backup Contract
 
@@ -1266,13 +1356,13 @@ sequenceDiagram
     participant Browser as Browser file / print APIs
 
     alt Export JSON backup
-        Student->>UI: Select Backup Plan, then Export
+        Student->>UI: Select Backup, then Export
         UI->>Storage: serializeSemesterPlannerBackup(plan)
         Storage->>Validation: Validate and normalize plan
         Storage-->>UI: Versioned JSON string
         UI->>Browser: Download JSON Blob
     else Import JSON backup
-        Student->>UI: Select Backup Plan, then Import and local JSON file
+        Student->>UI: Select Backup, then Import and local JSON file
         UI->>UI: Reject file if larger than 1 MB
         UI->>Storage: parseSemesterPlannerBackup(file text)
         Storage->>Validation: Validate envelope and plan
@@ -1428,6 +1518,8 @@ sequenceDiagram
     Maintainer->>Artifacts: Review warnings and generated output
     Maintainer->>DB: psql import using DATABASE_URL
     DB-->>Maintainer: Import result and verification queries
+    Maintainer->>DB: Enable intake availability for validated intakes
+    Maintainer->>Build: Copy reviewed cohort index to application data/
     Maintainer->>Build: Run npm run data:build (local verification)
     Build->>DB: Read normalized academic tables
     Build->>Snapshot: Write manifest, course index, course and schedule shards
@@ -1449,8 +1541,10 @@ steps below. Snapshot publication is the final application operation.
 4. Download course synopsis PDFs.
 5. Parse course synopsis PDFs and import course-detail SQL.
 6. Verify database counts/sample rows.
-7. Run `npm run data:build` from the repository root and review the manifest.
-8. Trigger a new Vercel deployment (a deploy hook is convenient).
+7. Enable `semesters.has_intake_schedule` for validated intakes and copy the reviewed
+   `scraper/data/schedule-cohorts.json` to `data/schedule-cohorts.json`.
+8. Run `npm run data:build` from the repository root and review the manifest.
+9. Trigger a new Vercel deployment (a deploy hook is convenient).
 
 Run `npm run scraper` from the repository root and choose the required task from
 the interactive menu. **All Items** runs the complete local preparation flow without
@@ -1505,7 +1599,7 @@ secret.
   built application serves requests.
 - Supabase-backed Vercel deployments should use the transaction-pooler
   connection string on port `6543`, not the session pooler on port `5432`.
-- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are currently
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are
   optional and unused by runtime code.
 - `/timetable`, `/planner`, and `/calculators` are force-dynamic.
 - `/settings` uses the shared app shell's server-loaded semester context and
@@ -1525,7 +1619,7 @@ secret.
 |---|---|
 | Run/check the app | Use `npm run dev`, `npm run typecheck`, and `npm run build`. |
 | Change data retrieval | Keep runtime reads in `lib/data/`; update the generator and snapshot types together when the persisted shape changes. |
-| Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. `drizzle/` is not currently the schema source of truth. |
+| Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. Generated files in `drizzle/` are not the schema source of truth. |
 | Evaluate the preliminary curriculum schema | Apply `scraper/curriculum-schema-extension.sql` only after the base schema in a disposable database. It is not a migration or part of the deployed schema. |
 | Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered snapshot reads behind route handlers. |
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
@@ -1533,24 +1627,25 @@ secret.
 | Change calculator catalog search | Keep the minimal response and full-catalog behavior in `app/api/calculator/courses/route.ts` and `searchCalculatorCourses` in `lib/data/course-search.ts`; do not accidentally add semester/class filters. |
 | Change semester-planner backup format | Update `lib/planner/storage.ts`, `lib/validation/planner.ts`, and this guide. Preserve support for existing public versions or reject them with a clear notice. |
 | Change semester-planner print output | Update `lib/export/semester-planner-print.ts`; keep all interpolated user/imported strings escaped and verify both A4 preview and print styles. |
-| Change app settings | Update `lib/settings/app-settings.ts`, `components/settings/settings-client.tsx`, `components/settings/settings-provider.tsx`, and tests that cover normalization/migration. |
+| Change app settings | Update `lib/settings/app-settings.ts`, `components/settings/settings-client.tsx`, `components/settings/settings-provider.tsx`, and tests that cover normalization and compatibility. |
 | Change course registration reminders | Update `lib/registration/schedule.ts`, `lib/registration/reminders.ts`, `lib/registration/reminder-storage.ts`, `components/registration/global-registration-reminders.tsx`, `components/registration/registration-reminder-banner.tsx`, settings controls, tests, and both guides. Verify timing boundaries around each changed event. |
 | Refresh academic data | Follow the maintainer flow above and `scraper/README.md`; review/import data, validate snapshots, then deploy. |
 
 ## Known Limitations
 
 - There is no user account, cloud synchronization, or server-side backup of
-  timetable, semester planner, or GPA-calculator state.
-- Clearing browser storage or changing browsers loses locally saved plans that
-  were not exported as JSON backups.
-- GPA-calculator state has no export, import, share, cloud backup, or formal
+  timetable, semester planner, or GPA-calculator state. Save a JSON backup or
+  share link before clearing browser storage or moving plans between browsers.
+- The GPA calculator can import modules from the browser-local semester planner,
+  but has no calculator-state file import/export, share, cloud backup, or formal
   Zod validation layer.
 - `/calculators` is excluded from search-engine indexing.
 - Calculator results depend on user-entered grades, prior GPA, prior
   GPA-counted CUs, and Pass/Fail selections; the app cannot verify them against
   official academic records or policy.
-- Only timetable semester/selections are shareable. The multi-semester study
-  plan can be imported/exported as JSON but cannot be shared through a URL.
+- Semester-planner share links are fixed snapshots, not live synchronized plans.
+  They use browser compression streams and versioned validation in
+  `lib/planner/share-url.ts`; unsupported browsers can use JSON backup instead.
 - Semester-planner PDF output depends on the browser print dialog and may require
   users to allow the new print-view tab.
 - Share links are limited to 50 class identifiers and depend on those semantic
@@ -1567,39 +1662,11 @@ secret.
 - Browser push notifications are not exposed as a production feature.
 - Assessment components represent the latest strategy by course and schedule
   type, not historical semester-specific assessments.
-- The root automated test coverage is currently focused on registration
-  reminders, reminder storage, settings normalization, and validation; broader
-  UI flows still rely on typecheck/build and manual browser verification.
+- Browser UI flows require manual verification alongside unit tests, typecheck,
+  and builds.
 - The scraper relies on external PDF formats and includes warning/issue reports
   because extraction can be incomplete or malformed.
 - No in-app admin interface exists.
-- The server PDF endpoint produces a timetable event-list PDF, while the
-  timetable UI creates a PDF from a browser screenshot. The semester-planner PDF
-  action instead opens an A4 HTML print view for the browser to save as PDF.
-- `getCurrentSemesterContext` falls back to the first returned semester/week
-  when today's date is outside all configured semester-week ranges.
-
-## Assumptions / Gaps
-
-The following details cannot be verified from repository code:
-
-- **Production admin identity/authentication:** the project context describes
-  admin authentication for maintainers, but the repository contains no admin
-  account model, sign-in route, middleware, or role checks. The only verifiable
-  controls are possession of `DATABASE_URL` and permission to deploy the app.
-- **Credential provisioning and rotation:** there is no documented process for
-  granting, rotating, or revoking maintainer database credentials or deploy
-  hook access.
-- **Production database policy configuration:** `scraper/schema.sql` defines
-  tables, indexes, triggers, and a security-invoker view, but repository code
-  does not define Supabase Row Level Security policies or production network
-  restrictions.
-- **Automated deployment pipeline:** Vercel region configuration is present, but
-  no CI/CD workflow files are tracked.
-- **Scheduled scraper execution:** the scraper is documented and implemented as
-  a local manual workflow; no cron job or hosted ingestion service exists here.
-- **Monitoring, logging, backups, and incident response:** no repository-defined
-  production operations process is present.
-- **Source-data licensing and update cadence:** source PDF files and parsing
-  logic are present, but the intended refresh frequency and distribution rules
-  are not defined in code.
+- Outside configured week ranges, `getCurrentSemesterContext` returns vacation
+  context with no week, preferring the most recently ended semester, then the
+  next future semester, then the first available semester.

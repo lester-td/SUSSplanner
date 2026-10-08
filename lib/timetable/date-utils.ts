@@ -54,7 +54,7 @@ export function formatDate(date: string, options?: Intl.DateTimeFormatOptions)
 
 export function formatCompactDate(date: string)
 {
-  return formatDate(date, { day: "numeric", month: "short" });
+  return formatDate(date, { day: "numeric", month: "short", year: undefined });
 }
 
 export function formatDateRange(startDate: string, endDate: string)

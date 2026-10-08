@@ -1,0 +1,63 @@
+{
+  "semesters": [
+    {
+      "academicYear": "2026/2027",
+      "semesterNo": 2,
+      "semesterName": "January 2027"
+    },
+    {
+      "academicYear": "2026/2027",
+      "semesterNo": 3,
+      "semesterName": "May 2027"
+    },
+    {
+      "academicYear": "2027/2028",
+      "semesterNo": 1,
+      "semesterName": "July 2027"
+    }
+  ],
+  "weeks": [
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 0, "weekType": "TEACHING", "label": "Week 0", "startDate": "2027-01-04", "endDate": "2027-01-10"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 1, "weekType": "TEACHING", "label": "Week 1", "startDate": "2027-01-11", "endDate": "2027-01-17"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 2, "weekType": "TEACHING", "label": "Week 2", "startDate": "2027-01-18", "endDate": "2027-01-24"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 3, "weekType": "TEACHING", "label": "Week 3", "startDate": "2027-01-25", "endDate": "2027-01-31"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 4, "weekType": "TEACHING", "label": "Week 4", "startDate": "2027-02-01", "endDate": "2027-02-07"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 5, "weekType": "TEACHING", "label": "Week 5", "startDate": "2027-02-08", "endDate": "2027-02-14"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 6, "weekType": "TEACHING", "label": "Week 6", "startDate": "2027-02-15", "endDate": "2027-02-21"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 7, "weekType": "TEACHING", "label": "Week 7", "startDate": "2027-02-22", "endDate": "2027-02-28"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 8, "weekType": "TEACHING", "label": "Week 8", "startDate": "2027-03-01", "endDate": "2027-03-07"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 9, "weekType": "TEACHING", "label": "Week 9", "startDate": "2027-03-08", "endDate": "2027-03-14"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 10, "weekType": "TEACHING", "label": "Week 10", "startDate": "2027-03-15", "endDate": "2027-03-21"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 11, "weekType": "TEACHING", "label": "Week 11", "startDate": "2027-03-22", "endDate": "2027-03-28"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 12, "weekType": "TEACHING", "label": "Week 12", "startDate": "2027-03-29", "endDate": "2027-04-03"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 13, "weekType": "STUDY", "label": "Study Week", "startDate": "2027-04-04", "endDate": "2027-04-10"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 14, "weekType": "EXAM", "label": "Exam Week 1", "startDate": "2027-04-12", "endDate": "2027-04-17"},
+    {"academicYear": "2026/2027", "semesterNo": 2, "weekNo": 15, "weekType": "EXAM", "label": "Exam Week 2", "startDate": "2027-04-19", "endDate": "2027-04-24"},
+
+    {"academicYear": "2026/2027", "semesterNo": 3, "weekNo": 0, "weekType": "TEACHING", "label": "Week 0", "startDate": "2027-04-26", "endDate": "2027-05-02"},
+    {"academicYear": "2026/2027", "semesterNo": 3, "weekNo": 1, "weekType": "TEACHING", "label": "Week 1", "startDate": "2027-05-03", "endDate": "2027-05-09"},
+    {"academicYear": "2026/2027", "semesterNo": 3, "weekNo": 2, "weekType": "TEACHING", "label": "Week 2", "startDate": "2027-05-10", "endDate": "2027-05-16"},
+    {"academicYear": "2026/2027", "semesterNo": 3, "weekNo": 3, "weekType": "TEACHING", "label": "Week 3", "startDate": "2027-05-17", "endDate": "2027-05-23"},
+    {"academicYear": "2026/2027", "semesterNo": 3, "weekNo": 4, "weekType": "TEACHING", "label": "Week 4", "startDate": "2027-05-24", "endDate": "2027-05-30"},
+    {"academicYear": "2026/2027", "semesterNo": 3, "weekNo": 5, "weekType": "TEACHING", "label": "Week 5", "startDate": "2027-05-31", "endDate": "2027-06-06"},
+    {"academicYear": "2026/2027", "semesterNo": 3, "weekNo": 6, "weekType": "TEACHING", "label": "Week 6", "startDate": "2027-06-07", "endDate": "2027-06-12"},
+    {"academicYear": "2026/2027", "semesterNo": 3, "weekNo": 7, "weekType": "EXAM", "label": "Exam Week", "startDate": "2027-06-14", "endDate": "2027-06-19"},
+
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 0, "weekType": "TEACHING", "label": "Week 0", "startDate": "2027-08-02", "endDate": "2027-08-08"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 1, "weekType": "TEACHING", "label": "Week 1", "startDate": "2027-08-09", "endDate": "2027-08-15"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 2, "weekType": "TEACHING", "label": "Week 2", "startDate": "2027-08-16", "endDate": "2027-08-22"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 3, "weekType": "TEACHING", "label": "Week 3", "startDate": "2027-08-23", "endDate": "2027-08-29"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 4, "weekType": "TEACHING", "label": "Week 4", "startDate": "2027-08-30", "endDate": "2027-09-05"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 5, "weekType": "TEACHING", "label": "Week 5", "startDate": "2027-09-06", "endDate": "2027-09-12"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 6, "weekType": "TEACHING", "label": "Week 6", "startDate": "2027-09-13", "endDate": "2027-09-19"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 7, "weekType": "TEACHING", "label": "Week 7", "startDate": "2027-09-20", "endDate": "2027-09-26"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 8, "weekType": "TEACHING", "label": "Week 8", "startDate": "2027-09-27", "endDate": "2027-10-03"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 9, "weekType": "TEACHING", "label": "Week 9", "startDate": "2027-10-04", "endDate": "2027-10-10"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 10, "weekType": "TEACHING", "label": "Week 10", "startDate": "2027-10-11", "endDate": "2027-10-17"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 11, "weekType": "TEACHING", "label": "Week 11", "startDate": "2027-10-18", "endDate": "2027-10-24"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 12, "weekType": "TEACHING", "label": "Week 12", "startDate": "2027-10-25", "endDate": "2027-10-30"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 13, "weekType": "STUDY", "label": "Study Week", "startDate": "2027-11-01", "endDate": "2027-11-06"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 14, "weekType": "EXAM", "label": "Exam Week 1", "startDate": "2027-11-08", "endDate": "2027-11-13"},
+    {"academicYear": "2027/2028", "semesterNo": 1, "weekNo": 15, "weekType": "EXAM", "label": "Exam Week 2", "startDate": "2027-11-15", "endDate": "2027-11-20"}
+  ]
+}

@@ -181,14 +181,14 @@ export function CourseCard({
       style={style}
       {...(draggable ? listeners : {})}
       {...(draggable ? attributes : {})}
-      className={`planner-course-card rounded-[0.85rem] border px-2.5 py-2 md:px-3 md:py-2.5 ${active ? "planner-course-card--active transition-colors duration-200" : "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-elev-3)]"} ${
+      className={`planner-course-card rounded-[0.85rem] border px-2.5 py-2 transition-colors duration-200 md:px-3 md:py-2.5 ${active ? "planner-course-card--active" : ""} ${
         draggable ? "cursor-grab active:cursor-grabbing select-none touch-none" : ""
       } ${
         active
           ? "border-[var(--primary)] bg-[var(--brand-chip-bg)] opacity-50 shadow-[0_12px_28px_rgba(15,23,42,0.12)]"
           : ghost
             ? "border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] opacity-55"
-            : "border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] hover:border-[var(--outline-variant)]"
+            : "border-[var(--brand-divider)] bg-[var(--surface-container-lowest)] hover:border-[var(--control-border)] hover:bg-[var(--control-surface-hover)]"
       }`}
     >
       <div className="flex items-start gap-2">
@@ -221,7 +221,7 @@ export function CourseCard({
                 type="button"
                 onClick={onEdit}
                 onPointerDown={(event) => event.stopPropagation()}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-[0.5rem] border border-[var(--outline-variant)] text-[var(--on-surface-variant)] transition-colors hover:border-[var(--brand-divider)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)]"
+                className="app-action-button app-action-button--ghost inline-flex h-7 w-7 items-center justify-center"
                 aria-label={`Edit ${course.courseCode}`}
               >
                 <EditIcon className="h-3.5 w-3.5" />
@@ -233,7 +233,7 @@ export function CourseCard({
                 type="button"
                 onClick={onDelete}
                 onPointerDown={(event) => event.stopPropagation()}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-[0.5rem] border border-red-500/30 text-red-400 transition-colors hover:border-red-400/70 hover:bg-red-500/10 hover:text-red-300"
+                className="app-action-button app-action-button--ghost inline-flex h-7 w-7 items-center justify-center"
                 aria-label={`Delete ${course.courseCode}`}
               >
                 <TrashIcon className="h-3.5 w-3.5" />

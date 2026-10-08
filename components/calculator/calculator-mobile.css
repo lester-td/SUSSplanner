@@ -1,0 +1,67 @@
+@media (max-width: 639px) {
+  .calculators-page .calculator-section {
+    width: calc(100% + 1.5rem);
+    margin-inline: -0.75rem;
+  }
+
+  :root .calculators-page .calculator-panel,
+  :root[data-color-scheme="dark"] .calculators-page .calculator-panel {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  :root .calculators-page :is(.calculator-major-panel, .calculator-nested-panel),
+  :root[data-color-scheme="dark"] .calculators-page :is(.calculator-major-panel, .calculator-nested-panel) {
+    border-block: 1px solid var(--control-border);
+  }
+
+  .calculator-panel > .calculator-panel-heading {
+    padding-inline: 0.75rem;
+    border-radius: 0;
+  }
+
+  .calculator-panel-body {
+    padding: 0.75rem;
+  }
+
+  :root .calculators-page .calculator-inner-panel,
+  :root[data-color-scheme="dark"] .calculators-page .calculator-inner-panel {
+    padding: 0;
+    background: transparent;
+  }
+
+  .calculator-gpa-summary {
+    gap: 0;
+    border-block: 1px solid var(--control-border);
+  }
+
+  .calculators-page .calculator-gpa-summary > .calculator-summary-panel {
+    padding-inline: 0.75rem;
+  }
+
+  :root .calculators-page .calculator-gpa-summary > .calculator-summary-panel + .calculator-summary-panel {
+    border-left: 1px solid var(--control-border);
+  }
+
+  .calculator-result-summary {
+    gap: 0;
+  }
+
+  .calculator-result-summary > .calculator-result-stat {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .calculator-result-summary > .calculator-result-stat:first-child {
+    padding-right: 0.75rem;
+  }
+
+  .calculator-result-summary > .calculator-result-stat + .calculator-result-stat {
+    padding-left: 0.75rem;
+    border-left: 1px solid var(--control-border);
+  }
+}

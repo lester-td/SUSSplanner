@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 
 import {
   CalendarIcon,
+  CalendarWeekIcon,
   ColumnsIcon,
   DownloadIcon,
   EyeIcon,
   EyeOffIcon,
   GridIcon,
   ListIcon,
+  PinIcon,
   RowsIcon,
   SchoolIcon,
   UploadIcon,
@@ -19,13 +21,17 @@ import {
 } from "@/components/planner/icons";
 import { ActionButton, IconButton } from "@/components/ui/actions";
 import { Modal } from "@/components/ui/modal";
-import { ClassScheduleModalContent } from "@/components/timetable/class-schedule-modal-content";
+import { CampusLabel } from "@/components/timetable/campus-label";
+import { ClassScheduleModalContent, formatClassScheduleTitle } from "@/components/timetable/class-schedule-modal-content";
 import { ExamCalendar, ExamCalendarOverviewRail } from "@/components/timetable/exam-calendar";
 import { SelectorRail } from "@/components/timetable/selector-rail";
 import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
-import { exportPngDataUrlToPdf } from "@/lib/export/pdf-client";
-import { exportElementToPng, renderElementToPngDataUrl } from "@/lib/export/png";
+import { TimetableExportCard } from "@/components/timetable/timetable-export-card";
+import { printTimetablePdf } from "@/lib/export/pdf-client";
+import { getPdfClassSessionEvents } from "@/lib/export/class-sessions";
+import { buildExportCourses, getTimetableExportFileName } from "@/lib/export/timetable-model";
+import { exportElementToPng } from "@/lib/export/png";
 import {
   buildTimeSlots,
   formatClassGroupLabel,
@@ -35,6 +41,7 @@ import {
   loadSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import { encodeShareUrlState } from "@/lib/timetable/share-url";
+import { getTimetableActionAvailability } from "@/lib/timetable/timetable-actions";
 import {
   buildExamCards,
   buildSelectableWeeks,
@@ -90,9 +97,11 @@ export function ShareClient({
   const [scheduleCourse, setScheduleCourse] = useState<ReturnType<typeof buildSelectedCourseCards>[number] | null>(null);
   const [hiddenClasses, setHiddenClasses] = useState<string[]>([]);
   const exportCaptureRef = useRef<HTMLDivElement | null>(null);
+  const alternateExportCaptureRef = useRef<HTMLDivElement | null>(null);
   const selectedSemester = timetable.semester;
 
   const selectedCards = useMemo(() => buildSelectedCourseCards(timetable), [timetable]);
+  const { canDownload } = getTimetableActionAvailability(sharedState.selectedClasses, selectedCards.length);
   const totalCredits = useMemo(
     () => selectedCards.reduce((sum, record) => sum + (record.creditUnits ?? 0), 0),
     [selectedCards],
@@ -101,11 +110,19 @@ export function ShareClient({
     () => new Map(selectedCards.map((card) => [card.shareKey, card.color])),
     [selectedCards],
   );
+  const exportCourses = useMemo(
+    () => buildExportCourses(selectedCards, colorByShareKey, hiddenClasses),
+    [selectedCards, colorByShareKey, hiddenClasses],
+  );
   const visibleEvents = useMemo(
     () => timetable.events.filter((event) => !hiddenClasses.includes(event.shareKey)),
     [hiddenClasses, timetable.events],
   );
   const blocks = useMemo(() => buildTimetableBlocks(visibleEvents, selectedWeekId), [selectedWeekId, visibleEvents]);
+  const undatedExams = useMemo(
+    () => exportCourses.filter((course) => course.examStatus === "undated" && !course.hidden),
+    [exportCourses],
+  );
   const examCards = useMemo(
     () => buildExamCards(visibleEvents).filter((card) => !hiddenClasses.includes(card.shareKey)),
     [hiddenClasses, visibleEvents],
@@ -133,6 +150,7 @@ export function ShareClient({
 
   function triggerDownload(path: string, fileName: string)
   {
+    if (!canDownload) return;
     const anchor = document.createElement("a");
     anchor.href = `${path}?${buildShareQuery()}`;
     anchor.download = fileName;
@@ -148,23 +166,29 @@ export function ShareClient({
 
   async function handlePngExport()
   {
-    if (!exportCaptureRef.current)
+    if (!canDownload || !exportCaptureRef.current)
     {
       return;
     }
 
-    await exportElementToPng(exportCaptureRef.current, `suss-shared-timetable-${sharedState.semesterId}.png`);
+    await exportElementToPng(exportCaptureRef.current, getTimetableExportFileName(selectedSemester, "png"));
   }
 
-  async function handlePdfExport()
+  function handlePdfExport()
   {
-    if (!exportCaptureRef.current)
-    {
-      return;
-    }
-
-    const pngDataUrl = await renderElementToPngDataUrl(exportCaptureRef.current);
-    await exportPngDataUrlToPdf(pngDataUrl, `suss-shared-${sharedState.semesterId}.pdf`);
+    if (!canDownload) return;
+    const timetableCard = viewMode === "class" ? exportCaptureRef.current : alternateExportCaptureRef.current;
+    const examCalendarCard = viewMode === "exam" ? exportCaptureRef.current : alternateExportCaptureRef.current;
+    if (!timetableCard || !examCalendarCard) return;
+    const opened = printTimetablePdf(
+      timetableCard,
+      examCalendarCard,
+      selectedSemester,
+      getPdfClassSessionEvents(timetable, hiddenClasses),
+      timetable.clashes.filter((clash) => clash.events.every((event) => !hiddenClasses.includes(event.shareKey))),
+      getTimetableExportFileName(selectedSemester, "pdf"),
+    );
+    if (!opened) window.alert("Unable to open the PDF print dialog.");
   }
 
   useEffect(() => {
@@ -200,7 +224,7 @@ export function ShareClient({
 
   return (
     <>
-      <div ref={exportCaptureRef} className={`timetable-page flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
+      <div className={`timetable-page flex min-h-0 flex-1 flex-col ${orientation === "horizontal" ? "md:flex-col" : "md:flex-row"}`}>
         <section className={`flex min-h-0 w-full flex-1 flex-col ${orientation === "horizontal" ? "md:w-full" : "md:w-[70%]"}`}>
           <div className="timetable-toolbar elev-1 flex flex-col border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             <div className="flex flex-col gap-3 border-b border-[var(--outline-variant)]/40 px-3 py-2.5 md:flex-row md:items-center md:justify-between">
@@ -267,6 +291,7 @@ export function ShareClient({
           ) : null}
 
           <TimetableAlerts
+            semester={selectedSemester}
             events={timetable.events}
             clashes={timetable.clashes}
           />
@@ -292,7 +317,7 @@ export function ShareClient({
                   showCurrentTime={false}
                 />
               ) : (
-                <ExamCalendar cards={examCards} colorByShareKey={colorByShareKey} />
+                <ExamCalendar cards={examCards} colorByShareKey={colorByShareKey} undatedExams={undatedExams} />
               )}
             </div>
           </div>
@@ -318,8 +343,9 @@ export function ShareClient({
                   label="Download"
                   onClick={() => setDownloadOpen((current) => !current)}
                   stretch
+                  disabled={!canDownload}
                 />
-                {downloadOpen ? (
+                {downloadOpen && canDownload ? (
                   <div className="elev-3 absolute left-0 top-full z-30 mt-1.5 w-full min-w-[9.5rem] rounded-[0.75rem] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-1.5">
                     <div
                       aria-hidden="true"
@@ -363,7 +389,7 @@ export function ShareClient({
                               href={`/courses/${record.courseCode}`}
                               className="inline min-w-0 text-[var(--on-surface)] underline decoration-transparent underline-offset-2 transition-[color,text-decoration-color] duration-150 hover:text-[var(--primary)] hover:decoration-current focus-visible:rounded-[0.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
                             >
-                              <span className="text-[15px] font-extrabold leading-5">{record.courseCode}</span>{" "}
+                              <span className="text-[15px] font-extrabold leading-5">{record.courseLabel ?? record.courseCode}</span>{" "}
                               <span className="text-[15px] font-normal leading-5">
                                 {record.courseName ?? "Untitled course"}
                               </span>
@@ -376,9 +402,16 @@ export function ShareClient({
                             <span className="shrink-0 font-semibold text-[var(--on-surface)]">Group:</span>
                             <span className="truncate">{formatClassGroupLabel(record.groupCode)}</span>
                           </div>
+                          {record.campuses.length > 0 ? (
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <PinIcon className="h-4 w-4 shrink-0" />
+                              <span className="shrink-0 font-semibold text-[var(--on-surface)]">Campus:</span>
+                              <CampusLabel campuses={record.campuses} />
+                            </div>
+                          ) : null}
                           <div className="flex min-w-0 items-center gap-1.5">
                             <CalendarIcon className="h-4 w-4 shrink-0" />
-                            {record.examDateLabel === "No Exam" || record.examDateLabel === "ECA" ? (
+                            {record.examStatus !== "dated" ? (
                               <span className="truncate font-bold text-[var(--on-surface)]">{record.examDateLabel}</span>
                             ) : (
                               <>
@@ -387,6 +420,9 @@ export function ShareClient({
                               </>
                             )}
                           </div>
+                          {record.examGuidance ? (
+                            <div className="pl-5 text-[11px] leading-4">{record.examGuidance}</div>
+                          ) : null}
                           <div className="flex min-w-0 items-center gap-1.5">
                             <SchoolIcon className="h-4 w-4 shrink-0" />
                             <span className="shrink-0 font-semibold text-[var(--on-surface)]">Credit Units:</span>
@@ -443,9 +479,36 @@ export function ShareClient({
         <div className="h-2" />
       </Modal>
 
+      <TimetableExportCard
+        ref={exportCaptureRef}
+        semester={selectedSemester}
+        weekLabel={selectedWeekId === "all" ? "All weeks" : timetable.semesterWeeks.find((week) => week.weekId === selectedWeekId)?.label ?? "Selected week"}
+        viewMode={viewMode}
+        orientation={orientation}
+        blocks={blocks}
+        examCards={examCards}
+        colorByShareKey={colorByShareKey}
+        courses={exportCourses}
+        showAllWeeks={selectedWeekId === "all"}
+      />
+
+      <TimetableExportCard
+        ref={alternateExportCaptureRef}
+        semester={selectedSemester}
+        weekLabel={selectedWeekId === "all" ? "All weeks" : timetable.semesterWeeks.find((week) => week.weekId === selectedWeekId)?.label ?? "Selected week"}
+        viewMode={viewMode === "class" ? "exam" : "class"}
+        orientation={orientation}
+        blocks={blocks}
+        examCards={examCards}
+        colorByShareKey={colorByShareKey}
+        courses={exportCourses}
+        showAllWeeks={selectedWeekId === "all"}
+      />
+
       <Modal
         open={Boolean(scheduleCourse)}
-        title="Class Schedule"
+        title={scheduleCourse ? formatClassScheduleTitle(formatClassGroupLabel(scheduleCourse.groupCode), scheduleCourse.events) : "Class Schedule"}
+        headerIcon={<CalendarWeekIcon className="h-5 w-5 shrink-0 text-[var(--primary)]" />}
         onClose={() => setScheduleCourse(null)}
         showCloseButton
         maxWidthClassName="max-w-4xl"
@@ -455,7 +518,7 @@ export function ShareClient({
           <ClassScheduleModalContent
             courseCode={scheduleCourse.courseCode}
             courseName={scheduleCourse.courseName}
-            classGroupLabel={formatClassGroupLabel(scheduleCourse.groupCode)}
+            courseLabel={scheduleCourse.courseLabel}
             events={scheduleCourse.events}
             selectedSemesterId={selectedSemester?.semesterId ?? null}
           />

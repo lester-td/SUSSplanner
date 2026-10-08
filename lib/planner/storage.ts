@@ -1,6 +1,9 @@
+import { inferCatalogSemesterSpan } from "@/lib/courses/semester-span";
 import type { CourseRecord, CourseSearchResult } from "@/lib/timetable/types";
 import { semesterPlannerBackupSchema, semesterPlannerStateSchema } from "@/lib/validation/planner";
 import type { SemesterPlannerCourse, SemesterPlannerState } from "./types";
+
+export { inferCatalogSemesterSpan } from "@/lib/courses/semester-span";
 
 export const SEMESTER_PLANNER_STORAGE_KEY = "sussplanner.semester-planner.v1";
 export const SEMESTER_PLANNER_UPDATED_EVENT = "sussplanner:semester-planner-updated";
@@ -28,22 +31,6 @@ function normalizeCourseCode(courseCode: string)
 function buildCatalogCourseId(courseCode: string)
 {
   return `catalog:${normalizeCourseCode(courseCode)}`;
-}
-
-export function inferCatalogSemesterSpan(courseCode: string)
-{
-  const normalizedCode = normalizeCourseCode(courseCode);
-
-  if (
-    normalizedCode === "NIE301"
-    || normalizedCode === "NIE351"
-    || normalizedCode.endsWith("499")
-  )
-  {
-    return 2;
-  }
-
-  return 1;
 }
 
 export function createCatalogSemesterPlannerCourse(

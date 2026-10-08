@@ -32,6 +32,7 @@ export default async function SettingsPage()
       activeSection="settings"
       currentSemesterContext={currentSemesterContext}
       dataUpdatedAt={latestDataUpdatedAt}
+      contentFrameClassName="app-aero-frame"
     >
       <SettingsClient />
     </AppShell>

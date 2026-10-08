@@ -21,7 +21,7 @@ import {
 } from "@/lib/settings/app-settings";
 import type { RegistrationReminder } from "@/lib/registration/types";
 
-export function GlobalRegistrationReminders()
+export function GlobalRegistrationReminders({ stacked = false }: { stacked?: boolean })
 {
   const [ready, setReady] = useState(false);
   const [appSettings, setAppSettings] = useState<SettingsState>(DEFAULT_APP_SETTINGS);
@@ -113,7 +113,7 @@ export function GlobalRegistrationReminders()
     <RegistrationReminderBanner
       reminders={activeRegistrationReminders}
       onCloseReminder={handleCloseRegistrationReminder}
-      variant="notification"
+      variant={stacked ? "stacked" : "notification"}
     />
   );
 }

@@ -6,9 +6,12 @@ Supabase Postgres remains the normalized academic-data source of truth. Public
 application requests do not connect to it. A build-time exporter creates split,
 read-only JSON snapshots that are bundled into each Vercel deployment.
 
-No database schema change is required.
+The database must match `scraper/schema.sql` before building snapshots. Set
+`semesters.has_intake_schedule` explicitly for validated intake schedules;
+new semesters default to unavailable. Calendar weeks and continuation sessions
+do not establish intake availability.
 
-## A-to-Z Publication Workflow
+## Publication Workflow
 
 1. Update the local scraper inputs.
 2. Run the relevant scraper parse/generation commands documented in
@@ -85,8 +88,6 @@ FEEDBACK_EMAIL_FROM
 FEEDBACK_EMAIL_TO
 ```
 
-`CACHE_REVALIDATE_SECRET` is not used by the snapshot architecture.
-
 ### Deploy Hook
 
 In Vercel, open **Project → Settings → Git → Deploy Hooks**. Create a hook named
@@ -129,9 +130,7 @@ deployment. Because each deployment contains its own complete snapshot, code and
 academic data roll back together. Correct the database/import, regenerate
 locally, and trigger a new deployment afterward.
 
-## Removing Runtime Database Access
+## Build-Time Database Dependency
 
-The deployed application does not import the database query client. Keep
-`lib/db/schema.ts` and Drizzle tooling because the snapshot generator and schema
-maintenance still require them. `DATABASE_URL` must remain configured in Vercel
-until snapshot generation moves to an external publication pipeline.
+Keep `lib/db/schema.ts`, Drizzle tooling, and Vercel's `DATABASE_URL` configuration
+for snapshot generation and schema maintenance. Runtime requests use snapshots.

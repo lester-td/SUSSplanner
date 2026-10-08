@@ -1,5 +1,7 @@
 export type SemesterNo = 1 | 2 | 3;
 export type ScheduleType = "daytime" | "evening";
+// Import mode only; database records always contain daytime or evening.
+export type ScheduleSourceType = ScheduleType | "auto";
 export type GroupCodeType = "TG" | "CRN";
 export type EventKind = "CLASS" | "EXAM" | "OTHER";
 export type ComponentGroup = "OCAS" | "OES";
@@ -8,6 +10,11 @@ export interface SemesterKey {
   academicYear: string;
   semesterNo: SemesterNo;
   semesterName: string;
+}
+
+export interface ScheduleIntakes {
+  regular?: SemesterKey;
+  special?: SemesterKey;
 }
 
 export interface CourseRecord {
@@ -32,6 +39,7 @@ export interface ClassRecord {
   scheduleType: ScheduleType;
   groupCodeType: GroupCodeType;
   groupCode: string;
+  language?: string | null;
   availableAsGsp?: boolean | null;
   isRestricted?: boolean | null;
   remarks?: string | null;
@@ -49,7 +57,7 @@ export interface ClassEventRecord {
   startTime: string; // HH:MM:SS
   endTime: string; // HH:MM:SS
   eventMode?: string | null;
-  venue?: string | null;
+  campus?: string | null;
   remarks?: string | null;
 }
 
