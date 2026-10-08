@@ -77,12 +77,16 @@ def plan_key(relative_path: Path) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value).strip("-")
 
 
+def repair_course_code_spacing(value: str) -> str:
+    # PDF extraction can insert a space inside a course prefix, for example
+    # "HB C105". Repair that narrow pattern before finding course codes.
+    return re.sub(r"\b([A-Z]{2,5})\s+([A-Z]\d{3}[A-Za-z0-9]*)\b", r"\1\2", value)
+
+
 def course_codes(value: str | None) -> list[str]:
     if not value:
         return []
-    # PDF extraction can insert a space inside a course prefix, for example
-    # "HB C105". Repair that narrow pattern before finding course codes.
-    repaired = re.sub(r"\b([A-Z]{2,5})\s+([A-Z]\d{3}[A-Za-z0-9]*)\b", r"\1\2", value)
+    repaired = repair_course_code_spacing(value)
     return list(dict.fromkeys(match.group(0) for match in COURSE_CODE_IN_TEXT_RE.finditer(repaired)))
 
 
@@ -596,22 +600,115 @@ def parse_effective_term(value: str | None) -> tuple[int | None, str | None]:
     return int(match.group(1)), period
 
 
+def replace_prerequisite_courses(raw_text: str, codes: list[str], replacement: str) -> str:
+    text = repair_course_code_spacing(clean(raw_text))
+    if not codes:
+        return text
+    code_pattern = r"\b(?:" + "|".join(re.escape(code) for code in codes) + r")\b"
+    # A course node already requires completion. Consume only completion
+    # wording immediately before a represented course, never general prose.
+    completion = (
+        r"\b(?:(?:students?\s+)?must\s+have\s+|have\s+|having\s+)?"
+        r"(?:successfully\s+)?(?:completed|passed|taken)\s+(?:the\s+)?"
+        r"|\b(?:successful\s+)?completion\s+of\s+"
+    )
+    text = re.sub(r"(?:" + completion + r")(?=" + code_pattern + r")", "", text, flags=re.IGNORECASE)
+    text = re.sub(code_pattern, replacement, text)
+    text = re.sub(r"^pre[- ]?requisites?\s*:\s*", "", text, flags=re.IGNORECASE)
+    return text
+
+
+def prerequisite_residual(raw_text: str, codes: list[str]) -> str:
+    text = replace_prerequisite_courses(raw_text, codes, "")
+    if not codes:
+        return text
+    text = re.sub(r"\band\b|\bor\b|&", " ", text, flags=re.IGNORECASE)
+    # Commas and punctuation surround course lists without adding conditions.
+    # Keep other syntax (such as /, +, >) for review instead of guessing its meaning.
+    text = re.sub(r"[(),;:]|(?<!\d)\.|\.(?!\d)", " ", text)
+    return clean(text)
+
+
+def complete_course_expression(raw_text: str, codes: list[str]) -> bool:
+    text = replace_prerequisite_courses(raw_text, codes, "COURSE").strip().removesuffix(".")
+    if not re.fullmatch(r"(?:COURSE|and|or|&|[,;()]|\s)+", text, flags=re.IGNORECASE):
+        return False
+    tokens = re.findall(r"COURSE|and|or|&|[,;()]", text, flags=re.IGNORECASE)
+    # Commas/semicolons mean all; do not silently reinterpret them as OR.
+    if any(token.lower() == "or" for token in tokens) and any(token in {",", ";"} for token in tokens):
+        return False
+    expect_operand = True
+    depth = 0
+    for token in tokens:
+        if token.lower() == "course":
+            if not expect_operand:
+                return False
+            expect_operand = False
+        elif token == "(":
+            if not expect_operand:
+                return False
+            depth += 1
+        elif token == ")":
+            if expect_operand or depth == 0:
+                return False
+            depth -= 1
+        else:
+            if expect_operand:
+                return False
+            expect_operand = True
+    return bool(tokens) and not expect_operand and depth == 0
+
+
+def prerequisite_condition(raw_text: str, residual: str) -> dict[str, Any]:
+    patterns = {
+        "placement_test": r"\bplacement\s+(?:\w+\s+){0,3}tests?\b",
+        "prior_learning": r"\bprior\s+learning\b",
+        "experience": r"\bexperience\b|\bexperienced\b",
+        "credit_units": r"\b\d+(?:\.\d+)?\s*(?:cu|credit[ -]*units?)\b",
+        "programme_standing": (
+            r"\b(?:programme|program|academic)\s+standing\b"
+            r"|\b\d+\s*[- ]\s*year\s+(?:tracks?|students?)\b"
+            r"|\b(?:senior|final[ -]year)\b"
+        ),
+        "co_enrollment": (
+            r"\bco[ -]?(?:enrol(?:l)?(?:ment|ed|ing)?|requisites?)\b"
+            r"|\bconcurrent(?:ly)?\b|\bat\s+the\s+same\s+time\b"
+        ),
+    }
+    kinds = [kind for kind, pattern in patterns.items() if re.search(pattern, clean(raw_text), flags=re.IGNORECASE)]
+    return {
+        "type": "condition",
+        "text": residual,
+        "sourceText": raw_text,
+        # These tags aid review; they do not make the condition executable.
+        "conditionTypes": kinds or ["unrecognized"],
+    }
+
+
 def prerequisite_rule(raw_text: str, codes: list[str]) -> tuple[str, str, dict[str, Any]]:
+    residual = prerequisite_residual(raw_text, codes)
     has_and = re.search(r"\band\b|&", raw_text, flags=re.IGNORECASE) is not None
     has_or = re.search(r"\bor\b", raw_text, flags=re.IGNORECASE) is not None
     if not codes:
-        return "condition", "unparsed", {"type": "condition", "text": raw_text}
+        return "condition", "review_required", prerequisite_condition(raw_text, residual)
+    condition = prerequisite_condition(raw_text, residual) if residual else None
+    children = [{"type": "course", "courseCode": code} for code in codes]
+    if condition:
+        children.append(condition)
     if has_and and has_or:
         return "mixed", "review_required", {
             "type": "unparsed",
             "text": raw_text,
             "courseCodes": codes,
+            "children": children,
         }
     operator = "any" if has_or else "all" if has_and or len(codes) > 1 else "single"
+    if not condition and not complete_course_expression(raw_text, codes):
+        return operator, "review_required", {"type": "unparsed", "text": raw_text, "children": children}
     node_type = "any" if operator == "any" else "all"
-    return operator, "parsed", {
+    return operator, "review_required" if condition else "parsed", {
         "type": node_type,
-        "children": [{"type": "course", "courseCode": code} for code in codes],
+        "children": children,
     }
 
 
@@ -635,6 +732,7 @@ def active_replacement_pairs(current_course_code: str, remarks: str | None) -> l
 def build_product_models(
     plans: list[dict[str, Any]],
     entries: list[dict[str, Any]],
+    issues: list[dict[str, Any]] | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     product_plans = [
         {
@@ -767,6 +865,24 @@ def build_product_models(
         if raw_prerequisite:
             codes = course_codes(raw_prerequisite)
             operator, parse_status, rule_json = prerequisite_rule(raw_prerequisite, codes)
+            if issues is not None and parse_status != "parsed":
+                conditions = [rule_json] if rule_json["type"] == "condition" else [
+                    node for node in rule_json.get("children", []) if node["type"] == "condition"
+                ]
+                details = "; ".join(
+                    f"{', '.join(node['conditionTypes'])}: {node['text']}" for node in conditions
+                )
+                message = (
+                    f"Unsupported prerequisite conditions retained for review: {details}"
+                    if conditions else f"Unsupported prerequisite course logic requires review: {raw_prerequisite}"
+                )
+                issues.append({
+                    "planKey": plan_key_value,
+                    "courseCode": course_code,
+                    "sourcePage": entry.get("sourcePage", ""),
+                    "severity": "warning",
+                    "issue": message,
+                })
             rule_key = f"{plan_course_key}:prerequisite"
             prerequisite_rules.append({
                 "ruleKey": rule_key,
@@ -1048,7 +1164,7 @@ def main() -> None:
         entries.extend(plan_entries)
         issues.extend(plan_issues)
 
-    models = build_product_models(plans, entries)
+    models = build_product_models(plans, entries, issues)
     payload = {
         "metadata": {
             "generatedAt": datetime.now(timezone.utc).isoformat(),

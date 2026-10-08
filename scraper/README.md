@@ -920,6 +920,23 @@ data/output/curriculum/issues.tsv
 Review the normalized records and issue report. Mixed `AND`/`OR` prerequisite rules and
 non-course conditions use a review status and retain their source text.
 
+Course-code extraction does not establish that a prerequisite was fully parsed. The
+parser removes recognized course references, completion wording, and connectors from a
+normalized copy and checks the remaining text. Residual conditions are retained as
+`condition` nodes and set `parseStatus` to `review_required`. Recognized condition tags
+cover placement tests, prior learning, experience, credit-unit requirements, programme
+standing, and co-enrollment. These tags support review rather than automatic eligibility
+checks; unfamiliar conditions also require review. The original text remains in `rawText`
+and the condition's `sourceText`, and the issue report includes the residual wording and
+source page. Only fully represented course-only rules use `parsed`.
+
+Run the curriculum prerequisite regression tests with the Python virtual environment
+activated:
+
+```bash
+npm run test:curriculum
+```
+
 Inspect the issue report and check for unresolved CID placeholders:
 
 ```bash

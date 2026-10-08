@@ -1,0 +1,38 @@
+[
+  {
+    "courseCode": "FIN559",
+    "sourcePath": "graduate_studies/Master of Finance.pdf",
+    "sourcePage": 6,
+    "prerequisite": "FIN551 or FIN552 or AIB503 or other prior learning in Python programmin g",
+    "courseCodes": ["FIN551", "FIN552", "AIB503"],
+    "conditionTypes": ["prior_learning"],
+    "residualIncludes": ["other prior learning in Python programmin g"]
+  },
+  {
+    "courseCode": "MLL381",
+    "sourcePath": "undergraduate/part-time/Bachelor of Applied Studies.pdf",
+    "sourcePage": 80,
+    "prerequisite": "MLL281 or Malay Placement test.",
+    "courseCodes": ["MLL281"],
+    "conditionTypes": ["placement_test"],
+    "residualIncludes": ["Malay Placement test"]
+  },
+  {
+    "courseCode": "OGP281",
+    "sourcePath": "undergraduate/part-time/Bachelor of Applied Studies.pdf",
+    "sourcePage": 92,
+    "prerequisite": "Placement Chinese Test or have taken OGP181. CET students are exempted from the Placement Test.",
+    "courseCodes": ["OGP181"],
+    "conditionTypes": ["placement_test"],
+    "residualIncludes": ["Placement Chinese Test", "CET students are exempted from the Placement Test"]
+  },
+  {
+    "courseCode": "ECE490",
+    "sourcePath": "undergraduate/full-time/Bachelor of Early Childhood Education.pdf",
+    "sourcePage": 3,
+    "prerequisite": "Students in 4-year and 3 -year tracks must have completed 50 cu and 40 cu of ECE courses respectively. Students are to be enrolled in ECE499 at the same time as ECE490.",
+    "courseCodes": ["ECE499", "ECE490"],
+    "conditionTypes": ["credit_units", "programme_standing", "co_enrollment"],
+    "residualIncludes": ["50 cu", "40 cu", "tracks", "at the same time"]
+  }
+]
