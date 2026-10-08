@@ -1409,7 +1409,7 @@ export function PlannerClient({
                 <ActionButton
                   variant={selectedWeekId === "all" ? "primary" : "ghost"}
                   icon={<CalendarWeekIcon className="h-[18px] w-[18px]" />}
-                  label={selectedWeekId === "all" ? "This Week" : "Äll Weeks"}
+                  label={selectedWeekId === "all" ? "This Week" : "All Weeks"}
                   onClick={() => setSelectedWeekId((current) => current === "all" ? thisWeek?.weekId ?? "all" : "all")}
                   stretch
                   disabled={selectedWeekId === "all" && !thisWeek}
