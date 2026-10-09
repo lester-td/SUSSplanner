@@ -1,0 +1,48 @@
+[
+  {
+    "courseCode": "IPM507",
+    "prerequisite": null,
+    "remarks": "Pre- requisite for CET modular course: IPM501.",
+    "rule": {
+      "type": "course",
+      "courseCode": "IPM501",
+      "displayRemarks": ["This prerequisite applies to the CET modular course only."]
+    },
+    "completedCourseCodes": ["IPM501"],
+    "concurrentCourseCodes": []
+  },
+  {
+    "courseCode": "ECE499",
+    "prerequisite": "Students in 4-year and 3 -year tracks must have completed 50 cu and 40 cu of ECE courses respectively and passed ECE316. Students are to be enrolled in ECE490 at the same time as ECE499.",
+    "remarks": "For the January semester, ECE490 & ECE499 are available only to students with special cases and prior approval.",
+    "rule": {
+      "type": "all",
+      "children": [
+        {
+          "type": "any",
+          "children": [
+            {
+              "type": "all",
+              "children": [
+                { "type": "condition", "text": "4-year track" },
+                { "type": "condition", "text": "Completed 50 cu of ECE courses" }
+              ]
+            },
+            {
+              "type": "all",
+              "children": [
+                { "type": "condition", "text": "3-year track" },
+                { "type": "condition", "text": "Completed 40 cu of ECE courses" }
+              ]
+            }
+          ]
+        },
+        { "type": "course", "courseCode": "ECE316" },
+        { "type": "condition", "text": "Enrolled in ECE490 at the same time as ECE499" }
+      ],
+      "displayRemarks": ["For the January semester, ECE490 & ECE499 are available only to students with special cases and prior approval."]
+    },
+    "completedCourseCodes": ["ECE316"],
+    "concurrentCourseCodes": ["ECE490"]
+  }
+]

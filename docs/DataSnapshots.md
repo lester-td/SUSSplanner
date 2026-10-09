@@ -6,8 +6,14 @@ Supabase Postgres remains the normalized academic-data source of truth. Public
 application requests do not connect to it. A build-time exporter creates split,
 read-only JSON snapshots that are bundled into each Vercel deployment.
 
-The database must match `scraper/schema.sql` before building snapshots. Set
-`semesters.has_intake_schedule` explicitly for validated intake schedules;
+The database must match `scraper/schema.sql` before building snapshots, including
+the two reviewed curriculum tables required by format-2 snapshots. Fresh database
+setup uses the maintained schema; back up and inspect existing databases before
+applying schema changes. Installed empty tables are valid partial coverage. For
+prerequisite review, approval and import guards, see
+[Prerequisite Trees](./PrerequisiteTrees.md).
+
+Set `semesters.has_intake_schedule` explicitly for validated intake schedules;
 new semesters default to unavailable. Calendar weeks and continuation sessions
 do not establish intake availability.
 
@@ -15,13 +21,18 @@ do not establish intake availability.
 
 1. Update the local scraper inputs.
 2. Run the relevant scraper parse/generation commands documented in
-   `scraper/README.md`.
+   the [scraper guide](../scraper/README.md).
 3. Review parser warnings, issue reports, JSON, TSV, and generated SQL.
-4. Import SQL with `psql` using `ON_ERROR_STOP=1`.
-5. Run the documented database count and sample-row checks.
-6. Locally run `npm run data:build`.
-7. Confirm the exporter reports plausible course, class, and event counts.
-8. Run `npm test`, `npm run typecheck`, and `npm run build`.
+4. Create and verify a fresh database backup with `npm run db:backup` from the
+   repository root before importing.
+5. Import regular academic SQL with `psql` using `ON_ERROR_STOP=1`. For curriculum
+   prerequisites, use the [reviewed batch workflow](./PrerequisiteTrees.md#automated-preparation-and-one-batch-approval).
+6. Check database counts and sample rows; reconcile prerequisite decisions with
+   `npm run curriculum:review -- --mode report --with-db` when applicable.
+7. Run `npm test`, `npm run typecheck`, and `npm run build`. The build regenerates
+   snapshots; confirm plausible coverage and prerequisite report counts.
+8. Run `npm run data:validate` against the generated snapshots. For a data-only
+   inspection before building, use `npm run data:build`.
 9. Test `/`, `/timetable`, `/courses`, a course detail page, a shared link, and
    ICS/PDF export against the production-like build.
 10. Push the application change when code changed, or trigger the production
@@ -62,13 +73,20 @@ Course codes are assigned to one of 16 deterministic hash buckets. This keeps
 individual reads small while avoiding thousands of files in Vercel function
 bundles.
 
+Format-2 course shards include programme-scoped prerequisite variants, remarks,
+sanitized sources, node metadata and direct reverse relationships. Builds require
+the original included curriculum PDFs at their registry paths to verify approved
+evidence; runtime requests use only the resulting shards.
+
 The manifest records the snapshot format version, generation time, latest valid
 database update time, row coverage, semester/week data, academic-calendar data,
 and every shard path.
 
 The generator writes into a temporary sibling directory and only replaces the
 active snapshot after every database read, integrity check, and file write
-succeeds.
+succeeds. Local replacement removes the previous directory before renaming the
+new one. Stop local servers during regeneration; if replacement fails, regenerate
+before starting them again.
 
 ## Vercel Configuration
 
@@ -118,8 +136,12 @@ Snapshot generation fails when:
 - required course or semester tables are empty;
 - a class references a missing course or semester;
 - a class event references a missing class;
+- reviewed curriculum tables are missing or incompatible;
+- included source PDFs are missing or their hashes/page ranges do not match;
+- prerequisite decisions are stale, rules are malformed or payload limits are
+  exceeded;
 - a database timestamp cannot be parsed; or
-- snapshot files cannot be written atomically.
+- snapshot files cannot be written or the snapshot directory cannot be replaced.
 
 An existing production deployment remains available if a new build fails.
 

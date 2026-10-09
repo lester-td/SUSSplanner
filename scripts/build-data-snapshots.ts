@@ -5,6 +5,9 @@ import process from "node:process";
 import { loadEnvConfig } from "@next/env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { buildRequisites } from "../lib/data/prerequisites/build-requisites";
+import { mapPlanRecord, mapRuleRecord } from "../lib/data/prerequisites/database-records";
+import { verifyPublishedPdfEvidence } from "../lib/data/prerequisites/pdf-evidence";
 import { getPublishedScheduleClasses } from "../lib/data/published-schedules";
 import { isClassStartingInSemester } from "../lib/timetable/semester-events";
 import { getSemesterChoices } from "../lib/timetable/semester-visibility";
@@ -18,6 +21,8 @@ import {
   classes,
   classEvents,
   courses,
+  curriculumPlans,
+  curriculumPrerequisiteRules,
   semesters,
   semesterWeeks,
 } from "../lib/db/schema";
@@ -170,29 +175,47 @@ async function loadRows<T>(label: string, query: PromiseLike<T[]>): Promise<T[]>
 
 async function main()
 {
-  const generatedAt = new Date();
   const client = postgres(getDatabaseUrl(), {
     prepare: false,
     max: 1,
     idle_timeout: 20,
     connect_timeout: 15,
   });
-  const db = drizzle(client);
 
   try
   {
-    const courseRows = await loadRows("courses", db.select().from(courses));
-    const semesterRows = await loadRows("semesters", db.select().from(semesters));
-    const weekRows = await loadRows("semester_weeks", db.select().from(semesterWeeks));
-    const calendarRows = await loadRows("academic_calendar_events", db.select().from(academicCalendarEvents));
-    const calendarSemesterRows = await loadRows(
-      "academic_calendar_event_semesters",
-      db.select().from(academicCalendarEventSemesters),
-    );
-    const classRows = await loadRows("classes", db.select().from(classes));
-    const eventRows = await loadRows("class_events", db.select().from(classEvents));
-    const assessmentRows = await loadRows("assessment_components", db.select().from(assessmentComponents));
-    const announcementRows = await loadRows("announcements", db.select().from(announcements));
+    const rows = await drizzle(client).transaction(async db => {
+      const courseRows = await loadRows("courses", db.select().from(courses));
+      const semesterRows = await loadRows("semesters", db.select().from(semesters));
+      const weekRows = await loadRows("semester_weeks", db.select().from(semesterWeeks));
+      const calendarRows = await loadRows("academic_calendar_events", db.select().from(academicCalendarEvents));
+      const calendarSemesterRows = await loadRows(
+        "academic_calendar_event_semesters",
+        db.select().from(academicCalendarEventSemesters),
+      );
+      const classRows = await loadRows("classes", db.select().from(classes));
+      const eventRows = await loadRows("class_events", db.select().from(classEvents));
+      const assessmentRows = await loadRows("assessment_components", db.select().from(assessmentComponents));
+      const announcementRows = await loadRows("announcements", db.select().from(announcements));
+      let planRows: Array<typeof curriculumPlans.$inferSelect>;
+      let ruleRows: Array<typeof curriculumPrerequisiteRules.$inferSelect>;
+      try
+      {
+        planRows = await loadRows("curriculum_plans", db.select().from(curriculumPlans));
+        ruleRows = await loadRows("curriculum_prerequisite_rules", db.select().from(curriculumPrerequisiteRules));
+      }
+      catch (error)
+      {
+        throw new Error("Reviewed prerequisite tables are missing or incompatible. Inspect the target database against scraper/schema.sql before updating its schema.", { cause: error });
+      }
+      return { courseRows, semesterRows, weekRows, calendarRows, calendarSemesterRows, classRows, eventRows, assessmentRows, announcementRows, planRows, ruleRows };
+    }, { isolationLevel: "repeatable read", accessMode: "read only" });
+    const { courseRows, semesterRows, weekRows, calendarRows, calendarSemesterRows, classRows, eventRows, assessmentRows, announcementRows, planRows, ruleRows } = rows;
+    await client.end({ timeout: 5 });
+    const generatedAt = new Date();
+    const plans = planRows.map(mapPlanRecord);
+    const prerequisiteRules = ruleRows.map(mapRuleRecord);
+    await verifyPublishedPdfEvidence(plans, prerequisiteRules, path.join(projectRoot, "scraper/data/input/curriculum-plans"));
 
     if (courseRows.length === 0 || semesterRows.length === 0)
     {
@@ -423,6 +446,7 @@ async function main()
 
       const bucket = getDataSnapshotBucket(courseRow.courseCode);
       const courseSnapshot: CourseSnapshot = {
+        requisites: { prerequisiteVariants: [], dependentCourses: [], coursesByCode: {}, sourcesByRuleKey: {} },
         course: mapCourse(courseRow),
         assessments: courseAssessments,
         offeredSemesters,
@@ -461,6 +485,14 @@ async function main()
       });
     }
 
+    const requisiteProjection = buildRequisites(plans, prerequisiteRules, courseIndex.map(course => ({
+      courseCode: course.courseCode, courseName: course.courseName, href: `/courses/${encodeURIComponent(course.courseCode)}`,
+      availability: "catalogued" as const,
+      offeredSemesters: [...course.offeredSemesters].sort((a, b) => a.academicYear.localeCompare(b.academicYear) || a.semesterNo - b.semesterNo || a.semesterId - b.semesterId).map(({ semesterId, semesterName }) => ({ semesterId, semesterName })),
+    })));
+    for (const bucket of Object.values(courseBuckets)) for (const [code, snapshot] of Object.entries(bucket)) snapshot.requisites = requisiteProjection.byCourse[code];
+    console.log(`[prerequisites] ${JSON.stringify({ ...requisiteProjection.report, largestCourseShardBytes: Math.max(...Object.values(courseBuckets).map(bucket => Buffer.byteLength(JSON.stringify(bucket), "utf8"))) })}`);
+
     const courseBucketFiles: Record<string, string> = {};
     for (const [bucket, snapshots] of Object.entries(courseBuckets).sort(([left], [right]) => left.localeCompare(right)))
     {
@@ -492,6 +524,8 @@ async function main()
       eventRows,
       assessmentRows,
       announcementRows,
+      planRows,
+      ruleRows,
     ];
     for (const rows of updatedRowGroups)
     {

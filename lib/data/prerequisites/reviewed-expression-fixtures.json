@@ -1,0 +1,48 @@
+[
+  {
+    "courseCodes": ["BME352"],
+    "rawText": "BME205 & (BME107,B ME108) or (BME209, BME210) or BME207",
+    "tree": { "type": "any", "children": [
+      { "type": "all", "children": [{ "type": "course", "courseCode": "BME205" }, { "type": "course", "courseCode": "BME107" }, { "type": "course", "courseCode": "BME108" }] },
+      { "type": "all", "children": [{ "type": "course", "courseCode": "BME205" }, { "type": "course", "courseCode": "BME209" }, { "type": "course", "courseCode": "BME210" }] },
+      { "type": "all", "children": [{ "type": "course", "courseCode": "BME205" }, { "type": "course", "courseCode": "BME207" }] }
+    ] }
+  },
+  {
+    "courseCodes": ["COU252", "COU254", "COU256", "COU299", "COU304", "COU356"],
+    "rawText": "COU201 or COU202 and COU204",
+    "tree": { "type": "any", "children": [
+      { "type": "all", "children": [{ "type": "course", "courseCode": "COU201" }, { "type": "course", "courseCode": "COU204" }] },
+      { "type": "all", "children": [{ "type": "course", "courseCode": "COU202" }, { "type": "course", "courseCode": "COU204" }] }
+    ] }
+  },
+  {
+    "courseCodes": ["OST363"],
+    "rawText": "OST165 and OST361 or OST362",
+    "tree": { "type": "any", "children": [
+      { "type": "all", "children": [{ "type": "course", "courseCode": "OST165" }, { "type": "course", "courseCode": "OST362" }] },
+      { "type": "all", "children": [{ "type": "course", "courseCode": "OST165" }, { "type": "course", "courseCode": "OST361" }] }
+    ] }
+  },
+  {
+    "courseCodes": ["PSY405"],
+    "rawText": "PSY107, PSY108, PSY205, and PSY390 or PSY391",
+    "tree": { "type": "any", "children": [
+      { "type": "all", "children": [{ "type": "course", "courseCode": "PSY107" }, { "type": "course", "courseCode": "PSY108" }, { "type": "course", "courseCode": "PSY205" }, { "type": "course", "courseCode": "PSY390" }] },
+      { "type": "all", "children": [{ "type": "course", "courseCode": "PSY107" }, { "type": "course", "courseCode": "PSY108" }, { "type": "course", "courseCode": "PSY205" }, { "type": "course", "courseCode": "PSY391" }] }
+    ] }
+  },
+  {
+    "courseCodes": ["RSS699"],
+    "rawText": "RSS501 and RSS503/HD S501",
+    "tree": { "type": "any", "children": [
+      { "type": "all", "children": [{ "type": "course", "courseCode": "RSS501" }, { "type": "course", "courseCode": "RSS503" }] },
+      { "type": "all", "children": [{ "type": "course", "courseCode": "RSS501" }, { "type": "course", "courseCode": "HDS501" }] }
+    ] }
+  },
+  {
+    "courseCodes": ["MTD365"],
+    "rawText": "Video Production Experience/ MTD301",
+    "tree": { "type": "course", "courseCode": "MTD301", "displayRemarks": ["Video production experience is required."] }
+  }
+]

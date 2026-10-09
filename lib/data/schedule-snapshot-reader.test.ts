@@ -20,7 +20,7 @@ const event: ClassEventWithWeekRecord = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(getSnapshotManifest).mockResolvedValue({
-    formatVersion: 1, generatedAt: "2026-10-06T00:00:00Z", dataUpdatedAt: null,
+    formatVersion: 2, generatedAt: "2026-10-06T00:00:00Z", dataUpdatedAt: null,
     coverage: { courseCount: 1, classCount: 1, semesterCount: 1, assessmentCount: 0 },
     semesters: [{ semesterId: 1, academicYear: "2026/2027", semesterNo: 2, semesterName: "January 2027", weeks: [] }],
     academicCalendarEvents: [], courseBucketFiles: {},

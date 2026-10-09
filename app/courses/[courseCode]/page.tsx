@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { CourseDetailPage } from "@/components/courses/course-detail-page";
 import {
-  getAssessmentComponents,
   getCourseByCode,
+  getCourseDetailSnapshot,
   getCourseClasses,
-  getCourseOfferedSemesters,
-  getCourseScheduledSemesters,
+  getCoursePostrequisites,
+  getCoursePrerequisites,
 } from "@/lib/data/course-details";
 import {
   getLatestDataUpdatedAt,
@@ -57,17 +57,18 @@ export default async function CourseDetailRoute({
     typeof rawSearchParams.semesterId === "string" ? rawSearchParams.semesterId : undefined,
   );
 
-  const course = await getCourseByCode(courseCode);
-  if (!course)
+  const snapshot = await getCourseDetailSnapshot(courseCode);
+  if (!snapshot)
   {
     notFound();
   }
 
-  const [classes, assessments, offeredSemesters, scheduledSemesters] = await Promise.all([
+  const { course, assessments, offeredSemesters, requisites } = snapshot;
+  const scheduledSemesters = snapshot.scheduledSemesters ?? offeredSemesters;
+  const [classes, postrequisites, prerequisites] = await Promise.all([
     getCourseClasses(courseCode, selectedSemesterId),
-    getAssessmentComponents(courseCode),
-    getCourseOfferedSemesters(courseCode),
-    getCourseScheduledSemesters(courseCode),
+    getCoursePostrequisites(course.courseCode, requisites),
+    getCoursePrerequisites(course.courseCode, requisites),
   ]);
 
   return (
@@ -84,6 +85,9 @@ export default async function CourseDetailRoute({
         selectedSemesterId={offeredSemesters.some(semester => semester.semesterId === selectedSemesterId) ? selectedSemesterId : undefined}
         classes={classes}
         assessments={assessments}
+        requisites={requisites}
+        postrequisites={postrequisites}
+        prerequisites={prerequisites}
       />
     </AppShell>
   );

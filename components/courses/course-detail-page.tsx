@@ -1,6 +1,8 @@
 "use client";
 
 import { getSemesterChoices } from "@/lib/timetable/semester-visibility";
+import { PrerequisiteTree } from "./prerequisite-tree/prerequisite-tree";
+import type { CourseRequisitesSnapshot, PostrequisiteNode, PrerequisiteTreeData } from "@/lib/data/prerequisites/types";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -65,6 +67,9 @@ export function CourseDetailPage({
   selectedSemesterId,
   classes: initialClasses,
   assessments,
+  requisites,
+  postrequisites,
+  prerequisites,
 }: {
   course: CourseRecord;
   offeredSemesters: SemesterRecord[];
@@ -73,6 +78,9 @@ export function CourseDetailPage({
   selectedSemesterId?: number;
   classes: CourseClassRecord[];
   assessments: AssessmentComponentRecord[];
+  requisites: CourseRequisitesSnapshot;
+  postrequisites?: PostrequisiteNode[];
+  prerequisites?: PrerequisiteTreeData;
 })
 {
   const [classes, setClasses] = useState(selectedSemesterId ? initialClasses : []);
@@ -84,6 +92,7 @@ export function CourseDetailPage({
   const [scheduleGroup, setScheduleGroup] = useState<CourseClassRecord | null>(null);
   const [assessmentScheduleType, setAssessmentScheduleType] = useState<"daytime" | "evening" | null>(null);
   const topics = useMemo(() => normalizeRichTextList(course.courseTopics), [course.courseTopics]);
+  const hasRequisites = requisites.prerequisiteVariants.length > 0 || requisites.dependentCourses.length > 0;
   const outcomes = useMemo(() => normalizeRichTextList(course.learningOutcomes), [course.learningOutcomes]);
   const assessmentsByScheduleType = useMemo(() => ({
     daytime: assessments.filter((component) => component.scheduleType === "daytime"),
@@ -204,6 +213,7 @@ export function CourseDetailPage({
                     <CalendarWeekIcon className="h-4 w-4 text-[var(--primary)]" />
                     {displaySemesterLabel}
                   </span>
+                  {hasRequisites ? <a href="#prerequisites" className="inline-flex min-h-11 items-center gap-1 rounded text-[12px] font-semibold text-[var(--primary)] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--primary)]">View prerequisites <span aria-hidden="true">↓</span></a> : null}
                   <div className="course-detail-quick-actions hidden flex-wrap items-center gap-2.5 sm:ml-auto sm:flex">
                     <AddToTimetableButton
                       course={{ ...course, offeredSemesters, scheduledSemesters }}
@@ -255,7 +265,7 @@ export function CourseDetailPage({
           <div className="course-detail-layout grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] xl:items-start">
             <CourseFacts course={course} className="grid xl:hidden" />
 
-            <section className="course-detail-main space-y-4">
+            <section className="course-detail-main min-w-0 space-y-4">
               {course.courseSynopsis ? (
                 <article className="border-b border-[var(--outline-variant)] pb-4">
                   <h2 className="text-[18px] font-semibold leading-6 text-[var(--on-surface)]">Description</h2>
@@ -288,8 +298,10 @@ export function CourseDetailPage({
               </article>
             </section>
 
-            <section className="course-detail-side space-y-4">
+            <section className="course-detail-side min-w-0 space-y-4">
               <CourseFacts course={course} className="hidden xl:grid" />
+
+              <PrerequisiteTree key={course.courseCode} courseCode={course.courseCode} requisites={requisites} postrequisites={postrequisites} prerequisites={prerequisites} />
 
               <article className="app-aero-panel course-detail-assessment overflow-hidden">
                 <h2 className="app-aero-panel-heading course-detail-assessment__header text-[16px] font-semibold leading-5">

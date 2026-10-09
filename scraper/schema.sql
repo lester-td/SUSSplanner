@@ -396,3 +396,70 @@ ANALYZE announcements;
 ANALYZE classes;
 ANALYZE class_events;
 ANALYZE assessment_components;
+
+-- Reviewed prerequisite display schema. Additive; does not import academic data.
+-- Curriculum decisions/timestamps are written explicitly by the reviewed importer.
+-- No additional SQL function or update trigger is required for these two tables;
+-- set_last_updated() above continues to serve the existing academic tables.
+-- An experimental layout must be reconciled separately, never silently reused.
+DO $migration$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'curriculum_plans')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'curriculum_plans' AND column_name = 'publication_input_hash') THEN
+    RAISE EXCEPTION 'Experimental curriculum_plans exists. Inspect and prepare an explicit retained-data reconciliation before applying the maintained schema.';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'curriculum_prerequisite_rules')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'curriculum_prerequisite_rules' AND column_name = 'approved_rule_hash') THEN
+    RAISE EXCEPTION 'Experimental curriculum_prerequisite_rules exists. Inspect and reconcile it before applying the reviewed schema.';
+  END IF;
+END
+$migration$;
+
+CREATE TABLE IF NOT EXISTS curriculum_plans (
+  plan_key TEXT PRIMARY KEY CHECK (plan_key ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  programme_name TEXT NOT NULL CHECK (btrim(programme_name) <> ''),
+  study_mode TEXT CHECK (study_mode IS NULL OR study_mode IN ('full-time', 'part-time')),
+  curriculum_version TEXT, effective_from TEXT,
+  source_path TEXT NOT NULL CHECK (btrim(source_path) <> ''),
+  source_hash TEXT NOT NULL CHECK (source_hash ~ '^[a-f0-9]{64}$'),
+  source_label TEXT NOT NULL CHECK (btrim(source_label) <> ''), source_url TEXT,
+  publication_status TEXT NOT NULL DEFAULT 'unreviewed' CHECK (publication_status IN ('unreviewed', 'included', 'excluded')),
+  publication_input_hash TEXT NOT NULL CHECK (publication_input_hash ~ '^publication-input:v1:[a-f0-9]{64}$'),
+  reviewed_publication_input_hash TEXT, publication_reviewed_by TEXT,
+  publication_reviewed_at TIMESTAMPTZ, publication_review_notes TEXT,
+  last_updated TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT chk_curriculum_publication_decision CHECK (
+    (publication_status = 'unreviewed' AND reviewed_publication_input_hash IS NULL AND publication_reviewed_by IS NULL AND publication_reviewed_at IS NULL AND publication_review_notes IS NULL)
+    OR (publication_status IN ('included', 'excluded') AND reviewed_publication_input_hash IS NOT NULL AND reviewed_publication_input_hash = publication_input_hash AND publication_reviewed_by IS NOT NULL AND btrim(publication_reviewed_by) <> '' AND publication_reviewed_at IS NOT NULL)
+  )
+);
+CREATE TABLE IF NOT EXISTS curriculum_prerequisite_rules (
+  rule_key TEXT PRIMARY KEY,
+  plan_key TEXT NOT NULL REFERENCES curriculum_plans(plan_key) ON DELETE RESTRICT,
+  course_code VARCHAR(20) NOT NULL CHECK (course_code ~ '^[A-Z0-9]{3,20}$'),
+  applicability_key TEXT NOT NULL CHECK (applicability_key ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  applicability_label TEXT NOT NULL CHECK (btrim(applicability_label) <> ''),
+  raw_text TEXT NOT NULL CHECK (btrim(raw_text) <> ''),
+  parse_status TEXT NOT NULL CHECK (parse_status IN ('parsed', 'review_required', 'unparsed')),
+  rule_json JSONB, parser_contract_version INT NOT NULL CHECK (parser_contract_version > 0),
+  source_hash TEXT NOT NULL CHECK (source_hash ~ '^[a-f0-9]{64}$'),
+  source_occurrences JSONB NOT NULL CHECK (jsonb_typeof(source_occurrences) = 'array' AND jsonb_array_length(source_occurrences) > 0),
+  record_status TEXT NOT NULL DEFAULT 'active' CHECK (record_status IN ('active', 'inactive')),
+  review_status TEXT NOT NULL DEFAULT 'pending' CHECK (review_status IN ('pending', 'approved', 'source_only', 'excluded')),
+  review_input_hash TEXT NOT NULL CHECK (review_input_hash ~ '^review-input:v1:[a-f0-9]{64}$'),
+  reviewed_input_hash TEXT, approved_rule_json JSONB, approved_rule_hash TEXT,
+  reviewed_by TEXT, reviewed_at TIMESTAMPTZ, review_notes TEXT,
+  last_updated TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT uq_curriculum_prerequisite_scope UNIQUE (plan_key, course_code, applicability_key),
+  CONSTRAINT chk_curriculum_rule_identity CHECK (rule_key = 'prerequisite:' || plan_key || ':' || course_code || ':' || applicability_key),
+  CONSTRAINT chk_curriculum_rule_decision CHECK (
+    (review_status = 'pending' AND reviewed_input_hash IS NULL AND reviewed_by IS NULL AND reviewed_at IS NULL AND review_notes IS NULL AND approved_rule_json IS NULL AND approved_rule_hash IS NULL)
+    OR (review_status IN ('approved', 'source_only', 'excluded') AND reviewed_input_hash IS NOT NULL AND reviewed_input_hash = review_input_hash AND reviewed_by IS NOT NULL AND btrim(reviewed_by) <> '' AND reviewed_at IS NOT NULL AND
+      ((review_status = 'approved' AND approved_rule_json IS NOT NULL AND jsonb_typeof(approved_rule_json) = 'object' AND approved_rule_hash IS NOT NULL AND approved_rule_hash ~ '^approved-rule:v1:[a-f0-9]{64}$')
+       OR (review_status IN ('source_only', 'excluded') AND approved_rule_json IS NULL AND approved_rule_hash IS NULL)))
+  )
+);
+CREATE INDEX IF NOT EXISTS idx_curriculum_rules_course ON curriculum_prerequisite_rules(course_code);
+CREATE INDEX IF NOT EXISTS idx_curriculum_rules_plan ON curriculum_prerequisite_rules(plan_key);
+ALTER TABLE curriculum_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE curriculum_prerequisite_rules ENABLE ROW LEVEL SECURITY;

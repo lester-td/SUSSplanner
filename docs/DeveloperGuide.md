@@ -2,6 +2,8 @@
 
 This guide covers application architecture, setup, state formats, and maintainer
 workflows. For data publication and rollback, see [Data Snapshot Operations](./DataSnapshots.md).
+For prerequisite persistence, review artifacts, snapshot format 2 and course-page
+rendering, see [Prerequisite Trees](./PrerequisiteTrees.md).
 
 ## Project Overview
 
@@ -10,8 +12,8 @@ anonymous-user capabilities:
 
 1. Build a semester timetable from SUSS course class groups, inspect clashes,
    switch between class and exam views, and export the result.
-2. Search the course catalog and inspect course details, class schedules, and
-   assessment components.
+2. Search the course catalog and inspect course details, prerequisite trees,
+   source remarks, class schedules, and assessment components.
 3. Build a multi-semester course plan using catalog courses or manually entered
    courses, export/import a restorable JSON backup, and open an A4 print view
    for saving as PDF.
@@ -113,7 +115,8 @@ flowchart LR
 ### Architectural Rules
 
 - UI components and production route handlers do not query Postgres. Reads go
-  through `lib/data/queries.ts` and deployment-local snapshot files.
+  directly through the course-search, course-details, metadata and timetable
+  modules in `lib/data/` and deployment-local snapshot files.
 - `DATABASE_URL` is used by snapshot generation, Drizzle tooling, validation,
   and maintainer `psql` commands; it is not required by `npm run start`.
 - Planner, calculator, settings, and reminder state stays in the browser. Feedback
@@ -184,6 +187,7 @@ Use the same Node/npm versions for the scraper, plus Python 3.10+ and `psql`.
 ├── components/
 │   ├── calculator/              GPA and OCAS calculator clients
 │   ├── courses/                 Course search/detail client components
+│   │   └── prerequisite-tree/   Scoped requirements, remarks, and reverse relationships
 │   ├── layout/                  Shared application shell and navigation
 │   ├── planner/                 Semester planner UI, add button, and shared icons
 │   │   └── semester-planner/    Desktop/mobile controls and share preview
@@ -201,16 +205,22 @@ Use the same Node/npm versions for the scraper, plus Python 3.10+ and `psql`.
 │   ├── timetable/               Domain types, URL encoding, storage, utilities
 │   └── validation/              Zod schemas
 ├── drizzle/                     Generated migrations (gitignored)
+├── docs/                        User, developer, data, and prerequisite guides
 ├── scraper/
 │   ├── data/input/              Tracked source manifests and source PDFs
+│   ├── data/reviews/            Tracked prerequisite registry and review decisions
 │   ├── src/cli/                 Scraper command entry points
 │   ├── src/parsers/             Schedule and course-detail parsers
 │   ├── src/sql/                 SQL generation
 │   ├── tools/                   Python PDF extraction helpers
-│   ├── curriculum-schema-extension.sql  Optional preliminary curriculum tables
+│   ├── curriculum-schema-extension.sql  Independent experimental curriculum model
 │   └── schema.sql               Complete database DDL used by scraper setup
-├── scripts/build-data-snapshots.ts Build-time academic-data export
-├── scripts/validate-project.mjs Environment and toolchain validation
+├── scripts/
+│   ├── backup-database.mjs       Private database archives and verification manifests
+│   ├── build-data-snapshots.ts  Build-time academic-data export
+│   ├── curriculum-batch.ts      Batch preparation, triage reports, and approval
+│   ├── review-curriculum.ts     Review reconciliation and guarded imports
+│   └── validate-project.mjs     Environment and toolchain validation
 ├── ARCHITECTURE.md              Architecture summary
 ├── README.md                    Project overview and quick reference
 ├── drizzle.config.ts            Drizzle Kit configuration
@@ -312,6 +322,12 @@ npm run typecheck
 | `npm run typecheck` | Run root TypeScript checks without emitting files. |
 | `npm run build` | Create a production build. |
 | `npm run start` | Run the production build locally. |
+| `npm run data:build` | Regenerate snapshots and report prerequisite coverage. |
+| `npm run data:validate` | Validate generated snapshot contents. |
+| `npm run db:backup` | Create a private logical archive and checksum/count manifest before schema changes or imports. |
+| `npm run curriculum:batch -- --mode prepare` | Prepare prerequisite mappings, candidates and triage reports without database writes. |
+| `npm run curriculum:review -- --mode report --with-db` | Reconcile current prerequisite evidence and decisions with retained database records. |
+| `npm run test:curriculum` | Run the Python curriculum regression suite using the scraper environment. |
 
 The setup validator checks supported Node/npm versions, installed dependencies,
 local environment files, and the shape of `DATABASE_URL`. Start validation
@@ -323,11 +339,14 @@ schema change is intentional and reviewed.
 
 ## Environment Variables
 
-The root [`.env.example`](../.env.example) lists these variables:
+Copy application configuration from the root [`.env.example`](../.env.example).
+The table also includes optional maintainer and integration-test variables:
 
 | Variable | Required | Used by | Notes |
 |---|---:|---|---|
 | `DATABASE_URL` | Yes for snapshot generation and database tooling; no at runtime | `scripts/build-data-snapshots.ts`, `drizzle.config.ts`, setup validator, maintainer `psql` commands | Must be a `postgres://` or `postgresql://` URL. Keep server-side and secret. Use Supabase's transaction pooler for Vercel builds. |
+| `DATABASE_BACKUP_URL` | No; defaults to `DATABASE_URL` | `scripts/backup-database.mjs` | Use a direct/session connection for backup; transaction port `6543` is unsuitable. |
+| `PREREQUISITE_TEST_DATABASE_URL` | Only for opt-in SQL integration tests | Prerequisite database tests | Must point to an explicitly disposable database; tests install the schema and truncate curriculum tables. |
 | `NEXT_PUBLIC_SUPABASE_URL` | No | Setup validator only | Optional; not used by runtime application code. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No | Setup validator only | Optional; not used by runtime application code. |
 | `RESEND_API_KEY` | Yes for feedback email | `/api/feedback` | Server-side Resend API key. |
@@ -344,11 +363,21 @@ environment files except `.env.example`.
 `lib/db/schema.ts` manually mirrors the tables for the snapshot exporter and
 Drizzle tooling. Generated migrations under `drizzle/` are gitignored.
 
-The preliminary curriculum tables are deliberately excluded from both active schema files.
-Their standalone DDL is kept in `scraper/curriculum-schema-extension.sql` for evaluation in
-disposable databases. It is an optional extension, not a migration or deployed schema.
+Both maintained schema files include the reviewed `curriculum_plans` and
+`curriculum_prerequisite_rules` relations. They retain source evidence, scoped
+parser candidates and fingerprint-bound publication/review decisions. RLS is
+enabled; approved records reach users through snapshots. See
+[Prerequisite Trees](./PrerequisiteTrees.md) for the full contract.
+
+The independent nine-table model in `scraper/curriculum-schema-extension.sql`
+is experimental and has incompatible layouts for those two table names. Evaluate
+it directly in an empty disposable database, without applying the application
+schema first. It is excluded from application imports and snapshot generation.
 
 ### Entity Relationship Diagram
+
+Main fields and relationships are shown below; `scraper/schema.sql` defines the
+complete columns and constraints.
 
 ```mermaid
 erDiagram
@@ -441,11 +470,57 @@ erDiagram
         timestamptz last_updated
     }
 
+    ACADEMIC_CALENDAR_EVENTS {
+        bigint event_id PK
+        smallint calendar_year
+        varchar audience
+        varchar event_title
+        date start_date
+        date end_date
+        varchar status
+        timestamptz last_updated
+    }
+
+    ACADEMIC_CALENDAR_EVENT_SEMESTERS {
+        bigint event_id PK,FK
+        bigint semester_id PK,FK
+    }
+
+    CURRICULUM_PLANS {
+        text plan_key PK
+        text programme_name
+        text study_mode
+        text source_path
+        text source_hash
+        text publication_status
+        text publication_input_hash
+        text reviewed_publication_input_hash
+        timestamptz last_updated
+    }
+
+    CURRICULUM_PREREQUISITE_RULES {
+        text rule_key PK
+        text plan_key FK
+        varchar course_code
+        text applicability_key
+        text raw_text
+        jsonb source_occurrences
+        text record_status
+        text review_status
+        text review_input_hash
+        text reviewed_input_hash
+        jsonb approved_rule_json
+        timestamptz last_updated
+    }
+
     COURSES ||--o{ CLASSES : offers
     SEMESTERS ||--o{ CLASSES : contains
     SEMESTERS ||--o{ SEMESTER_WEEKS : defines
     CLASSES ||--o{ CLASS_EVENTS : schedules
     COURSES ||--o{ ASSESSMENT_COMPONENTS : has
+    ACADEMIC_CALENDAR_EVENTS ||--o{ ACADEMIC_CALENDAR_EVENT_SEMESTERS : maps
+    SEMESTERS ||--o{ ACADEMIC_CALENDAR_EVENT_SEMESTERS : includes
+    CURRICULUM_PLANS ||--o{ CURRICULUM_PREREQUISITE_RULES : defines
 ```
 
 ### Read-Only View
@@ -472,6 +547,10 @@ JSON snapshots.
 - `week_type` is `TEACHING`, `STUDY`, or `EXAM`.
 - `assessment_components` is not semester-specific because the source synopsis
   endpoint exposes only the latest assessment strategy.
+- Prerequisite rules are unique by `(plan_key, course_code, applicability_key)`.
+  Publication/review decisions must match their current input fingerprints.
+  Rule course codes have no catalogue foreign key, so missing catalogue entries
+  retain their source requirements.
 
 ### Data Access Behavior
 
@@ -503,8 +582,10 @@ JSON snapshots.
   build to publish database changes. No admin page or runtime database write API
   is required.
 - `scripts/build-data-snapshots.ts` requires `DATABASE_URL`, opens one
-  short-lived connection with prepared statements disabled, and reads each
-  academic table once per generation.
+  short-lived connection with prepared statements disabled, and reads all eleven
+  academic tables in one read-only repeatable-read transaction. It closes the
+  connection before verifying included curriculum PDFs and building prerequisite
+  projections.
 - The category-specific readers in `lib/data/` resolve only paths declared by
   the manifest and memoize parsed files within each server process.
 - Schedule imports assign ownership from source-manifest `intakes` and the PDF's
@@ -537,7 +618,7 @@ JSON snapshots.
 | `/feedback` | Force-dynamic, `noindex` page with public GitHub Issues and a private feedback form. |
 | `/settings` | Server-loads semester/week metadata for `AppShell`, then `SettingsClient` manages browser-local colour-scheme, theme, timetable-orientation, and course-registration reminder preferences. |
 | `/courses` | Server-loads semesters, weeks, and search facets; `CourseSearchPage` fetches the full catalog, caches it in memory for return navigation, refreshes stale cached data after 15 minutes, filters/searches the cached catalog client-side, and paginates results at 10 courses per page. |
-| `/courses/[courseCode]` | Server-loads course details, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
+| `/courses/[courseCode]` | Server-loads course details, scoped prerequisites/remarks, reverse relationships, assessments, offered semesters, and optional selected-semester classes. Returns Next.js `notFound()` for an unknown course. |
 | `/share?sem=...&classes=...` | Validates and resolves the shared timetable on the server, then renders a read-only `ShareClient` with explicit import. Missing or malformed parameters get explanatory UI. |
 
 The shared `AppShell` provides navigation to Home, Timetable, Courses, Planner,
@@ -1392,7 +1473,7 @@ sequenceDiagram
     participant UI as PlannerClient
     participant Search as GET /api/courses/search
     participant Classes as GET /api/classes
-    participant Queries as lib/data/queries.ts
+    participant Queries as Course search, course details and timetable modules
     participant Snapshot as JSON snapshots
     participant Storage as localStorage
 
@@ -1431,7 +1512,7 @@ sequenceDiagram
     actor Recipient
     participant Page as /share server page
     participant Decoder as share-url + Zod validation
-    participant Queries as lib/data/queries.ts
+    participant Queries as lib/data/timetable.ts
     participant Snapshot as JSON snapshots
     participant Client as ShareClient
     participant Storage as localStorage
@@ -1505,6 +1586,8 @@ sequenceDiagram
     participant Source as SUSS/source PDFs + manifests + curriculum plans
     participant Scraper as Local scraper commands
     participant Artifacts as JSON / TSV / SQL artifacts
+    participant Review as Prerequisite batch review
+    participant Backup as Private archive / disposable restore
     participant DB as Postgres
     participant Build as Snapshot generator
     participant Snapshot as Split JSON snapshots
@@ -1516,7 +1599,17 @@ sequenceDiagram
     Source-->>Scraper: Source data
     Scraper->>Artifacts: Write parsed data, issues, and transactional SQL
     Maintainer->>Artifacts: Review warnings and generated output
-    Maintainer->>DB: psql import using DATABASE_URL
+    Maintainer->>Backup: Create backup and verify application restore
+    Backup->>DB: Read consistent database snapshot
+    Backup-->>Maintainer: Archive, manifest and restore evidence
+    alt Regular academic data
+        Maintainer->>DB: psql import using DATABASE_URL
+    else Curriculum prerequisites
+        Maintainer->>Review: Prepare mappings and triage source statements
+        Review->>Artifacts: Write report and proposed coverage
+        Maintainer->>Review: Approve exact batch with --apply
+        Review->>DB: Apply guarded reviewed records
+    end
     DB-->>Maintainer: Import result and verification queries
     Maintainer->>DB: Enable intake availability for validated intakes
     Maintainer->>Build: Copy reviewed cohort index to application data/
@@ -1533,18 +1626,22 @@ sequenceDiagram
 ### Recommended Import Order
 
 For a fresh database, `scraper/README.md` specifies the database preparation
-steps below. Snapshot publication is the final application operation.
+steps below. Back up and verify existing databases before schema changes or
+imports. Snapshot publication is the final application operation.
 
 1. Apply `scraper/schema.sql`.
 2. Generate and import semester-week SQL.
 3. Parse schedule PDFs and import schedule SQL.
 4. Download course synopsis PDFs.
 5. Parse course synopsis PDFs and import course-detail SQL.
-6. Verify database counts/sample rows.
-7. Enable `semesters.has_intake_schedule` for validated intakes and copy the reviewed
+6. Enable `semesters.has_intake_schedule` for validated intakes and copy the reviewed
    `scraper/data/schedule-cohorts.json` to `data/schedule-cohorts.json`.
-8. Run `npm run data:build` from the repository root and review the manifest.
-9. Trigger a new Vercel deployment (a deploy hook is convenient).
+7. Generate a catalogue snapshot with `npm run data:build`, extract curriculum PDFs,
+   and use the [reviewed prerequisite workflow](./PrerequisiteTrees.md) to triage
+   and explicitly approve any prerequisite publication.
+8. Verify database counts/sample rows and reconcile prerequisite records.
+9. Build and validate snapshots from the repository root; review coverage and preview.
+10. Trigger a new Vercel deployment (a deploy hook is convenient).
 
 Run `npm run scraper` from the repository root and choose the required task from
 the interactive menu. **All Items** runs the complete local preparation flow without
@@ -1553,12 +1650,14 @@ course filters such as `TLL*`. TLL course and curriculum records automatically u
 selective English/Tamil OCR when unresolved CID glyphs remain; the menu warns about and
 validates the required dependencies before running a TLL-inclusive selection. Review
 generated files before importing SQL manually.
-Curriculum-plan JSON separates product records from raw review rows. Its generated SQL
-targets the optional tables in `scraper/curriculum-schema-extension.sql`; those tables are
-not part of the current application schema and should only be evaluated in a disposable
-database while the work is paused. The SQL covers plans, requirements, plan courses,
-prerequisite rules, exclusions, presentations, lifecycle events, and replacements.
-Curriculum presentations do not create timetable classes or semesters.
+
+Curriculum-plan JSON separates normalized records from raw review rows and binds
+prerequisite candidates to their source cells. The root TypeScript batch/review
+commands import approved decisions into the application's two reviewed tables.
+The parser's optional SQL targets the independent experimental nine-table model
+and is evaluated only in an empty disposable database. Curriculum presentations
+do not create timetable classes or semesters.
+
 The lower-level `generate:weeks`, `scrape:all`, `download:courses`,
 `parse:courses`, and `parse:curriculum` commands remain available for diagnostic runs. See
 `scraper/README.md` for the default paths, review queries, and troubleshooting.
@@ -1620,7 +1719,8 @@ secret.
 | Run/check the app | Use `npm run dev`, `npm run typecheck`, and `npm run build`. |
 | Change data retrieval | Keep runtime reads in `lib/data/`; update the generator and snapshot types together when the persisted shape changes. |
 | Change the schema | Update `scraper/schema.sql`, `lib/db/schema.ts`, and affected SQL generation together. Generated files in `drizzle/` are not the schema source of truth. |
-| Evaluate the preliminary curriculum schema | Apply `scraper/curriculum-schema-extension.sql` only after the base schema in a disposable database. It is not a migration or part of the deployed schema. |
+| Review or refresh prerequisite trees | Follow [Prerequisite Trees](./PrerequisiteTrees.md): extract, triage, back up, approve the exact batch, reconcile, and rebuild snapshots. |
+| Evaluate the experimental curriculum schema | Apply `scraper/curriculum-schema-extension.sql` directly to an empty disposable database, without `scraper/schema.sql`. See the [scraper instructions](../scraper/README.md#optional-experimental-sql). |
 | Change a page | Put server loading in `app/`, interaction in client components, and browser-triggered snapshot reads behind route handlers. |
 | Change share/local state | Update timetable types, Zod validation, URL encoding, local storage, planner, and share-page behavior together. Format changes can invalidate existing URLs/state. |
 | Change GPA Calculator behavior | Update `components/calculator/gpa-calculator-client.tsx`; keep Grade/GPV synchronization, Pass/Fail denominators, and local-storage format aligned. |

@@ -1,0 +1,59 @@
+[
+  {
+    "courseCode": "CET315",
+    "prerequisite": "This course is open to those who already have a law degree and SUSS students who have completed LAW201, LAW203, LAW305 and LAW307 in the School of Law, or BUS201 and BUS205 in the School of Business.",
+    "remarks": null,
+    "decision": "approved",
+    "rule": {
+      "type": "any",
+      "children": [
+        { "type": "all", "children": [
+          { "type": "course", "courseCode": "LAW201" },
+          { "type": "course", "courseCode": "LAW203" },
+          { "type": "course", "courseCode": "LAW305" },
+          { "type": "course", "courseCode": "LAW307" }
+        ] },
+        { "type": "all", "children": [
+          { "type": "course", "courseCode": "BUS201" },
+          { "type": "course", "courseCode": "BUS205" }
+        ] }
+      ],
+      "displayRemarks": ["Open to those who already have a law degree."]
+    }
+  },
+  {
+    "courseCode": "HBC213",
+    "prerequisite": null,
+    "remarks": "Chinese SHBS programmes as SHBS Core Elective unless otherwise stated; all other SUSS programmes as General/Unr estricted Elective. BACLS students have the option to read HBC207 (conducted in English), and should sit for HBC101/HB C103 before sitting for HBC207/HB C213.",
+    "decision": "source_only",
+    "rule": null
+  },
+  {
+    "courseCode": "OGP281",
+    "prerequisite": "Placement Chinese Test or have taken OGP181. CET students are exempted from the Placement Test.",
+    "remarks": "To be eligible for OGP281, students must take the Placement Chinese Test to determine if the course level is appropriate for them. All oral and written assessment s are in Chinese. CET students are exempted from the Placement Test.",
+    "decision": "approved",
+    "rule": {
+      "type": "course",
+      "courseCode": "OGP181",
+      "displayRemarks": [
+        "Placement Chinese Test or have taken OGP181. CET students are exempted from the Placement Test.",
+        "To be eligible for OGP281, students must take the Placement Chinese Test to determine if the course level is appropriate for them. All oral and written assessments are in Chinese. CET students are exempted from the Placement Test."
+      ]
+    }
+  },
+  {
+    "courseCode": "OGP381",
+    "prerequisite": "Placement Chinese Test or have taken OGP281. CET students are exempted from the Placement Test.",
+    "remarks": "To be eligible for OGP381, students must take the Placement Chinese Test to determine if the course level is appropriate for them. All oral and written assessment s are in Chinese. CET students are exempted from Placement Test.",
+    "decision": "approved",
+    "rule": {
+      "type": "course",
+      "courseCode": "OGP281",
+      "displayRemarks": [
+        "Placement Chinese Test or have taken OGP281. CET students are exempted from the Placement Test.",
+        "To be eligible for OGP381, students must take the Placement Chinese Test to determine if the course level is appropriate for them. All oral and written assessments are in Chinese. CET students are exempted from Placement Test."
+      ]
+    }
+  }
+]
