@@ -43,13 +43,13 @@ function TreeContent({ courseCode, requisites, postrequisites, prerequisites, so
     {hasPrerequisites || hasRemarks ? <div className={expanded ? styles.expandedSources : undefined}>
       {hasPrerequisites ? <details className={styles.disclosure}>
         <summary>Prerequisite</summary>
-        <div id={`${idPrefix}prerequisite-details`} className={styles.sourceContent}>
+        <div id={`${idPrefix}prerequisite-details`} className={styles.sourceContent} role="region" aria-label="Prerequisite details" tabIndex={expanded ? undefined : 0}>
           <SourceEntries entries={sources} courseCode={courseCode} field="prerequisites" />
         </div>
       </details> : null}
       {hasRemarks ? <details className={styles.disclosure}>
         <summary>Remarks</summary>
-        <div id={`${idPrefix}prerequisite-remarks`} className={styles.sourceContent}>
+        <div id={`${idPrefix}prerequisite-remarks`} className={styles.sourceContent} role="region" aria-label="Remarks" tabIndex={expanded ? undefined : 0}>
           <SourceEntries entries={sources} courseCode={courseCode} field="remarks" />
         </div>
       </details> : null}

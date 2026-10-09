@@ -1,6 +1,7 @@
 .section, .expandedContent { --tree-line-color: color-mix(in srgb, var(--on-surface-variant) 65%, var(--surface-container-lowest)); }
 .section { overflow: hidden; overflow-wrap: anywhere; scroll-margin-top: 5rem; }
 .section:focus-visible, .treeViewport:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.sourceContent:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 .body { padding: .75rem; }
 .intro { color: var(--on-surface-variant); font-size: .8125rem; line-height: 1.6; }
 .intro { margin-bottom: .75rem; }
@@ -28,6 +29,7 @@
 .node:focus-visible, .remarksLink:focus-visible, .disclosure summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .remarksLink { font-size: .75rem; line-height: 18px; color: var(--primary); text-decoration: underline; text-underline-offset: .2rem; }
 .sourceContent { padding: .5rem 0 .75rem 1rem; scroll-margin-top: 5rem; }
+.body .sourceContent { max-height: min(14rem, 30dvh); overflow-y: auto; overscroll-behavior: contain; padding-right: .5rem; }
 .sourceGroup + .sourceGroup { margin-top: 1.25rem; }
 .sourceCourse { margin-bottom: .625rem; color: var(--on-surface); font-size: .875rem; font-weight: 650; }
 .sourceList { display: grid; gap: 1rem; }
