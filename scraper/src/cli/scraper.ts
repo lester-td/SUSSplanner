@@ -5,6 +5,7 @@ import process from "node:process";
 import { createInterface, type Interface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import type { OutputFormat } from "../lib/outputFormat.js";
+import { COURSE_DOWNLOAD_MANIFEST } from "../lib/courseDownloadManifest.js";
 
 type Action = "all" | "weeks" | "schedules" | "courses" | "curriculum";
 
@@ -380,10 +381,10 @@ async function scrapeSchedules(format: OutputFormat, courseFilterArgs: string[])
 
 async function refreshCourses(format: OutputFormat, courseFilterArgs: string[]): Promise<void> {
   printHeader("Downloading fresh course synopsis PDFs");
-  await runNpmScript("download:courses", ["--force", ...courseFilterArgs]);
+  await runNpmScript("download:courses", ["--force", "--manifest-out", COURSE_DOWNLOAD_MANIFEST, ...courseFilterArgs]);
 
   printHeader("Parsing course synopsis PDFs");
-  await runNpmScript("parse:courses", [...formatArgs(format), ...courseFilterArgs]);
+  await runNpmScript("parse:courses", ["--download-manifest", COURSE_DOWNLOAD_MANIFEST, ...formatArgs(format), ...courseFilterArgs]);
 }
 
 async function parseCurriculumPlans(format: OutputFormat): Promise<void> {

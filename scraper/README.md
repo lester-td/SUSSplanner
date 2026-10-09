@@ -617,9 +617,10 @@ Curriculum parsing processes all plans and does not apply course filters:
 --code-prefix TLL           every course code beginning with the prefix
 ```
 
-Multiple prefixes can be comma-separated, for example `--code-prefix TLL,TSL`. On conversion
-commands, multiple selectors use union semantics: a course is included when it matches any
-exact code or prefix.
+Multiple prefixes can be comma-separated, for example `--code-prefix TLL,TSL`. Multiple
+selectors use union semantics across these commands: a course is included when it matches
+any exact code from `--codes` or an explicit `--codes-file`, or any prefix. Duplicate codes
+are removed case-insensitively when resolving download inputs.
 
 For example, generate schedule JSON and SQL containing only `TLL` courses:
 
@@ -636,6 +637,8 @@ The filters are supported by `scrape:schedule`, `scrape:all`, `download:courses`
 `parse:courses`, `courses-json-to-sql`, and `schedule-json-to-sql`. Commands that load
 course codes for downloading use `data/output/schedules/course-codes.txt` as the prefix-search
 universe unless another `--codes-file` is supplied; inline `--codes` are added to that universe.
+An explicit `--codes-file` contributes all of its codes, even when inline codes or prefixes
+are also supplied. Inline `--codes` alone are self-contained and do not read the default file.
 
 Run:
 
@@ -739,13 +742,24 @@ data/output/courses/download-report.tsv
 data/output/courses/downloads.json
 ```
 
-The report has three main columns:
+The report includes availability, download status, and input state for each variant:
 
 ```text
-course_code    daytime    evening
+course_code    daytime    evening    daytime_status    evening_status    daytime_input_state    evening_input_state
 ```
 
-A tick/check means that version was downloaded.
+A tick/check means that version was downloaded or accepted from the local cache.
+Input states are `fresh` (downloaded this run), `cached` (valid local PDF accepted
+without `--force`), `stale` (retained after a failed refresh), `missing` (no course
+PDF available), and `failed` (download failed with no retained input).
+
+Missing responses, including HTTP 404/410 and the endpoint's No Record Found
+responses, remove any existing target PDF. PDFs under 5 KB are classified as
+missing only when their extracted text contains only No Record Found; otherwise
+they are failed refreshes. Network errors, server errors, unverified small PDFs,
+and unexpected HTML retain the old PDF as `stale` and exclude it from manifest-based
+parsing. Download failures return a non-zero exit status after writing the reports.
+The interactive course refresh stops before parsing when a download fails.
 
 Review it before parsing or importing course data:
 
@@ -770,12 +784,26 @@ Run:
 
 ```bash
 npm run parse:courses -- \
+  --download-manifest data/output/courses/downloads.json \
   --pdf-dir data/input/courses \
   --codes-file data/output/schedules/course-codes.txt \
   --out data/output/courses/course-details.sql \
   --json data/output/courses/course-details.json \
   --issues-out data/output/courses/parse-issues.tsv
 ```
+
+`--download-manifest` makes the current download run the source of truth: only
+`downloaded` and `skipped` course variants are parsed, using their recorded PDF
+paths. Paths in new manifests are absolute; relative paths in older manifests
+resolve from the command's working directory. Course filters can further restrict
+these accepted entries. Stale, missing, and failed entries appear in the parse
+issues report. Failed downloads also make this parse command return non-zero,
+even when it writes partial output from accepted inputs. An empty manifest never
+falls back to scanning the PDF directory.
+
+The interactive workflow always passes this manifest. Omit `--download-manifest`
+only for a standalone parse of manually selected local PDFs; directory scanning
+does not establish whether those files were refreshed successfully.
 
 ### Automatically OCR unresolved Tamil CID glyphs
 
@@ -896,6 +924,30 @@ data/output/curriculum/issues.tsv
 
 Review the normalized records and issue report. Mixed `AND`/`OR` prerequisite rules and
 non-course conditions use a review status and retain their source text.
+
+Course-code extraction does not establish that a prerequisite was fully parsed. The
+parser removes recognized course references, completion wording, and connectors from a
+normalized copy and checks the remaining text. Residual conditions are retained as
+`condition` nodes and set `parseStatus` to `review_required`. Recognized condition tags
+cover placement tests, prior learning, experience, credit-unit requirements, programme
+standing, and co-enrollment. These tags support review rather than automatic eligibility
+checks; unfamiliar conditions also require review. The original text remains in `rawText`
+and the condition's `sourceText`, and the issue report includes the residual wording and
+source page. Only fully represented course-only rules use `parsed`.
+
+Self-references are excluded from prerequisite rules and edges and produce a
+`review_required` issue. Co-enrollment wording (including "at the same time") is retained
+as a condition with its full source text and emits no prerequisite edges. Passages mixing
+completion and co-enrollment requirements remain entirely under review until their clause
+scope can be established. SQL generation also rejects self-dependencies in rule nodes or
+edges before producing an import.
+
+Run the curriculum prerequisite regression tests with the Python virtual environment
+activated:
+
+```bash
+npm run test:curriculum
+```
 
 Inspect the issue report and check for unresolved CID placeholders:
 
@@ -1056,6 +1108,7 @@ npm run download:courses -- \
 npm run parse:courses -- \
   --pdf-dir data/input/courses \
   --codes-file data/output/schedules/course-codes.txt \
+  --download-manifest data/output/courses/downloads.json \
   --out data/output/courses/course-details.sql \
   --json data/output/courses/course-details.json \
   --issues-out data/output/courses/parse-issues.tsv

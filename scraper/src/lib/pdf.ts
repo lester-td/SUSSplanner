@@ -28,6 +28,7 @@ export async function downloadPdf(url: string): Promise<Buffer> {
 }
 
 export async function extractPdfTextFromBuffer(buffer: Buffer): Promise<string> {
-  const parsed = await pdfParse(buffer);
+  // PDF.js expects typed-array slicing; Buffer.slice() shares memory instead.
+  const parsed = await pdfParse(new Uint8Array(buffer));
   return parsed.text;
 }

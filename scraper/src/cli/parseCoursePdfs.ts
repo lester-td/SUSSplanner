@@ -2,8 +2,9 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { parseArgs, optionalBool, optionalString } from "../lib/args.js";
+import { parseArgs, optionalBool, optionalString, requireString } from "../lib/args.js";
 import { loadCourseCodeFilter, matchesCourseCode, type CourseCodeFilter } from "../lib/courseCodeFilter.js";
+import { loadCourseDownloadManifest } from "../lib/courseDownloadManifest.js";
 import { parseOutputFormat, writesJson, writesSql } from "../lib/outputFormat.js";
 import type { CourseDetailParseResult, ScheduleType } from "../lib/types.js";
 import { buildCourseDetailPdfUrl, isNoRecordFoundText, isftForScheduleType, parseCourseDetailText } from "../parsers/courseDetailPdf.js";
@@ -245,6 +246,9 @@ async function validateOcrEnvironment(languages: string): Promise<void> {
 async function main(): Promise<void> {
   const args = parseArgs();
   const pdfDir = optionalString(args, "pdf-dir") ?? "data/input/courses";
+  const downloadManifest = args["download-manifest"] !== undefined
+    ? requireString(args, "download-manifest")
+    : undefined;
   const outSql = optionalString(args, "out") ?? "data/output/courses/course-details.sql";
   const outJson = optionalString(args, "json") ?? "data/output/courses/course-details.json";
   const rawTextDir = optionalString(args, "raw-text-dir") ?? "data/output/courses/raw-text";
@@ -264,9 +268,22 @@ async function main(): Promise<void> {
   await fs.mkdir(path.dirname(issuesOut), { recursive: true });
 
   const courseCodeFilter = await loadCourseCodeFilter(args);
-  const pdfs = await listCoursePdfFiles(pdfDir, courseCodeFilter, fallbackScheduleType);
+  const manifestInputs = downloadManifest ? await loadCourseDownloadManifest(downloadManifest, courseCodeFilter) : undefined;
+  const pdfs = manifestInputs?.accepted ?? await listCoursePdfFiles(pdfDir, courseCodeFilter, fallbackScheduleType);
+  const skippedIssues: ParseIssue[] = (manifestInputs?.excluded ?? []).map(item => ({
+    courseCode: item.courseCode,
+    scheduleType: item.scheduleType,
+    severity: item.status === "failed" ? "error" : "warning",
+    issue: `Download input excluded (${item.inputState}, ${item.status}): ${item.error ?? "not accepted by the current download run"}`
+  }));
+  for (const item of skippedIssues) console.warn(`${item.courseCode} (${item.scheduleType}): ${item.issue}`);
+  if (manifestInputs?.excluded.some(item => item.status === "failed")) process.exitCode = 1;
 
   if (pdfs.length === 0) {
+    const issueLines = ["course_code\tschedule_type\tseverity\tissue", ...skippedIssues.map(item =>
+      [item.courseCode, item.scheduleType, item.severity, item.issue.replace(/\s+/g, " ").trim()].join("\t"))];
+    await fs.writeFile(issuesOut, issueLines.join("\n") + "\n", "utf8");
+    if (downloadManifest) throw new Error(`No accepted course PDFs in ${downloadManifest}; no course outputs generated.`);
     throw new Error(`No course PDFs found in ${pdfDir}${courseCodeFilter.active ? " matching the course-code filters" : ""}.`);
   }
 
@@ -280,7 +297,6 @@ async function main(): Promise<void> {
   }
 
   const results: CourseDetailParseResult[] = [];
-  const skippedIssues: ParseIssue[] = [];
 
   for (const { courseCode, scheduleType, pdfPath } of pdfs) {
     const useOcr = ocrOnCid || isTamilCourseCode(courseCode);
@@ -351,6 +367,9 @@ async function main(): Promise<void> {
   }
 
   const issueLines = ["course_code\tschedule_type\tseverity\tissue"];
+  for (const item of skippedIssues) {
+    issueLines.push([item.courseCode, item.scheduleType, item.severity, item.issue.replace(/\s+/g, " ").trim()].join("\t"));
+  }
   for (const result of results) {
     for (const warning of result.warnings) {
       const severity = warning.includes("skipped") || warning.startsWith("Failed to parse") ? "error" : "warning";

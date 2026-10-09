@@ -57,18 +57,20 @@ export function filterCourseCodes(courseCodes: string[], filter: CourseCodeFilte
 }
 
 export async function resolveInputCourseCodes(args: CliArgs, defaultCodesFile: string): Promise<string[]> {
-  const inlineCodes = parseCourseCodes(optionalString(args, "codes") ?? "");
-  const prefixes = parseCourseCodePrefixes(optionalString(args, "code-prefix") ?? "");
+  const codesFile = optionalString(args, "codes-file");
+  const filter = await loadCourseCodeFilter(args);
 
   // Preserve the existing behavior where --codes is self-contained and does not
   // require the default codes file to exist.
-  if (inlineCodes.length > 0 && prefixes.length === 0) {
-    return [...new Set(inlineCodes)].sort();
+  if (filter.exactCodes.size > 0 && !codesFile && filter.prefixes.length === 0) {
+    return filterCourseCodes([...filter.exactCodes], filter);
   }
 
-  const codesFile = optionalString(args, "codes-file") ?? defaultCodesFile;
-  const candidates = [...await readCourseCodesFile(codesFile), ...inlineCodes];
-  const filter = await loadCourseCodeFilter(args, { includeCodesFile: false });
+  // Explicit file codes are exact selectors in the shared union filter. Only
+  // the default file supplies candidates that must match an inline code or prefix.
+  const candidates = codesFile
+    ? [...filter.exactCodes]
+    : [...await readCourseCodesFile(defaultCodesFile), ...filter.exactCodes];
   return filterCourseCodes(candidates, filter);
 }
 
