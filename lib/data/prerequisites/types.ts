@@ -82,6 +82,7 @@ export type RuleRecord = {
   parseStatus: ParseStatus;
   ruleJson: unknown;
   parserContractVersion: number;
+  evidenceDiagnostics: string[];
   sourceHash: string;
   sourceOccurrences: SourceOccurrence[];
   recordStatus: "active" | "inactive";

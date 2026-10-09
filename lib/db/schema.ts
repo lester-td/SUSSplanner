@@ -44,6 +44,7 @@ export const curriculumPrerequisiteRules = pgTable("curriculum_prerequisite_rule
   ruleKey: text("rule_key").primaryKey(), planKey: text("plan_key").notNull().references(() => curriculumPlans.planKey, { onDelete: "restrict" }),
   courseCode: varchar("course_code", { length: 20 }).notNull(), applicabilityKey: text("applicability_key").notNull(), applicabilityLabel: text("applicability_label").notNull(), rawText: text("raw_text").notNull(),
   parseStatus: text("parse_status").$type<ParseStatus>().notNull(), ruleJson: jsonb("rule_json").$type<unknown>(), parserContractVersion: integer("parser_contract_version").notNull(),
+  evidenceDiagnostics: jsonb("evidence_diagnostics").$type<string[]>().notNull().default([]),
   sourceHash: text("source_hash").notNull(), sourceOccurrences: jsonb("source_occurrences").$type<SourceOccurrence[]>().notNull(),
   recordStatus: text("record_status").$type<"active" | "inactive">().notNull().default("active"), reviewStatus: text("review_status").$type<ReviewStatus>().notNull().default("pending"),
   reviewInputHash: text("review_input_hash").notNull(), reviewedInputHash: text("reviewed_input_hash"), approvedRuleJson: jsonb("approved_rule_json").$type<PrerequisiteRuleNode>(), approvedRuleHash: text("approved_rule_hash"),
@@ -52,7 +53,7 @@ export const curriculumPrerequisiteRules = pgTable("curriculum_prerequisite_rule
   uniqueIndex("uq_curriculum_prerequisite_scope").on(table.planKey, table.courseCode, table.applicabilityKey),
   index("idx_curriculum_rules_course").on(table.courseCode), index("idx_curriculum_rules_plan").on(table.planKey),
   check("chk_curriculum_rule_identity", sql`${table.courseCode} ~ '^[A-Z0-9]{3,20}$' AND ${table.applicabilityKey} ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND ${table.ruleKey} = 'prerequisite:' || ${table.planKey} || ':' || ${table.courseCode} || ':' || ${table.applicabilityKey}`),
-  check("chk_curriculum_rule_evidence", sql`btrim(${table.rawText}) <> '' AND btrim(${table.applicabilityLabel}) <> '' AND ${table.parseStatus} IN ('parsed', 'review_required', 'unparsed') AND ${table.parserContractVersion} > 0 AND ${table.sourceHash} ~ '^[a-f0-9]{64}$' AND jsonb_typeof(${table.sourceOccurrences}) = 'array' AND jsonb_array_length(${table.sourceOccurrences}) > 0 AND ${table.recordStatus} IN ('active', 'inactive')`),
+  check("chk_curriculum_rule_evidence", sql`btrim(${table.rawText}) <> '' AND btrim(${table.applicabilityLabel}) <> '' AND ${table.parseStatus} IN ('parsed', 'review_required', 'unparsed') AND ${table.parserContractVersion} > 0 AND ${table.sourceHash} ~ '^[a-f0-9]{64}$' AND jsonb_typeof(${table.evidenceDiagnostics}) = 'array' AND jsonb_typeof(${table.sourceOccurrences}) = 'array' AND jsonb_array_length(${table.sourceOccurrences}) > 0 AND ${table.recordStatus} IN ('active', 'inactive')`),
   check("chk_curriculum_rule_decision", sql`
     ${table.reviewInputHash} ~ '^review-input:v1:[a-f0-9]{64}$' AND (
       (${table.reviewStatus} = 'pending' AND ${table.reviewedInputHash} IS NULL AND ${table.reviewedBy} IS NULL AND ${table.reviewedAt} IS NULL AND ${table.reviewNotes} IS NULL AND ${table.approvedRuleJson} IS NULL AND ${table.approvedRuleHash} IS NULL)

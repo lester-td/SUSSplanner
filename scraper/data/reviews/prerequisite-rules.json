@@ -39,7 +39,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG213:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:798b58156372fcba391a02d3cbc67cabaf0da71aecf9361f6af0143c96154363",
+      "expectedInputHash": "review-input:v1:c70ac8074e1aa285ef7dd2e0c645c5ba92194a2b64598e505a898c2f9e1d57e9",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -59,7 +59,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG254:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:da0c18d16562c4d72e591c2ee781f8b41f0fb21ea485e9355ad1f9e4e8d1402f",
+      "expectedInputHash": "review-input:v1:df449f558c8707a7138f317619c4fddb18485724b099ac11d1dfe7b44c553e64",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -67,7 +67,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG352:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:0bc60d9c5515e33586216b037df9bd95a029a3a985e3c9b55e411e5409cf4695",
+      "expectedInputHash": "review-input:v1:9abf5915c10eab80d3b37a2a2959d1bdb1f371a6d44ce1ff05ce1eccbf340ccc",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -75,7 +75,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG355:section-0c37580e716c",
-      "expectedInputHash": "review-input:v1:095e6414f55a8111b7806fa93d35485a43019cb764c77a1488f107da1ae15d62",
+      "expectedInputHash": "review-input:v1:e366eec853d756c25a5801435fa21f15d1c7336cd48d27ef86a021fa661b23d8",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -83,7 +83,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG362:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:2c6da12da055c144ff1cfa72a845689c33740fd780590c8c85dad9d2f412515a",
+      "expectedInputHash": "review-input:v1:56425c4de83c2a2c24cb79aec8604fc1eece837dba9678315514f6c248899de4",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -91,7 +91,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG364:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:2362974314d3c4a3cbaaa375b53942869113b3c30f1d3a09baa5453fd7b160ec",
+      "expectedInputHash": "review-input:v1:0a55c69f8bc92b8892e83f17a9731fad6afe419be06ad746df0119658674aad4",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -99,7 +99,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG366:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:18a05d09cd97f3989356cafdfff09c81491141bee246ba0e5fc52c02138895e9",
+      "expectedInputHash": "review-input:v1:1d83f18ff1bf2d2fd626490d302cd478a72f06ecc1f8e5cd914273968a376053",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -107,7 +107,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG368:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:40349f417bae09279868dd06e3a47ffc4f9f9afd10c228b6f1bc1764b15b0970",
+      "expectedInputHash": "review-input:v1:4a7956cb4afafd003ddcd2e7d3708b4786edd384cbae7fb121cd25eee75a5b72",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -115,7 +115,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELG369:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:5cdda1545fa9ba1522cd42a0a20a791534d85207f96e86bd93d899f95ebfee13",
+      "expectedInputHash": "review-input:v1:d6d555f24f9bd2f8533b91f1b4ca2939b38355321e2840d425ecfd99bcfe2508",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -123,7 +123,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELL388:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:8e6c69285c2918663770f5f2d4e1281abbaf39c7c1083d98581103860736737f",
+      "expectedInputHash": "review-input:v1:be6322ee9f5e1164da198800432275f8287600e33bddfe2ff278763b7d828b55",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: All compulsory courses, at least four Level 3 ELG/ELT courses and CGPA 3.0 remain a compound textual requirement. Do not infer course-group membership or count a course twice; attendance is a separate source note.",
@@ -143,7 +143,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELT255:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:3932c5ca8f4e655f7e03970efda8fc7c86681150160234133337a2c3c05a2d24",
+      "expectedInputHash": "review-input:v1:a6c21d72200b5c67ad0426c2893619fd2eb2458e0245f560b9756c7225e17c0e",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -151,7 +151,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELT256:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:de02cc8ad09d964f34b90cb6fc188bf11ef4c56ea26fd9afdd214b737eb3b192",
+      "expectedInputHash": "review-input:v1:e9b10fbab29b3eb054ac6f987832229ac08d40835f0b33e9cb512cf264c23ac3",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -180,7 +180,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELT374:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:0de9f0e085f1cc64f294b0bcdd60b97dc6a1e508b48e72abb37181d75b260de6",
+      "expectedInputHash": "review-input:v1:0248bdcc3ad17c6a738be7252953fb470100749ed7f1241d160176b973e84dc7",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -188,7 +188,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELT375:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:0d06e0ca8ad0374a6f1fe80536b958321e0c5c4fd0dff4627e224c4148cb9885",
+      "expectedInputHash": "review-input:v1:de752a7d4f063a8d58a1eee5c5f3f5fc2d323be1d4163bb433bc41099e0c997d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -196,7 +196,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELT376:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:08754e28b2be0d8ae2c220406d32d9d92140242b25d7491f06995b51ea68b3ec",
+      "expectedInputHash": "review-input:v1:8d063f8ff573f2741acabf4eb2f1cbcbd99a9d1b6bf711f23fc8f9b23662334f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -204,7 +204,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELT379:section-743fb3d4d571",
-      "expectedInputHash": "review-input:v1:52f90247453c1213429e75a0a901cc8aa1a1b82febaee7bea20a327b7f5d0428",
+      "expectedInputHash": "review-input:v1:eaea23bea5ac1807e7bcad382fc23bdf603282c9e102086b404bb8b8c31474f7",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: followed the remarks cell from the same PDF row. Levels 1 and 2 compulsory literature courses are required; exact group membership is not inferred. Full remarks evidence retained under parser contract 2. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -212,7 +212,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-english-language-and-literature-part-time:ELT381:section-0c37580e716c",
-      "expectedInputHash": "review-input:v1:42bc021cc0212903a6b704e28602baeaee19990f6324d1b0b2c6cd7e613e02b0",
+      "expectedInputHash": "review-input:v1:3f773bdcb182323acdefd95946d230ab1c31e5fd2b3d68711f3977b4570fd109",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -232,7 +232,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-sociology-part-time:SOC307:section-c50085dd0c2d",
-      "expectedInputHash": "review-input:v1:1a6c7b0a881398f48bad14adcd92b3ce1090c9011c9d6c2c180eb5305d03a7dc",
+      "expectedInputHash": "review-input:v1:e89e22daca818725502901e9b5bce4ea32bc304da50b7a35747897e91bbda8c6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -240,7 +240,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-sociology-part-time:SOC309:section-c50085dd0c2d",
-      "expectedInputHash": "review-input:v1:274904340b157c23075f66625eaa7f9777a9346d6f5891c0a2c1dc68d8939225",
+      "expectedInputHash": "review-input:v1:0331c4bdba5133a682716bee907c1f9e06aa38ef55370a92f0d586913b9dc0a6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -269,7 +269,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-translation-and-interpretation-part-time:CTI204:section-3f7c8a08f432",
-      "expectedInputHash": "review-input:v1:9f7a057524b33171df8256594a41984d165b10ee27500b53106c3e75aed57d2d",
+      "expectedInputHash": "review-input:v1:233548b8cbe09ae3dd68cb55b0b164bf2575dff9fcde87263658fe1f97951196",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -277,7 +277,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-translation-and-interpretation-part-time:CTI205:section-3f7c8a08f432",
-      "expectedInputHash": "review-input:v1:345305dc5b979e8612827557a28d03ad4b6a5fbd73de4395e6b7cbaee1077e07",
+      "expectedInputHash": "review-input:v1:ad836b506f0bbd1e59acbe34ab0da70ad4a0685741ee16d2238c87060ec59ea0",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -285,7 +285,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-translation-and-interpretation-part-time:CTI207:section-3f7c8a08f432",
-      "expectedInputHash": "review-input:v1:ea101b976c82a7dd96c842598fde3587fc571075be6b9a0d2f6396e5b7e5cda3",
+      "expectedInputHash": "review-input:v1:1cf23a1f399734b6127a6d29e8ec9fb3e5f4c2c5dae6547a3fae462411acaa4a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -293,7 +293,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-translation-and-interpretation-part-time:CTI215:section-3f7c8a08f432",
-      "expectedInputHash": "review-input:v1:f79c7d40b5efacba0004ba2b2504e7c1f076cdc944e67d4f14843546b0f8e50b",
+      "expectedInputHash": "review-input:v1:6b69913e19c8f5337b2356debae166b6806c90a96e55ea231ed8a1b879b16a17",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -343,7 +343,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-translation-and-interpretation-part-time:CTI305:section-3f7c8a08f432",
-      "expectedInputHash": "review-input:v1:2f1516cad35cf7dc80ec26dfb9db777fdb711ae2b2797fa8010f702148c26402",
+      "expectedInputHash": "review-input:v1:e7ea112909374c46429ad4d75a9762b60d9611c1d5f453e6266df3084b7c4055",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -351,7 +351,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-translation-and-interpretation-part-time:CTI321:section-3f7c8a08f432",
-      "expectedInputHash": "review-input:v1:6687fde01f63e28dbab3c9db2a9a69e013ed9806361d990781e4b4ac59c15ee1",
+      "expectedInputHash": "review-input:v1:fbfa1f58032068885152fd74dbb1415d2085a7436bda5371764edeac03f6ad20",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -359,7 +359,7 @@
     },
     {
       "ruleKey": "prerequisite:ba-translation-and-interpretation-part-time:CTI388:section-3f7c8a08f432",
-      "expectedInputHash": "review-input:v1:b445c9b482b8a6ba6f5c8fe5ae5300d36da6081b1f2b743d9b5ee878d498cbaa",
+      "expectedInputHash": "review-input:v1:39e11bda730f54c7b5f34609286bdace5d25ead859f1f7b4eab09c4fb17352a7",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -544,7 +544,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-accountancy-full-time:ACC493:section-5f2c6f44ed49",
-      "expectedInputHash": "review-input:v1:82d2c361e3889983bbe1ecefd17c3223e5671e25180e967784bdd1e37e56b7b8",
+      "expectedInputHash": "review-input:v1:3d913ba304b1eb9f4b4367a14d1f91ab16b408a570f3d4f563709c886d270d26",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: The 110-cu completion threshold remains literal. The paired course is suggested, so no mandatory or prior-completion relationship to it is inferred.",
@@ -552,7 +552,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-accountancy-full-time:ACC495:section-5f2c6f44ed49",
-      "expectedInputHash": "review-input:v1:00f84b792b615a3637378d29f68b726967be0afa4f428d4f70b616ddd40fca98",
+      "expectedInputHash": "review-input:v1:72d51bbedcf13b7d001648b06b308c07df32b4fef127d24c2d494b7980300dc6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: The 110-cu completion threshold remains literal. The paired course is suggested, so no mandatory or prior-completion relationship to it is inferred.",
@@ -826,7 +826,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-accountancy-part-time:ACC493:section-5f2c6f44ed49",
-      "expectedInputHash": "review-input:v1:dc812946c4050f23ed785edb339998b8b3e725f0b8b9cc264188060e139c35b8",
+      "expectedInputHash": "review-input:v1:39cb9046c2daf6e6f024133838fcbd6c766ec4a2b5a566240d9b8f348a421d9f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: The 110-cu completion threshold remains literal. The paired course is suggested, so no mandatory or prior-completion relationship to it is inferred.",
@@ -834,7 +834,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-accountancy-part-time:ACC495:section-5f2c6f44ed49",
-      "expectedInputHash": "review-input:v1:9c0764d19b9f706b8a2d8f7f3269431d084c8484fc10f639201a32f57e27e601",
+      "expectedInputHash": "review-input:v1:2ad4325adfa89ace600a6f1eb9c9bc05b648566c9dbc8334691ebb84c3d86731",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: The 110-cu completion threshold remains literal. The paired course is suggested, so no mandatory or prior-completion relationship to it is inferred.",
@@ -1095,7 +1095,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ACC353:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:46e446f8fc000806c5240868f31e374424a0ff3572b1073bf1342092a1678c58",
+      "expectedInputHash": "review-input:v1:df30eefd91f69824e5c1599e27fd0bdbd551e547c4a99fdd986a2a0d77bbeee5",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User clarified 9 October 2026: ANL303 is always required, plus either ACC201 AND ACC203, or ACC202. ACC202 alone does not satisfy the requirement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -1167,7 +1167,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ANL305:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:9e603b1bfee7d1e1b42a721cdade1e6a0ef2821dddedb6aeb983598f4079e4ca",
+      "expectedInputHash": "review-input:v1:18303e0990beeea7f4f6cd75eb267bbfdf1f8ebd304e61defb93771a4724043a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -1205,7 +1205,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ANL312:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:c084ed261fc4dba29d28530a61db1ec5d2381b0e2933a027052007b9adb6e183",
+      "expectedInputHash": "review-input:v1:50e8963c5e2ba10c83255e3c618df1241f2d0ebf6a1844e9bf838eacbd4466fb",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent enrolment is not evidence of prior completion. The complete credit, track and enrolment conditions remain visible as remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Attempted/taking together and the explicit co-requisite remain enrolment conditions, not completed-course requirements. Recommended study order adds no edge.",
@@ -1258,7 +1258,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BAE103:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:89ae95208780f4853c8dbe68631e40c465c51a351b8968a2497d7e2fc8eaa2f8",
+      "expectedInputHash": "review-input:v1:9bf78e3cc3a1514fd12f31718cbfc2cf9ea4cb18f8d5bcc4aafe164ad98d17cd",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit visual-art qualification/training requirement remains literal. First-year advice and exhibition details do not add prerequisites.",
@@ -1266,7 +1266,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BAE201:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:c010efb3bfda6db9bbdb2b33fd6fa666d1603b2d734a227868a593a4fc2a2c5a",
+      "expectedInputHash": "review-input:v1:0259a5f3a7b1e9c5236976a5cbdd589519758ad1025b2c87f91904c8f056cb5b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit visual-art qualification/training requirement remains literal. First-year advice and exhibition details do not add prerequisites.",
@@ -1274,7 +1274,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BME107:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:15bd6b20ee66180e2e75b1f576c468100c256438eb312cc2e709a2716f04c704",
+      "expectedInputHash": "review-input:v1:11ac2cc4f5f325f06228f855003ed1be2a6706be911897a6ab97d24cd4358e52",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -1282,7 +1282,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BME108:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:7e6eb2a800e232d5733751e1832562db31c787d0e0c4254c1532eefd4a463f10",
+      "expectedInputHash": "review-input:v1:f9da63d9bf074b356df419584c342869aa4050921d0d0061b1369b763ddeb632",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -1290,7 +1290,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BME205:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:0470c6ca9f0522d846ad194d78911c6042bd9355c120b180e0a014f03c12d39d",
+      "expectedInputHash": "review-input:v1:ee97b6301e00634e8c1bab71e964fef6f561f571d8fa6204e4dadb4687c9eec8",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -1462,7 +1462,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BME352:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:296c9e0c8c6fffa763d9f72b3fe929bd5b3676a50aaadac324ffd402db8a7f48",
+      "expectedInputHash": "review-input:v1:471f5fc7d0993dbe6bd5dc73f9765d545114503bdb74dba027ebba3f46a02c6e",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: BME205 is required in every route, together with either BME107 and BME108, BME209 and BME210, or BME207. The original PDF wording and spacing are retained as evidence. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -1665,7 +1665,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BSE221:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:374f388c1c15524553ec2265caeca12ddfba565f5aa3b6c2ed2056c00632ee7b",
+      "expectedInputHash": "review-input:v1:0c90d6133f185d601605f8bd52a20e6fc8ae7da03cbb7b605cd0357020a68f25",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Prior outdoor experience is described as expected. Preserve that wording without strengthening it to mandatory completed courses; recommendations and session information add no edges.",
@@ -1673,7 +1673,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BSE223:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:516b70bb83f4efd1d70825c25f666dd2b19c9f8519a08c61981c86ded18f6809",
+      "expectedInputHash": "review-input:v1:7d8495613a11c07e7221efbb9c974b987600b930784d2bef33d7fafa3e9ff372",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Prior outdoor experience is described as expected. Preserve that wording without strengthening it to mandatory completed courses; recommendations and session information add no edges.",
@@ -1681,7 +1681,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:BSE321:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:99809c259d35531d22c043c61ec4c392641a93a5c8aa6c08a113eb9025a5486c",
+      "expectedInputHash": "review-input:v1:1c3790ee25c83315692fd1f700fa17306bb8bd4f152085cbd0f2569914b051e1",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Prior outdoor experience is described as expected. Preserve that wording without strengthening it to mandatory completed courses; recommendations and session information add no edges.",
@@ -1689,7 +1689,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CCC101:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:0a238bf3af1e95838b88c477a979d50420ec0af0d04266d5d1e622b32fed7edd",
+      "expectedInputHash": "review-input:v1:149fe248020270e5dd510826c976d85f9a643ea9481dfa0d5375dd6886d66871",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -1697,7 +1697,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CCC103:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:6a0fe8f0013d104a21f41bcf1a5f3dfa903d4e893b4e49a7a1e97dceec188a7c",
+      "expectedInputHash": "review-input:v1:9ad2e0daebd7bd0e67b150b55c2cb6d316bf84e36a7fb24aa57b41740d23bb78",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -1705,7 +1705,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CDO401:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:b58c746542a9cc9e9d412a76a4198cbe450c1419bc4b700b4e8efb91cf98ccb3",
+      "expectedInputHash": "review-input:v1:782a413213feea65a66aca379d58a65b77fb0767f38a0bddd07b439ad3d3f0c4",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: The source says students should have a business proposal or minimum viable product. Keep this expected preparation literal, including the separate source credit-recognition/candidature notes; no course edge or universal cohort assumption.",
@@ -1713,7 +1713,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CET315:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:fb73707f84294b88730ac701f07625f7e5b6cc32e04d8292ca0d6b00b35ce7d6",
+      "expectedInputHash": "review-input:v1:553fe15138f9338351de96557909ec48fbf0b66b7c27d2a8fad145831eac4021",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed: represent the course route as (LAW201 AND LAW203 AND LAW305 AND LAW307) OR (BUS201 AND BUS205), with law-degree eligibility displayed separately beneath the tree. Full original source wording remains bound to the decision.",
@@ -1799,7 +1799,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI113:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:0bec277bf139fa6588714d3574e004ae6d296010e5ead522df90988f17d4dc90",
+      "expectedInputHash": "review-input:v1:540bfcd5f5efd145b966585fe96fa7939bcbb08ec8d670fdab34c3c8d8c60ba7",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1807,7 +1807,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI121:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:9533874842e2a7c3f00df33dbc7d77b242e6fb2c0359d164f6b0d8fe12520cca",
+      "expectedInputHash": "review-input:v1:69ac474c8bded2e4dd5bcf711e6487db5d578492a6b42d1bbd314850b1f4195a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1815,7 +1815,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI122:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:6451c1cbb9f49a20a66c8da3ab013a7c1c3f3fc0bfe3755a4241c440b60a89dd",
+      "expectedInputHash": "review-input:v1:964060db8bce4c778457387d98e143b09717ba98482e11a2a227142e77d106af",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1823,7 +1823,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI204:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:77b6d9bd9646f0b01ec0adac60f866cf520911bd2a3d9e3908014d580cdbc319",
+      "expectedInputHash": "review-input:v1:0d08b38cc20496bca3b5a8e711f270634076a92e2dd2e80c78aabd759b70efa0",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1831,7 +1831,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI205:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:08a8117ef637e8437e54969e0abee751c7e8a2f0ea3b32a5c681b795c9b62367",
+      "expectedInputHash": "review-input:v1:adcd45cae7e6ef890f1703e5019eff7de7d2a33c36f62e858f1b0b668706946d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1839,7 +1839,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI207:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:dbd73cc56400c60433c5dc51c917a955bcbcea95b101364da1b90c9d516806e0",
+      "expectedInputHash": "review-input:v1:ef2d199fa9342fb48a2a458dd2966ece90ae8f0c436434b00ffcfb92f29e104b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1847,7 +1847,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI212:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:4f77484249a1ba059d04b60380f2bbae2f3344b242d60387c03b7b3fdcdcc652",
+      "expectedInputHash": "review-input:v1:3a36ecdd9c0a5bda222a741ae9eec098b0e404e20a1c2275377df7e8ff580875",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1855,7 +1855,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI215:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:9e9f3d6593b658f659dcaf5b6d189d6a17c9ad433b285bbc981534d33c534435",
+      "expectedInputHash": "review-input:v1:02239350508011c2543193d8fe51c283f9ec6dceb05e72726bacd6fbdbecb49a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1911,7 +1911,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI303:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:ae3bb8ff20676a21d06bd1f796e71c9606cb21e4839f8e1aeb6641d3ec5295bd",
+      "expectedInputHash": "review-input:v1:3152520b7e84a0cd92976f4a1d5643aadf704173e4498fab35abfb72bcfe06c5",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1919,7 +1919,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI304:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:6a2bbd7595b3693fc8af10c435006d15d05cfaad4349a382306289bf167c3ca3",
+      "expectedInputHash": "review-input:v1:b04e7d67bfa358ec0167e28a8781671de45ca4859eace39011ae7b429eeaa833",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1927,7 +1927,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI305:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:843afebd1fbdf0966335df2925fa0e0b8cd46d14ed1e1ef353c8cb1d6135443f",
+      "expectedInputHash": "review-input:v1:a4c6a88db1d6061404fc697834cd116080957a8be34502751167638caeef7925",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1935,7 +1935,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI321:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:8d5aca518dc83c509c6f29bd0f4078289d3d7b38bf205f901737765ff8d6c446",
+      "expectedInputHash": "review-input:v1:d4ce34d85400cc5656be8b39479f1dc221a01cb201499885d4f6aabb64c7bd1c",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1943,7 +1943,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:CTI388:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:6d60baca4ca4fbbd4daa583693f67574201335eaf95bc536d6a60a605a4febe1",
+      "expectedInputHash": "review-input:v1:f63c59dbbf11d96348e8d412e9f59229365938fef7d821f7e4f17258e6f8fbb5",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The explicit minimum Chinese/English proficiency or school-exam grade qualification is retained literally for this source programme. B4/pass and A2 source versions are not merged or treated as equivalent.",
@@ -1951,7 +1951,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:DSM101:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:0de16f4c3131860680ed96680da9262a2b38490c4263fb08becbcde1174f8ff2",
+      "expectedInputHash": "review-input:v1:422ed68eeec8991de46a4c1595d8e10a26be9f3e99e58aa8a6875f72706d9376",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Explicit programme/audience restriction retained exactly. Do not turn excluded audiences into positive prerequisite course requirements or expand programme abbreviations from inference.",
@@ -2287,7 +2287,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ECE364:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:add2b67aa7827caf7e888531eacc552820ad9c3222f8596df2192d451d1b2668",
+      "expectedInputHash": "review-input:v1:d6f230cd8a5696fdf8cbfab32b92ecb53e95ab9bc32007a0e704be97982b6787",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -2295,7 +2295,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ECE366:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:e0b4e9230187cbcdb8bfc075ad18c9af45e6aeeb208b5f1aced7a9c60bdc2615",
+      "expectedInputHash": "review-input:v1:99202b99071224eae2a20558d0bfab4471482b67ee5db21de84efc30d37c5b4e",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -2303,7 +2303,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ECE370:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:dce73c23c8791855f8ffd6ac1eafe830ac6a071d65004af7874ba2229e73b93a",
+      "expectedInputHash": "review-input:v1:23b7e2be5b10f7eef0861543e06bd7a775defddfb14d9106c1ad78725e6a9a63",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -2311,7 +2311,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ECE372:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:d5e1294b242303935bc0d0584ab0d1724d2e3803a28e4507120f26012cbf4fec",
+      "expectedInputHash": "review-input:v1:2badbcd0622f59dd9d152a89d4a268763ff0d42f82711f0531d8717f785e6bdf",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -2376,7 +2376,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG213:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:94932dac5124181ec31629395e937b4ad2a8a70fbd847970dee9e7028c8aaae0",
+      "expectedInputHash": "review-input:v1:dd120fc06654e25c086b381f57dda8e6c745c3b15e7192ef7d6a83c24216eef6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2396,7 +2396,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG254:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:e93acb34cacbbc9abf184e7e833485b52fec4f5872e5ca7872835924a5e9f3ed",
+      "expectedInputHash": "review-input:v1:0d518b9e8e6185285ba848f740c429c9d7d0114178db5ca8b2ae098fc0f5d158",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2404,7 +2404,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG352:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:10c73b0764eed6f98a333f5f6dc0dc2cb019c1f31bc5a4d357f05a4f32f693fb",
+      "expectedInputHash": "review-input:v1:18165aba85267e798b0b0b369515661d54766af86b913e7dac930c7d8c24e74d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2412,7 +2412,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG355:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:ed08613c75963e4e7b15e3181c1faf967a30a2068583a5a184db908c48513856",
+      "expectedInputHash": "review-input:v1:2fde5d3da24fe299a75745b8d8e507874cacc75bf4984d0630ba8a43bf21fc4e",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2420,7 +2420,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG362:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:2b306ab9d4df81c7f383501a14f66e495e95dde28545927b212471b031d5f366",
+      "expectedInputHash": "review-input:v1:e4646d16897b8bc583003f4ffdc9b1e21345d7a8b7dfaa7d8e3362261e6e19a5",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2428,7 +2428,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG364:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:e38ce0843674420771b34a2656b2736d8fc5e9857a6c08f14d95bf0c88e3a4e8",
+      "expectedInputHash": "review-input:v1:45a02eb0be8615b78483932bd7005167a0fde2aa8c46bebc25829423a4ad587a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2436,7 +2436,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG366:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:1cf0cdcb0c32f409a105554ab058ffaeabd4d49eb7851eda2a697dac7aeb2150",
+      "expectedInputHash": "review-input:v1:8c74db194e11710ad2f23e399ca87ecc0fc9e4c01d83190113d1ee418798ce1b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2444,7 +2444,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG368:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:a26ec1c1360cfb7bce350e0a1850c23ecd3eaa9c465eb9fdf11646a8bc696910",
+      "expectedInputHash": "review-input:v1:025827136dae7920f3a9879db03934bc11e2e55296e28268665fa52a0373be7a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2452,7 +2452,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELG369:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:ac18e00cfd90ebdca2ebef1fc2df70fb46867f535f05632bcb95d3b392e33848",
+      "expectedInputHash": "review-input:v1:18aa4066557b17f6e915c8363f05ae6e571023b48a370896b958d1d7e765cdb1",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2472,7 +2472,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELT255:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:bd56e4b414a6bb7e5143f10e9548da8beb96e77e79c1438b6999eff05f1074e1",
+      "expectedInputHash": "review-input:v1:d42af681e48f5aa4c3cc35ef6df03b5bd440f5a130068642b1ed253caf584c8c",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2480,7 +2480,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELT256:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:4c50a8b71786d7a9e7ce68f4c4f5ce3ac3b8d17ae1b64ae23d0bec1b50dd97b1",
+      "expectedInputHash": "review-input:v1:c205ce88be1bd8edb47c6876650af824411bcb3d81ed8d359b7df620c61204ef",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2509,7 +2509,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELT374:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:104b11907adccae6a1e0845e1e3d980cca0f01c2e13e916ef54d8b2d0f845b07",
+      "expectedInputHash": "review-input:v1:1493d44c9a0f3ff8cb4b4777a83f1df9f64f618c3876bcce8c6ad61aee7761c6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2517,7 +2517,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELT375:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:0af828798fd88ada095926daada507f6dc1460a5de73622ba056e617c0c52bcf",
+      "expectedInputHash": "review-input:v1:fbb3e0145d4f0f25afb8dc25fb24dca656f3c5d359767e6bb333451629e5dea4",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2525,7 +2525,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELT376:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:833f1de410f9bbbff673d1b57f7719dcf73df78f0bc76d53dbb3ef9cb82905d2",
+      "expectedInputHash": "review-input:v1:e4e60e1339647444d5aa24f792349b73bd7b604c394ba9299531cbf56282cf7d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2533,7 +2533,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELT379:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:936abbdec53cef62ff72c529ac8e3eb343d6ed2552befe12a6ef18f9bf197252",
+      "expectedInputHash": "review-input:v1:47fab62dd234807b72ac0f6178a9d23cfe22e49351f57ac03585af9db181a2dd",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: followed the remarks cell from the same PDF row. Levels 1 and 2 compulsory literature courses are required; exact group membership is not inferred. Full remarks evidence retained under parser contract 2. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -2541,7 +2541,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ELT381:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:afcbdc85a5b949d5970e3968a533bc2240190a66d0effab30f8b1484784845c7",
+      "expectedInputHash": "review-input:v1:45f12170b6f03416d60798b65bc26ed0ef12e8dbff29547eef7b6e6957c45701",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -3057,7 +3057,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:FLM366:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:dab357c0dbfddbed6484a7bc955d13530368a8c1ec1fd8f98eb85bf25be62fad",
+      "expectedInputHash": "review-input:v1:dc346fbe84fab3a5a54fc40e9726d07abe3d64f89afd14cabb8f9b4fc0265ab2",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Contacting the Head of Programme before applying is explicit. The withdrawal consequence confirms the entry procedure; keep the full source wording without a course edge.",
@@ -3125,7 +3125,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:GSP177:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:86e465732cdd59dd2488562d5380ef516439487cc72621d91593c034b93ff1ff",
+      "expectedInputHash": "review-input:v1:c33ba6cf00f1ce374933962d2f158ace3e1e21db5e16d34e3b8c4dda19852eee",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Explicit programme/audience restriction retained exactly. Do not turn excluded audiences into positive prerequisite course requirements or expand programme abbreviations from inference.",
@@ -3133,7 +3133,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:GSP178:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:50a2d9bec838541673c3b6d1dbaeeb04ce659435f1bf91fb2c054e77da578897",
+      "expectedInputHash": "review-input:v1:e0f85b79fdbac68b040a73c99689fda347b22e06199a3c499fdd182046cc2ec1",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Explicit programme/audience restriction retained exactly. Do not turn excluded audiences into positive prerequisite course requirements or expand programme abbreviations from inference.",
@@ -3141,7 +3141,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:GSP390:section-0e6de3c2b62f",
-      "expectedInputHash": "review-input:v1:1247a9820141c77334423e733db0c4c483818a05683ac6ccc8951412f4f4ce93",
+      "expectedInputHash": "review-input:v1:811df9eba980bdd290f167b3fc142e796bc8ce776d389074ca3537cda167e4e7",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: At least 50 cu from more than one discipline remains a compound credit/discipline condition. Course or discipline membership is not inferred.",
@@ -3149,7 +3149,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:GSP401:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:de760f1f12edaa38b5c47e8af55922ac9fdadebc0cd3ce1ac8ef4060a9e3d14e",
+      "expectedInputHash": "review-input:v1:96aa2de0210ded8ce7fdff73346af1702a4d2b36f572226ffe49d4f4215dc228",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: The source says students should have a business proposal or minimum viable product. Keep this expected preparation literal, including the separate source credit-recognition/candidature notes; no course edge or universal cohort assumption.",
@@ -3157,7 +3157,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:HBC213:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:6b5b66ff4590bd0a4a38ed42de4cbf94295e88b37afa5f935c761057129b959a",
+      "expectedInputHash": "review-input:v1:b3d0012abbc1501920996af4cefae79aa3755d87f2af945e3c2b11793e089e55",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed: retain the complete original statement as prerequisite remarks; infer no compulsory course grouping or alias relationships.",
@@ -3325,7 +3325,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ICT337:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:462c3c77af02acee11cc026e3d2b3f5ca27528a2484828223d2e1ee9a0570549",
+      "expectedInputHash": "review-input:v1:328bea352ffb92eaea586f329a1d1debe84c20d71b63498221ef6099ef7bacfe",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -3333,7 +3333,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ICT338:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:1696e8fde5cc7127225f1cb7dff74ff81ed4064fc750821e5b830b6c0a06fc6a",
+      "expectedInputHash": "review-input:v1:3162bf812772939a5ecdb82b1caf4ae2732e6a0758f23323b36c00abf3d1ae5d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -3470,7 +3470,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ICT370:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:15ec1b4860d0d57b100465c3f0847187c0224303301c017994f82c21513f2693",
+      "expectedInputHash": "review-input:v1:b09b6f9c29f8fafe91a6222be39e4784c82e277d2f2eca1e3e726744a38cc19a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -3478,7 +3478,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ICT372:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:6b97ff454814ec191903f7da2be8e960bab19f3ebbe95ef93ff09ab6385742b3",
+      "expectedInputHash": "review-input:v1:d6d4599fbb2451d94e751ab84554faaa904b4318ba59842f0d3924fa2672c1c0",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -3486,7 +3486,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ICT374:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:3809d5241e6246c5239a89e1765e29d97a810d215837e79c60dcd3ac8475e037",
+      "expectedInputHash": "review-input:v1:53a19e093bf8267309a9d581149d89dd7650dcfddf441b8ba061f13f3106ef6d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -3494,7 +3494,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ICT376:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:7b959a9f5e2b4bef00ebeffcb6d73dab37c24cab4efa018ddde03d4d2e1bc2a9",
+      "expectedInputHash": "review-input:v1:00af06cc3c7e16fd42409887377152386ade784f11e19d893e03346c665b0b14",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -3502,7 +3502,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:ICT378:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:325ded5375a377eec9acc1857649684212c919fea2133e6b3b564d2567c98af8",
+      "expectedInputHash": "review-input:v1:3222ee6207c5a2f96048b2827014f3ff1e5039e8cde074c4149f5ffae7aa1e3a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -3510,7 +3510,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:MKT373:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:ddc6da912454f03570f09eceaefd1e8adbb06b243af309aca5eb4a45f30671c8",
+      "expectedInputHash": "review-input:v1:2abc6ad55aa0418b4efdbdf5a350dad2e0fcbc3a2a8a4ac0eda4fd24726f80e2",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Basic video-editing skills and self-evaluation remain source preparation statements. No named course, experience threshold or required assessment result is inferred.",
@@ -3518,7 +3518,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:MLL181:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:81ae321901aa81066e50d3603cf4fa056381bbe8a21fc0d0ad07935249a27f23",
+      "expectedInputHash": "review-input:v1:8f1599648abb104e84cca6bde2f8ae51254f740224c6c64e2dbf9cd7ffc57afb",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: placement, prior-study exclusions or CET exemptions affect applicability. Keep every clause together as remarks; no course-only alternative is substituted. Full remarks evidence retained under parser contract 2. Source remarks review: The placement-test entry check and exclusion of students with O-level Malay both remain literal. Neither absence of a credential nor a placement test creates a course edge.",
@@ -3583,7 +3583,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:MTD307:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:72a3cf66996981c4fdd728abde51845edeb658276e5ce21615c2b9ceacd29586",
+      "expectedInputHash": "review-input:v1:3c848c63306d7e8231df81b1d9c4703a223bed9f8a6d04dee6b29223c60e7a81",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -3591,7 +3591,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:MTD309:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:ab7207f9d9adbc5257db6ea4ad984632c5ff743976b5efeaca4fa0d88a33fc90",
+      "expectedInputHash": "review-input:v1:df621884eff3afcd2aa399c18223f3aaf546172cc7c3d714700bbe1b24015ecf",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -3599,7 +3599,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:MTD365:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:294b0d79391d1fff9428ff73381261fb7e4067ac79b1f196b15e7efc04fc8cb5",
+      "expectedInputHash": "review-input:v1:c8621c49c07892490c91c48bb445cd647eb155141c56f44c717b36a32e7fa8d4",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed interpretation, 9 October 2026: MTD301 is the course prerequisite. Display “Video production experience is required.” as a prerequisite remark beneath the tree, without creating an experience node or reverse edge. Rebound to parser contract 2 after verifying unchanged source cells. Source remarks review: The previously confirmed MTD301 requirement and required video-production experience remain exactly as the user specified.",
@@ -4166,7 +4166,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:OGP171:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:5ff5ce51be112d30ab9a185e931dec150790f1afc4c8920bff0d34874c13bcd7",
+      "expectedInputHash": "review-input:v1:107d29d7cc5fbec40ae9197865bcb5f4ec954b79e8d67339bdba722a24f66b91",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Language qualification/previous-study conditions and the stated CET exemptions remain literal. Exemptions are not silently removed and no course equivalents are inferred.",
@@ -4174,7 +4174,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:OGP181:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:b09d0db1ed51cf90605a4ded798e73bb43cb696a51a316dbcf517c0f7707a5a1",
+      "expectedInputHash": "review-input:v1:80cf12d53e9b09ee5a040667596e26d3d964194eebffd236fce0ff82dcfbd2c2",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: placement, prior-study exclusions or CET exemptions affect applicability. Keep every clause together as remarks; no course-only alternative is substituted. Full remarks evidence retained under parser contract 2. Source remarks review: Language qualification/previous-study conditions and the stated CET exemptions remain literal. Exemptions are not silently removed and no course equivalents are inferred.",
@@ -4182,7 +4182,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:OGP281:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:6027330438e7f09b4f9065daa7cca68b407f71b4b926d2ec3575ea569c6d904f",
+      "expectedInputHash": "review-input:v1:593bff14a94f94ef876c145402b3def6b0d572fb2e434677c3fb750dfbf1002f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed: show OGP181 as the course-based prerequisite route. Retain both the source placement-test alternative and the full remarks, including CET exemptions, beneath the tree. This does not remove the alternative entry route from the displayed information.",
@@ -4198,7 +4198,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:OGP381:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:8dc9648a753c1c7bb66c0a43a0dc042ad5b8c326e3abe56e01e908fd45c2805c",
+      "expectedInputHash": "review-input:v1:f7221f98c264bdbf361589337802dee8e504bf16f1f0c52ca2ca46ccbdf7fc50",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed after clarification: use OGP281 as the direct course-based prerequisite, with OGP181 represented by OGP281's own tree. Do not add OGP181 as a direct OGP381 prerequisite. Retain the source placement-test alternative, full remarks and CET exemptions beneath the tree.",
@@ -4214,7 +4214,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:OST363:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:2ce3f66e7d5feae4307310d25a4257d95dff39fc4f3ecb1569c8fd18975c7443",
+      "expectedInputHash": "review-input:v1:17df9022175fdf7d672887acb3da4795129e21ad4da9918468ceba14322d11b5",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: OST165 is always required, together with either OST362 or OST361. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -4319,7 +4319,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:SEC331:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:b76965a8c74de9fced8053abe91023f3027085d5a251d047904866b862d236bb",
+      "expectedInputHash": "review-input:v1:f8298e94bf752ba0ba2beaf9c17ea77d5a20c12cca357908cefc6294c95f8e14",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Nationality/residency and industry-entry wording remains literal. Its source sentence is awkward; do not invent an AND/OR combination or expand credentials from inference.",
@@ -4327,7 +4327,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:SEC333:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:6ae9f0ba22f35f908ce1a0bcce3aa5a2caff7f888f36c962964ec58d5b1ef45a",
+      "expectedInputHash": "review-input:v1:2b8b03ccee1e09475739119176ff0e4419568e15fee6c21c8f797c2b931f4356",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Nationality/residency and industry-entry wording remains literal. Its source sentence is awkward; do not invent an AND/OR combination or expand credentials from inference.",
@@ -4335,7 +4335,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:SEC335:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:b591c33d3544df630a8327b37317aa1f7451de54a75b613c29369ec7491cd510",
+      "expectedInputHash": "review-input:v1:1c75e29ea60dae5ab44321189ca2cc918cd7bddde0983f571653677f26927eec",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Nationality/residency and industry-entry wording remains literal. Its source sentence is awkward; do not invent an AND/OR combination or expand credentials from inference.",
@@ -4343,7 +4343,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:SEC337:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:08eae852f061a6b365ca4abc34073d38a9e857f093aeebe8a12b5ced2cbe8329",
+      "expectedInputHash": "review-input:v1:85344c3da87a3f62aefcc04ad7cb237ff53ba7adcf21448e95fcb537277be4fb",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Nationality/residency and industry-entry wording remains literal. Its source sentence is awkward; do not invent an AND/OR combination or expand credentials from inference.",
@@ -4372,7 +4372,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-applied-studies-part-time:SOC365:section-3d226fa87062",
-      "expectedInputHash": "review-input:v1:acd0c00dbc93a0a995beb2efd484fb4ac3c06c4770b182e7085ad8d4110311c4",
+      "expectedInputHash": "review-input:v1:10741237f1a03423e817ec7cf43baf8375a3329d7d3bb80a6d7fd0a31d687ff0",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The stated Level 1/2 language, literature or discipline-course group is retained literally. No catalogue membership, compulsory-course list or completed-course edges are inferred; replacement/compulsory-status notices do not change that requirement.",
@@ -4479,7 +4479,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU154:section-1edcc0f4edb1",
-      "expectedInputHash": "review-input:v1:1fc701088b9269b11ee1f5fac6f664b494222d470895f350f3f1e58aa06b0b19",
+      "expectedInputHash": "review-input:v1:d966cdea8f2e50db9bd7c8057ca21868558cef831e889129cd6e3b5a3171d25d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: dated or intake-specific alternatives are retained verbatim; a default cohort is not selected. Full remarks evidence retained under parser contract 2. Source remarks review: The course routes depend on intake/date qualifications. Keep their complete wording as remarks; do not publish an unrestricted OR tree or choose a current/legacy cohort by default.",
@@ -4487,7 +4487,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU155:section-1edcc0f4edb1",
-      "expectedInputHash": "review-input:v1:8628aa98d29a72bf27214b20cc01e1873ee9de681cf50352d1cc3c6aafabeaf6",
+      "expectedInputHash": "review-input:v1:a028d7a88944fabbda72dd1a71df7eb4cef52719234bd8e6c8a4bac78226bc7f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: dated or intake-specific alternatives are retained verbatim; a default cohort is not selected. Full remarks evidence retained under parser contract 2. Source remarks review: The course routes depend on intake/date qualifications. Keep their complete wording as remarks; do not publish an unrestricted OR tree or choose a current/legacy cohort by default.",
@@ -4495,7 +4495,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU157:section-1edcc0f4edb1",
-      "expectedInputHash": "review-input:v1:95edc4b312d3f0b8172017c6b19a1289c5c274ec0c660dc8558d1f2e240c3ba2",
+      "expectedInputHash": "review-input:v1:74babc169a901889ba572ea8881fa03715333e46d040b198cb3781c4c6653921",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: dated or intake-specific alternatives are retained verbatim; a default cohort is not selected. Full remarks evidence retained under parser contract 2. Source remarks review: The course routes depend on intake/date qualifications. Keep their complete wording as remarks; do not publish an unrestricted OR tree or choose a current/legacy cohort by default.",
@@ -4561,7 +4561,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU209:section-1874f96a719d",
-      "expectedInputHash": "review-input:v1:3155740e5179c6e5803c7cf0aaa30041465722f65e1e38c4150b3bb64d149165",
+      "expectedInputHash": "review-input:v1:2897d59331d5e6408efd47f6501c41ad8c056ac93f275bf3b0566c7418083ddb",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: dated or intake-specific alternatives are retained verbatim; a default cohort is not selected. Full remarks evidence retained under parser contract 2. Source remarks review: The course routes depend on intake/date qualifications. Keep their complete wording as remarks; do not publish an unrestricted OR tree or choose a current/legacy cohort by default.",
@@ -4569,7 +4569,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU252:section-1edcc0f4edb1",
-      "expectedInputHash": "review-input:v1:99f4c4b26e4a0e71cc60129ab57f537efd07db6c15c75d7da5027ddab9ebf610",
+      "expectedInputHash": "review-input:v1:16709bef03f01a37b1c34b2cca977aa191d04ea0fd1ce819b9dbeaa0272ec12c",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: COU204 is always required, together with either COU201 or COU202. Applied to every matching course statement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -4608,7 +4608,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU254:section-1edcc0f4edb1",
-      "expectedInputHash": "review-input:v1:3e609d276e4bbd682f32e80ebdb2e6618f81882e47d538cc6b89daac80d51d06",
+      "expectedInputHash": "review-input:v1:4aab249a97aff56b926958c96f149b0240a17cca5134f08e4da22cee491f9967",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: COU204 is always required, together with either COU201 or COU202. Applied to every matching course statement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -4647,7 +4647,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU256:section-1edcc0f4edb1",
-      "expectedInputHash": "review-input:v1:45fc2a75608f70a6a5852103b4587c4ceae4af6f5df2ef5eb11b2af0c99de726",
+      "expectedInputHash": "review-input:v1:5bdf3967c8e5ddd4fc0713ac20d0b969bb950cf7dfc5efcd7937444f0e3aa2ff",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: COU204 is always required, together with either COU201 or COU202. Applied to every matching course statement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -4753,7 +4753,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU299:section-1874f96a719d",
-      "expectedInputHash": "review-input:v1:d8e37be54e830c43c496f338da14e263f453b3efae63294b75e9ebcc8efc7619",
+      "expectedInputHash": "review-input:v1:1cb0a1a9d5d326de173d257d3f6ecf0fa690a4ec0a72faafc20ddc0b8e47481a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: COU204 is always required, together with either COU201 or COU202. Applied to every matching course statement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -4813,7 +4813,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU304:section-1874f96a719d",
-      "expectedInputHash": "review-input:v1:7674cdc6350444bb1f3c694951fc93058967c06154ff1c6f604c811c261fb2e5",
+      "expectedInputHash": "review-input:v1:84bd32497e8caf9b42a005b4ddd18e9126ba9769c166519194fac67181cb4e31",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: COU204 is always required, together with either COU201 or COU202. Applied to every matching course statement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -4902,7 +4902,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU356:section-1edcc0f4edb1",
-      "expectedInputHash": "review-input:v1:e6bf4caa307cc8f52763e4ea66564cfb0dcc430a915c1c88e175ad30389a2975",
+      "expectedInputHash": "review-input:v1:7a19d3e567b1ff606dc6949a23e29d48010821ee0f88173e176a25c7241413b5",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: COU204 is always required, together with either COU201 or COU202. Applied to every matching course statement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -4941,7 +4941,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU362:section-1edcc0f4edb1",
-      "expectedInputHash": "review-input:v1:efa234394741cbd09059b8de8d56beed0879524e4dba5941d444d124d43530a1",
+      "expectedInputHash": "review-input:v1:81ff79b7960a1dcef35e427c1bd3fa60a35f2f19617622fa210f44385ac99cb0",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: dated or intake-specific alternatives are retained verbatim; a default cohort is not selected. Full remarks evidence retained under parser contract 2. Source remarks review: The course routes depend on intake/date qualifications. Keep their complete wording as remarks; do not publish an unrestricted OR tree or choose a current/legacy cohort by default.",
@@ -4961,7 +4961,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-counselling-part-time:COU391:section-1874f96a719d",
-      "expectedInputHash": "review-input:v1:bb1810cca4887f6620f4e843fdf6029be8c66a5d3a5c459672fc80657d873740",
+      "expectedInputHash": "review-input:v1:af408260aae261b51cf0044ee5ba5f35b25b95a23166f07e1145f972ddff860a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the programme, cohort and date qualifications exactly; no default intake or universal prerequisite is inferred. Source remarks review: The course routes depend on intake/date qualifications. Keep their complete wording as remarks; do not publish an unrestricted OR tree or choose a current/legacy cohort by default.",
@@ -5028,7 +5028,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-and-chinese-language-education-part-time:ECC399:section-263839066667",
-      "expectedInputHash": "review-input:v1:3bf9f560d1f63e2dcb17829365d2425924d4d76d9ae94240b8bb2e3c6f93d34f",
+      "expectedInputHash": "review-input:v1:45d05eaa6a92ede425c87072db4753fdeae4a695c7add646ac026dcfc99a6d15",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: The Chinese statement requires 110 credits including university common courses, and the remarks specify the final semester. Preserve both clauses literally; no translation or course membership changes the evidence.",
@@ -5066,7 +5066,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-full-time:ECE364:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:230dcd98b6108a34188f246934d19d72e881077a2222a46ea7f4d99da4e08eb0",
+      "expectedInputHash": "review-input:v1:65b2bbd4fa8a4e59fbbb527e4d584a9d505efdd67f8e7a27aaac26c807074213",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -5074,7 +5074,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-full-time:ECE366:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:89e49a02cfb9155fb37f76c2a5f8df07977d600ae76007940b2c540fd22d929e",
+      "expectedInputHash": "review-input:v1:61f7c61064b9d152555bef089f215b2e385384a30183c9f2ecc6a24db68bdfc9",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -5082,7 +5082,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-full-time:ECE370:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:0e3b7e41f3acb45cb09539825f2d7419d957b0e48e066339f486f6a984cdb455",
+      "expectedInputHash": "review-input:v1:4ae952d86eb7fe59820fa88a3335576cdbd22176429248bb7b129d63d4a3c6cd",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -5090,7 +5090,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-full-time:ECE372:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:6c471d0b769d8a7a4461459e62c06084d697441d7ea57c29cf2cb12ab35edf29",
+      "expectedInputHash": "review-input:v1:a34ca8f5bb0439815175b6383afee8452fc294ab236263bc8629f3664457172b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -5110,7 +5110,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-full-time:ECE490:section-0fd9d4a04752",
-      "expectedInputHash": "review-input:v1:887b97aaae57f25fe632dfe7531a286e5a4138a1746e05b78aedbb81f469e253",
+      "expectedInputHash": "review-input:v1:811435975622fcb6e87a591bc9085f71143cf6ed3cbde4282dbdba7d2ba5879f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent enrolment is not evidence of prior completion. The complete credit, track and enrolment conditions remain visible as remarks. Full remarks evidence retained under parser contract 2. Source remarks review: The 4-year/3-year tracks have different ECE-credit thresholds and concurrent ECE499 enrolment. January entry additionally requires special circumstances and prior approval. Preserve the full track, term and co-enrolment conditions without prior ECE499 edges.",
@@ -5118,7 +5118,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-full-time:ECE499:section-0fd9d4a04752",
-      "expectedInputHash": "review-input:v1:37723fd398ac56cba2af575344ea96c2481e3a0225ec7074a1a091394c7b5959",
+      "expectedInputHash": "review-input:v1:16c9f542df0fe5efbf024ca63eb279a49d312ac6d6f95588ea62e9100d133668",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Source remarks review: Source review proposal: ECE316 must be passed. Preserve the alternative 4-year/50-cu and 3-year/40-cu ECE-credit routes, concurrent ECE490 enrolment, and the January special-case/prior-approval qualification. ECE490 adds no prior-completion edge.",
@@ -5227,7 +5227,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-part-time:ECE364:section-bd8cb5ad31e5",
-      "expectedInputHash": "review-input:v1:7b0f6b5f4faa60b39de001ce7948b241b3fef1580ee89b407880fa1d31ba49ac",
+      "expectedInputHash": "review-input:v1:1f1c732fd092fd94a680de1b1e153b0ade99195b2976f55deac044d6d8ae74de",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -5235,7 +5235,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-part-time:ECE366:section-bd8cb5ad31e5",
-      "expectedInputHash": "review-input:v1:5a0e6ad6a8ab66b754e376c4aeacfc4737b8a38f6b8a87de3fabdb71242bc712",
+      "expectedInputHash": "review-input:v1:99aa44f17533d672d2e941712222626f083c4e592d573ea1f23a0b2ccf27b389",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -5243,7 +5243,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-part-time:ECE370:section-bd8cb5ad31e5",
-      "expectedInputHash": "review-input:v1:b03fdccedf580fc2daa1c270d6d0123e84be4c1935d5ab219553442351a0d4b6",
+      "expectedInputHash": "review-input:v1:a2e4de6f802a8c761628bbefd7171f646de686830c53a22c31c20136208e6e85",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -5251,7 +5251,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-early-childhood-education-part-time:ECE372:section-bd8cb5ad31e5",
-      "expectedInputHash": "review-input:v1:4f790619a45f5b60046584ee0125d1bcd8d6c9dc49f82acac8b5e0efd1ee4e22",
+      "expectedInputHash": "review-input:v1:eff1d1baf53c9a8273eba961f72892d2b45d2b35566e98104cff46414db9e463",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Mandatory ECE background and/or access to children in the stated setting remain literal entry conditions. No course completion or employment credential is inferred.",
@@ -5570,7 +5570,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-engineering-electronics-hons-part-time:ENG499:section-7283e28f436d",
-      "expectedInputHash": "review-input:v1:3860330407a2e9b61b9ba279005267cccbadb65716a5ff61b4a42494336bb4be",
+      "expectedInputHash": "review-input:v1:b8b96de207eb378b17d5349e6362347cd5a95b87ef920e387524e09568149a88",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -5715,7 +5715,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-human-resource-management-full-time:HRM487:section-0fd9d4a04752",
-      "expectedInputHash": "review-input:v1:9540e070c59efe371d6201ad907ec94a4a274a09ce82726cb55b8d5dd391c84a",
+      "expectedInputHash": "review-input:v1:81514d8b050e9aae644238178fe80a771fb085a896cdac07dbe7c46f0493494d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -5723,7 +5723,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-human-resource-management-full-time:HRM499:section-0fd9d4a04752",
-      "expectedInputHash": "review-input:v1:11e74434e557a11be1892d9f771e8a3bbe3b2ee1a962766d136fc0da30d76869",
+      "expectedInputHash": "review-input:v1:d5cb6cdc9466846767714ca5239924148512d885853d704fa3125c034d0d12f0",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -5840,7 +5840,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-laws:CET315:section-5ca65846a234",
-      "expectedInputHash": "review-input:v1:4149606ad32208956157f5e2d5dc10e15949e30959c6c8a2ec71e203ad4c60c7",
+      "expectedInputHash": "review-input:v1:6387eab7313663845c05e121d8df96667fa1b8526a28affc8d33f4f3a87b9c01",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed: represent the course route as (LAW201 AND LAW203 AND LAW305 AND LAW307) OR (BUS201 AND BUS205), with law-degree eligibility displayed separately beneath the tree. Full original source wording remains bound to the decision.",
@@ -5902,7 +5902,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-laws:LAW498:section-f27ac16e73a2",
-      "expectedInputHash": "review-input:v1:c181f79ffdcf3ce69b202a5c7b5677beebe1fc6b6bebc38da6f8393b26ec25b2",
+      "expectedInputHash": "review-input:v1:69de7871ab5d78ee57b883cd84a138ca3eb670bcd93f0651a096407c996d4b08",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent enrolment is not evidence of prior completion. The complete credit, track and enrolment conditions remain visible as remarks. Full remarks evidence retained under parser contract 2. Source remarks review: The source says students should have taken all other courses, with LAW329 and LAW403 permitted concurrently and other exceptions decided case by case. Preserve the complete course-group and exceptions wording; no group membership or strict completion edges for the two concurrent exceptions are inferred.",
@@ -5949,7 +5949,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-business-analytics-full-time:ACC353:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:0094a838b31ced4b967ab10e435aab6df29a9791ef87e4e4babac90d8bdbe4a9",
+      "expectedInputHash": "review-input:v1:01e47472d7b224c6c1f832b575357933322a6fcd38ad28fd2e52d94d53b57112",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User clarified 9 October 2026: ANL303 is always required, plus either ACC201 AND ACC203, or ACC202. ACC202 alone does not satisfy the requirement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -6009,7 +6009,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-business-analytics-full-time:ANL305:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:f0cf3ab50abc5e82a565c9cbe329626a1f43d07965afbf9cbd3cd45f76afedf0",
+      "expectedInputHash": "review-input:v1:db85f4312ba52925f6f85b4a48c3851c4ea947567ee7e463f69263424226172b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -6047,7 +6047,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-business-analytics-full-time:ANL312:section-e0504df26f42",
-      "expectedInputHash": "review-input:v1:76fe3bbf7bcb6b68fa4b1c62563e8a9716f9c84a6985ef342418c679ed0854a4",
+      "expectedInputHash": "review-input:v1:c0f1dd7ab4533cabe8406551d3fb26dbd8a7b632980b80014d7112d504e1d918",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent enrolment is not evidence of prior completion. The complete credit, track and enrolment conditions remain visible as remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Attempted/taking together and the explicit co-requisite remain enrolment conditions, not completed-course requirements. Recommended study order adds no edge.",
@@ -6100,7 +6100,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-business-analytics-full-time:BUS490:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:b0c1e02f43cb85b6e29978f35e139c520eb237379e42d2e0cf10f497a717f2c6",
+      "expectedInputHash": "review-input:v1:3ddf6d98c39088f6f5f62acf148e9a57b3dba7060c27bcf994bcb0fdb567d2d6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -6201,7 +6201,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-business-analytics-full-time:NIE499:section-e0504df26f42",
-      "expectedInputHash": "review-input:v1:43855fa1ad0f661f9f4943cd60fdaac9067ba38bff47b8a5347f96b790aeac10",
+      "expectedInputHash": "review-input:v1:4945ec0d2b25f0af3099c76ed9270e9c89205fc21b24a92cd7cf2b0c76bed510",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -6209,7 +6209,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-finance-full-time:BUS490:section-7eab14536ee4",
-      "expectedInputHash": "review-input:v1:90ca16af1c7e228b91be1a62715f43f3686e6456984a7cffebeca698a34cd22c",
+      "expectedInputHash": "review-input:v1:cd35eb7db3b429bf4a608c7dafc89d6173409ec5af6f6c6d499b9ed57217c71d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -6615,7 +6615,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-finance-full-time:NIE499:section-3704c17dd4f5",
-      "expectedInputHash": "review-input:v1:5bd00fa3af50bc58af5ce585af6b164e35e899b60d17ab5f472642a6d7ed41c7",
+      "expectedInputHash": "review-input:v1:73086e16b87f79277bc0e5b4e09929a9d3a5759a2bcc1250e1b55c0d44e7c5c9",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -6623,7 +6623,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-finance-part-time:BUS490:section-7eab14536ee4",
-      "expectedInputHash": "review-input:v1:da6c3d4c94ff90ae44d54b08ebf16c4038adf15c6e45d8fe806c37d755b07710",
+      "expectedInputHash": "review-input:v1:306582d62797205e4be3afc1e1082683533b775c1900fb10c9419fb69d90485a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -7011,7 +7011,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-information-and-communication-technology-full-time:DSM101:section-ba84111f0d46",
-      "expectedInputHash": "review-input:v1:35076e09ff557ac9a5f63d5f59a2e5b02f91ff3c91b3086bb993b3310125c826",
+      "expectedInputHash": "review-input:v1:3cb577813447a21d57697503eac2d4e2aa7f5bdde5446233d06f5f32d2d14f9f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Explicit programme/audience restriction retained exactly. Do not turn excluded audiences into positive prerequisite course requirements or expand programme abbreviations from inference.",
@@ -7175,7 +7175,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-information-and-communication-technology-full-time:ICT337:section-bbb47c5128ef",
-      "expectedInputHash": "review-input:v1:a0a7e4d271f7210810de2226d6a685982e6b1b3898bc15b60a043d9ef4fdbf43",
+      "expectedInputHash": "review-input:v1:e9cf2d5a35f8867f37e97c039307e4a489fc19bd22566e3aae408065b812f386",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -7183,7 +7183,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-information-and-communication-technology-full-time:ICT338:section-bbb47c5128ef",
-      "expectedInputHash": "review-input:v1:feb01615900b7cf49ec8b6d42b3e913c47e2adad607df815c509d011ebcbae5f",
+      "expectedInputHash": "review-input:v1:01ade7d8608c5f6a03bd00a308e87b032989a6a9d695d3d569b5dcbc798eb6db",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -7359,7 +7359,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-information-and-communication-technology-full-time:NIE499:section-ba84111f0d46",
-      "expectedInputHash": "review-input:v1:d53a7b94ce184304d394b1d70247cc3cc1c92ed8ebcd2cc0120638aca79a8da1",
+      "expectedInputHash": "review-input:v1:2cdd2a3aa25fd7c826e6b41a9a5b933b5d0f5a2d78062eae104558302c073753",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -7367,7 +7367,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-marketing-full-time:BUS490:section-e0504df26f42",
-      "expectedInputHash": "review-input:v1:de24a8e6a8bce9da56b26271207c9123b06687c6b1b8b9a4c97a599a5f002935",
+      "expectedInputHash": "review-input:v1:f3a4b368599b37d54eb1ece666ade21813a1b7e77b171312869cde0ad5f35ec2",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -7375,7 +7375,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-marketing-full-time:MKT373:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:af8737b713e5dc4e6cea89c3523988a34576b9bddefd2589dc9b7900fa864dbf",
+      "expectedInputHash": "review-input:v1:0fc191cff7cac654bc56df1e2dec2d5e01495f5ea33042276e0cd8a8abfc6f3b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Basic video-editing skills and self-evaluation remain source preparation statements. No named course, experience threshold or required assessment result is inferred.",
@@ -7422,7 +7422,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-marketing-full-time:NIE499:section-e0504df26f42",
-      "expectedInputHash": "review-input:v1:5f2297cd09c828bf6b6f2729528c838d2c03f23bc6bdba4cf1866e815e74ea8b",
+      "expectedInputHash": "review-input:v1:b250c52b5aadc58ff9d826597471a86dcd1c47f7427f33b2200efec6d11bc311",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -7430,7 +7430,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-marketing-part-time:BUS490:section-e0504df26f42",
-      "expectedInputHash": "review-input:v1:3811feee88a862ab3803cc23a97bedf14c54e2d5beca7c5f7d02adce3e1407b2",
+      "expectedInputHash": "review-input:v1:affc6826c998a875afc8cf167d2e6263e6e144ad82cb5eee1518576a00f44da6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -7438,7 +7438,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-marketing-part-time:MKT373:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:c645597443f7043738643bbb1234de3c55e1f5d6d4cd84f0801e443eaf502cbd",
+      "expectedInputHash": "review-input:v1:be8fa4e0a8330abc75b855328b0d48406cc2e1ff9fa6895705d96877f86373d1",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Basic video-editing skills and self-evaluation remain source preparation statements. No named course, experience threshold or required assessment result is inferred.",
@@ -7590,7 +7590,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-psychology-full-time:PSY405:section-11f1ea02b282",
-      "expectedInputHash": "review-input:v1:fb1a1dc273b586d06705672c22fcde4bcb622281b4066cf8dd75a36834c50977",
+      "expectedInputHash": "review-input:v1:386f0b980ed8b572b26d4c6df3fec7cd8ae99c760c7d7c0e57b26ba6c2efe030",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: PSY107, PSY108 and PSY205 are always required, together with either PSY390 or PSY391. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -7645,7 +7645,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-psychology-full-time:PSY413:section-11f1ea02b282",
-      "expectedInputHash": "review-input:v1:5f77eeee3ab0a69675c1d8d421440a630cd3d572278b6e053f7a1c4e750f19c3",
+      "expectedInputHash": "review-input:v1:90c6a060e04464a6044217c3da70ff733366292271affca8a518daf9a24518dd",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -7653,7 +7653,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-psychology-full-time:PSY461:section-3c9cfdfb2188",
-      "expectedInputHash": "review-input:v1:852b9265d4f013d96f2a78c32cf51ed4365f3f99db305920347045542f090177",
+      "expectedInputHash": "review-input:v1:7c6bb673f03463ffa9fc7875de841ea6863bca10a38e6459d665948e2bf451eb",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The CET/ACE psychology degree or knowledge qualification retains its exact mandatory/should wording. Recommended PSY course preparation is not made compulsory.",
@@ -7661,7 +7661,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-psychology-full-time:PSY475:section-11f1ea02b282",
-      "expectedInputHash": "review-input:v1:9dcf943f8fa7803b4be879f4d6beb95411d47d3cb6d2e408e7ae5bce95d92ca4",
+      "expectedInputHash": "review-input:v1:efc943a18a45c093fccd0834b7e0500a9edcf5dba6a61877443c1c1ecfc283c4",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: The CET/ACE psychology degree or knowledge qualification retains its exact mandatory/should wording. Recommended PSY course preparation is not made compulsory.",
@@ -7708,7 +7708,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-science-in-supply-chain-management-full-time:NIE499:section-1874f96a719d",
-      "expectedInputHash": "review-input:v1:886c8ac6c1eeddaf902a5d9c16674170f1dc69985bc202864ee04396ee2879d3",
+      "expectedInputHash": "review-input:v1:3b9fe8036eafc844c2fc78fe2e1f2aac6e604c39b5aaf79558cd1eb4f5b5ee58",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -8315,7 +8315,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-social-work-full-time:SWK498:section-263839066667",
-      "expectedInputHash": "review-input:v1:bd2fb46fe6db1c2e70d572a63b41bbaa8c7228826b898e8e1612e5ddbb8cd081",
+      "expectedInputHash": "review-input:v1:2f1ea7588666e67b4e0c046cb9cec2f493dfd4c96267325edb8ee47243819108",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -8864,7 +8864,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-sports-and-physical-education-part-time:BSE221:section-022bf38e5513",
-      "expectedInputHash": "review-input:v1:96435ba2f923d08f3d3f08f2aaef174be19e3dff71cc373c2a5ba89bc40778f1",
+      "expectedInputHash": "review-input:v1:73fe2cfc88ffb743459ac3b294d90c1703b5bdbc78474eb8072487d391961b86",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Prior outdoor experience is described as expected. Preserve that wording without strengthening it to mandatory completed courses; recommendations and session information add no edges.",
@@ -8872,7 +8872,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-sports-and-physical-education-part-time:BSE223:section-022bf38e5513",
-      "expectedInputHash": "review-input:v1:497bea475aa1053573e735a04861ded6c74dbcc87a0b67d67c59e75a3e630750",
+      "expectedInputHash": "review-input:v1:343e17533d480b880588ad155f80e339262a4f8982817e40bafb97121bcc660b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Prior outdoor experience is described as expected. Preserve that wording without strengthening it to mandatory completed courses; recommendations and session information add no edges.",
@@ -8904,7 +8904,7 @@
     },
     {
       "ruleKey": "prerequisite:bachelor-of-sports-and-physical-education-part-time:BSE321:section-022bf38e5513",
-      "expectedInputHash": "review-input:v1:2230c5ccb7d135e7ec6a5c977f700d9a99ab6edac9322b73250c54dcdb68c1ab",
+      "expectedInputHash": "review-input:v1:c0b0ca19a2d354f66af5f4edb33a249d7a8ae938a740cdeb21648c5c4fe11829",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Prior outdoor experience is described as expected. Preserve that wording without strengthening it to mandatory completed courses; recommendations and session information add no edges.",
@@ -8942,7 +8942,7 @@
     },
     {
       "ruleKey": "prerequisite:beng-hons-aerospace-systems-part-time:DSM101:section-c19490eec1c7",
-      "expectedInputHash": "review-input:v1:dcfabbf6eb9d2ec3570876faf7288f65da3e4dbce19bfc1d05fbf5abda79b2f7",
+      "expectedInputHash": "review-input:v1:22e1ca9b4a484d6deee82f288898899a8d206b3b66599e98c3038afc5764a073",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Explicit programme/audience restriction retained exactly. Do not turn excluded audiences into positive prerequisite course requirements or expand programme abbreviations from inference.",
@@ -9303,7 +9303,7 @@
     },
     {
       "ruleKey": "prerequisite:beng-hons-aerospace-systems-part-time:EAS499:section-37324ca7294b",
-      "expectedInputHash": "review-input:v1:ecc8af282fee33db9700078b4d5ac41a7357d3febe30562e185f8826ad6f854e",
+      "expectedInputHash": "review-input:v1:ee2975ac3b1124d7f77b5cae496ac53729a943b2393ff5e7f608df1b1486a85c",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -9475,7 +9475,7 @@
     },
     {
       "ruleKey": "prerequisite:beng-hons-aerospace-systems-part-time:SST102:section-9e6b61e1d9c9",
-      "expectedInputHash": "review-input:v1:84497120ccf4b3bd2e7f6b62236672bbd22ab1d58fe9b3474299f2cf1e545652",
+      "expectedInputHash": "review-input:v1:7a6132ca4e0a8e01d3fc50048bc2dc1dc952c4e7a8693ac972d2df6035d54061",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Explicit programme/audience restriction retained exactly. Do not turn excluded audiences into positive prerequisite course requirements or expand programme abbreviations from inference.",
@@ -9483,7 +9483,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-business-analytics-part-time:ACC353:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:bb9834e5a7de9fa06d45e6f547e1095043d71f41e9aa1cb32441997cb376533e",
+      "expectedInputHash": "review-input:v1:20970327205533695805c652b3a25bdfd8c578484da02820b8ac35c1c5fb0c40",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User clarified 9 October 2026: ANL303 is always required, plus either ACC201 AND ACC203, or ACC202. ACC202 alone does not satisfy the requirement. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -9543,7 +9543,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-business-analytics-part-time:ANL305:section-e0504df26f42",
-      "expectedInputHash": "review-input:v1:37b3c5d0a1f18a9af6ca66bc322d205706264aaca01c0787b2763f65c4c928b6",
+      "expectedInputHash": "review-input:v1:bc82728c62eadaa4e26164832a413d55baef8a84de4b204b2a1728fbd195d822",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -9581,7 +9581,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-business-analytics-part-time:ANL312:section-e0504df26f42",
-      "expectedInputHash": "review-input:v1:b930e58aebaa8df0748b3cfaaaf1a4e91c2d167bb9a62a14254bd154b9ad37ee",
+      "expectedInputHash": "review-input:v1:cde710dbdbaf90789f988bbab64f2ba4252ff1fb51519355e03b7bb4d82d5852",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent enrolment is not evidence of prior completion. The complete credit, track and enrolment conditions remain visible as remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Attempted/taking together and the explicit co-requisite remain enrolment conditions, not completed-course requirements. Recommended study order adds no edge.",
@@ -9634,7 +9634,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-business-analytics-part-time:ANL488:section-e0504df26f42",
-      "expectedInputHash": "review-input:v1:aac7c16e5997ee5d3cdf56d9ee90f799f0a43f1be81f712dc4aabf6b7a681c33",
+      "expectedInputHash": "review-input:v1:e6870ebfdd84496db1450210d0f214d1d7e145100d2683e20200a967da54fe96",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -9642,7 +9642,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-business-analytics-part-time:BUS490:section-4dd01feca429",
-      "expectedInputHash": "review-input:v1:dea78a8489784aa8f2118960187aed777b07f7c96b467b0a4f0e0ac09886e193",
+      "expectedInputHash": "review-input:v1:25e237aba58528652085f8d71e532a4feb4d2933e9dbff22ab571a1def956989",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -9731,7 +9731,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-business-part-time:BUS490:section-0d28a7214e40",
-      "expectedInputHash": "review-input:v1:43f9a9c51adcafa05b0f1ad060c3de4de060f8902c32404c1d58217e388c6216",
+      "expectedInputHash": "review-input:v1:a95af0e898012fe8160229ac44d981fa33f7d1fa08cf7863f5521426fe8a3d2a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -9739,7 +9739,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-digital-media-part-time:MTD307:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:7cf43b7f5349b548181b38cd9d8e2323288247b6f2269692b300c533777da4c6",
+      "expectedInputHash": "review-input:v1:99e534fd01aae6413dbf9d4a7d17822b588216afb0ab03bcc07ca10d0a99e530",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -9747,7 +9747,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-digital-media-part-time:MTD309:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:804d0358b048f672eb3fe071ffea8ce41bcc32b65b8a840c86239ec5352ecb2e",
+      "expectedInputHash": "review-input:v1:f27adc73e57b60143a53f721befaa0e28dae664402aae3c97966b33fb75d06d2",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: The stated same-semester pairing and its scope remain literal concurrent-enrolment requirements. No prior-completion relationship to the paired course is inferred.",
@@ -9755,7 +9755,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-digital-media-part-time:MTD365:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:943d1c60523440a0828a0be89c5617650fd0e27825656cfc30abf6deaec55bf7",
+      "expectedInputHash": "review-input:v1:199c73306182271a873610f9d01f1fe9e639c31edf07dcb07499c71ccb85f15f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed interpretation, 9 October 2026: MTD301 is the course prerequisite. Display “Video production experience is required.” as a prerequisite remark beneath the tree, without creating an experience node or reverse edge. Rebound to parser contract 2 after verifying unchanged source cells. Source remarks review: The previously confirmed MTD301 requirement and required video-production experience remain exactly as the user specified.",
@@ -10056,7 +10056,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-hons-biomedical-engineering-part-time:BME499:section-b9ba0d192af0",
-      "expectedInputHash": "review-input:v1:7c8c8ee6ad64e27fb50387991fb826aef7745d31f20c1be6a4dce9c563e4f117",
+      "expectedInputHash": "review-input:v1:07bb60e3abc0fd9e22e554a3ee857bc66401c1c384cfba60e41dbe527641a47e",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -10094,7 +10094,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-hons-biomedical-engineering-part-time:NIE499:section-263839066667",
-      "expectedInputHash": "review-input:v1:e0b7df01901d76bfb55d950515d42f0729dec4a76b40e280fcbd90e5cd1534fa",
+      "expectedInputHash": "review-input:v1:381c0f29aa33487b1b7c1984946a09dfeadf6cc9b934c6f7520f108e0799826a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -10159,7 +10159,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-hons-information-technology-and-business-erp-part-time:ICT370:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:5a4230d6421f4e6f4c389c12d453d41c46e00b1b88d498edca3571ab03ea4f5a",
+      "expectedInputHash": "review-input:v1:820c39e1389a79bb0cc9d8779b5f1fddded94705fd3a17c96e9f85bd1ebd1089",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -10167,7 +10167,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-hons-information-technology-and-business-erp-part-time:ICT372:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:477e6e46731b2f6827b48bcc1b06611ca91ca99963d003c36439e9ee03f18f4d",
+      "expectedInputHash": "review-input:v1:90a94eea9c49c941e2fe8a9972358fab33b68bf15a9cd1d0d88c6cfe74f31ff1",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -10175,7 +10175,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-hons-information-technology-and-business-erp-part-time:ICT374:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:b13eab459e1e7cece0234d24621fedd180e8bcc6492cc8d0eb9107d8c843c487",
+      "expectedInputHash": "review-input:v1:dcbfdf91597ffaa6b70f7fd4f4eae2b228882a43194d1381d5fb91e3f3892591",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -10183,7 +10183,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-hons-information-technology-and-business-erp-part-time:ICT376:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:b9e4cf45008cdb4e534275cb2159b74cb23103ef3143ee75b299f4c6fb45f6dd",
+      "expectedInputHash": "review-input:v1:94c8acc36081dcee8c8670dd467fe99471a6ee7423f9e115b6d73e9f8de50da6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -10191,7 +10191,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-hons-information-technology-and-business-erp-part-time:ICT378:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:80af70e4d7ee7dfe88968d93cd32336a2d4c2b5c383b1e30b3f9ea9f9eb68fd2",
+      "expectedInputHash": "review-input:v1:030c2ab314557562744982276286110af16308c9fa8291a8bd434f81d115b8b9",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: a possible entry condition or assumed preparation is not explicitly mandatory. Keep the full source for review without inferred completion links; optional advice and course information are classified separately. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -10229,7 +10229,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-hons-information-technology-and-business-erp-part-time:NIE499:section-ba84111f0d46",
-      "expectedInputHash": "review-input:v1:9bbfae3f65a5a539ed9ffa35b3ce521f80dce822c1a73f0327d04bbcd3673fa1",
+      "expectedInputHash": "review-input:v1:2960ad11f279c4afd3c53e47b524bb0a950a271f9ee541feaf8b966b0a86f29f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -10237,7 +10237,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-information-and-communication-technology-part-time:DSM101:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:23350c7ab9f7f05e8ce575cfb8870cc443c3d63c2d4411b7799dc403fb1e05ae",
+      "expectedInputHash": "review-input:v1:d63cbb57e2009e2f6144fc61346beebfa3d0c0ab5a4e724b1e45e5f97ac390a5",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: Explicit programme/audience restriction retained exactly. Do not turn excluded audiences into positive prerequisite course requirements or expand programme abbreviations from inference.",
@@ -10389,7 +10389,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-information-and-communication-technology-part-time:ICT337:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:e8c9daae4365ee558d5a9a86648602d5803b4bd1999527a56d2bc36eb999d0ef",
+      "expectedInputHash": "review-input:v1:d3fbc2243c33cdaf13572062eb73bab5efd6dde166a4190472b4aa76b0577e78",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -10397,7 +10397,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-information-and-communication-technology-part-time:ICT338:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:a81bda6e475d2b968d59d84519938a2e4e092675d4a34a395100b0255fef58cc",
+      "expectedInputHash": "review-input:v1:32ab343eab8b793e4e67b0aa7e0ea096af6fd6f873a48cfd1e64a2df4fb062f2",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Background, exposure or assumed domain knowledge remains literal. Knowledge of a named course does not imply its prior completion; no course edge is added.",
@@ -11160,7 +11160,7 @@
     },
     {
       "ruleKey": "prerequisite:bsc-supply-chain-management-part-time:SCM488:section-1874f96a719d",
-      "expectedInputHash": "review-input:v1:991315ad5b06e559f4d37426e8d83df7993d6829c31047ff1515866e3a4a2bde",
+      "expectedInputHash": "review-input:v1:bea1e29756728329829d905bb31d8825ea89ff3676664a90682a8dc19d4d3a05",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: referenced remarks are included in full. Requirements differ by study mode and before/after the 2023/07 intake; the NIE499 change is dated July 2026. No universal prerequisite route is selected. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -11168,7 +11168,7 @@
     },
     {
       "ruleKey": "prerequisite:doctor-of-business-administration:DBA799:section-5378d0e5ff54",
-      "expectedInputHash": "review-input:v1:51270f0c69cd1bd3d4c09968c20419a0aeb75cb7f2279c067165e9c5a18507ed",
+      "expectedInputHash": "review-input:v1:64ecffecaa5895763d039e532260665be7ab2b732ee0cf134881a5245c43d253",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Completion and passing of the named qualifying examination remains literal. Programme timing and duration notes do not establish additional prerequisites.",
@@ -11176,7 +11176,7 @@
     },
     {
       "ruleKey": "prerequisite:doctor-of-philosophy-phdg:RSH799:section-ba84111f0d46",
-      "expectedInputHash": "review-input:v1:b6008d086f09d5d3546ed2f0059a3b82708bb4dc3df7a4bc9ee74b78bd4eac34",
+      "expectedInputHash": "review-input:v1:9926b9b307ebc846db476ae328f699a65577cfc8c589a7dd79929962f321af15",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Completion and passing of the named qualifying examination remains literal. Programme timing and duration notes do not establish additional prerequisites.",
@@ -11184,7 +11184,7 @@
     },
     {
       "ruleKey": "prerequisite:doctor-of-philosophy-phdg:RSS503:section-ba84111f0d46",
-      "expectedInputHash": "review-input:v1:9c54d5c1100c2620697820b7951c441125587fb6aae59b2eb3d880430deb1db6",
+      "expectedInputHash": "review-input:v1:54ee950eac3f38a640d3ed277704a90471b1fae78c24238411e9fad28b549105",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: The undergraduate preparation requirement remains literal, including each subject area and the instruction for students lacking statistics background. No undergraduate course equivalence or compulsory course membership is inferred.",
@@ -11192,7 +11192,7 @@
     },
     {
       "ruleKey": "prerequisite:doctor-of-philosophy-phger:HDS799:section-5f2c6f44ed49",
-      "expectedInputHash": "review-input:v1:aa98f4635f05ae6bee4710c5597a5f1659e3771773ad239dee19bff913a911e3",
+      "expectedInputHash": "review-input:v1:c981c3d1c0f475b05a68b212addb31af6e0f2ea6d5e5e6c5b44f775916f1dd99",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: non-course eligibility requirement retained in full as prerequisite remarks. Full remarks evidence retained under parser contract 2. Source remarks review: Completion and passing of the named qualifying examination remains literal. Programme timing and duration notes do not establish additional prerequisites.",
@@ -11200,7 +11200,7 @@
     },
     {
       "ruleKey": "prerequisite:doctor-of-philosophy-phger:RSS503:section-8a919e2fb13d",
-      "expectedInputHash": "review-input:v1:c8b8c6e2e960b90fdcab2fc6b440483b346e33dec488b1755f23fe6e2a30f852",
+      "expectedInputHash": "review-input:v1:0194518ab16823e098a1e0c6164deb9cc69069e860ddb1dd2d8802d8b7e73726",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: The undergraduate preparation requirement remains literal, including each subject area and the instruction for students lacking statistics background. No undergraduate course equivalence or compulsory course membership is inferred.",
@@ -11337,7 +11337,7 @@
     },
     {
       "ruleKey": "prerequisite:graduate-certificate-in-designing-learning-for-programmes:WSX552:section-583af4ab93df",
-      "expectedInputHash": "review-input:v1:1738ce44f110d732455c4b0ee8110e8f463c3dc99599e169e7dfc71bb1ec5616",
+      "expectedInputHash": "review-input:v1:d7f2bcd39a03b76c0601ec16661720f31fd4f0cbf894729374f67fa0305cc81f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The associate-faculty/adjunct-educator entry restriction remains literal. A certificate awarded after completion is not an entry requirement.",
@@ -11345,7 +11345,7 @@
     },
     {
       "ruleKey": "prerequisite:graduate-certificate-in-financial-technology:FIN559:section-9f7ae9e62f5a",
-      "expectedInputHash": "review-input:v1:5aa6040003cbe60c920d16c14cdb07486b639c48a8c2fa4303214ac3e622c121",
+      "expectedInputHash": "review-input:v1:bde532e35bcae80dda2d8247e2a8d532df6581b0ed5f2e712986e08dda915910",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -11403,7 +11403,7 @@
     },
     {
       "ruleKey": "prerequisite:graduate-certificate-in-innovative-approaches-to-adult-learning:WSX551:section-583af4ab93df",
-      "expectedInputHash": "review-input:v1:151c79327eeb4b55a512f65d92eabb2f0ac4f04fcd9dcf660003267829d89692",
+      "expectedInputHash": "review-input:v1:16768616a3cc43766a7b46bf59cfc284e5acf85d0c1d07bd0686296e4d81fc54",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The associate-faculty/adjunct-educator entry restriction remains literal. A certificate awarded after completion is not an entry requirement.",
@@ -11523,7 +11523,7 @@
     },
     {
       "ruleKey": "prerequisite:graduate-diploma-in-artificial-intelligence-for-business:FIN559:section-1d1ee7d5b0a9",
-      "expectedInputHash": "review-input:v1:fedca3de369b40d673c774edafb1674880c865a7a76b55d4f6b247f67d56584a",
+      "expectedInputHash": "review-input:v1:7a6a42c7b6d790ecddcb875cd99341ca8b8a3b58cc15ddbb9046b4dae681ff5f",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -11588,7 +11588,7 @@
     },
     {
       "ruleKey": "prerequisite:graduate-diploma-in-financial-technology:FIN559:section-9a7fdc93d39f",
-      "expectedInputHash": "review-input:v1:e49a75fee5946773bdba25b94122813c62331deb1c7ffa9dea6abc3af9b32e3c",
+      "expectedInputHash": "review-input:v1:ecf33521b4cdfe5345ba290b64435fa1c350e3e8ca8cd727d3036643d0a87806",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -11608,7 +11608,7 @@
     },
     {
       "ruleKey": "prerequisite:graduate-diploma-in-logistics-and-supply-chain-management:SCM515:section-583af4ab93df",
-      "expectedInputHash": "review-input:v1:062a6eefd23617bae5bdae360a74f2d09d3233decabb431171dfd0658629fce8",
+      "expectedInputHash": "review-input:v1:11dc7aca2e69a7dd72d4e04870e8506184c9dee1c1813ea0adadd83bdd08cf55",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -11616,7 +11616,7 @@
     },
     {
       "ruleKey": "prerequisite:graduate-diploma-in-management:MGT598:section-5d71ee892fea",
-      "expectedInputHash": "review-input:v1:55634234753041fdfa3c2164f66d60e2eeabfc5d0f884ced9971c26928c340fc",
+      "expectedInputHash": "review-input:v1:88afd65670895d24932811af969b7c5296bbcf816a33a619dea9ddf39f50e11a",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -11805,7 +11805,7 @@
     },
     {
       "ruleKey": "prerequisite:juris-doctor:LAW498:section-ee1c0a5b1408",
-      "expectedInputHash": "review-input:v1:0f16b6271eadc970a7f5ca2b86729779cdee8e2181882701e9718c8c8e52851f",
+      "expectedInputHash": "review-input:v1:08cfe880d628ab1654b1dd394f42b22201d28c54df1a03554493d26c82b1ece9",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent enrolment is not evidence of prior completion. The complete credit, track and enrolment conditions remain visible as remarks. Full remarks evidence retained under parser contract 2. Source remarks review: The source says students should have taken all other courses, with LAW329 and LAW403 permitted concurrently and other exceptions decided case by case. Preserve the complete course-group and exceptions wording; no group membership or strict completion edges for the two concurrent exceptions are inferred.",
@@ -12048,7 +12048,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-analytics-and-visualisation:FIN559:section-20e2e5a9c473",
-      "expectedInputHash": "review-input:v1:51a8c2fb81bffeaced673379c702114f2284a9496fafdf41c2de38bc0504e54a",
+      "expectedInputHash": "review-input:v1:c9791de2df921bde938a378592d2b7af6743dd5faf5bfabc449bf486fec540ff",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -12056,7 +12056,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-applied-research-in-social-sciences:RSS503:section-aefed379a028",
-      "expectedInputHash": "review-input:v1:70cb2a4902b1233f201b93fdfcc720f99e4c0bcb5e004b4cf3c92314ca15fd48",
+      "expectedInputHash": "review-input:v1:675f804fb0f07bc6cf324de0c77022206444b46d327c3648dc422e557a23303b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: The undergraduate preparation requirement remains literal, including each subject area and the instruction for students lacking statistics background. No undergraduate course equivalence or compulsory course membership is inferred.",
@@ -12064,7 +12064,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-applied-research-in-social-sciences:RSS551:section-35dea52bc60e",
-      "expectedInputHash": "review-input:v1:0a99698b712324f7d9520950fe06fe4a8ad3f923ef3cc5eee5a0a92dbb8d6a06",
+      "expectedInputHash": "review-input:v1:9d6b158bb91849af0686b2d10533d2ad533d3f184901b77b337d7598783e7f15",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The undergraduate preparation requirement remains literal, including each subject area and the instruction for students lacking statistics background. No undergraduate course equivalence or compulsory course membership is inferred.",
@@ -12072,7 +12072,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-applied-research-in-social-sciences:RSS699:section-28a299bbd261",
-      "expectedInputHash": "review-input:v1:7249cf44ed4a22a00b1e08a16697e7d3d02df783a34572eaabe365b27834d657",
+      "expectedInputHash": "review-input:v1:9ce32369291297eed42f85f152a18cc105101236706829e6352ac5e9cdfaa048",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "User-confirmed grouping, 9 October 2026: RSS501 is always required, together with either RSS503 or HDS501. The original HD S501 spacing is retained as evidence. Rebound to parser contract 2 after verifying unchanged source cells.",
@@ -12206,7 +12206,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-artificial-intelligence-for-business:FIN559:section-94007721a0a3",
-      "expectedInputHash": "review-input:v1:4b622ccd0e3088da6f3ef6742974b5b84f7a731b8f845946e202345893df95af",
+      "expectedInputHash": "review-input:v1:e49303f6aad6a1a78c2982677db22895444fea014bbbbb1dde758410f8f360d6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -12272,7 +12272,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-counselling:COU608:section-db701aaaee74",
-      "expectedInputHash": "review-input:v1:e847d52f75ef8d41e036c22c5dff353e3f9a056f0a02c92c5b672b85fe3c9acb",
+      "expectedInputHash": "review-input:v1:b8711b52d165eaa6c169b5885480e94a82250538a38055a7fdb8561bc26bc43b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: At least six MCOU compulsory/elective courses remains a course-group count condition. The repeat/HoP approval clause concerns a failed repeat attempt and is retained without becoming a universal prerequisite.",
@@ -12359,7 +12359,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-counselling:RSS503:section-5d71ee892fea",
-      "expectedInputHash": "review-input:v1:b91d7970563c2d41edb45974ba812ac6ac705ce14ede7d8ed1b0cfdc50cad15f",
+      "expectedInputHash": "review-input:v1:14c3b2a3f7f1138788fd4b1e1054c13b77a8df0ca04bf9d6e773955170fe8bbc",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: The undergraduate preparation requirement remains literal, including each subject area and the instruction for students lacking statistics background. No undergraduate course equivalence or compulsory course membership is inferred.",
@@ -12367,7 +12367,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-digital-marketing:MGT598:section-bbb47c5128ef",
-      "expectedInputHash": "review-input:v1:b65e08936a2b51b3cd162db3d39caf178599c4ef5de46074c77fbd9e8fd53f3c",
+      "expectedInputHash": "review-input:v1:9686de01dbfce107b668bd7689b64cf9fa32b5be079c63284570f18c36ade489",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -12400,7 +12400,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-education-in-early-childhood-education-chinese:ECC501:section-c50085dd0c2d",
-      "expectedInputHash": "review-input:v1:81b4cfc0674885ebe475d7350f06bb29ef010354d4365c8e215f38db4d47a686",
+      "expectedInputHash": "review-input:v1:d5fe85ff0dd5c17858e9366ad504a5f4dc0a546e11e3ce72a943306f914a7923",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: All three courses are to be taken together in the first semester. This creates concurrent-enrolment conditions only; the delivery-language sentence is not a prerequisite.",
@@ -12408,7 +12408,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-education-in-early-childhood-education-chinese:ECC502:section-c50085dd0c2d",
-      "expectedInputHash": "review-input:v1:6252682062894231a3c3da07e84e5a08a27cd31af7fa35773954b1316ae124ee",
+      "expectedInputHash": "review-input:v1:e78e2d8b4aae75e9604fe09e4d6b92a25073805b991ab5ae9257542415fcc60d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: All three courses are to be taken together in the first semester. This creates concurrent-enrolment conditions only; the delivery-language sentence is not a prerequisite.",
@@ -12416,7 +12416,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-education-in-early-childhood-education-chinese:ECC503:section-c50085dd0c2d",
-      "expectedInputHash": "review-input:v1:d1df843da3b7dcd8f4ac528ecee25948488bd98032be53a1cc4037c056ff71ea",
+      "expectedInputHash": "review-input:v1:6c9d5121b3b3dfe48784e4461098fabeba871db35973e2a3e9fe536cd66804f2",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: All three courses are to be taken together in the first semester. This creates concurrent-enrolment conditions only; the delivery-language sentence is not a prerequisite.",
@@ -12758,7 +12758,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-finance:FIN523:section-583af4ab93df",
-      "expectedInputHash": "review-input:v1:5b87ba757ce4ac4310379c97e8a22594e481ec605a1e2b008e181a4000571352",
+      "expectedInputHash": "review-input:v1:ffc9b7ff71f9a4429a3792936a36db0af4766a722c954aa2d91a50f8a1181f35",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -12766,7 +12766,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-finance:FIN525:section-583af4ab93df",
-      "expectedInputHash": "review-input:v1:bff1d93a9660c72c9ec52109e6ce8cfb82c904f9c4d481cebce43fcadbfb910e",
+      "expectedInputHash": "review-input:v1:e03554cce075520d1828b7981d4630276101c1e28798c5dc19647ecccfc8ec57",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -12803,7 +12803,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-finance:FIN559:section-38780c9aedcd",
-      "expectedInputHash": "review-input:v1:f75c1b40fba65e81f235e5f46f96293ccc3d1992a4f9298666fd6ed3653d7823",
+      "expectedInputHash": "review-input:v1:c47aa96dbcbbbf82d95ae49fd135d80b3db05cbc762753d48f40444d74eea093",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: the remarks explicitly permit a listed course concurrently. Preserve both cells as remarks; do not publish a strict prior-completion edge. Source remarks review: A listed course may be taken concurrently or substituted by the stated prior-learning/appeal route. Both source cells remain literal; no strict prior-completion edge is published.",
@@ -12832,7 +12832,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-finance:MGT598:section-20e2e5a9c473",
-      "expectedInputHash": "review-input:v1:559ea442044e2e04a4be1faf92610d348638948627d6ec77ab216d98775f0384",
+      "expectedInputHash": "review-input:v1:f82b38cec3fe186071e3110dca8243b037e070965557b0f2ee4b3a6dfb2ff0a6",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -12840,7 +12840,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-financial-technology:MSM598:section-a0c7412e029b",
-      "expectedInputHash": "review-input:v1:33e0ff732c059fdfc5ae46010d1fc812cbbedb0edb7885001124cb879e02f470",
+      "expectedInputHash": "review-input:v1:91a9113786ba003a393b6cb94955109450b7f1e2eb605414375d0f64eb3a5b45",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -12848,7 +12848,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-global-security-and-strategy:GSS588:section-5a5def44c4ee",
-      "expectedInputHash": "review-input:v1:4c01921bf49c2a3c4893c5f5efee96fca13de269cc1ec4b6a079f344b93340e6",
+      "expectedInputHash": "review-input:v1:1b2b109d8373ce3cc45a0c118370b0dffea5d3c78efa51e535b81eb279c74ad1",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -12856,7 +12856,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-ip-and-innovation-management:IPM507:section-ae204202189c",
-      "expectedInputHash": "review-input:v1:55ac383a8fbf504bf31ec7be1f30df43ca91d55a44d6783837b0ae79944ffc66",
+      "expectedInputHash": "review-input:v1:2bbac94eed6b8790c7ae40def182f0451d7bc505c65f2770995f618f4a6e38d3",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Source remarks review: Source review proposal: IPM501 is explicit for CET modular enrolment only. The CET limitation stays beneath the tree; no programme-wide requirement is asserted.",
@@ -12871,7 +12871,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-management:MGT598:section-5d71ee892fea",
-      "expectedInputHash": "review-input:v1:dc93a32d48314c1b5075ce5710df8f75742529958f0e25e91f4672c535b6b0eb",
+      "expectedInputHash": "review-input:v1:82a843a634ec32fedb5a17fb41c247ac1cd4d414595496c6e7579e7ae49183f5",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -13074,7 +13074,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-psychology:PSY501:section-5a5def44c4ee",
-      "expectedInputHash": "review-input:v1:b79ddbfbca1ec3e580ba83e1cdd26dad4e2af91b1f8541bfca16f3ec5d39b964",
+      "expectedInputHash": "review-input:v1:5b2c49745dfc79180a1147ae4fc0950264377347f9b4bee7a415a74ecb54f35d",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: concurrent or passed/concurrent requirements remain in full as remarks. No strict prior-completion links are inferred. Source remarks review: Each psychology route explicitly permits passing OR concurrent enrolment. Preserve route-specific AND combinations in text; no strict completion edges from PSY511/516/520/523 are inferred.",
@@ -13192,7 +13192,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-psychology:RSS551:section-6dd7eb3b4e75",
-      "expectedInputHash": "review-input:v1:444c251ba905dd2b7c6341c11cf056d16f832b51f560af74cf93adf429dbd208",
+      "expectedInputHash": "review-input:v1:aaca8228b611f7e2d8a82aee5bab3175d79127afeaa5ec75a7d71648fe196b09",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: preserve the complete requirement, eligibility or course-group wording as remarks. No unsupported course relationship or group membership is inferred. Source remarks review: The undergraduate preparation requirement remains literal, including each subject area and the instruction for students lacking statistics background. No undergraduate course equivalence or compulsory course membership is inferred.",
@@ -13272,7 +13272,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-science-in-management:MSM598:section-6168b870db43",
-      "expectedInputHash": "review-input:v1:16988e39add0678fbddd40ab5daa656c8b0886b31c8e32e93da84d3d68f42aaf",
+      "expectedInputHash": "review-input:v1:d43a499191939945e0748c755623b072c9856297f25bf414d10e66fc281b5763",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -13280,7 +13280,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-science-in-strategic-ip-and-innovation-management:MIP598:section-bd8cb5ad31e5",
-      "expectedInputHash": "review-input:v1:1df595fe78bd23c219f90dc521777c07d016d566f770b5cf6df6f1ba9bd9d77e",
+      "expectedInputHash": "review-input:v1:abae2e370dd9051b85587ae98874222b3564f5435255ee944c1e9b7fe4be2e78",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",
@@ -13288,7 +13288,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-social-sciences:RSH688:section-f84fdcb44b08",
-      "expectedInputHash": "review-input:v1:afd59abd369f27b80b199ca657a37010f395c3744dadc496252921a1af510cc7",
+      "expectedInputHash": "review-input:v1:7022f3624c1fac1ce7110e92f7f96b5c9d96b07bf797af2fc17fc49355d65a3b",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: requirement names a course group, prior qualification or discipline rather than an explicit list of course codes. Membership is not inferred from loose tokens. Full remarks evidence retained under parser contract 2. Source remarks review: Completion of two SUSS-conferred Graduate Diploma programmes remains a literal qualification count. Do not infer individual courses or invent diploma membership.",
@@ -13296,7 +13296,7 @@
     },
     {
       "ruleKey": "prerequisite:master-of-sustainability-management:MGT598:section-b8086d236455",
-      "expectedInputHash": "review-input:v1:ceb8ba99f9c2c419501ac399971268e0485c77d627e2a1741e140252b5865d0f",
+      "expectedInputHash": "review-input:v1:30480f787db31290b0c16ad0522fde68759041511cc0099f1a0cce2c04e28320",
       "reviewerAlias": "lester",
       "reviewedAt": "2026-10-09T02:41:39.506Z",
       "notes": "Triage: complete credit totals, academic standing, study-mode conditions and exclusions are retained as remarks. They cannot be replaced by just the mentioned course codes. Full remarks evidence retained under parser contract 2. Source remarks review: Preserve every explicit credit, course-group, track, study-year and enrolment/approval clause. Attempted courses are not converted to completed courses; group membership, excluded-core totals and cohort defaults are not inferred.",

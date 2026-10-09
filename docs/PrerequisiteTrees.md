@@ -34,9 +34,10 @@ SVG connectors use the same 2px thickness and
 meet nodes at their vertical centres, bending between columns. Subtree contours
 include both boxes and connector lanes so independent alternatives cannot touch.
 Genuinely distinct prerequisite variants branch from a small **by programme**
-link that opens the Prerequisite disclosure below. Overlapping alternatives
-collapse when their combined routes already match a recorded variant: ICT233's
-`ICT133` and `ICT133 or ANL252` display once as **one of ICT133 / ANL252**.
+link that opens the Prerequisite disclosure below. Non-equivalent programme
+requirements remain separate even when one is contained in another: ICT233's
+`ICT133` and `ICT133 or ANL252` retain separate **by programme** branches.
+Only equivalent compacted requirements share a branch across programmes.
 Matching nested operators flatten, and duplicate alternatives match regardless
 of course order. ALL branches inside an ANY choice remain separate. Curriculum
 names stay inside the disclosures rather than taking up space in the tree.
@@ -138,7 +139,25 @@ missing remarks are flagged. A changed remarks cell invalidates the review
 fingerprint. Contract 1 inputs retain their legacy pointer-only binding for
 existing artifacts. Source cells are never overwritten; normalized spacing and
 parsing notes appear separately in the review report.
-Parser status never establishes approval.
+Parser status never establishes approval. Prerequisite diagnostics and warnings
+explicitly concerning prerequisites are persisted as sorted, deduplicated
+`evidenceDiagnostics` and bound into the review input. Adding, removing or changing
+that evidence invalidates a retained decision. Title-only warnings do not affect
+it. Unresolved glyph/OCR or interpretation diagnostics prohibit a structured
+approval during record validation, including inherited approvals and snapshot
+publication. Clean inputs keep their existing fingerprints.
+
+The diagnostic-binding fix for PR #124 refreshed only `expectedInputHash` on 224
+of the 746 checked-in decisions (21 approved and 203 source-only); 522 hashes did
+not change. Before rebinding, all 746 legacy fingerprints and decision fields
+were checked against the saved review extraction at `34661c1`, and the included
+PDF bytes/page references were verified. The same extraction supplied the newly
+bound diagnostics. Decisions, approved trees, reviewer aliases, timestamps,
+notes and publication decisions were preserved, and a second reconciliation was
+a no-op. This strengthens the binding of existing reviewed evidence; it does not
+record a new academic approval. Git retains the original fingerprints and batch
+approval notes as history. Do not repeat this rebinding for changed evidence;
+new or changed diagnostics require review.
 
 Two checked-in, format-1 artifacts own stable identities and decisions:
 
@@ -297,7 +316,12 @@ reset affected decisions to pending unless an exact new decision is supplied.
 `scraper/schema.sql` is the maintained schema, mirrored in `lib/db/schema.ts`.
 It includes the RLS-enabled `curriculum_plans` and
 `curriculum_prerequisite_rules` tables, restrictive plan references, decision
-constraints and indexes. The applied one-time migration has been removed.
+constraints and indexes. Reapplying it adds `evidence_diagnostics` with an empty
+array default to existing reviewed tables without rewriting decisions. Install
+this additive column before using the updated importer or database snapshot
+builder. Reconciliation then binds current diagnostics; stale decisions are reset
+to pending unless an exact current review-file decision is supplied.
+The applied one-time migration has been removed.
 Fresh database setup uses:
 
 ```bash

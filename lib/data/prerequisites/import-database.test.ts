@@ -32,9 +32,11 @@ describe.skipIf(!databaseUrl)("isolated transactional curriculum importer", () =
     finally { connection.release(); }
   }
   it("inserts reviewed records and preserves timestamps/approvals on re-import", async () => {
-    const plan = fixturePlan(); const rule = fixtureRule(plan);
+    const plan = fixturePlan(); const rule = fixtureRule(plan, undefined, { evidenceDiagnostics: ["Logical grouping requires triage"] });
     await apply(generateReviewSql({ plans: [], rules: [] }, { plans: [plan], rules: [rule] }));
-    const before = await stored(); await apply(generateReviewSql(before, before));
+    const before = await stored();
+    expect(before.rules[0].evidenceDiagnostics).toEqual(rule.evidenceDiagnostics);
+    await apply(generateReviewSql(before, before));
     expect(await stored()).toEqual(before);
   });
   it("blocks stale SQL after a newer correction with an unchanged input hash", async () => {

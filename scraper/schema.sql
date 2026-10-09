@@ -459,6 +459,9 @@ CREATE TABLE IF NOT EXISTS curriculum_prerequisite_rules (
        OR (review_status IN ('source_only', 'excluded') AND approved_rule_json IS NULL AND approved_rule_hash IS NULL)))
   )
 );
+-- Additive upgrade for installations created before diagnostic evidence was bound.
+-- Existing decisions are retained; reconciliation invalidates changed fingerprints.
+ALTER TABLE curriculum_prerequisite_rules ADD COLUMN IF NOT EXISTS evidence_diagnostics JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(evidence_diagnostics) = 'array');
 CREATE INDEX IF NOT EXISTS idx_curriculum_rules_course ON curriculum_prerequisite_rules(course_code);
 CREATE INDEX IF NOT EXISTS idx_curriculum_rules_plan ON curriculum_prerequisite_rules(plan_key);
 ALTER TABLE curriculum_plans ENABLE ROW LEVEL SECURITY;

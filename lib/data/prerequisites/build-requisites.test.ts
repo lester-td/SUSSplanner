@@ -76,3 +76,9 @@ describe("review-gated per-course projection", () => {
     expect(() => validateRequisitesSnapshot(clean, "MAIN300")).toThrow();
   });
 });
+
+it("rejects unresolved evidence even with matching persisted approval fingerprints", () => {
+  const plan = fixturePlan();
+  const rule = fixtureRule(plan, undefined, { evidenceDiagnostics: ["Unresolved prerequisite OCR affects interpretation"] });
+  expect(() => buildRequisites([plan], [rule], fixtureCatalogue)).toThrow(/Unresolved source interpretation/);
+});
