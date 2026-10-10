@@ -18,6 +18,11 @@
     "start": "next start",
     "test": "vitest run",
     "data:build": "tsx scripts/build-data-snapshots.ts",
+    "data:validate": "node --import tsx scripts/validate-data-snapshots.ts",
+    "curriculum:review": "node --import tsx scripts/review-curriculum.ts",
+    "curriculum:batch": "node --import tsx scripts/curriculum-batch.ts",
+    "db:backup": "node scripts/backup-database.mjs",
+    "test:curriculum": "npm --prefix scraper run test:curriculum",
     "scraper": "npm --prefix scraper run start --",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate"

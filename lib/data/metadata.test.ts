@@ -7,7 +7,7 @@ import { getSnapshotManifest } from "./manifest-reader";
 import { getActiveAnnouncements, getSemesterById, getSemesters, getVisibleSemesters, getSemestersWithWeeks, getSemestersWithClassesAndWeeks, getSemesterWeeks, getUpcomingAcademicCalendarEvents } from "./metadata";
 
 const manifest: DataSnapshotManifest = {
-  formatVersion: 1, generatedAt: "2026-10-06T00:00:00Z", dataUpdatedAt: null,
+  formatVersion: 2, generatedAt: "2026-10-06T00:00:00Z", dataUpdatedAt: null,
   coverage: { courseCount: 0, classCount: 0, semesterCount: 3, assessmentCount: 0 },
   semesters: [
     { semesterId: 1, academicYear: "2025/2026", semesterNo: 2, semesterName: "January 2026", isArchived: true, weeks: [] },

@@ -7,8 +7,9 @@ import type {
   SemesterRecord,
   SemesterWeekRecord,
 } from "@/lib/timetable/types";
+import type { CourseRequisitesSnapshot } from "./prerequisites/types";
 
-export const DATA_SNAPSHOT_FORMAT_VERSION = 1;
+export const DATA_SNAPSHOT_FORMAT_VERSION = 2;
 export const DATA_SNAPSHOT_BUCKET_COUNT = 16;
 
 export function getDataSnapshotBucket(courseCode: string)
@@ -59,6 +60,7 @@ export type CourseIndexSnapshotRecord = CourseSearchResult & {
 };
 
 export type CourseSnapshot = {
+  requisites: CourseRequisitesSnapshot;
   course: CourseRecord;
   assessments: AssessmentComponentRecord[];
   offeredSemesters: SemesterRecord[];

@@ -12,6 +12,7 @@ maintaining academic data.
 - Exports selected timetable data as PDF, ICS, or PNG
 - Stores planner state in browser `localStorage` (no user auth required)
 - Supports course search, course details, and multi-semester course planning
+- Shows programme-scoped prerequisite trees, source remarks, and courses they help unlock
 
 ## At a Glance
 
@@ -66,7 +67,7 @@ npm run data:build      # Regenerate read snapshots from Postgres
 | `/` | Home page with app links, student resources, search, and upcoming dates |
 | `/timetable` | Interactive timetable planner |
 | `/courses` | Search and filter the course catalog |
-| `/courses/[courseCode]` | View course, assessment, and class details |
+| `/courses/[courseCode]` | View course details, prerequisites, assessments, and classes |
 | `/planner` | Build a browser-local multi-semester course plan |
 | `/calculators` | Estimate GPA and OCAS outcomes |
 | `/settings` | Set appearance, timetable defaults, and reminder preferences |
@@ -98,6 +99,9 @@ generation does not reserve a database session for the duration of a build.
 - Production requests read generated JSON snapshots and never query Postgres.
 - The application build reads academic data but does not update academic tables.
 - The academic database schema must exist before snapshots can be generated.
+- Prerequisite trees use reviewed, programme-scoped requirements embedded in
+  format-2 course snapshots. See [Prerequisite Trees](./docs/PrerequisiteTrees.md)
+  for schema setup, review artifacts and the approval workflow.
 - Do not run `drizzle-kit push` against shared or production databases unless
   an intentional schema change has been reviewed.
 
@@ -126,6 +130,8 @@ generation, import order, validation, and troubleshooting.
   reference
 - [Data Snapshot Operations](./docs/DataSnapshots.md): publish, deploy,
   validate, and roll back academic-data snapshots
+- [Prerequisite Trees](./docs/PrerequisiteTrees.md): extraction, source review,
+  batch approval, and publication
 
 ## License
 

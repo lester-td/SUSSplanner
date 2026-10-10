@@ -41,6 +41,7 @@ for (const semester of semesters.filter(item => item.semesterId !== 2))
   });
 }
 const course: CourseSnapshot = {
+  requisites: { prerequisiteVariants: [], dependentCourses: [], coursesByCode: {}, sourcesByRuleKey: {} },
   course: {
     courseCode: "NIE301", courseName: "Learning", schoolName: null,
     isPostgraduate: false, courseLevel: "3", creditUnits: 5,

@@ -37,6 +37,13 @@ flowchart LR
 
 ## Database Contract
 
+Programme-scoped prerequisite requirements follow a separate review boundary:
+Python extraction → stable registry and fingerprint-bound TypeScript reviews →
+two reviewed curriculum tables → format-2 course shards → course-page tree.
+Reverse relationships come only from approved course leaves. Runtime receives all
+node metadata and sanitized sources in the initial course payload. See
+[Prerequisite Trees](./docs/PrerequisiteTrees.md) for the authoritative workflow.
+
 Snapshot generation reads these existing relations without changing them:
 
 - `courses`
@@ -48,9 +55,13 @@ Snapshot generation reads these existing relations without changing them:
 - `class_events`
 - `assessment_components`
 - `announcements`
+- `curriculum_plans`
+- `curriculum_prerequisite_rules`
 
 `lib/db/schema.ts` remains the Drizzle mapping used by the build-time exporter
-and database tooling.
+and database tooling. All eleven relations are read in one read-only
+repeatable-read transaction. Included curriculum PDFs are then verified against
+their registry paths and hashes before prerequisite projections are generated.
 
 ## Snapshot Contract
 
@@ -59,8 +70,8 @@ Generated files are split by access pattern:
 - `manifest.json`: format version, timestamps, coverage, semesters, weeks,
   calendar events, announcements, and shard paths
 - `course-index.json`: compact searchable course records and offering metadata
-- `courses/<bucket>.json`: full details, assessments, and offered semesters for
-  one deterministic course-code bucket
+- `courses/<bucket>.json`: full details, assessments, offered semesters, and
+  prerequisite/reverse relationships for one deterministic course-code bucket
 - `schedules/<semesterId>-<bucket>.json`: classes and dated events for one
   semester and course-code bucket
 
@@ -80,9 +91,9 @@ Primary files:
   memoized JSON file access
 - `lib/data/metadata.ts`: semesters, weeks, calendar, coverage, update timestamp
 - `lib/data/course-search.ts`: course search, calculator search, and facets
-- `lib/data/course-details.ts`: course details, assessments, classes, and counts
+- `lib/data/course-details.ts`: course details, prerequisites, assessments,
+  classes, and counts
 - `lib/data/timetable.ts`: semantic selection resolution and timetable assembly
-- `lib/data/queries.ts`: compatibility export surface used by pages and APIs
 
 Runtime code does not import `postgres`, Drizzle, or `DATABASE_URL`. A cold
 request may read deployment files, but it cannot query the database.

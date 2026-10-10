@@ -15,7 +15,51 @@ import {
   time,
   timestamp,
   varchar,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
+import type { ParseStatus, ReviewStatus, SourceOccurrence, PrerequisiteRuleNode } from "@/lib/data/prerequisites/types";
+
+export const curriculumPlans = pgTable("curriculum_plans", {
+  planKey: text("plan_key").primaryKey(),
+  programmeName: text("programme_name").notNull(),
+  studyMode: text("study_mode").$type<"full-time" | "part-time">(),
+  curriculumVersion: text("curriculum_version"), effectiveFrom: text("effective_from"),
+  sourcePath: text("source_path").notNull(), sourceHash: text("source_hash").notNull(),
+  sourceLabel: text("source_label").notNull(), sourceUrl: text("source_url"),
+  publicationStatus: text("publication_status").$type<"unreviewed" | "included" | "excluded">().notNull().default("unreviewed"),
+  publicationInputHash: text("publication_input_hash").notNull(), reviewedPublicationInputHash: text("reviewed_publication_input_hash"),
+  publicationReviewedBy: text("publication_reviewed_by"), publicationReviewedAt: timestamp("publication_reviewed_at", { withTimezone: true, mode: "string" }), publicationReviewNotes: text("publication_review_notes"),
+  lastUpdated: timestamp("last_updated", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+}, table => [
+  check("chk_curriculum_plan_key", sql`${table.planKey} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+  check("chk_curriculum_plan_metadata", sql`btrim(${table.programmeName}) <> '' AND btrim(${table.sourceLabel}) <> '' AND btrim(${table.sourcePath}) <> '' AND ${table.sourceHash} ~ '^[a-f0-9]{64}$' AND (${table.studyMode} IS NULL OR ${table.studyMode} IN ('full-time', 'part-time'))`),
+  check("chk_curriculum_publication_decision", sql`
+    ${table.publicationInputHash} ~ '^publication-input:v1:[a-f0-9]{64}$' AND (
+      (${table.publicationStatus} = 'unreviewed' AND ${table.reviewedPublicationInputHash} IS NULL AND ${table.publicationReviewedBy} IS NULL AND ${table.publicationReviewedAt} IS NULL AND ${table.publicationReviewNotes} IS NULL)
+      OR (${table.publicationStatus} IN ('included', 'excluded') AND ${table.reviewedPublicationInputHash} IS NOT NULL AND ${table.reviewedPublicationInputHash} = ${table.publicationInputHash} AND ${table.publicationReviewedBy} IS NOT NULL AND btrim(${table.publicationReviewedBy}) <> '' AND ${table.publicationReviewedAt} IS NOT NULL)
+    )`),
+]).enableRLS();
+
+export const curriculumPrerequisiteRules = pgTable("curriculum_prerequisite_rules", {
+  ruleKey: text("rule_key").primaryKey(), planKey: text("plan_key").notNull().references(() => curriculumPlans.planKey, { onDelete: "restrict" }),
+  courseCode: varchar("course_code", { length: 20 }).notNull(), applicabilityKey: text("applicability_key").notNull(), applicabilityLabel: text("applicability_label").notNull(), rawText: text("raw_text").notNull(),
+  parseStatus: text("parse_status").$type<ParseStatus>().notNull(), ruleJson: jsonb("rule_json").$type<unknown>(), parserContractVersion: integer("parser_contract_version").notNull(),
+  sourceHash: text("source_hash").notNull(), sourceOccurrences: jsonb("source_occurrences").$type<SourceOccurrence[]>().notNull(),
+  recordStatus: text("record_status").$type<"active" | "inactive">().notNull().default("active"), reviewStatus: text("review_status").$type<ReviewStatus>().notNull().default("pending"),
+  reviewInputHash: text("review_input_hash").notNull(), reviewedInputHash: text("reviewed_input_hash"), approvedRuleJson: jsonb("approved_rule_json").$type<PrerequisiteRuleNode>(), approvedRuleHash: text("approved_rule_hash"),
+  reviewedBy: text("reviewed_by"), reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: "string" }), reviewNotes: text("review_notes"), lastUpdated: timestamp("last_updated", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+}, table => [
+  uniqueIndex("uq_curriculum_prerequisite_scope").on(table.planKey, table.courseCode, table.applicabilityKey),
+  index("idx_curriculum_rules_course").on(table.courseCode), index("idx_curriculum_rules_plan").on(table.planKey),
+  check("chk_curriculum_rule_identity", sql`${table.courseCode} ~ '^[A-Z0-9]{3,20}$' AND ${table.applicabilityKey} ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND ${table.ruleKey} = 'prerequisite:' || ${table.planKey} || ':' || ${table.courseCode} || ':' || ${table.applicabilityKey}`),
+  check("chk_curriculum_rule_evidence", sql`btrim(${table.rawText}) <> '' AND btrim(${table.applicabilityLabel}) <> '' AND ${table.parseStatus} IN ('parsed', 'review_required', 'unparsed') AND ${table.parserContractVersion} > 0 AND ${table.sourceHash} ~ '^[a-f0-9]{64}$' AND jsonb_typeof(${table.sourceOccurrences}) = 'array' AND jsonb_array_length(${table.sourceOccurrences}) > 0 AND ${table.recordStatus} IN ('active', 'inactive')`),
+  check("chk_curriculum_rule_decision", sql`
+    ${table.reviewInputHash} ~ '^review-input:v1:[a-f0-9]{64}$' AND (
+      (${table.reviewStatus} = 'pending' AND ${table.reviewedInputHash} IS NULL AND ${table.reviewedBy} IS NULL AND ${table.reviewedAt} IS NULL AND ${table.reviewNotes} IS NULL AND ${table.approvedRuleJson} IS NULL AND ${table.approvedRuleHash} IS NULL)
+      OR (${table.reviewStatus} IN ('approved', 'source_only', 'excluded') AND ${table.reviewedInputHash} IS NOT NULL AND ${table.reviewedInputHash} = ${table.reviewInputHash} AND ${table.reviewedBy} IS NOT NULL AND btrim(${table.reviewedBy}) <> '' AND ${table.reviewedAt} IS NOT NULL AND
+        ((${table.reviewStatus} = 'approved' AND ${table.approvedRuleJson} IS NOT NULL AND jsonb_typeof(${table.approvedRuleJson}) = 'object' AND ${table.approvedRuleHash} IS NOT NULL AND ${table.approvedRuleHash} ~ '^approved-rule:v1:[a-f0-9]{64}$') OR (${table.reviewStatus} IN ('source_only', 'excluded') AND ${table.approvedRuleJson} IS NULL AND ${table.approvedRuleHash} IS NULL)))
+    )`),
+]).enableRLS();
 
 export const courses = pgTable("courses", {
   courseCode: varchar("course_code", { length: 20 }).primaryKey(),

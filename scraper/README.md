@@ -124,8 +124,8 @@ Generated files     scraper/data/output/{weeks,schedules,courses,curriculum}/
    artifacts; it never imports SQL automatically.
 9. Review the generated JSON, download reports, and issue TSVs before considering any SQL
    import.
-10. Import only the regular week, schedule, and course SQL when intended. Curriculum SQL
-    follows the separate disposable-database process in section 9A.
+10. Import the regular week, schedule, and course SQL when intended. Publish curriculum
+    prerequisites through the reviewed batch workflow in [section 9A](#9a-parse-curriculum-plan-pdfs).
 
 The menu choices behave as follows:
 
@@ -135,7 +135,7 @@ The menu choices behave as follows:
 | **Generate Semester Weeks** | Valid `data/input/weeks/semester-weeks.json` | Writes files under `data/output/weeks/`. |
 | **Parse Schedule PDFs** | Valid manifest and referenced schedule files | Writes schedule JSON/SQL and `data/output/schedules/course-codes.txt`. Run this before course downloading when that code list does not exist. |
 | **Download and Parse Course PDFs** | `course-codes.txt` from schedule parsing; Tamil OCR dependencies if the filter can include `TLL` | Downloads both daytime and evening variants with `--force`, then writes course JSON/SQL, reports, issues, and corrected OCR copies. |
-| **Parse Curriculum Plan PDFs** | PDFs under `data/input/curriculum-plans/` and Tamil OCR dependencies | Parses every curriculum PDF and writes preliminary JSON/SQL, issues, and corrected OCR copies. Course filters do not apply. |
+| **Parse Curriculum Plan PDFs** | PDFs under `data/input/curriculum-plans/` and Tamil OCR dependencies | Writes extraction JSON and review candidates, issues, corrected OCR copies, and optional experimental SQL. Course filters do not apply. |
 | **Exit** | None | Closes the menu without running a task. |
 
 The individual commands documented below remain available for diagnostic runs.
@@ -179,18 +179,19 @@ semester records.
 
 ### From curriculum plan PDFs
 
-The curriculum parser generates records for these optional tables:
+Application prerequisite publication imports reviewed records into two tables:
 
-- `curriculum_plans` and `curriculum_requirements`
-- `curriculum_plan_courses`
-- `curriculum_prerequisite_rules` and `curriculum_prerequisites`
-- `curriculum_course_exclusions`
-- `curriculum_course_presentations`
-- `curriculum_course_lifecycle_events`
-- `curriculum_course_replacements`
+- `curriculum_plans`: programme identities, source evidence and inclusion decisions
+- `curriculum_prerequisite_rules`: scoped source statements, candidates and approved
+  trees or source-only decisions
 
-Curriculum presentations describe published course availability. They do not create
-semesters, classes, class events, or timetable data.
+The parser supplies extraction JSON; the root TypeScript review workflow validates
+and imports decisions. See [Prerequisite Trees](../docs/PrerequisiteTrees.md).
+The parser's optional SQL instead targets an independent nine-table experimental
+model for requirements, plan courses, prerequisites, exclusions, presentations,
+lifecycle events and replacements. It shares two table names with the reviewed
+model but has incompatible layouts. Curriculum presentations do not create
+semesters, classes or timetable events in either workflow.
 
 ## 1. Install dependencies
 
@@ -343,9 +344,10 @@ WHERE academic_year = '2027/2028' AND semester_no = 1;
 The July timetable notice disappears when that flag becomes `true`. Older
 snapshots without the field retain their previous visibility until rebuilt.
 
-Skip sections 2 and 3 when only generating and reviewing local artifacts. A database
-connection is required only when the reviewed regular SQL files are intentionally imported,
-or when the preliminary curriculum model is evaluated in a disposable database.
+Skip sections 2 and 3 when only extracting local artifacts. A database connection
+is required for regular SQL imports, curriculum batch preparation/reconciliation
+against retained records, and approved imports. Offline batch preparation is
+available with `--without-db`; approval always checks the actual database.
 
 ### Option A: fresh reset of public schema
 
@@ -379,13 +381,17 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
 
 ### Option B: existing database
 
-Compare the existing database with `schema.sql` and apply reviewed schema
-changes before importing. Check at least:
+Back up and inspect the existing database before applying reviewed schema changes
+or importing. Run `npm run db:backup` from the repository root and verify the
+backup as described in [Prerequisite Trees](../docs/PrerequisiteTrees.md#database-backups).
+Compare the database with `schema.sql`. Check at least:
 
 - `semesters.is_archived` and `semesters.has_intake_schedule` exist.
 - `classes.language` and `class_events.campus` exist.
 - Academic-calendar tables and `announcements` exist.
 - `assessment_components` has `schedule_type` and no `semester_id`.
+- `curriculum_plans` and `curriculum_prerequisite_rules` have the reviewed layouts
+  from `schema.sql`, including fingerprint/decision fields and enabled RLS.
 
 Check:
 
@@ -875,108 +881,101 @@ The parser no longer extracts or stores textbooks.
 
 ## 9A. Parse curriculum plan PDFs
 
-The curriculum parser reads every PDF under `data/input/curriculum-plans/`. It produces
-normalized product records for:
+Production prerequisite display uses the reviewed workflow in
+[Prerequisite Trees](../docs/PrerequisiteTrees.md). Extraction supplies candidates;
+publication requires explicit programme/scope assignments and fingerprint-bound
+decisions in the two checked-in files under `scraper/data/reviews/`. See the
+[latest verification record](../docs/PrerequisiteTreePreviewChecklist.md#latest-verification-9-october-2026)
+for the approved dataset and retained evidence.
 
-- plans, requirement sections, credit-unit ranges, and selection rules
-- active courses that can be added from a curriculum plan
-- prerequisite rules with source text, course-code edges, and parse status
-- excluded course combinations
-- January, May, and July presentation records without timetable records
-- retired and replaced course lifecycle events
-- one-to-many course replacement relationships
+### Extract and inspect
 
-The JSON keeps raw PDF rows, source coordinates, OCR metadata, and extraction warnings
-under `review`. The SQL imports only the normalized product records.
+The parser reads every PDF under `data/input/curriculum-plans/`. JSON contains
+normalized plans, requirement sections, offering rows, prerequisite suggestions,
+exclusions, presentations, lifecycle events and replacements. Raw PDF rows,
+source coordinates, OCR metadata and warnings remain under `review`.
 
-It supports both the current nine-column offering tables and the five-column
-retired/replaced-course tables. Wrapped course titles are joined to the preceding row, and
-long course-code suffixes such as `BUS557Ae` and `CDO303ACI` are retained.
-Chinese text is extracted directly as Unicode, and PDF line-wrap spaces between Chinese
-characters are removed. If embedded-font repair leaves unresolved CID glyphs in a Tamil
-programme course title, the parser OCRs only the affected pages and title cells using
-English and Tamil. It validates the course code before accepting a title and leaves the
-source PDFs unchanged. Reviewable OCR copies are written under
-`data/output/curriculum/ocr-pdfs/`.
+Both nine-column offering tables and five-column retired/replaced-course tables
+are supported. Wrapped titles join the preceding row, and long course-code
+suffixes such as `BUS557Ae` and `CDO303ACI` are retained. Chinese text is extracted
+as Unicode, with PDF line-wrap spaces removed. Tamil title cells with unresolved
+font glyphs use selective English/Tamil OCR; course codes are validated before
+accepting corrected titles. Original PDFs remain unchanged, and OCR copies are
+written under `data/output/curriculum/ocr-pdfs/`. Add `--ocr-on-cid` for the same
+fallback in other programmes. The optional Tesseract `chi_sim` pack is needed only
+for Chinese PDFs whose text cannot be extracted reliably.
 
-The current Chinese curriculum PDFs do not need OCR: their Chinese characters are
-extractable Unicode. The parser checks for unresolved CID/replacement glyphs and removes
-spaces introduced where a Chinese title wrapped across PDF lines. The optional Tesseract
-`chi_sim` language pack is only needed if a future Chinese PDF is image-only or has broken
-font encoding.
-
-Run it through menu item **Parse Curriculum Plan PDFs**, or directly:
+Choose **Parse Curriculum Plan PDFs** in the menu, or run from `scraper/`:
 
 ```bash
-npm run parse:curriculum -- --format both
+npm run parse:curriculum -- --format json
 ```
 
-Tamil programme title OCR is automatic. Add `--ocr-on-cid` to enable the same fallback
-for unresolved title glyphs in other curriculum plans.
-
-Outputs:
+The reviewed application workflow uses:
 
 ```text
 data/output/curriculum/curriculum-plans.json
-data/output/curriculum/curriculum-plans.sql
 data/output/curriculum/issues.tsv
 ```
 
-Review the normalized records and issue report. Mixed `AND`/`OR` prerequisite rules and
-non-course conditions use a review status and retain their source text.
+Parser contract 2 checks every offering row's remarks, including rows with no
+prerequisite cell, and resolves "See Remarks" from that row. Fully consumed
+expressions support nested AND/OR, comma-separated ALL groups and repaired
+course-code spacing. Completion requirements can become candidates; concurrent
+enrolment, qualifications and unclear groupings remain conditions or remarks
+for triage. Recommendations and course information create no prerequisite edges.
+Source cells remain unchanged, and changes to either evidence cell invalidate
+the existing decision fingerprint. See
+[parser semantics](../docs/PrerequisiteTrees.md#source-of-authority) for grouping,
+conditions, clause classification and legacy contract handling.
 
-Course-code extraction does not establish that a prerequisite was fully parsed. The
-parser removes recognized course references, completion wording, and connectors from a
-normalized copy and checks the remaining text. Residual conditions are retained as
-`condition` nodes and set `parseStatus` to `review_required`. Recognized condition tags
-cover placement tests, prior learning, experience, credit-unit requirements, programme
-standing, and co-enrollment. These tags support review rather than automatic eligibility
-checks; unfamiliar conditions also require review. The original text remains in `rawText`
-and the condition's `sourceText`, and the issue report includes the residual wording and
-source page. Only fully represented course-only rules use `parsed`.
-
-Self-references are excluded from prerequisite rules and edges and produce a
-`review_required` issue. Co-enrollment wording (including "at the same time") is retained
-as a condition with its full source text and emits no prerequisite edges. Passages mixing
-completion and co-enrollment requirements remain entirely under review until their clause
-scope can be established. SQL generation also rejects self-dependencies in rule nodes or
-edges before producing an import.
-
-Run the curriculum prerequisite regression tests with the Python virtual environment
-activated:
+Run regression tests with the Python virtual environment activated, then inspect
+issues, unresolved CID placeholders and non-parsed records:
 
 ```bash
 npm run test:curriculum
-```
-
-Inspect the issue report and check for unresolved CID placeholders:
-
-```bash
 less data/output/curriculum/issues.tsv
 rg '\(cid:' data/output/curriculum/curriculum-plans.json
-```
-
-No `rg` output means no unresolved CID placeholders were written to the curriculum JSON.
-Also inspect records whose prerequisite `parseStatus` is `review_required` or `unparsed`:
-
-```bash
 jq '[.prerequisiteRules[] | select(.parseStatus != "parsed")]' \
   data/output/curriculum/curriculum-plans.json
 ```
 
-The curriculum tables are a preliminary, optional schema extension. They are not part of
-`schema.sql`, are not represented in the active Drizzle schema, and have not been deployed
-to the application database. `curriculum-schema-extension.sql` is not a migration. Do not
-apply either it or the generated curriculum import to a shared or production database while
-this work is paused.
+No `rg` output means no unresolved CID placeholders were written to the JSON.
+Extracted course codes and `parseStatus: parsed` are suggestions, never approval.
 
-To evaluate the model in a disposable database, apply the normal schema first, followed by
-the extension and the reviewed generated SQL:
+### Review and publish application prerequisites
+
+From the repository root, with the maintained schema installed and a current
+course-index snapshot available (`npm run data:build`):
 
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f curriculum-schema-extension.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/curriculum/curriculum-plans.sql
+npm run curriculum:batch -- --mode prepare
+```
+
+This reads retained records and generates draft mappings, a searchable report and
+an exception queue. Triage the report, back up the database, then explicitly approve
+the exact batch. Follow [Prerequisite Trees](../docs/PrerequisiteTrees.md#automated-preparation-and-one-batch-approval)
+for evidence guards, commands, reconciliation and snapshot publication.
+
+### Optional experimental SQL
+
+`--format sql` or `--format both` also generates
+`data/output/curriculum/curriculum-plans.sql`. This file imports normalized records
+into the independent nine-table model in `curriculum-schema-extension.sql`.
+It is incompatible with the application's two reviewed prerequisite tables;
+both the extension and generated SQL reject the reviewed layout.
+
+To evaluate that model, use a separate, empty disposable database and set
+`CURRICULUM_EXPERIMENT_DATABASE_URL` to its connection string. The extension is
+self-contained: applying the maintained application schema first would create
+conflicting tables. From `scraper/`:
+
+```bash
+npm run parse:curriculum -- --format both
+psql "${CURRICULUM_EXPERIMENT_DATABASE_URL:?Set an empty disposable database URL}" \
+  -v ON_ERROR_STOP=1 -f curriculum-schema-extension.sql
+psql "${CURRICULUM_EXPERIMENT_DATABASE_URL:?Set an empty disposable database URL}" \
+  -v ON_ERROR_STOP=1 -f data/output/curriculum/curriculum-plans.sql
 ```
 
 ---
@@ -1118,10 +1117,12 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f data/output/courses/course-details.sq
 After importing and reviewing schedules, enable
 [intake schedule availability](#intake-schedule-availability) before publishing snapshots.
 
-This is the normal application import path. It deliberately excludes
-`curriculum-schema-extension.sql` and `curriculum-plans.sql`. Use the isolated evaluation
-steps in section 9A for curriculum data; do not add those files to the shared or production
-import sequence while the model remains preliminary.
+This sequence imports regular academic data. Curriculum prerequisites use the
+[reviewed batch workflow](../docs/PrerequisiteTrees.md#automated-preparation-and-one-batch-approval)
+after extraction and triage. The independent experimental
+`curriculum-schema-extension.sql` and parser-generated `curriculum-plans.sql` are
+excluded from the application import path; see [section 9A](#9a-parse-curriculum-plan-pdfs)
+for isolated evaluation.
 
 ### Publish the imported data to the application
 

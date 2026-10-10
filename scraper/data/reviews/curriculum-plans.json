@@ -1,0 +1,4400 @@
+{
+  "formatVersion": 1,
+  "plans": [
+    {
+      "planKey": "ba-chinese-studies-part-time",
+      "programmeName": "BA Chinese Studies 中文学士学位",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "ed76931cf79984da45db846ad613a7a81df404b2406f510c028378de34e730e0",
+      "sourcePath": "undergraduate/part-time/BA Chinese Studies 中文学士学位.pdf",
+      "sourceLabel": "BA Chinese Studies 中文学士学位 curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-263839066667",
+          "applicabilityLabel": "Source section: COMPULSORY - 80 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 80 cu",
+          "applicabilityKey": "section-263839066667"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:b044ec54aae76f978c8e2f3e21b621ff1c635d2486b48472c7512824912b4b03",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "ba-english-language-and-literature-part-time",
+      "programmeName": "BA English Language and Literature",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "22eddda26012aee2d1114541e2adf2fa69c87e9084f6b7f7a11a8319d6d3a198",
+      "sourcePath": "undergraduate/part-time/BA English Language and Literature.pdf",
+      "sourceLabel": "BA English Language and Literature curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0c37580e716c",
+          "applicabilityLabel": "Source section: COMPULSORY - 30 cu"
+        },
+        {
+          "applicabilityKey": "section-743fb3d4d571",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 to 50 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 30 cu",
+          "applicabilityKey": "section-0c37580e716c"
+        },
+        {
+          "extractedSection": "ELECTIVE - 30 to 50 cu",
+          "applicabilityKey": "section-743fb3d4d571"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:88e74d2a03b5403c0245527a7cf11061997fb08fb48096d53f0dcfb4a544d826",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "ba-malay-language-and-literature-part-time",
+      "programmeName": "BA Malay Language and Literature",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "bc7a2b5d71b9877daa545369467eaf63dc20f2543146b3f801c5fb64a4eae575",
+      "sourcePath": "undergraduate/part-time/BA Malay Language and Literature.pdf",
+      "sourceLabel": "BA Malay Language and Literature curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:1b59ab2e54901d6b67cc9ec1108995c5bc2a9fea0ce775d2751335eeddd257ac",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "ba-sociology-part-time",
+      "programmeName": "BA Sociology",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "c1c73aa5fec8001208d66fb3eb99952f7f105a403b5a850b4ced9247b2688049",
+      "sourcePath": "undergraduate/part-time/BA Sociology.pdf",
+      "sourceLabel": "BA Sociology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-c50085dd0c2d",
+          "applicabilityLabel": "Source section: COMPULSORY - 50 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 50 cu",
+          "applicabilityKey": "section-c50085dd0c2d"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:76b3bff634b235b31483f41ee9e432e56997028b5958637211c3f73a0a715903",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "ba-tamil-language-and-literature-part-time",
+      "programmeName": "BA Tamil Language and Literature",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d8c1871cf30bd9055c63d501978dab33b4d532c3e45127d088c21a9ac697cbd7",
+      "sourcePath": "undergraduate/part-time/BA Tamil Language and Literature.pdf",
+      "sourceLabel": "BA Tamil Language and Literature curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:f7205c8cefd47feda1f83e29091669056ef7e789cd96d331d07fa5733d050ff7",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "ba-translation-and-interpretation-part-time",
+      "programmeName": "BA Translation and Interpretation",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "18349c0d46a6e2f591519d71e984596d022fa443e00344e7eb47cfcb410c9c87",
+      "sourcePath": "undergraduate/part-time/BA Translation and Interpretation.pdf",
+      "sourceLabel": "BA Translation and Interpretation curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-3f7c8a08f432",
+          "applicabilityLabel": "Source section: ELECTIVE - 50 cu Students need to complete at least 20 cu of level 3 and above courses as electives."
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 50 cu Students need to complete at least 20 cu of level 3 and above courses as electives.",
+          "applicabilityKey": "section-3f7c8a08f432"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:474ead321083d96fc59892f00a5726d09795fd035fd126d38849147239a6187a",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-accountancy-full-time",
+      "programmeName": "Bachelor of Accountancy",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b785df420a7ef55daee5e5abc721b92a9d131e27d865bd27b79ff13abd2b26f6",
+      "sourcePath": "undergraduate/full-time/Bachelor of Accountancy.pdf",
+      "sourceLabel": "Bachelor of Accountancy curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5f2c6f44ed49",
+          "applicabilityLabel": "Source section: COMPULSORY - 110 cu"
+        },
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 110 cu",
+          "applicabilityKey": "section-5f2c6f44ed49"
+        },
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:8ea60dfa5f3c03c6e85e64be3a95a9c6903b56a8e2a9a4c08df69d3285ec81cb",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-accountancy-part-time",
+      "programmeName": "Bachelor of Accountancy",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "204f37e17afa3f58860928d971f960c49a346fe2fe7cd52cbb01ac5cf65d1c59",
+      "sourcePath": "undergraduate/part-time/Bachelor of Accountancy.pdf",
+      "sourceLabel": "Bachelor of Accountancy curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5f2c6f44ed49",
+          "applicabilityLabel": "Source section: COMPULSORY - 110 cu"
+        },
+        {
+          "applicabilityKey": "section-566f41f5e616",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 10 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 110 cu",
+          "applicabilityKey": "section-5f2c6f44ed49"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 10 cu",
+          "applicabilityKey": "section-566f41f5e616"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:d025847017e3b889eabf15c30fd34143d814eeda79ca3326865361401a3e50e4",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-applied-studies-part-time",
+      "programmeName": "Bachelor of Applied Studies",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d9044b5238f78688528a3ae257f98fcf29968e50f1f1ea1e24faa682548517a6",
+      "sourcePath": "undergraduate/part-time/Bachelor of Applied Studies.pdf",
+      "sourceLabel": "Bachelor of Applied Studies curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0e6de3c2b62f",
+          "applicabilityLabel": "Source section: COMPULSORY - 5 cu"
+        },
+        {
+          "applicabilityKey": "section-3d226fa87062",
+          "applicabilityLabel": "Source section: ELECTIVE - 75 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 5 cu",
+          "applicabilityKey": "section-0e6de3c2b62f"
+        },
+        {
+          "extractedSection": "ELECTIVE - 75 cu",
+          "applicabilityKey": "section-3d226fa87062"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:75af3249111fb1538a96e68390c4d2ccbc0e06f4e73cb965acfc3c7ab0598b68",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-arts-in-chinese-studies-full-time",
+      "programmeName": "Bachelor of Arts in Chinese Studies",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "1837ef9a205a96ac2607745e1b2496b27d8dd327b151d0473836b832897cb4e2",
+      "sourcePath": "undergraduate/full-time/Bachelor of Arts in Chinese Studies.pdf",
+      "sourceLabel": "Bachelor of Arts in Chinese Studies curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-e0504df26f42",
+          "applicabilityLabel": "Source section: COMPULSORY - 65 cu"
+        },
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 65 cu",
+          "applicabilityKey": "section-e0504df26f42"
+        },
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:1a02ed9d6be326c712a28528a92e9563c70c278c989036b9de2ae80bf22bed3b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-building-and-project-management-part-time",
+      "programmeName": "Bachelor of Building and Project Management",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "6092fde547d08537591449aacf0fa0f1adb80b25e45b3a7f3c173bdfe73a4612",
+      "sourcePath": "undergraduate/part-time/Bachelor of Building and Project Management.pdf",
+      "sourceLabel": "Bachelor of Building and Project Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-b8086d236455",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 20 cu",
+          "applicabilityKey": "section-b8086d236455"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:4adfe19779217411bcba2990834f7d09f968662cc3f16e760be3229ac142f7d2",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-communication-part-time",
+      "programmeName": "Bachelor of Communication",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "5b99af621417dc0e8ff9a31529dbb3054f3a23f207a60257097c8731557b55f6",
+      "sourcePath": "undergraduate/part-time/Bachelor of Communication.pdf",
+      "sourceLabel": "Bachelor of Communication curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:ab3e6966392418ede8eda4317e664e3657fdf97eb4c9920e19735a3b69f7c258",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-counselling-part-time",
+      "programmeName": "Bachelor of Counselling",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "284ff49db1cee1db0cab2893421dc9869dc09b706ab464f1ffbf940cd0f20df6",
+      "sourcePath": "undergraduate/part-time/Bachelor of Counselling.pdf",
+      "sourceLabel": "Bachelor of Counselling curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-1874f96a719d",
+          "applicabilityLabel": "Source section: COMPULSORY - 70 cu"
+        },
+        {
+          "applicabilityKey": "section-1edcc0f4edb1",
+          "applicabilityLabel": "Source section: ELECTIVE - 25 cu"
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 70 cu",
+          "applicabilityKey": "section-1874f96a719d"
+        },
+        {
+          "extractedSection": "ELECTIVE - 25 cu",
+          "applicabilityKey": "section-1edcc0f4edb1"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:cc7c71b032687a6be42b84d645a5eeb0ef2fe4f9407f7f6d1bb7eb1553e95be0",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-early-childhood-and-chinese-language-education-part-time",
+      "programmeName": "Bachelor of Early Childhood and Chinese Language Education 学前华文教育学士学位",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "3bb4efb1113ee3033aebca37e462093957cf25f6a429d4af238af3d4f8d988ed",
+      "sourcePath": "undergraduate/part-time/Bachelor of Early Childhood and Chinese Language Education 学前华文教育学士学位.pdf",
+      "sourceLabel": "Bachelor of Early Childhood and Chinese Language Education 学前华文教育学士学位 curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-263839066667",
+          "applicabilityLabel": "Source section: COMPULSORY - 80 cu"
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 80 cu",
+          "applicabilityKey": "section-263839066667"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:22d18bcd4c3bf332ec0cc15c4ee719865a91fe70b91cfebe519693f7c8ff02d8",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-early-childhood-education-full-time",
+      "programmeName": "Bachelor of Early Childhood Education",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "f768f603954bc09f90dfda84c6a4bf48620fe8751a808dadb1aef478500ab6a1",
+      "sourcePath": "undergraduate/full-time/Bachelor of Early Childhood Education.pdf",
+      "sourceLabel": "Bachelor of Early Childhood Education curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0fd9d4a04752",
+          "applicabilityLabel": "Source section: COMPULSORY - 75 cu"
+        },
+        {
+          "applicabilityKey": "section-4dd01feca429",
+          "applicabilityLabel": "Source section: ELECTIVE - 15 cu"
+        },
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 75 cu",
+          "applicabilityKey": "section-0fd9d4a04752"
+        },
+        {
+          "extractedSection": "ELECTIVE - 15 cu",
+          "applicabilityKey": "section-4dd01feca429"
+        },
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:9a65765e4f85990dcb0b30bdbccc859d244469707ce96417444d737191342886",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-early-childhood-education-part-time",
+      "programmeName": "Bachelor of Early Childhood Education",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "17168d806a0c5d3ae8b3ddc39a4a5b5b40c394b40feb06320f1609963713a0f9",
+      "sourcePath": "undergraduate/part-time/Bachelor of Early Childhood Education.pdf",
+      "sourceLabel": "Bachelor of Early Childhood Education curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-bd8cb5ad31e5",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 cu"
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 30 cu",
+          "applicabilityKey": "section-bd8cb5ad31e5"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:6cfab77858e7dc991181af67e7d6dad1a1ae2ad0a943f33285755a0175af4908",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-engineering-electronics-hons-part-time",
+      "programmeName": "Bachelor of Engineering Electronics (Hons)",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "41be45320547043632730121248c16e004c52c6d9a7995ff2abf03c8dd1162ab",
+      "sourcePath": "undergraduate/part-time/Bachelor of Engineering Electronics (Hons).pdf",
+      "sourceLabel": "Bachelor of Engineering Electronics (Hons) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-7283e28f436d",
+          "applicabilityLabel": "Source section: COMPULSORY - 120 cu"
+        },
+        {
+          "applicabilityKey": "section-bd8cb5ad31e5",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 120 cu",
+          "applicabilityKey": "section-7283e28f436d"
+        },
+        {
+          "extractedSection": "ELECTIVE - 30 cu",
+          "applicabilityKey": "section-bd8cb5ad31e5"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:348399543da293bbf5de2b88845f8e9908612508b99cb776b57f30c34cb2e8bd",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-human-resource-management-full-time",
+      "programmeName": "Bachelor of Human Resource Management",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "dc83c98a8528c272d44cad315759ae74fd1f813de0250402ac9faa2115a7c84d",
+      "sourcePath": "undergraduate/full-time/Bachelor of Human Resource Management.pdf",
+      "sourceLabel": "Bachelor of Human Resource Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0fd9d4a04752",
+          "applicabilityLabel": "Source section: COMPULSORY - 75 cu"
+        },
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 75 cu",
+          "applicabilityKey": "section-0fd9d4a04752"
+        },
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:5bfc336a7e4bf34d9afc94b779888319e76baa95af1c2f2de497e41565c473e4",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-human-resource-management-part-time",
+      "programmeName": "Bachelor of Human Resource Management",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "bd58cff87faa9baa5fde1dcdcb026077f41960150b477569486f006e4a20673b",
+      "sourcePath": "undergraduate/part-time/Bachelor of Human Resource Management.pdf",
+      "sourceLabel": "Bachelor of Human Resource Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0d28a7214e40",
+          "applicabilityLabel": "Source section: COMPULSORY - 60 cu"
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 60 cu",
+          "applicabilityKey": "section-0d28a7214e40"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:28ff4fe4d2a56ab94c263fb4494b3912592e400de19e3dc23c3adf207214657b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-laws",
+      "programmeName": "Bachelor of Laws",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "771fcbd3cd9c79ec28847d8ed95324f2634b84b15f5b300680b818d7149d9a53",
+      "sourcePath": "law_programmes/Bachelor of Laws.pdf",
+      "sourceLabel": "Bachelor of Laws curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-f27ac16e73a2",
+          "applicabilityLabel": "Source section: COMPULSORY - 155 cu"
+        },
+        {
+          "applicabilityKey": "section-5ca65846a234",
+          "applicabilityLabel": "Source section: LAW ELECTIVE - 5 to 10 cu Students need to complete 25 cu of electives, 5 to 10 cu from Law electives."
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 155 cu",
+          "applicabilityKey": "section-f27ac16e73a2"
+        },
+        {
+          "extractedSection": "LAW ELECTIVE - 5 to 10 cu Students need to complete 25 cu of electives, 5 to 10 cu from Law electives.",
+          "applicabilityKey": "section-5ca65846a234"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:afae6b0627b877e4e5afc407254e6709e2c2157268e8cd579dba564825b7bc31",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-public-safety-and-security-full-time",
+      "programmeName": "Bachelor of Public Safety and Security",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "74430dbddcafd89bdfa56faeee348f5e5bbe98dec9e06f8fce98d151bd7c9739",
+      "sourcePath": "undergraduate/full-time/Bachelor of Public Safety and Security.pdf",
+      "sourceLabel": "Bachelor of Public Safety and Security curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:3dfb734deadb3abec736a91301ebe0ca8a041b9ab44cc0bd67c25e27fb548824",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-public-safety-and-security-part-time",
+      "programmeName": "Bachelor of Public Safety and Security",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "69daf73168228b4484ce514dc47ae22bf09fc6a168cb2e39c3b35068a9ac241a",
+      "sourcePath": "undergraduate/part-time/Bachelor of Public Safety and Security.pdf",
+      "sourceLabel": "Bachelor of Public Safety and Security curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:02f8bd1e8efa8bf6e44aaa2b9acfc27d10c6f1f540850da608ce752e648b9d3e",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-business-analytics-full-time",
+      "programmeName": "Bachelor of Science in Business Analytics",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b9f8992ac64eb72fe18468c84c54acec974036cdea5e27e0c5d4280e82acacf9",
+      "sourcePath": "undergraduate/full-time/Bachelor of Science in Business Analytics.pdf",
+      "sourceLabel": "Bachelor of Science in Business Analytics curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-e0504df26f42",
+          "applicabilityLabel": "Source section: COMPULSORY - 65 cu"
+        },
+        {
+          "applicabilityKey": "section-4dd01feca429",
+          "applicabilityLabel": "Source section: ELECTIVE - 15 cu"
+        },
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 65 cu",
+          "applicabilityKey": "section-e0504df26f42"
+        },
+        {
+          "extractedSection": "ELECTIVE - 15 cu",
+          "applicabilityKey": "section-4dd01feca429"
+        },
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:14d369d46d6b7f367e91b7a7569afaab2e1fd941fa740d8c07bc2b52c16346b5",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-finance-full-time",
+      "programmeName": "Bachelor of Science in Finance",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b418542a7c57cac8fb3dc77c80b70539ecba4a2b4f94332b46b7adeaa274ee6b",
+      "sourcePath": "undergraduate/full-time/Bachelor of Science in Finance.pdf",
+      "sourceLabel": "Bachelor of Science in Finance curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-3704c17dd4f5",
+          "applicabilityLabel": "Source section: COMPULSORY - 40 cu"
+        },
+        {
+          "applicabilityKey": "section-7eab14536ee4",
+          "applicabilityLabel": "Source section: ELECTIVE - 0 to 10 cu"
+        },
+        {
+          "applicabilityKey": "section-c78823fb1db0",
+          "applicabilityLabel": "Source section: RESTRICTED ELECTIVE - 30 to 40 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 40 cu",
+          "applicabilityKey": "section-3704c17dd4f5"
+        },
+        {
+          "extractedSection": "ELECTIVE - 0 to 10 cu",
+          "applicabilityKey": "section-7eab14536ee4"
+        },
+        {
+          "extractedSection": "RESTRICTED ELECTIVE - 30 to 40 cu",
+          "applicabilityKey": "section-c78823fb1db0"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:00bf7c0a2ba4ef943f82382bce2fef2ec86ea67870a2da994667a4d46bd42db3",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-finance-part-time",
+      "programmeName": "Bachelor of Science in Finance",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "244686a2be03513befbd0edaae92a24ac87d2991da46c18d2736a17996bb086f",
+      "sourcePath": "undergraduate/part-time/Bachelor of Science in Finance.pdf",
+      "sourceLabel": "Bachelor of Science in Finance curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0c37580e716c",
+          "applicabilityLabel": "Source section: COMPULSORY - 30 cu"
+        },
+        {
+          "applicabilityKey": "section-7eab14536ee4",
+          "applicabilityLabel": "Source section: ELECTIVE - 0 to 10 cu"
+        },
+        {
+          "applicabilityKey": "section-5dfa87994eac",
+          "applicabilityLabel": "Source section: RESTRICTED ELECTIVE - 40 to 50 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 30 cu",
+          "applicabilityKey": "section-0c37580e716c"
+        },
+        {
+          "extractedSection": "ELECTIVE - 0 to 10 cu",
+          "applicabilityKey": "section-7eab14536ee4"
+        },
+        {
+          "extractedSection": "RESTRICTED ELECTIVE - 40 to 50 cu",
+          "applicabilityKey": "section-5dfa87994eac"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:153f07a3acda315b69f186cc5cf14a23827d2fabf8f8d9cca571edc3e3417d75",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-information-and-communication-technology-full-time",
+      "programmeName": "Bachelor of Science in Information and Communication Technology",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "cf398f786b56a9b0e348a9c909efd22660c1edef1fccd0aa63bd1f282aaefd2e",
+      "sourcePath": "undergraduate/full-time/Bachelor of Science in Information and Communication Technology.pdf",
+      "sourceLabel": "Bachelor of Science in Information and Communication Technology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-ba84111f0d46",
+          "applicabilityLabel": "Source section: COMPULSORY - 90 cu"
+        },
+        {
+          "applicabilityKey": "section-bbb47c5128ef",
+          "applicabilityLabel": "Source section: ELECTIVE - 10 cu"
+        },
+        {
+          "applicabilityKey": "section-b685e4e96732",
+          "applicabilityLabel": "Source section: FREE ELECTIVE - 40 cu Students can use 30 cu to take a minor."
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 90 cu",
+          "applicabilityKey": "section-ba84111f0d46"
+        },
+        {
+          "extractedSection": "ELECTIVE - 10 cu",
+          "applicabilityKey": "section-bbb47c5128ef"
+        },
+        {
+          "extractedSection": "FREE ELECTIVE - 40 cu Students can use 30 cu to take a minor.",
+          "applicabilityKey": "section-b685e4e96732"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:93a6256d32930087abe19b50824bb197a08c8b6d7d0979e4ea563052e0cf9be4",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-marketing-full-time",
+      "programmeName": "Bachelor of Science in Marketing",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "5dcd05894bc08290b47c7cd3f10b63644577c6025d124d17a39beaa03ffca892",
+      "sourcePath": "undergraduate/full-time/Bachelor of Science in Marketing.pdf",
+      "sourceLabel": "Bachelor of Science in Marketing curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-e0504df26f42",
+          "applicabilityLabel": "Source section: COMPULSORY - 65 cu"
+        },
+        {
+          "applicabilityKey": "section-4dd01feca429",
+          "applicabilityLabel": "Source section: ELECTIVE - 15 cu"
+        },
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 65 cu",
+          "applicabilityKey": "section-e0504df26f42"
+        },
+        {
+          "extractedSection": "ELECTIVE - 15 cu",
+          "applicabilityKey": "section-4dd01feca429"
+        },
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:8c9349099dd1f8c46c260d92b5efb61d777d87e11ef52a25489ba1ed2a14b64a",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-marketing-part-time",
+      "programmeName": "Bachelor of Science in Marketing",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "28e05b6ea8e467662bd092bbbaaa7677ff3dd55c9122c3023742cf57f077b1ac",
+      "sourcePath": "undergraduate/part-time/Bachelor of Science in Marketing.pdf",
+      "sourceLabel": "Bachelor of Science in Marketing curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-e0504df26f42",
+          "applicabilityLabel": "Source section: COMPULSORY - 65 cu"
+        },
+        {
+          "applicabilityKey": "section-4dd01feca429",
+          "applicabilityLabel": "Source section: ELECTIVE - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 65 cu",
+          "applicabilityKey": "section-e0504df26f42"
+        },
+        {
+          "extractedSection": "ELECTIVE - 15 cu",
+          "applicabilityKey": "section-4dd01feca429"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:8b1c4f9ed66df5902042373be8832b2f87e839f32cb5da573d009546dce67cde",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-psychology-full-time",
+      "programmeName": "Bachelor of Science in Psychology",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "4861dc257b50e65ce6c877088277a96e11462e5b77f5ca3711e14ad71f472127",
+      "sourcePath": "undergraduate/full-time/Bachelor of Science in Psychology.pdf",
+      "sourceLabel": "Bachelor of Science in Psychology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-c50085dd0c2d",
+          "applicabilityLabel": "Source section: COMPULSORY - 50 cu"
+        },
+        {
+          "applicabilityKey": "section-5f57738fa214",
+          "applicabilityLabel": "Source section: ELECTIVE - 0 to 60 cu Students can use up to 60 cu to take a Psychology specialisation, minors and/or a second major."
+        },
+        {
+          "applicabilityKey": "section-3c9cfdfb2188",
+          "applicabilityLabel": "Source section: HONOURS COMPULSORY - 20 cu"
+        },
+        {
+          "applicabilityKey": "section-11f1ea02b282",
+          "applicabilityLabel": "Source section: HONOURS ELECTIVE - 10 cu"
+        },
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 50 cu",
+          "applicabilityKey": "section-c50085dd0c2d"
+        },
+        {
+          "extractedSection": "ELECTIVE - 0 to 60 cu Students can use up to 60 cu to take a Psychology specialisation, minors and/or a second major.",
+          "applicabilityKey": "section-5f57738fa214"
+        },
+        {
+          "extractedSection": "HONOURS COMPULSORY - 20 cu",
+          "applicabilityKey": "section-3c9cfdfb2188"
+        },
+        {
+          "extractedSection": "HONOURS ELECTIVE - 10 cu",
+          "applicabilityKey": "section-11f1ea02b282"
+        },
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:d0480994d199af679192c89996ecd6e2bf856efda863e590b1896146328ac0b4",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-supply-chain-management-full-time",
+      "programmeName": "Bachelor of Science in Supply Chain Management",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "7cdcce4c87a4f919b386ec7e2a9baf80cd5ecc1f1fa1c34f02c05448163cb34e",
+      "sourcePath": "undergraduate/full-time/Bachelor of Science in Supply Chain Management.pdf",
+      "sourceLabel": "Bachelor of Science in Supply Chain Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-1874f96a719d",
+          "applicabilityLabel": "Source section: COMPULSORY - 70 cu"
+        },
+        {
+          "applicabilityKey": "section-95a7a9b2b079",
+          "applicabilityLabel": "Source section: FREE ELECTIVE - 60 cu Students can use up to 60 cu to take minors or a second major."
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 70 cu",
+          "applicabilityKey": "section-1874f96a719d"
+        },
+        {
+          "extractedSection": "FREE ELECTIVE - 60 cu Students can use up to 60 cu to take minors or a second major.",
+          "applicabilityKey": "section-95a7a9b2b079"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:83c409f5de3063f30611132b9d15e6208e38bf1ab48dba496db5fc5f639a627d",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-science-in-workplace-safety-and-health-part-time",
+      "programmeName": "Bachelor of Science in Workplace Safety and Health",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "aab8b5766f9169d4be92e49dff2c773bb6e7c40969fc55320a71c244e754b0fd",
+      "sourcePath": "undergraduate/part-time/Bachelor of Science in Workplace Safety and Health.pdf",
+      "sourceLabel": "Bachelor of Science in Workplace Safety and Health curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:db7dae82aae888742c69a85b4ce5436bb45640ad23bace5cfc60ea83eacd16f6",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-social-work-full-time",
+      "programmeName": "Bachelor of Social Work",
+      "studyMode": "full-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "8dc00b3350932058589bf5d818f7e7b0fc2dd1b9a06f4fcf91494bb604d9ac85",
+      "sourcePath": "undergraduate/full-time/Bachelor of Social Work.pdf",
+      "sourceLabel": "Bachelor of Social Work curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-263839066667",
+          "applicabilityLabel": "Source section: COMPULSORY - 80 cu"
+        },
+        {
+          "applicabilityKey": "section-2b406867a797",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 cu Students can use up to 30 cu to take 2 areas of concentration."
+        },
+        {
+          "applicabilityKey": "section-3b701da8c108",
+          "applicabilityLabel": "Source section: SUSS CORE COMPULSORY - 47.5 cu"
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        },
+        {
+          "applicabilityKey": "section-e15902520154",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 80 cu",
+          "applicabilityKey": "section-263839066667"
+        },
+        {
+          "extractedSection": "ELECTIVE - 30 cu Students can use up to 30 cu to take 2 areas of concentration.",
+          "applicabilityKey": "section-2b406867a797"
+        },
+        {
+          "extractedSection": "SUSS CORE COMPULSORY - 47.5 cu",
+          "applicabilityKey": "section-3b701da8c108"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (PEOPLE) - 2.5 cu",
+          "applicabilityKey": "section-e15902520154"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:ba729f35f88fd31115e423c81e51f8ed29e86c25ae13e263b5d8e9d07b06fdb7",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-social-work-part-time",
+      "programmeName": "Bachelor of Social Work",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d045e68aaf1e132975d36ae99446a13206a587617c453daa970674c965ece43e",
+      "sourcePath": "undergraduate/part-time/Bachelor of Social Work.pdf",
+      "sourceLabel": "Bachelor of Social Work curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-e0504df26f42",
+          "applicabilityLabel": "Source section: COMPULSORY - 65 cu"
+        },
+        {
+          "applicabilityKey": "section-450477667d1e",
+          "applicabilityLabel": "Source section: ELECTIVE - 25 cu Students can use 15 cu to take an area of concentration."
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 65 cu",
+          "applicabilityKey": "section-e0504df26f42"
+        },
+        {
+          "extractedSection": "ELECTIVE - 25 cu Students can use 15 cu to take an area of concentration.",
+          "applicabilityKey": "section-450477667d1e"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:2b4e96c04ca8a5ca922b2eb549e7fb9dbe1e74812bddb4121db40a54e305854c",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bachelor-of-sports-and-physical-education-part-time",
+      "programmeName": "Bachelor of Sports and Physical Education",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "e660ebc62b1bd85c17c0c7718934069bc6a30e8d96edbc5262c7f36f4b2ba432",
+      "sourcePath": "undergraduate/part-time/Bachelor of Sports and Physical Education.pdf",
+      "sourceLabel": "Bachelor of Sports and Physical Education curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-3704c17dd4f5",
+          "applicabilityLabel": "Source section: COMPULSORY - 40 cu"
+        },
+        {
+          "applicabilityKey": "section-022bf38e5513",
+          "applicabilityLabel": "Source section: ELECTIVE - 40 cu"
+        },
+        {
+          "applicabilityKey": "section-67570b9d63c0",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 40 cu",
+          "applicabilityKey": "section-3704c17dd4f5"
+        },
+        {
+          "extractedSection": "ELECTIVE - 40 cu",
+          "applicabilityKey": "section-022bf38e5513"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 5 cu",
+          "applicabilityKey": "section-67570b9d63c0"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:6094cb29c0f6c8d2deef25ff3fdf2288d1cc6cb6dea04647edf065f50b2c8e84",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "beng-hons-aerospace-systems-part-time",
+      "programmeName": "BEng (Hons) Aerospace Systems",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "88b923224e45e80d92082326c21e9d0310bded8e85a7a4af1aa642c9d57a4138",
+      "sourcePath": "undergraduate/part-time/BEng (Hons) Aerospace Systems.pdf",
+      "sourceLabel": "BEng (Hons) Aerospace Systems curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-37324ca7294b",
+          "applicabilityLabel": "Source section: COMPULSORY - 125 cu"
+        },
+        {
+          "applicabilityKey": "section-c19490eec1c7",
+          "applicabilityLabel": "Source section: ELECTIVE (ENGINEERING) - 15 to 25 cu Students need to complete at least 15 cu of Engineering electives."
+        },
+        {
+          "applicabilityKey": "section-9e6b61e1d9c9",
+          "applicabilityLabel": "Source section: ELECTIVE (MANAGEMENT) - 0 to 10 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 125 cu",
+          "applicabilityKey": "section-37324ca7294b"
+        },
+        {
+          "extractedSection": "ELECTIVE (ENGINEERING) - 15 to 25 cu Students need to complete at least 15 cu of Engineering electives.",
+          "applicabilityKey": "section-c19490eec1c7"
+        },
+        {
+          "extractedSection": "ELECTIVE (MANAGEMENT) - 0 to 10 cu",
+          "applicabilityKey": "section-9e6b61e1d9c9"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:b1f5e0720336c15be5612658828027ed5d2321173f73f0b74b398e2387060b77",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-business-analytics-part-time",
+      "programmeName": "BSc Business Analytics",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "e856ea4e4edd7e0c1ba86c75389ec617283e5c68960f64ea28f5b000e4deb4a6",
+      "sourcePath": "undergraduate/part-time/BSc Business Analytics.pdf",
+      "sourceLabel": "BSc Business Analytics curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-e0504df26f42",
+          "applicabilityLabel": "Source section: COMPULSORY - 65 cu"
+        },
+        {
+          "applicabilityKey": "section-4dd01feca429",
+          "applicabilityLabel": "Source section: ELECTIVE - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 65 cu",
+          "applicabilityKey": "section-e0504df26f42"
+        },
+        {
+          "extractedSection": "ELECTIVE - 15 cu",
+          "applicabilityKey": "section-4dd01feca429"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:3393951c62b1c70b4992bbca9581f417242bff2b4ea3049a448bb65be58fc279",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-business-part-time",
+      "programmeName": "BSc Business",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "0c3cbf2dc9f966207fbab27e44adcbc696c7b989a2373406bb874245c2bc646b",
+      "sourcePath": "undergraduate/part-time/BSc Business.pdf",
+      "sourceLabel": "BSc Business curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0d28a7214e40",
+          "applicabilityLabel": "Source section: COMPULSORY - 60 cu"
+        },
+        {
+          "applicabilityKey": "section-b8086d236455",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 60 cu",
+          "applicabilityKey": "section-0d28a7214e40"
+        },
+        {
+          "extractedSection": "ELECTIVE - 20 cu",
+          "applicabilityKey": "section-b8086d236455"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:2b4e03fad8199cb6e64096670e1cad5b49e6907ebf4e607934768a1b766e6921",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-digital-media-part-time",
+      "programmeName": "BSc Digital Media",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d42e7e7004566027fbd68fc7466dbf6fbadb05187607783a19b4867834ce8a7b",
+      "sourcePath": "undergraduate/part-time/BSc Digital Media.pdf",
+      "sourceLabel": "BSc Digital Media curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-b8086d236455",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 20 cu",
+          "applicabilityKey": "section-b8086d236455"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:5cf66cc51a1b89adcf2f2938c6bba9fdd05c98fc6e356832bb47e18c925306d4",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-events-management-part-time",
+      "programmeName": "BSc Events Management",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "540bf378e329ea44fc4af8adf2e25b2a924f719d6806b737cb409b87c98ff2de",
+      "sourcePath": "undergraduate/part-time/BSc Events Management.pdf",
+      "sourceLabel": "BSc Events Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:a1d1be4d384a63d0b14b751a228f15e338b125ebe646b0cf6ab70ab79e97d04b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-facilities-management-part-time",
+      "programmeName": "BSc Facilities Management",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "bfbb878e555cf2c5a826f9119f1da0134b015d47fb6bbf07ba3ee8b0b11c879a",
+      "sourcePath": "undergraduate/part-time/BSc Facilities Management.pdf",
+      "sourceLabel": "BSc Facilities Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0d28a7214e40",
+          "applicabilityLabel": "Source section: COMPULSORY - 60 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 60 cu",
+          "applicabilityKey": "section-0d28a7214e40"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:5e242e0371e9dee4d050ad557bc5b6a562909779d782edd30e12e50f266bae9a",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-hons-biomedical-engineering-part-time",
+      "programmeName": "BSc (Hons) Biomedical Engineering",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "187a1795c0502c4becc82237d9ccef3093d7cb0c1d652771dafe476ad53c64d2",
+      "sourcePath": "undergraduate/part-time/BSc (Hons) Biomedical Engineering.pdf",
+      "sourceLabel": "BSc (Hons) Biomedical Engineering curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-263839066667",
+          "applicabilityLabel": "Source section: COMPULSORY - 80 cu"
+        },
+        {
+          "applicabilityKey": "section-b9ba0d192af0",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 cu Students need to complete 20 cu of electives."
+        },
+        {
+          "applicabilityKey": "section-566f41f5e616",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 10 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 80 cu",
+          "applicabilityKey": "section-263839066667"
+        },
+        {
+          "extractedSection": "ELECTIVE - 20 cu Students need to complete 20 cu of electives.",
+          "applicabilityKey": "section-b9ba0d192af0"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 10 cu",
+          "applicabilityKey": "section-566f41f5e616"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:c4bc209b1c93c0d218680fa7ca07323d5981811f52a54e4b538f93c8fe387d3b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-hons-information-technology-and-business-erp-part-time",
+      "programmeName": "BSc (Hons) Information Technology and Business (ERP)",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "860f0c57b357af5eb45f81a0c9ca5c88784017237f8740bc1543e197fefd58ee",
+      "sourcePath": "undergraduate/part-time/BSc (Hons) Information Technology and Business (ERP).pdf",
+      "sourceLabel": "BSc (Hons) Information Technology and Business (ERP) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-ba84111f0d46",
+          "applicabilityLabel": "Source section: COMPULSORY - 90 cu"
+        },
+        {
+          "applicabilityKey": "section-b8086d236455",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 cu"
+        },
+        {
+          "applicabilityKey": "section-566f41f5e616",
+          "applicabilityLabel": "Source section: SUSS CORE ELECTIVES (ENGAGEMENT) - 10 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 90 cu",
+          "applicabilityKey": "section-ba84111f0d46"
+        },
+        {
+          "extractedSection": "ELECTIVE - 20 cu",
+          "applicabilityKey": "section-b8086d236455"
+        },
+        {
+          "extractedSection": "SUSS CORE ELECTIVES (ENGAGEMENT) - 10 cu",
+          "applicabilityKey": "section-566f41f5e616"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:d32d58d6bef6e3fa6fd24a642a59d4f6589c6f6f5912c4c19e335413734099b6",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-human-factors-in-safety-part-time",
+      "programmeName": "BSc Human Factors in Safety",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "ac7384b5019065c6391251c38cf33200dc46b2834d05fd0ac6c6586ae271b372",
+      "sourcePath": "undergraduate/part-time/BSc Human Factors in Safety.pdf",
+      "sourceLabel": "BSc Human Factors in Safety curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:a4a16ff2f94acf4533ac6b041ad333b52706e88d1ec4c1d67517c7d3719f7e9d",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-information-and-communication-technology-part-time",
+      "programmeName": "BSc Information and Communication Technology",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "eba5dfb734ef63caa99a980d2183bf94ce4e3009812aadf75500f72acdaeaeca",
+      "sourcePath": "undergraduate/part-time/BSc Information and Communication Technology.pdf",
+      "sourceLabel": "BSc Information and Communication Technology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0d28a7214e40",
+          "applicabilityLabel": "Source section: COMPULSORY - 60 cu"
+        },
+        {
+          "applicabilityKey": "section-b8086d236455",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 60 cu",
+          "applicabilityKey": "section-0d28a7214e40"
+        },
+        {
+          "extractedSection": "ELECTIVE - 20 cu",
+          "applicabilityKey": "section-b8086d236455"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:2cc35425b33d1972d1c33c4f2afdd6c583e46818f45616eb24aa1f2c9b72c9ad",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-mathematics-part-time",
+      "programmeName": "BSc Mathematics",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "9b8fd8f077e4a9005770bfbf2b5166fd3954952b4d28a9c792b20c810857ff2d",
+      "sourcePath": "undergraduate/part-time/BSc Mathematics.pdf",
+      "sourceLabel": "BSc Mathematics curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-c50085dd0c2d",
+          "applicabilityLabel": "Source section: COMPULSORY - 50 cu"
+        },
+        {
+          "applicabilityKey": "section-bd8cb5ad31e5",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 50 cu",
+          "applicabilityKey": "section-c50085dd0c2d"
+        },
+        {
+          "extractedSection": "ELECTIVE - 30 cu",
+          "applicabilityKey": "section-bd8cb5ad31e5"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:1466de09e812ad06db9dbd6d3cd9452322f126702bd7635e52ffc59b27bf334e",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-psychology-part-time",
+      "programmeName": "BSc Psychology",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "c19236a91f4a8d69d64d821d0ca677a07e9eec7583cc45d68bffb0520a6ffed9",
+      "sourcePath": "undergraduate/part-time/BSc Psychology.pdf",
+      "sourceLabel": "BSc Psychology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-c50085dd0c2d",
+          "applicabilityLabel": "Source section: COMPULSORY - 50 cu"
+        },
+        {
+          "applicabilityKey": "section-ad7e4eb0c74d",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 cu Students need to complete at least 5 cu of level 3 and above courses as electives."
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 50 cu",
+          "applicabilityKey": "section-c50085dd0c2d"
+        },
+        {
+          "extractedSection": "ELECTIVE - 30 cu Students need to complete at least 5 cu of level 3 and above courses as electives.",
+          "applicabilityKey": "section-ad7e4eb0c74d"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:037b11bad66f0a49c6c54a2b91502b17cb5b48aac669026ca26d4064586d6140",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "bsc-supply-chain-management-part-time",
+      "programmeName": "BSc Supply Chain Management",
+      "studyMode": "part-time",
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "a6613d35f45519dee612e026af880e1397f4f57db3af1d838420309e5e54c253",
+      "sourcePath": "undergraduate/part-time/BSc Supply Chain Management.pdf",
+      "sourceLabel": "BSc Supply Chain Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-1874f96a719d",
+          "applicabilityLabel": "Source section: COMPULSORY - 70 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 70 cu",
+          "applicabilityKey": "section-1874f96a719d"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:648cb19987c7babaefe9b50f24a66dcdff3b1070ac830849486b9b25d723f54c",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "doctor-of-business-administration",
+      "programmeName": "Doctor of Business Administration",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "489eed0d45349c5db2095c730bb694a1a133072d555e2cb1967065c43ba86873",
+      "sourcePath": "graduate_studies/Doctor of Business Administration.pdf",
+      "sourceLabel": "Doctor of Business Administration curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5378d0e5ff54",
+          "applicabilityLabel": "Source section: COMPULSORY - 95 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 95 cu",
+          "applicabilityKey": "section-5378d0e5ff54"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:a4bf3f8e2aff4220c854307992f11fc00681abdad5a50c257b7d49ac94f76077",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "doctor-of-philosophy-pdeng",
+      "programmeName": "Doctor of Philosophy - PDENG",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "c5eb5d06f1a355227bbf99bf09be7dd328f9b87669db7b5ed4899fb337e3550d",
+      "sourcePath": "graduate_studies/Doctor of Philosophy - PDENG.pdf",
+      "sourceLabel": "Doctor of Philosophy - PDENG curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:214e39fef3c49262993a116bef1b75311bb00477c41319bdbc6e31d656737a24",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "doctor-of-philosophy-phdg",
+      "programmeName": "Doctor of Philosophy - PHDG",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "17653b56a33481f7856ae97ed07534335d568eac859e0f1cc39248f48ffd9d3a",
+      "sourcePath": "graduate_studies/Doctor of Philosophy - PHDG.pdf",
+      "sourceLabel": "Doctor of Philosophy - PHDG curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-ba84111f0d46",
+          "applicabilityLabel": "Source section: COMPULSORY - 90 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 90 cu",
+          "applicabilityKey": "section-ba84111f0d46"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:d81e9aad0f02e317e3543659646b3235dbbfcf4da6b8c09c94e794502a1830b3",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "doctor-of-philosophy-phger",
+      "programmeName": "Doctor of Philosophy - PHGER",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d0d3936cad642253cb31e298c33b0185b7e829ddf11448967ec941c91e3355e7",
+      "sourcePath": "graduate_studies/Doctor of Philosophy - PHGER.pdf",
+      "sourceLabel": "Doctor of Philosophy - PHGER curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5f2c6f44ed49",
+          "applicabilityLabel": "Source section: COMPULSORY - 110 cu"
+        },
+        {
+          "applicabilityKey": "section-8a919e2fb13d",
+          "applicabilityLabel": "Source section: ELECTIVE - 10 cu Minimum 2 research method courses required"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 110 cu",
+          "applicabilityKey": "section-5f2c6f44ed49"
+        },
+        {
+          "extractedSection": "ELECTIVE - 10 cu Minimum 2 research method courses required",
+          "applicabilityKey": "section-8a919e2fb13d"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:e44f83417307b9717331012e54d6a49a66cdb2a4684c9c047b35318240628afc",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "executive-master-of-business-administration",
+      "programmeName": "Executive Master of Business Administration 高级管理人员工商管理硕士",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "049a1b8875e3f6b7e0674e3b833425884ab8fae1e82229d558d8e91d803f1c34",
+      "sourcePath": "graduate_studies/Executive Master of Business Administration 高级管理人 员工商管理硕士.pdf",
+      "sourceLabel": "Executive Master of Business Administration 高级管理人员工商管理硕士 curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-b43ea7039d16",
+          "applicabilityLabel": "Source section: COMPULSORY - 55 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 55 cu",
+          "applicabilityKey": "section-b43ea7039d16"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:d5f0845f5ec2119f4eb9b0cd98ae9d9baa2751fa77323adce501f77d33bc8417",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-analytics-and-visualisation",
+      "programmeName": "Graduate Certificate in Analytics and Visualisation",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "328c96f6a043565b04a9bc23c1ac763c42c3e3979d4cb62b46f2183f87e335d2",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Analytics and Visualisation.pdf",
+      "sourceLabel": "Graduate Certificate in Analytics and Visualisation curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-2b1dd04e7472",
+          "applicabilityLabel": "Source section: ELECTIVE - 5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 5 cu",
+          "applicabilityKey": "section-2b1dd04e7472"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:05345c9af09de8c04466145cf02732fa5e7ade54f8defc6cac18edbdfc61b68f",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-applied-linguistics-tesol",
+      "programmeName": "Graduate Certificate in Applied Linguistics (TESOL)",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "43c1f9dcaaaf2bd8f26ef0e1f59301606cf81061a83966b8570340bd75694987",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Applied Linguistics (TESOL).pdf",
+      "sourceLabel": "Graduate Certificate in Applied Linguistics (TESOL) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:8941a11d8b9836df3c6518ef9b5b29d08c08b7cb628f913661b30418a6f8c989",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-artificial-intelligence-for-business",
+      "programmeName": "Graduate Certificate in Artificial Intelligence for Business",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "906c5bb71f27f704a704886374e1dff10da0d53d8cfdf9356b5d3fbbbbbf79a5",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Artificial Intelligence for Business.pdf",
+      "sourceLabel": "Graduate Certificate in Artificial Intelligence for Business curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:aef82b2d657010478d912ed6e9a212b0aef2c16b095a221ae8bafe9e715f7577",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-compliance",
+      "programmeName": "Graduate Certificate in Compliance",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "f5f8f341c9ab9ad7c62ccda32c773e2eb786ac8f560ba19307ce05f7e6aadabc",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Compliance.pdf",
+      "sourceLabel": "Graduate Certificate in Compliance curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-583af4ab93df",
+          "applicabilityLabel": "Source section: COMPULSORY - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 15 cu",
+          "applicabilityKey": "section-583af4ab93df"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:49d59339de87e8b915a7c53281e4e267084427d1c1e8ebd12ecd3e56a842980b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-designing-learning-and-innovation",
+      "programmeName": "Graduate Certificate in Designing Learning and Innovation",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "dd646e1f0663149bc9a43ec83313afc01783d8deeb326f9b91203f0c23ff0b2a",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Designing Learning and Innovation.pdf",
+      "sourceLabel": "Graduate Certificate in Designing Learning and Innovation curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:23321e21c6f2ab7722d57e93890782244066c78ffe7d07f9d46aeaf4757edf52",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-designing-learning-for-programmes",
+      "programmeName": "Graduate Certificate in Designing Learning for Programmes",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "11361278edf28cf6d67796934b7c236b30334b07fb7a08aca6fb54ddb23d0cc3",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Designing Learning for Programmes.pdf",
+      "sourceLabel": "Graduate Certificate in Designing Learning for Programmes curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-583af4ab93df",
+          "applicabilityLabel": "Source section: COMPULSORY - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 15 cu",
+          "applicabilityKey": "section-583af4ab93df"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:a9565f21c636f14ec828222b87324f7082df579fa8f552cf0a2e9904941badc4",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-digital-marketing",
+      "programmeName": "Graduate Certificate in Digital Marketing",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "2dc643c83c4d9bf0f868b547a3b81e31a740cf0febfe293ca5ff17e80181f456",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Digital Marketing.pdf",
+      "sourceLabel": "Graduate Certificate in Digital Marketing curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:5116a562eba90926258eb4e221cbb6b356e7113507fe58e4d9e360d2c6d2ca8f",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-early-childhood-curriculum",
+      "programmeName": "Graduate Certificate in Early Childhood Curriculum",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b957c42d3d1680ae784e4f41be53b86edcfbdb9ad577a9a39d804b8d6fe286c5",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Early Childhood Curriculum.pdf",
+      "sourceLabel": "Graduate Certificate in Early Childhood Curriculum curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:2f3570c9826637d14b97b8e6befceffbbae6da47f3bd2e34994d1551872eb5e0",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-facilities-management",
+      "programmeName": "Graduate Certificate in Facilities Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "e667c0d26121ea75e9037aa3244a6ce07f59f23da1a46001caf36044e7b1b894",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Facilities Management.pdf",
+      "sourceLabel": "Graduate Certificate in Facilities Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:38c46d929e7c710c16310284f7a40fc7dc2c9f34d7379215743522e3cd3a94db",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-financial-technology",
+      "programmeName": "Graduate Certificate in Financial Technology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "c66bd9fd69889e2ea09df284da6569f0317cea79bc85916a79427d7aa447dfe9",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Financial Technology.pdf",
+      "sourceLabel": "Graduate Certificate in Financial Technology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-9f7ae9e62f5a",
+          "applicabilityLabel": "Source section: RESTRICTED ELECTIVE - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "RESTRICTED ELECTIVE - 15 cu",
+          "applicabilityKey": "section-9f7ae9e62f5a"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:194e5c095130db981b3a3a564604c5b9f05d7e87e8b8ee4518ec4b8bd964c852",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-gerontology",
+      "programmeName": "Graduate Certificate in Gerontology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "eefe9b2c7b25d0191d06b786c4610579d97c87abdc07bf6ada5b2bc68a0bda9b",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Gerontology.pdf",
+      "sourceLabel": "Graduate Certificate in Gerontology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:179107a4c23d1a7286793a3b84d16c10ee579cb4eedecbef1b059b61e4923585",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-global-security-and-strategy",
+      "programmeName": "Graduate Certificate in Global Security and Strategy",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "7f7ea83e74ae78c2b1f7e10fefc5b95374007384145fd34ab713e43b11f0ca9c",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Global Security and Strategy.pdf",
+      "sourceLabel": "Graduate Certificate in Global Security and Strategy curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:25f39369aa1f6349d6d2d865b9c6c8f326b4a123de745a1a202c763f3e834e57",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-healthcare-facilities-management",
+      "programmeName": "Graduate Certificate in Healthcare Facilities Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "455f9ddb4070ea69309229fbd4db7ad3033afaeba9c8010a3e3b091cf8f6a520",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Healthcare Facilities Management.pdf",
+      "sourceLabel": "Graduate Certificate in Healthcare Facilities Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:bb7f1cfdc6e80f029b2026d268db9bc9570a08a5041d00dec5aa39e7d1dfa7e6",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-human-capital-management",
+      "programmeName": "Graduate Certificate in Human Capital Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "ecf0221a184e272d1f69cc91f2b496f5c4fafcaa4621bfc948860ceeacd3254f",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Human Capital Management.pdf",
+      "sourceLabel": "Graduate Certificate in Human Capital Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:e9adf14b635a8238ef9fa669f45ffab6855593e11a7c59ef7317a8fc9e61a703",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-implementing-and-evaluating-innovation-change-and-learning",
+      "programmeName": "Graduate Certificate in Implementing and Evaluating Innovation, Change and Learning",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "69fe0eed2acb54e14798297cdd77453ed524953bc1e80a90f6944198110df74b",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Implementing and Evaluating Innovation, Change and Learning.pdf",
+      "sourceLabel": "Graduate Certificate in Implementing and Evaluating Innovation, Change and Learning curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-583af4ab93df",
+          "applicabilityLabel": "Source section: COMPULSORY - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 15 cu",
+          "applicabilityKey": "section-583af4ab93df"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:8a1854165d4b09bd3b2ccddd09f6c94cf962f8e611069dedb9b8855f51cd72d3",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-innovative-approaches-to-adult-learning",
+      "programmeName": "Graduate Certificate in Innovative Approaches to Adult Learning",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "29e38d87043c936a76f0bbb33794c7c8112da9b2eaefc0bb4b9eaaf9c6ad028b",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Innovative Approaches to Adult Learning.pdf",
+      "sourceLabel": "Graduate Certificate in Innovative Approaches to Adult Learning curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-583af4ab93df",
+          "applicabilityLabel": "Source section: COMPULSORY - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 15 cu",
+          "applicabilityKey": "section-583af4ab93df"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:e53f2d4d8415e62fe56c7fb24ff248728cc323a03ac4f87f110e5d89076ba3cc",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-internet-of-things",
+      "programmeName": "Graduate Certificate in Internet of Things",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "2a4c10f054e4ace794224ac1d19c247a917d33df7feb33a4341528ebd0af4514",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Internet of Things.pdf",
+      "sourceLabel": "Graduate Certificate in Internet of Things curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:8acb347a10504ee6bc4dc048455bc4f2794aa39e52fb5ddb3e0db6c47b0a8b5d",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-ip-and-innovation-management",
+      "programmeName": "Graduate Certificate in IP and Innovation Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b9f7f5a8d04abb599116eb195ade0db6ba7cbca67d07110a683e72ad6841b617",
+      "sourcePath": "graduate_certificate/Graduate Certificate in IP and Innovation Management.pdf",
+      "sourceLabel": "Graduate Certificate in IP and Innovation Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:d62cdf691fa319a6a4c4613174d87bf79c3792bf66622ae4936406e3d32c738e",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-leading-learning-innovation-and-change-across-boundaries",
+      "programmeName": "Graduate Certificate in Leading Learning, Innovation and Change Across Boundaries",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "3948b64891d66069ca957f6995e4967850b23302f2cb58844b494c820fa10673",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Leading Learning, Innovation and Change Across Boundaries.pdf",
+      "sourceLabel": "Graduate Certificate in Leading Learning, Innovation and Change Across Boundaries curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:7e44098ccef44d1e7247d4eaee3d97a47a8981a2ea6bed970f8ca48162ff4781",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-logistics-and-supply-chain-management",
+      "programmeName": "Graduate Certificate in Logistics and Supply Chain Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "022c6cfc91ba2c37904fd2fc8b5d9f809f4229d7f097787f01f56e48aba59491",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Logistics and Supply Chain Management.pdf",
+      "sourceLabel": "Graduate Certificate in Logistics and Supply Chain Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:8862588a70d062361158c2826fee7adbba58da79c1cf1adc8f3b53135602ae76",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-management",
+      "programmeName": "Graduate Certificate in Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b41f03b7087cdbcc30c778e8c720f967c74355bd9ae173afe62ec8341cfdf780",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Management.pdf",
+      "sourceLabel": "Graduate Certificate in Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:7ef97788bd3ec932db18da339d038d19f11b08384e7873d94a3e5cd15a721ea7",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-organisational-innovation-and-change",
+      "programmeName": "Graduate Certificate in Organisational Innovation and Change",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "2fd325d7d7f50dd210e2e4abd3150c6a5e6c78a45b15bdd5eef9ab6564cbbe23",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Organisational Innovation and Change.pdf",
+      "sourceLabel": "Graduate Certificate in Organisational Innovation and Change curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:fd7ef11f69dcb885b1d3c885d3422f3f689ad365eee1986a0255004892b2cf2e",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-project-management",
+      "programmeName": "Graduate Certificate in Project Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b2a22f7bdf77935960b68db51b40e5bb0a0a727e7922ce612827f2ee86945947",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Project Management.pdf",
+      "sourceLabel": "Graduate Certificate in Project Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:dec6ba048aae8f568bd1852dadf2dab0fd7df07dc34c6ba40bd1f1ed3f0f3554",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-sustainability-management",
+      "programmeName": "Graduate Certificate in Sustainability Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d0c7d234a00881546603fd5f2af538114814dd16bc9cb22704159e9b2462213f",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Sustainability Management.pdf",
+      "sourceLabel": "Graduate Certificate in Sustainability Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:1c014e926545bfe2d5f9c93a44fc2e8448cf32e368c34100e8d68a1b610d8d36",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-certificate-in-taxation",
+      "programmeName": "Graduate Certificate in Taxation",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "1d70c7cc5494619cbd47dbff9ccfb408564108198101a153f2590fdb4706bc3d",
+      "sourcePath": "graduate_certificate/Graduate Certificate in Taxation.pdf",
+      "sourceLabel": "Graduate Certificate in Taxation curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:b4512d180c3042afdc0646e20bebe4a1b11482fdc30acaefc0e88f53aa63f49e",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-adult-learning",
+      "programmeName": "Graduate Diploma in Adult Learning",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "e296f8e6b1dedd4fb01796cfe3f6201f2a4f4b57ef4924b2dfabd3bf6b47b129",
+      "sourcePath": "graduate_studies/Graduate Diploma in Adult Learning.pdf",
+      "sourceLabel": "Graduate Diploma in Adult Learning curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:aff2f9db32bcfd77182b27d6561e4a79f99ae7882cae4001991a92682403c176",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-analytics-and-visualisation",
+      "programmeName": "Graduate Diploma in Analytics and Visualisation",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "5f29df4d88341e148a1a787a09471e45dd72ab04be3381b99e2d8412016cfb34",
+      "sourcePath": "graduate_studies/Graduate Diploma in Analytics and Visualisation.pdf",
+      "sourceLabel": "Graduate Diploma in Analytics and Visualisation curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-b8086d236455",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 20 cu",
+          "applicabilityKey": "section-b8086d236455"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:d6590ce333c920e479baf0b71a4e42f2b1e654c2fa7218f633116b05827cbfaf",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-applied-linguistics-tesol",
+      "programmeName": "Graduate Diploma in Applied Linguistics (TESOL)",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "24ac8a2e979ef2083570923c0021cda7dd9a9c8a542721ad6a980fad9b6a1fc1",
+      "sourcePath": "graduate_studies/Graduate Diploma in Applied Linguistics (TESOL).pdf",
+      "sourceLabel": "Graduate Diploma in Applied Linguistics (TESOL) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-20e2e5a9c473",
+          "applicabilityLabel": "Source section: ELECTIVE - 0 to 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 0 to 15 cu",
+          "applicabilityKey": "section-20e2e5a9c473"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:158d0a225f2e7b26f5fdaaf2b4b3443d89aad6a0f61aa8e9d2d2f04177de99c7",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-artificial-intelligence-for-business",
+      "programmeName": "Graduate Diploma in Artificial Intelligence for Business",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "e1c613493a1c3557af8578327170d17ae0730d012467885afe0f9eb4caf73780",
+      "sourcePath": "graduate_studies/Graduate Diploma in Artificial Intelligence for Business.pdf",
+      "sourceLabel": "Graduate Diploma in Artificial Intelligence for Business curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-1d1ee7d5b0a9",
+          "applicabilityLabel": "Source section: ELECTIVE - 10 cu Students need to complete 10 cu of elective courses."
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 10 cu Students need to complete 10 cu of elective courses.",
+          "applicabilityKey": "section-1d1ee7d5b0a9"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:c8ee8c2518b09cc1d20cb6c727329afd06057cff09544939a28afcb9f86a281d",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-artificial-intelligence-of-things",
+      "programmeName": "Graduate Diploma in Artificial Intelligence of Things",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "0db46a0f4137d45ea0c6677e7553f9e453cf8f59a1cfe423c5953a1e84c3c99a",
+      "sourcePath": "graduate_studies/Graduate Diploma in Artificial Intelligence of Things.pdf",
+      "sourceLabel": "Graduate Diploma in Artificial Intelligence of Things curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:b22259dc0bbb015ae45b56e0e9eda61a45f82ead8e6cf9644fe6ddcc70a6fdca",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-curriculum-and-teaching",
+      "programmeName": "Graduate Diploma in Curriculum and Teaching",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "ef3bb703839627696dcebde7fff46e6b335dd1cd677fd801d9e15fb47b144c99",
+      "sourcePath": "graduate_studies/Graduate Diploma in Curriculum and Teaching.pdf",
+      "sourceLabel": "Graduate Diploma in Curriculum and Teaching curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:735a59770ac4c9d33399cdec2f211dfa2db0516a6f4a051ca277a637a56d510c",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-digital-marketing",
+      "programmeName": "Graduate Diploma in Digital Marketing",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "681ec03e308e0111031addf86724dd0f72bf3185f3b45befc16dc411fd61cdcd",
+      "sourcePath": "graduate_studies/Graduate Diploma in Digital Marketing.pdf",
+      "sourceLabel": "Graduate Diploma in Digital Marketing curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:f5d048d10137ee6e8441714cff04f9c072cbf1e3e40ceb9ffb1a2ce02216df5b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-education",
+      "programmeName": "Graduate Diploma in Education",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "41002b8511183f710791327f4e8a6ce647476425b31fd31f3a4978fe311bfb8a",
+      "sourcePath": "graduate_studies/Graduate Diploma in Education.pdf",
+      "sourceLabel": "Graduate Diploma in Education curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:6c82bfba43088a6e8766ad3d5421eb6eba38cd17a520e7634261f962698c3df0",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-expressive-arts-therapy",
+      "programmeName": "Graduate Diploma in Expressive Arts Therapy",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "fa907defe3640853412480a716bd8a33521e261e492db06799f507b7220ad57a",
+      "sourcePath": "graduate_studies/Graduate Diploma in Expressive Arts Therapy.pdf",
+      "sourceLabel": "Graduate Diploma in Expressive Arts Therapy curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:b9673016c5846d660fa07524bd1d3ee540fe2538277bea6a32a7d9e768fdeb9e",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-facilities-management",
+      "programmeName": "Graduate Diploma in Facilities Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "ef2649f60a64d3eee3f157c1dd853f1b3f8aa2726c0ea7976e9778c43536bec2",
+      "sourcePath": "graduate_studies/Graduate Diploma in Facilities Management.pdf",
+      "sourceLabel": "Graduate Diploma in Facilities Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-bbb47c5128ef",
+          "applicabilityLabel": "Source section: ELECTIVE - 10 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 10 cu",
+          "applicabilityKey": "section-bbb47c5128ef"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:549504464a897405cfe9648b6478ce1ca0fce9c6439952ea93aedf30bdf6b4ff",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-financial-technology",
+      "programmeName": "Graduate Diploma in Financial Technology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d41d48c513dd734a14540ba363338e5906e96d16c271edc555a8ac0ce2287d2a",
+      "sourcePath": "graduate_studies/Graduate Diploma in Financial Technology.pdf",
+      "sourceLabel": "Graduate Diploma in Financial Technology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-9a7fdc93d39f",
+          "applicabilityLabel": "Source section: RESTRICTED ELECTIVE - 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "RESTRICTED ELECTIVE - 30 cu",
+          "applicabilityKey": "section-9a7fdc93d39f"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:32620c8df778354c4bea1fc434b6b8dfd426e1040478cb7b68e6c19d8164110f",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-gerontology",
+      "programmeName": "Graduate Diploma in Gerontology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "c66d3c5f5a73560854b44597b19a39fca674f83142b4059ba83e5a1bb5d7b70a",
+      "sourcePath": "graduate_studies/Graduate Diploma in Gerontology.pdf",
+      "sourceLabel": "Graduate Diploma in Gerontology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:2c1e26e1fb569f852f795718e8ff8d0aa89766043e299fe643ba28aeb679c138",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-global-security-and-strategy",
+      "programmeName": "Graduate Diploma in Global Security and Strategy",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "ae6e39735eedf970435167e8594c5817be9fab2bb2c73b255ff82d3252566a24",
+      "sourcePath": "graduate_studies/Graduate Diploma in Global Security and Strategy.pdf",
+      "sourceLabel": "Graduate Diploma in Global Security and Strategy curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:af1a0618f3ea9a2dc8d4af3a042fecaf6c693fc5dd47f7bac92d0c55d8bf5fb2",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-human-capital-management",
+      "programmeName": "Graduate Diploma in Human Capital Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "ca43e5edfc02e146ec4d562ad3be07225f6c105c0e522d6f7bcc73268a1e9327",
+      "sourcePath": "graduate_studies/Graduate Diploma in Human Capital Management.pdf",
+      "sourceLabel": "Graduate Diploma in Human Capital Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:a17f24ec4f2a5e1c2e4d9916eb9f51e97944d6f85f6235d76589ef931af830b8",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-ip-and-innovation-management-ip-management",
+      "programmeName": "Graduate Diploma in IP and Innovation Management (IP Management)",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "f0f803fe56cafa40da9501faed4eed307300ad6626f9a559779337343a2ad3fc",
+      "sourcePath": "graduate_studies/Graduate Diploma in IP and Innovation Management (IP Management).pdf",
+      "sourceLabel": "Graduate Diploma in IP and Innovation Management (IP Management) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:404e19bc0bc51c7ae8ff7672d4f4dc36cda32697d4231ede937ec60e84496013",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-ip-and-innovation-management-patent-agency",
+      "programmeName": "Graduate Diploma in IP and Innovation Management (Patent Agency)",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "c29ce2dd129f58326609f06c2cbab20e3eab8f79ecb510819360f68bf45951be",
+      "sourcePath": "graduate_studies/Graduate Diploma in IP and Innovation Management (Patent Agency).pdf",
+      "sourceLabel": "Graduate Diploma in IP and Innovation Management (Patent Agency) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-64d585c5f7f4",
+          "applicabilityLabel": "Source section: COMPULSORY - 35 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 35 cu",
+          "applicabilityKey": "section-64d585c5f7f4"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:cd90c583c9f1b35829a72bad8928c8531a2b1b45dd5fb5b3e9a268aae31d82a1",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-learning-design-and-technology",
+      "programmeName": "Graduate Diploma in Learning Design and Technology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b46041ddaa1acf1f5c699711dc71e1059dd449c93616810fe8a9336ec060e8cf",
+      "sourcePath": "graduate_studies/Graduate Diploma in Learning Design and Technology.pdf",
+      "sourceLabel": "Graduate Diploma in Learning Design and Technology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:00778ee2c765e6330d2429c6f9d12c53159287aff482938e1cc00e2ddb1859bc",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-logistics-and-supply-chain-management",
+      "programmeName": "Graduate Diploma in Logistics and Supply Chain Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "5ab5c01beca5963bc7c168cff5c5099d406598b8801ba5b85a0862f92ce53172",
+      "sourcePath": "graduate_studies/Graduate Diploma in Logistics and Supply Chain Management.pdf",
+      "sourceLabel": "Graduate Diploma in Logistics and Supply Chain Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-583af4ab93df",
+          "applicabilityLabel": "Source section: COMPULSORY - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 15 cu",
+          "applicabilityKey": "section-583af4ab93df"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:dff58a39b696aeeda1ef7d17c21796321a5e008ddc9303fee310dca378a015cb",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-management",
+      "programmeName": "Graduate Diploma in Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "5aecf030fd25dcac995107f0d571e6132020362aa639d18d5f49704ff062dd76",
+      "sourcePath": "graduate_studies/Graduate Diploma in Management.pdf",
+      "sourceLabel": "Graduate Diploma in Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5d71ee892fea",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 to 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 20 to 30 cu",
+          "applicabilityKey": "section-5d71ee892fea"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:fc5dc8b643b7edebd12d6809155ac90326b77ce4e993aa1cb2e026eff5d5d118",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-organisational-psychology",
+      "programmeName": "Graduate Diploma in Organisational Psychology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "1713808c6a2298b6de493aa7cb301347716e10eeda13c05647497a050d31cc67",
+      "sourcePath": "graduate_studies/Graduate Diploma in Organisational Psychology.pdf",
+      "sourceLabel": "Graduate Diploma in Organisational Psychology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:24ba7cbea95ead82378fe84c41e5e07916af78d245752107807948a8a63a484d",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-professional-life-coaching",
+      "programmeName": "Graduate Diploma in Professional Life-coaching",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "89e432c2526ed638046fb7469f36d95751a5391a23e9f71450fc182fc448ec8b",
+      "sourcePath": "graduate_studies/Graduate Diploma in Professional Life-coaching.pdf",
+      "sourceLabel": "Graduate Diploma in Professional Life-coaching curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0c37580e716c",
+          "applicabilityLabel": "Source section: COMPULSORY - 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 30 cu",
+          "applicabilityKey": "section-0c37580e716c"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:5a5d14dc6229599ba12602441a9d13b7fea7f8f9ad8b0ec05c8672ff1d807e51",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-project-management",
+      "programmeName": "Graduate Diploma in Project Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "82d9aa3abe8f674a22197c1c92ff167fe26aaa9ab78b1a2cac4d198223172210",
+      "sourcePath": "graduate_studies/Graduate Diploma in Project Management.pdf",
+      "sourceLabel": "Graduate Diploma in Project Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:3c8e155f9dcf78eb9f3434cdef67f227376bd58778135785cc558db21f07231a",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-psychodynamic-approaches",
+      "programmeName": "Graduate Diploma in Psychodynamic Approaches",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "6bafcd253349cc05863b2a41caa3068922da62bc92af780f13054a8753cdc7cd",
+      "sourcePath": "graduate_studies/Graduate Diploma in Psychodynamic Approaches.pdf",
+      "sourceLabel": "Graduate Diploma in Psychodynamic Approaches curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0c37580e716c",
+          "applicabilityLabel": "Source section: COMPULSORY - 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 30 cu",
+          "applicabilityKey": "section-0c37580e716c"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:0ff5b0d6925db034a4e971b7d437932f4042c8a84f3daa5ddea17265b59af7f0",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-social-work",
+      "programmeName": "Graduate Diploma in Social Work",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b2206164fa773242233c2a64123ca07fca2351134adc540176eadf2fc9728c06",
+      "sourcePath": "graduate_studies/Graduate Diploma in Social Work.pdf",
+      "sourceLabel": "Graduate Diploma in Social Work curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-3704c17dd4f5",
+          "applicabilityLabel": "Source section: COMPULSORY - 40 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 40 cu",
+          "applicabilityKey": "section-3704c17dd4f5"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:08810753d3db2a9f8e99d4c7c20405b2ac2afc589eaf5957c1ed03964ddc99c4",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-sustainability-management",
+      "programmeName": "Graduate Diploma in Sustainability Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d84247ac2567265b949faf5b96540616c63e15380f5e95efc4e6a6fa38d67cc7",
+      "sourcePath": "graduate_studies/Graduate Diploma in Sustainability Management.pdf",
+      "sourceLabel": "Graduate Diploma in Sustainability Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:fe927abaa1b33209ed8e6847cdfb0cdf6f19833a7bfebdaee2bd395c6c045157",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-systemic-therapy",
+      "programmeName": "Graduate Diploma in Systemic Therapy",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "63f9aac076ede76ae786d2d9b1d923848637f451c83f50b9525547c228addb75",
+      "sourcePath": "graduate_studies/Graduate Diploma in Systemic Therapy.pdf",
+      "sourceLabel": "Graduate Diploma in Systemic Therapy curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-bd8cb5ad31e5",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 30 cu",
+          "applicabilityKey": "section-bd8cb5ad31e5"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:153f1d6c67326203555fb39ef46233f736251f7c993cfa62449f59c273e6c849",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-taxation",
+      "programmeName": "Graduate Diploma in Taxation",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "5b4820d034f5c4cf7a6cf39014ced31e355f6665b89c704d3c857077897ea8a0",
+      "sourcePath": "graduate_studies/Graduate Diploma in Taxation.pdf",
+      "sourceLabel": "Graduate Diploma in Taxation curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:11597d90e4bf50fedcc78a373964d386010212cbbb426cf0aa90fb54a92a6c43",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "graduate-diploma-in-youth-work",
+      "programmeName": "Graduate Diploma in Youth Work",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "529b8b2479b271c8acf3cd84499b82c895ca64c4540c8c01b5184dc7a1a63bc6",
+      "sourcePath": "graduate_studies/Graduate Diploma in Youth Work.pdf",
+      "sourceLabel": "Graduate Diploma in Youth Work curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:53088e1c5ce3b482f3b9f5a34e61ddbf4ba28e528dac817a59cf920c4c6eb8fd",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "juris-doctor",
+      "programmeName": "Juris Doctor",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "fbcf0c71816faba7d043e85c82c2050aeaf9f85c624854ddaa39335c5e39efde",
+      "sourcePath": "law_programmes/Juris Doctor.pdf",
+      "sourceLabel": "Juris Doctor curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-ee1c0a5b1408",
+          "applicabilityLabel": "Source section: COMPULSORY - 150 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 150 cu",
+          "applicabilityKey": "section-ee1c0a5b1408"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:35d0a28ead9d43f4bb189d3daab6c22608145fcba015258e704b696ae353968d",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-in-boundary-crossing-learning-and-leadership",
+      "programmeName": "Master in Boundary-Crossing Learning and Leadership",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "bce448b07fecd7cca41a5b9d415a6ace1e305664c9d353e26764022fa5e54060",
+      "sourcePath": "graduate_studies/Master in Boundary-Crossing Learning and Leadership.pdf",
+      "sourceLabel": "Master in Boundary-Crossing Learning and Leadership curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0c37580e716c",
+          "applicabilityLabel": "Source section: COMPULSORY - 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 30 cu",
+          "applicabilityKey": "section-0c37580e716c"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:45d8ab895ecd2692a67220b90d67e9eeb7b602daccda860e5554a6b281292392",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-analytics-and-visualisation",
+      "programmeName": "Master of Analytics and Visualisation",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d77072183dc6fae7d916e26de452cd1c3415e0f89ce963c025ad8ba90274c595",
+      "sourcePath": "graduate_studies/Master of Analytics and Visualisation.pdf",
+      "sourceLabel": "Master of Analytics and Visualisation curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-ae204202189c",
+          "applicabilityLabel": "Source section: COMPULSORY - 20 cu"
+        },
+        {
+          "applicabilityKey": "section-20e2e5a9c473",
+          "applicabilityLabel": "Source section: ELECTIVE - 0 to 15 cu"
+        },
+        {
+          "applicabilityKey": "section-53ec0a980db3",
+          "applicabilityLabel": "Source section: RESTRICTED ELECTIVE - 25 to 40 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 20 cu",
+          "applicabilityKey": "section-ae204202189c"
+        },
+        {
+          "extractedSection": "ELECTIVE - 0 to 15 cu",
+          "applicabilityKey": "section-20e2e5a9c473"
+        },
+        {
+          "extractedSection": "RESTRICTED ELECTIVE - 25 to 40 cu",
+          "applicabilityKey": "section-53ec0a980db3"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:be9f622107339a4b79a4798e9ea9fedf788490837bd35d132ea28e4eaaf4497c",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-applied-research-in-social-sciences",
+      "programmeName": "Master of Applied Research in Social Sciences",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "fcf8d5f5db9f7726fc95d0c448fedb71a46bb3478bf36f38c7bfb570aef66636",
+      "sourcePath": "graduate_studies/Master of Applied Research in Social Sciences.pdf",
+      "sourceLabel": "Master of Applied Research in Social Sciences curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-28a299bbd261",
+          "applicabilityLabel": "Source section: COMPULSORY - 45 cu"
+        },
+        {
+          "applicabilityKey": "section-35dea52bc60e",
+          "applicabilityLabel": "Source section: ELECTIVE - 10 cu Choose any 2 of the 3 electives, but at least one elective must be a RSS course (RSS551 or RSS553)."
+        },
+        {
+          "applicabilityKey": "section-aefed379a028",
+          "applicabilityLabel": "Source section: RESTRICTED ELECTIVE - 5 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 45 cu",
+          "applicabilityKey": "section-28a299bbd261"
+        },
+        {
+          "extractedSection": "ELECTIVE - 10 cu Choose any 2 of the 3 electives, but at least one elective must be a RSS course (RSS551 or RSS553).",
+          "applicabilityKey": "section-35dea52bc60e"
+        },
+        {
+          "extractedSection": "RESTRICTED ELECTIVE - 5 cu",
+          "applicabilityKey": "section-aefed379a028"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:26bcbb0abdca956b4b02a8860824062de18b5ff789148f24e14e8c168046e85b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-artificial-intelligence-for-business",
+      "programmeName": "Master of Artificial Intelligence for Business",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "fe48ee21a897726e213734b57c8d3f0d625e246c44cc0a082a962f4d8076d023",
+      "sourcePath": "graduate_studies/Master of Artificial Intelligence for Business.pdf",
+      "sourceLabel": "Master of Artificial Intelligence for Business curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-3704c17dd4f5",
+          "applicabilityLabel": "Source section: COMPULSORY - 40 cu"
+        },
+        {
+          "applicabilityKey": "section-94007721a0a3",
+          "applicabilityLabel": "Source section: SPECIALISATION ELECTIVE - 15 cu Note: 1. The Management Cluster will be removed effective from Jan 2027 Semester. 2. MGT556 (together with MGT572) may also be used to fulfil the 5 CU Elective requirement if you choose not to pursue the Management Cluster under the Specialisation Elective. Please contact Student Services - students@suss.edu.sg for assistance."
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 40 cu",
+          "applicabilityKey": "section-3704c17dd4f5"
+        },
+        {
+          "extractedSection": "SPECIALISATION ELECTIVE - 15 cu Note: 1. The Management Cluster will be removed effective from Jan 2027 Semester. 2. MGT556 (together with MGT572) may also be used to fulfil the 5 CU Elective requirement if you choose not to pursue the Management Cluster under the Specialisation Elective. Please contact Student Services - students@suss.edu.sg for assistance.",
+          "applicabilityKey": "section-94007721a0a3"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:1eb61e38610b412ea4386f479998fc066c863d1d8b823fc42a3eeefcebf4f21a",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-arts-in-applied-linguistics-tesol",
+      "programmeName": "Master of Arts in Applied Linguistics (TESOL)",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d39c24b166364b3a6003d26ce2588887873d05e3555037cbc5edbcdb3485e0cb",
+      "sourcePath": "graduate_studies/Master of Arts in Applied Linguistics (TESOL).pdf",
+      "sourceLabel": "Master of Arts in Applied Linguistics (TESOL) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5d71ee892fea",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 to 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 20 to 30 cu",
+          "applicabilityKey": "section-5d71ee892fea"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:9bc984ca37b3fd90a82855bde91469ffee7a7e42e2b3ac32bc0ebdb14a6ec914",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-built-environment",
+      "programmeName": "Master of Built Environment",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "4751aa07cb525f6bab3ed087d3291eb9c8f66ac9870815bccc46e74ec7334de4",
+      "sourcePath": "graduate_studies/Master of Built Environment.pdf",
+      "sourceLabel": "Master of Built Environment curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:33c827f684e27c051a0d85c8a668e3ce8aa740d079587847d7bdafdd03fde86f",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-counselling",
+      "programmeName": "Master of Counselling",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "267775327078b5f4d23ee3508e35497e3da58338548288350c49372c6f3aaf52",
+      "sourcePath": "graduate_studies/Master of Counselling.pdf",
+      "sourceLabel": "Master of Counselling curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-db701aaaee74",
+          "applicabilityLabel": "Source section: COMPULSORY - 40 cu All students enrolled from the July 2024 semester onwards need to complete COU608."
+        },
+        {
+          "applicabilityKey": "section-5d71ee892fea",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 to 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 40 cu All students enrolled from the July 2024 semester onwards need to complete COU608.",
+          "applicabilityKey": "section-db701aaaee74"
+        },
+        {
+          "extractedSection": "ELECTIVE - 20 to 30 cu",
+          "applicabilityKey": "section-5d71ee892fea"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:15f202dac526a8f94fd868942d3966700fb5fb16baffa25802530f442641924f",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-digital-marketing",
+      "programmeName": "Master of Digital Marketing",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "f536ac95b5e9b9b6e6273365b0e68a651587db22ad77530c3973fb31aec43709",
+      "sourcePath": "graduate_studies/Master of Digital Marketing.pdf",
+      "sourceLabel": "Master of Digital Marketing curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-bbb47c5128ef",
+          "applicabilityLabel": "Source section: ELECTIVE - 10 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 10 cu",
+          "applicabilityKey": "section-bbb47c5128ef"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:0b74eb2d0526a7d4672749724f3f6ede3ff846f79e2b1136e9f84537d9343d2a",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-early-childhood-education",
+      "programmeName": "Master of Early Childhood Education",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "5e166906eee3b461f35d5f2b33dedcdea45b877a04f4f91a359f4ac452b09f9c",
+      "sourcePath": "graduate_studies/Master of Early Childhood Education.pdf",
+      "sourceLabel": "Master of Early Childhood Education curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-3704c17dd4f5",
+          "applicabilityLabel": "Source section: COMPULSORY - 40 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 40 cu",
+          "applicabilityKey": "section-3704c17dd4f5"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:db982ce07e99f8214bc0defc5db28dfc1eb2222943e1cd5ca297f8f553105c6d",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-education",
+      "programmeName": "Master of Education",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d3f1c95b2107c294a172fac07d916921e41cd80fba63af1ddbcc4064e6fb2504",
+      "sourcePath": "graduate_studies/Master of Education.pdf",
+      "sourceLabel": "Master of Education curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:a135ffb31ed0252016242d9e56ebe36dfda2a04f86511b05f2a1a15487e6fbcc",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-education-in-early-childhood-education-chinese",
+      "programmeName": "Master of Education in Early Childhood Education (Chinese)",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "7df86e10591d44c68cf6e44fbd73e8ca5d99c39ef23db8852bc3ca8f0a9ebbae",
+      "sourcePath": "graduate_studies/Master of Education in Early Childhood Education (Chinese).pdf",
+      "sourceLabel": "Master of Education in Early Childhood Education (Chinese) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-c50085dd0c2d",
+          "applicabilityLabel": "Source section: COMPULSORY - 50 cu"
+        },
+        {
+          "applicabilityKey": "section-bbb47c5128ef",
+          "applicabilityLabel": "Source section: ELECTIVE - 10 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 50 cu",
+          "applicabilityKey": "section-c50085dd0c2d"
+        },
+        {
+          "extractedSection": "ELECTIVE - 10 cu",
+          "applicabilityKey": "section-bbb47c5128ef"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:fb6fd7127ee81312c4351096201f2ddfd1141ff8cf99c7208d3e8f906b53b8e3",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-engineering",
+      "programmeName": "Master of Engineering",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "8e7e6b37cbe769315f45699db5a58257385826f712ddaf4b896b25b8797d9fed",
+      "sourcePath": "graduate_studies/Master of Engineering.pdf",
+      "sourceLabel": "Master of Engineering curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:b3bebb320ee5d6ef82e6b38435cc8f728b066f220ca1f94f2bbcad1c67a7721b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-finance",
+      "programmeName": "Master of Finance",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "d66dddd82cf3a6a50fb84b4ee19db2ba60315872fdfbbcc246a146f8851d7417",
+      "sourcePath": "graduate_studies/Master of Finance.pdf",
+      "sourceLabel": "Master of Finance curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-583af4ab93df",
+          "applicabilityLabel": "Source section: COMPULSORY - 15 cu"
+        },
+        {
+          "applicabilityKey": "section-20e2e5a9c473",
+          "applicabilityLabel": "Source section: ELECTIVE - 0 to 15 cu"
+        },
+        {
+          "applicabilityKey": "section-38780c9aedcd",
+          "applicabilityLabel": "Source section: RESTRICTED ELECTIVE - 30 to 35 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 15 cu",
+          "applicabilityKey": "section-583af4ab93df"
+        },
+        {
+          "extractedSection": "ELECTIVE - 0 to 15 cu",
+          "applicabilityKey": "section-20e2e5a9c473"
+        },
+        {
+          "extractedSection": "RESTRICTED ELECTIVE - 30 to 35 cu",
+          "applicabilityKey": "section-38780c9aedcd"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:f5f5ba0eaebd9ac1d5bd3e284b9904a95e322cf3b94903f24b5048d8b3aba7f9",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-financial-technology",
+      "programmeName": "Master of Financial Technology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "14ff93e1b114765cbba068b2bde53137eae4114e69bc3200fdceb05ed4df28d5",
+      "sourcePath": "graduate_studies/Master of Financial Technology.pdf",
+      "sourceLabel": "Master of Financial Technology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-a0c7412e029b",
+          "applicabilityLabel": "Source section: ELECTIVE - 0 to 20 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 0 to 20 cu",
+          "applicabilityKey": "section-a0c7412e029b"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:5d61756174b37ed20b1fcb01dcdb2603496d09c9e9825abfcf34cb1645690623",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-gerontology",
+      "programmeName": "Master of Gerontology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "87b31caaf6b707766df4e812860cfc758c23ae1f1dcf3c6230b66cfb8158a53c",
+      "sourcePath": "graduate_studies/Master of Gerontology.pdf",
+      "sourceLabel": "Master of Gerontology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:87816f4e5b2164896d8b743facd78a29715b4e9d07586643ca1b9df58f080727",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-global-security-and-strategy",
+      "programmeName": "Master of Global Security and Strategy",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "7adf6a9aa4a32741fd71be76a46aa223db9413c9bdadc072b22f0c905cf6cd08",
+      "sourcePath": "graduate_studies/Master of Global Security and Strategy.pdf",
+      "sourceLabel": "Master of Global Security and Strategy curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5a5def44c4ee",
+          "applicabilityLabel": "Source section: COMPULSORY - 25 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 25 cu",
+          "applicabilityKey": "section-5a5def44c4ee"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:8e0ce9dd8e0cba5bad905390149a1338db94123f2332f297e5333245b0c92ea6",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-human-capital-management",
+      "programmeName": "Master of Human Capital Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "ccfb0eb3063ad96237ac328419f0ea1a59bd7408ad02085a39ab840404fbde8a",
+      "sourcePath": "graduate_studies/Master of Human Capital Management.pdf",
+      "sourceLabel": "Master of Human Capital Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:48c18fcb88d5c0c741208de3659454e944b19aca66a380126764851344b9ce34",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-ip-and-innovation-management",
+      "programmeName": "Master of IP and Innovation Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "b62dd36f99774f5d15078045fbbd07da1f00176510edc1ae890d397bc47c856c",
+      "sourcePath": "graduate_studies/Master of IP and Innovation Management.pdf",
+      "sourceLabel": "Master of IP and Innovation Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-ae204202189c",
+          "applicabilityLabel": "Source section: COMPULSORY - 20 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 20 cu",
+          "applicabilityKey": "section-ae204202189c"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:ed0e806481f696949dfe0a5bd24359ed3c0a42023842cb38656f68fcb2841faa",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-management",
+      "programmeName": "Master of Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "08e875534eeb66fa1c3770c1de0d66c143931f237058ea4fbe48f213f8051042",
+      "sourcePath": "graduate_studies/Master of Management.pdf",
+      "sourceLabel": "Master of Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5d71ee892fea",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 to 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 20 to 30 cu",
+          "applicabilityKey": "section-5d71ee892fea"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:0741a5021a6bbfd0690a138db35f6b7a6d7f93172562cafa045b1da457e810dc",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-psychology",
+      "programmeName": "Master of Psychology",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "bc7e90889aaaa05f3cf2a845be30864ebab2f11a125abfae18ef19715f654b26",
+      "sourcePath": "graduate_studies/Master of Psychology.pdf",
+      "sourceLabel": "Master of Psychology curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-5a5def44c4ee",
+          "applicabilityLabel": "Source section: COMPULSORY - 25 cu"
+        },
+        {
+          "applicabilityKey": "section-6dd7eb3b4e75",
+          "applicabilityLabel": "Source section: ELECTIVE - 5 cu Forensic Psychology students must take PSY534 as an elective. Organisational Psychology students can take any elective, except PSY534."
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 25 cu",
+          "applicabilityKey": "section-5a5def44c4ee"
+        },
+        {
+          "extractedSection": "ELECTIVE - 5 cu Forensic Psychology students must take PSY534 as an elective. Organisational Psychology students can take any elective, except PSY534.",
+          "applicabilityKey": "section-6dd7eb3b4e75"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:ebb15a6941fcdcd4a4ac70f53186be58a9de87d1430e6a16c96e9e8d5b0872a8",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-psychology-clinical",
+      "programmeName": "Master of Psychology (Clinical)",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "489a34d8764ecb5ee94d2e2ab8f65a6f8981e8329337e6f288b3f9bbbcf026bb",
+      "sourcePath": "graduate_studies/Master of Psychology (Clinical).pdf",
+      "sourceLabel": "Master of Psychology (Clinical) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-0fd9d4a04752",
+          "applicabilityLabel": "Source section: COMPULSORY - 75 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 75 cu",
+          "applicabilityKey": "section-0fd9d4a04752"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:71854de956102d6767436fb26131c1a50183c8dcfb7722cd7e07e699cf7da210",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-science-in-data-analytics-and-visualisation",
+      "programmeName": "Master of Science in Data Analytics and Visualisation 数据分析与可视化硕士",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "6da84e157126fdcd728796474b71cf08d67a678048ccaee1b2bac95076bff6dd",
+      "sourcePath": "graduate_studies/Master of Science in Data Analytics and Visualisation 数 据分析与可视化硕士.pdf",
+      "sourceLabel": "Master of Science in Data Analytics and Visualisation 数据分析与可视化硕士 curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-28a299bbd261",
+          "applicabilityLabel": "Source section: COMPULSORY - 45 cu"
+        },
+        {
+          "applicabilityKey": "section-4dd01feca429",
+          "applicabilityLabel": "Source section: ELECTIVE - 15 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 45 cu",
+          "applicabilityKey": "section-28a299bbd261"
+        },
+        {
+          "extractedSection": "ELECTIVE - 15 cu",
+          "applicabilityKey": "section-4dd01feca429"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:f084a13defb0b415522547057bb012b719c9ea27648ef8d3f48d9e8408f8d0e7",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-science-in-management",
+      "programmeName": "Master of Science in Management 管理学硕士学位",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "085c4e66b8a48b7c8c33eac4b734215d74fd5e65c1dbb96f080ce7e2422a95da",
+      "sourcePath": "graduate_studies/Master of Science in Management 管理学硕士学位.pdf",
+      "sourceLabel": "Master of Science in Management 管理学硕士学位 curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-6168b870db43",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 to 40 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 30 to 40 cu",
+          "applicabilityKey": "section-6168b870db43"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:4d61f93826068e7579fec3b7b0bdef9554422e1c7d9cd73280464c2b96d6b41f",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-science-in-management-education",
+      "programmeName": "Master of Science in Management (Education) 中文管理学硕士(教育学方向)",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "78c6333b5755d7e33a20a555f419ab49e7a3f12ba251df421ce510ec198e79fa",
+      "sourcePath": "graduate_studies/Master of Science in Management (Education) 中文管理 学硕士(教育学方向).pdf",
+      "sourceLabel": "Master of Science in Management (Education) 中文管理学硕士(教育学方向) curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:008812461d61be608880e863e09a12e54ab2844fc96d6ab6775951cf69045751",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-science-in-strategic-ip-and-innovation-management",
+      "programmeName": "Master of Science in Strategic IP and Innovation Management 知识产权策略与创新管理硕士学位",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "74ad4889b3b9bd0871c7d8fba0620da967db9cf10badc9a8cb11ac372f371cc2",
+      "sourcePath": "graduate_studies/Master of Science in Strategic IP and Innovation Management 知识产权策略与创新管理硕士学位.pdf",
+      "sourceLabel": "Master of Science in Strategic IP and Innovation Management 知识产权策略与创新管理硕士学位 curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-bd8cb5ad31e5",
+          "applicabilityLabel": "Source section: ELECTIVE - 30 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 30 cu",
+          "applicabilityKey": "section-bd8cb5ad31e5"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:76600a9a07a32eb9da5147ee2ecbe7dccd9faf68402b3267487497ae0f73812b",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-social-sciences",
+      "programmeName": "Master of Social Sciences",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "011a426c337f2a36147540fe8eee79e3e823970845d584c6575f3a1ce757293d",
+      "sourcePath": "graduate_studies/Master of Social Sciences.pdf",
+      "sourceLabel": "Master of Social Sciences curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-f84fdcb44b08",
+          "applicabilityLabel": "Source section: COMPULSORY - 10 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "COMPULSORY - 10 cu",
+          "applicabilityKey": "section-f84fdcb44b08"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:e10cec85f1089b2b0197d870055deb6315406ccfadf66e67afb3e73712111c00",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-social-work",
+      "programmeName": "Master of Social Work",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "26520116b2b638c8ef8250773e39a2c401fa3dc90c62a5203ae1fe1981b72e6c",
+      "sourcePath": "graduate_studies/Master of Social Work.pdf",
+      "sourceLabel": "Master of Social Work curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:c1f8d9fc74222b4853c154437b4f6e1d5a40816c87ff62cab0cd468a833915bd",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-sustainability-management",
+      "programmeName": "Master of Sustainability Management",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "8f1b6a32ba956b73d87d50036cfbf02d437b56be8d332197491f73c8dc332801",
+      "sourcePath": "graduate_studies/Master of Sustainability Management.pdf",
+      "sourceLabel": "Master of Sustainability Management curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "section-b8086d236455",
+          "applicabilityLabel": "Source section: ELECTIVE - 20 cu"
+        }
+      ],
+      "sectionMappings": [
+        {
+          "extractedSection": "ELECTIVE - 20 cu",
+          "applicabilityKey": "section-b8086d236455"
+        }
+      ],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:772bb1cd645ab6b011d3ab671294639f0c5add79347b565cf3355413233dcd55",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    },
+    {
+      "planKey": "master-of-taxation",
+      "programmeName": "Master of Taxation",
+      "studyMode": null,
+      "curriculumVersion": null,
+      "effectiveFrom": null,
+      "sourceHash": "df538248a3601a32cc5e64c931c67dd25a866f2b729627845384dc57cc4b58ef",
+      "sourcePath": "graduate_studies/Master of Taxation.pdf",
+      "sourceLabel": "Master of Taxation curriculum plan",
+      "sourceUrl": null,
+      "scopes": [
+        {
+          "applicabilityKey": "no-statements",
+          "applicabilityLabel": "No extracted prerequisite statements"
+        }
+      ],
+      "sectionMappings": [],
+      "publication": {
+        "decision": "included",
+        "expectedInputHash": "publication-input:v1:bd63fc8245dde7f2ca0d42f5d01bf1b97ac46ec3e752f821da46e41b08d96735",
+        "reviewerAlias": "lester",
+        "reviewedAt": "2026-10-09T02:41:39.506Z",
+        "notes": "Batch approval curriculum-batch-approval:v1:1bd355d51f0b34151871270f6a210cef6663b1be297e115619e941034e7f692d; prepared by policy 1"
+      }
+    }
+  ]
+}

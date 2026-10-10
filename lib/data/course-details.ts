@@ -5,10 +5,30 @@ import { getScheduleSnapshot } from "./schedule-snapshot-reader";
 import { getSemesterById, getSemestersWithWeeks } from "./metadata";
 import { filterEventsForSemester, isClassStartingInSemester } from "@/lib/timetable/semester-events";
 import { getSemesterChoices } from "@/lib/timetable/semester-visibility";
+import { buildPostrequisiteTree } from "./prerequisites/build-postrequisite-tree";
+import { buildPrerequisiteTree } from "./prerequisites/build-prerequisite-tree";
+import type { CourseRequisitesSnapshot } from "./prerequisites/types";
 
 function normalizeCourseCode(courseCode: string)
 {
   return courseCode.trim().toUpperCase();
+}
+
+export async function getCourseDetailSnapshot(courseCode: string)
+{
+  return getCourseSnapshot(normalizeCourseCode(courseCode));
+}
+
+export async function getCoursePostrequisites(courseCode: string, requisites: CourseRequisitesSnapshot)
+{
+  return buildPostrequisiteTree(normalizeCourseCode(courseCode), requisites,
+    async code => (await getCourseSnapshot(code))?.requisites ?? null);
+}
+
+export async function getCoursePrerequisites(courseCode: string, requisites: CourseRequisitesSnapshot)
+{
+  return buildPrerequisiteTree(normalizeCourseCode(courseCode), requisites,
+    async code => (await getCourseSnapshot(code))?.requisites ?? null);
 }
 
 export async function getCourseByCode(courseCode: string)
