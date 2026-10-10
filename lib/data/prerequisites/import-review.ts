@@ -145,21 +145,14 @@ export function reconcileReviews(extractionInput: unknown, registryInput: unknow
     const previous = rules.get(key);
     if (previous?.recordStatus === "inactive") continue; // Retain historical evidence.
     incomingRule.reviewInputHash = reviewInputHash(plans.get(incomingRule.planKey)!, incomingRule);
-    // Diagnostics and parser uncertainty require a fresh decision, even when the
-    // existing fingerprint is unchanged. No diagnostic history is needed.
-    const uncertain = incomingRule.parseStatus !== "parsed" || report.diagnostics.some(item => item.ruleKey === key);
-    rules.set(key, previous?.reviewInputHash === incomingRule.reviewInputHash && !(previous.reviewStatus === "approved" && uncertain) ? { ...incomingRule, reviewStatus: previous.reviewStatus, reviewedInputHash: previous.reviewedInputHash, approvedRuleJson: previous.approvedRuleJson, approvedRuleHash: previous.approvedRuleHash, reviewedBy: previous.reviewedBy, reviewedAt: previous.reviewedAt, reviewNotes: previous.reviewNotes, lastUpdated: previous.lastUpdated } : incomingRule);
+    rules.set(key, previous?.reviewInputHash === incomingRule.reviewInputHash ? { ...incomingRule, reviewStatus: previous.reviewStatus, reviewedInputHash: previous.reviewedInputHash, approvedRuleJson: previous.approvedRuleJson, approvedRuleHash: previous.approvedRuleHash, reviewedBy: previous.reviewedBy, reviewedAt: previous.reviewedAt, reviewNotes: previous.reviewNotes, lastUpdated: previous.lastUpdated } : incomingRule);
   }
   for (const [key, rule] of rules)
   {
     if (rule.recordStatus !== "active") continue;
     const plan = plans.get(rule.planKey);
     if (!plan) throw new Error(`Rule has unknown plan: ${key}`);
-    if (touchedPlanKeys.has(plan.planKey) && !incoming.has(key))
-    {
-      report.missingActiveRules.push(key);
-      rules.set(key, clearRuleDecision(rule));
-    }
+    if (touchedPlanKeys.has(plan.planKey) && !incoming.has(key)) report.missingActiveRules.push(key);
     if (rule.sourceHash !== plan.sourceHash)
     {
       if (plan.publicationStatus === "included") throw new Error(`Changed PDF has unrefreshed active evidence: ${key}; refresh or explicitly deactivate it`);
@@ -180,7 +173,6 @@ export function reconcileReviews(extractionInput: unknown, registryInput: unknow
     if (entry.archived) continue;
     if (currentKeys.has(entry.ruleKey) || entry.expectedInputHash !== rule.reviewInputHash) throw new Error(`Conflicting/stale review decision: ${entry.ruleKey}; expected ${rule.reviewInputHash}`);
     currentKeys.add(entry.ruleKey);
-    if (entry.decision === "approved" && report.missingActiveRules.includes(entry.ruleKey)) throw new Error(`Missing current prerequisite evidence: ${entry.ruleKey}; refresh or explicitly deactivate it`);
     const tree = entry.decision === "approved" ? canonicalizeRule(entry.approvedRule) : null;
     if (tree && courseLeaves(tree).includes(rule.courseCode)) throw new Error(`Self-prerequisite approval: ${entry.ruleKey}`);
     if (tree && (/\(cid:\d+\)/i.test(rule.rawText) || report.diagnostics.some(item => item.ruleKey === entry.ruleKey && item.messages.some(message => /unresolved.*(?:glyph|ocr)|interpretation/i.test(message))))) throw new Error(`Unresolved source interpretation: ${entry.ruleKey}`);

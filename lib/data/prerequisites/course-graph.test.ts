@@ -4,7 +4,6 @@ import { buildPrerequisiteTree } from "./build-prerequisite-tree";
 import { buildPostrequisiteTree } from "./build-postrequisite-tree";
 import { buildRequisites } from "./build-requisites";
 import { fixtureCatalogue, fixturePlan, fixtureRule } from "./fixtures";
-import { canonicalizeRule } from "./rule";
 import type { PrerequisiteRuleNode } from "./types";
 
 const course = (courseCode: string): PrerequisiteRuleNode => ({ type: "course", courseCode });
@@ -44,7 +43,7 @@ it("factors PSY405's common courses above its alternative without changing eligi
   }
 });
 
-it("preserves overlapping programme requirements while keeping separate course branches", async () => {
+it("deduplicates overlapping programme routes while keeping separate course branches", async () => {
   const plan = fixturePlan();
   const other = fixturePlan({ planKey: "other-programme", sourceHash: "b".repeat(64) });
   const rules = [fixtureRule(plan, all("PRE100", "ALT200")),
@@ -56,10 +55,10 @@ it("preserves overlapping programme requirements while keeping separate course b
   const graph = buildCourseGraph("MAIN300", byCourse.MAIN300, expanded);
   expect([...new Set(graph.nodes.filter(node => node.kind === "course").map(node => node.label))].sort()).toEqual(["ALT200", "MAIN300", "NEXT400", "PRE100"]);
   const alternatives = graph.nodes.filter(node => node.label === "ALT200");
-  expect(alternatives).toHaveLength(3);
+  expect(alternatives).toHaveLength(2);
   for (const node of alternatives) expect(graph.edges.filter(edge => edge.to === node.id)).toHaveLength(1);
-  expect(graph.nodes.some(node => node.label === "by programme")).toBe(true);
-  expect(graph.requirements.find(item => item.courseCode === "PRE100")?.rules).toEqual(expect.arrayContaining([course("ALT200"), { type: "any", children: [course("ALT200"), course("NEXT400")] }]));
+  expect(graph.nodes.some(node => node.label === "by programme")).toBe(false);
+  expect(graph.requirements.find(item => item.courseCode === "PRE100")?.rules).toEqual([{ type: "any", children: [course("ALT200"), course("NEXT400")] }]);
   expect(graph.nodes.some(node => /Requirement [12]|↩/.test(node.label))).toBe(false);
 });
 
@@ -99,21 +98,19 @@ it.each([
   [{ type: "any", children: [course("PRE100"), course("ALT200")] }, { type: "any", children: [course("ALT200"), course("NEXT400"), course("PRE100")] }],
   [all("PRE100", "ALT200"), { type: "any", children: [all("ALT200", "PRE100"), course("NEXT400")] }],
   [all("PRE100", "ALT200", "NEXT400"), { type: "all", children: [course("NEXT400"), { type: "any", children: [all("PRE100", "ALT200"), course("OLD999")] }] }],
-] satisfies PrerequisiteRuleNode[][])("preserves narrower and broader requirements in separate programme branches (%#)", async (narrow, broad) => {
+] satisfies PrerequisiteRuleNode[][])("collapses a route repeated inside a broader recorded choice (%#)", async (narrow, broad) => {
   const first = fixturePlan(), second = fixturePlan({ planKey: "second", sourceHash: "b".repeat(64) });
   const { byCourse } = buildRequisites([first, second], [fixtureRule(first, narrow), fixtureRule(second, broad)], fixtureCatalogue);
   const pre = await buildPrerequisiteTree("MAIN300", byCourse.MAIN300, async code => byCourse[code] ?? null);
   const graph = buildCourseGraph("MAIN300", byCourse.MAIN300, pre);
-  expect(graph.nodes.some(node => node.label === "by programme")).toBe(true);
+  expect(graph.nodes.some(node => node.label === "by programme")).toBe(false);
   const rules = graph.requirements.find(item => item.courseCode === "MAIN300")!.rules;
-  expect(rules).toHaveLength(2);
-  expect(rules).toEqual(expect.arrayContaining([compactGraphRule(canonicalizeRule(narrow)), compactGraphRule(canonicalizeRule(broad))]));
+  expect(rules).toHaveLength(1);
   const codes = ["PRE100", "ALT200", "NEXT400", "OLD999"];
   for (let mask = 0; mask < 16; mask++)
   {
     const completed = new Set(codes.filter((_, index) => mask & (1 << index)));
-    for (const original of [narrow, broad])
-      expect(matches(rules.find(rule => JSON.stringify(rule) === JSON.stringify(compactGraphRule(canonicalizeRule(original))))!, completed)).toBe(matches(original, completed));
+    expect(matches(rules[0], completed)).toBe(matches(narrow, completed) || matches(broad, completed));
   }
   expect(pre.sources.map(source => source.planKey).sort()).toEqual([first.planKey, second.planKey].sort());
 });

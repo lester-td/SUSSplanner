@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { reconcileReviews, generateReviewSql } from "./import-review";
-import { emptyReviewFile, fixtureCatalogue, fixtureExtraction, fixturePlan, fixtureRegistry, fixtureRule, fixtureTime } from "./fixtures";
-import { buildRequisites } from "./build-requisites";
+import { emptyReviewFile, fixtureExtraction, fixturePlan, fixtureRegistry, fixtureRule, fixtureTime } from "./fixtures";
 import { publicationHash } from "./review-input";
 
 const empty = () => ({ plans: [], rules: [] });
@@ -16,7 +15,6 @@ describe("stable identity and review reconciliation", () => {
   it("preserves approvals and update times on a no-op and path/extraction ordering changes", () => {
     const plan = fixturePlan(); const rule = fixtureRule(plan);
     const extraction = fixtureExtraction(); extraction.review.plans[0].planKey = "moved-path-key"; extraction.review.sourceEntries[0].planKey = "moved-path-key";
-    extraction.review.sourceEntries[0].warnings = ["Unrelated timetable warning"] as never;
     const registry = fixtureRegistry(plan); registry.plans[0].sourcePath = "moved.pdf";
     const next = reconcileReviews(extraction, registry, emptyReviewFile(), { plans: [plan], rules: [rule] });
     expect(next.rules[0]).toEqual(rule);
@@ -38,63 +36,6 @@ describe("stable identity and review reconciliation", () => {
     expect(approved.rules[0].approvedRuleJson?.type).toBe("all");
     expect(approved.rules[0].ruleJson).toBeNull();
     expect(approved.rules[0].parseStatus).toBe("review_required");
-  });
-  it.each(["warnings", "prerequisiteDiagnostics"] as const)("resets inherited approval for refreshed %s, including the original OCR blocker", field => {
-    const plan = fixturePlan(), rule = fixtureRule(plan), stored = { plans: [plan], rules: [rule] };
-    const extraction = fixtureExtraction();
-    extraction.review.sourceEntries[0][field] = ["Unresolved prerequisite OCR affects interpretation"] as never;
-    const next = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored);
-    expect(next.rules[0].reviewInputHash).toBe(rule.reviewInputHash);
-    expect(next.rules[0].reviewStatus).toBe("pending");
-    for (const key of ["reviewedInputHash", "approvedRuleJson", "approvedRuleHash", "reviewedBy", "reviewedAt", "reviewNotes"] as const) expect(next.rules[0][key]).toBeNull();
-    const published = buildRequisites(next.plans, next.rules, fixtureCatalogue).byCourse;
-    expect(published.MAIN300.prerequisiteVariants[0].rule).toBeNull();
-    expect(published.PRE100.dependentCourses).toEqual([]);
-    expect(generateReviewSql(stored, next)).toContain("UPDATE curriculum_prerequisite_rules");
-    const reviews = emptyReviewFile();
-    reviews.reviews.push({ ruleKey: rule.ruleKey, expectedInputHash: rule.reviewInputHash, decision: "approved", approvedRule: rule.approvedRuleJson, reviewerAlias: "reviewer", reviewedAt: fixtureTime });
-    expect(() => reconcileReviews(extraction, fixtureRegistry(), reviews, stored)).toThrow(/Unresolved source interpretation/);
-  });
-  it("requires a fresh decision for ambiguous parsing even when its fingerprint is unchanged", () => {
-    const plan = fixturePlan(), rule = fixtureRule(plan, undefined, { parseStatus: "review_required", ruleJson: null });
-    const extraction = fixtureExtraction();
-    extraction.review.sourceEntries[0].parseStatus = "review_required";
-    extraction.review.sourceEntries[0].parserRule = null as never;
-    const next = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), { plans: [plan], rules: [rule] });
-    expect(next.rules[0].reviewInputHash).toBe(rule.reviewInputHash);
-    expect(next.rules[0].reviewStatus).toBe("pending");
-  });
-  it.each(["diagnostic", "empty", "historical", "unmapped-scope"])("does not republish unreconciled evidence: %s", mode => {
-    const plan = fixturePlan(), rule = fixtureRule(plan), extraction = fixtureExtraction(), registry = fixtureRegistry();
-    const entry = extraction.review.sourceEntries[0];
-    if (mode === "diagnostic") entry.prerequisiteDiagnostics = ["Ambiguous prerequisite grouping"] as never;
-    if (mode === "empty") { entry.prerequisite = null as never; entry.warnings = ["Unresolved prerequisite OCR affects interpretation"] as never; }
-    if (mode === "historical") entry.recordType = "historical";
-    if (mode === "unmapped-scope") registry.plans[0].sectionMappings = [];
-    const stored = { plans: [plan], rules: [rule] };
-    const next = reconcileReviews(extraction, registry, emptyReviewFile(), stored);
-    expect(next.rules[0].reviewStatus).toBe("pending");
-    expect(next.rules[0].recordStatus).toBe("active");
-    expect(buildRequisites(next.plans, next.rules, fixtureCatalogue).byCourse.PRE100.dependentCourses).toEqual([]);
-    if (mode !== "diagnostic") {
-      const reviews = emptyReviewFile();
-      reviews.reviews.push({ ruleKey: rule.ruleKey, expectedInputHash: rule.reviewInputHash, decision: "approved", approvedRule: rule.approvedRuleJson, reviewerAlias: "reviewer", reviewedAt: fixtureTime });
-      expect(() => reconcileReviews(extraction, registry, reviews, stored)).toThrow(/Missing current prerequisite evidence/);
-    }
-  });
-  it.each([1, 2])("resets missing evidence for parser contract %s and rejects the old approval", version => {
-    const plan = fixturePlan(), rule = fixtureRule(plan, undefined, { parserContractVersion: version });
-    const extraction = fixtureExtraction();
-    extraction.metadata.parserContractVersion = version;
-    Object.assign(extraction.review.sourceEntries[0], { parserContractVersion: version, prerequisite: null, parseStatus: "unparsed", parserRule: null,
-      prerequisiteDiagnostics: ["Unresolved prerequisite OCR affects interpretation"], ...(version === 2 ? { remarks: null, prerequisiteSourceFields: [] } : {}) });
-    const stored = { plans: [plan], rules: [rule] };
-    const next = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored);
-    expect(next.rules[0].reviewStatus).toBe("pending");
-    expect(buildRequisites(next.plans, next.rules, fixtureCatalogue).byCourse.PRE100.dependentCourses).toEqual([]);
-    const reviews = emptyReviewFile();
-    reviews.reviews.push({ ruleKey: rule.ruleKey, expectedInputHash: rule.reviewInputHash, decision: "approved", approvedRule: rule.approvedRuleJson, reviewerAlias: "reviewer", reviewedAt: fixtureTime });
-    expect(() => reconcileReviews(extraction, fixtureRegistry(), reviews, stored)).toThrow(/Missing current prerequisite evidence/);
   });
   it("collapses identical occurrences but rejects conflicting text in one scope", () => {
     const extraction = fixtureExtraction();
@@ -132,15 +73,12 @@ describe("stable identity and review reconciliation", () => {
     reviews.reviews.push({ ...reviews.reviews[0] });
     expect(() => reconcileReviews(fixtureExtraction(), fixtureRegistry(), reviews, { plans: [plan], rules: [rule] })).toThrow(/duplicate/);
   });
-  it("resets missing rules to pending without deactivating them and retains inactive evidence", () => {
+  it("never deactivates missing rules implicitly and retains inactive evidence", () => {
     const plan = fixturePlan(); const rule = fixtureRule(plan);
     const extraction = fixtureExtraction(); extraction.review.sourceEntries[0].prerequisite = null as never;
     const stored = { plans: [plan], rules: [rule] };
     const missing = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored);
-    expect(missing.rules[0].recordStatus).toBe("active");
-    expect(missing.rules[0].reviewStatus).toBe("pending");
-    expect(missing.rules[0].approvedRuleJson).toBeNull();
-    expect(missing.report.missingActiveRules).toEqual([rule.ruleKey]);
+    expect(missing.rules[0]).toEqual(rule); expect(missing.report.missingActiveRules).toEqual([rule.ruleKey]);
     const reviews = emptyReviewFile(); reviews.deactivations.push({ ruleKey: rule.ruleKey, expectedInputHash: rule.reviewInputHash, reviewerAlias: "reviewer", reviewedAt: fixtureTime });
     const inactive = reconcileReviews(extraction, fixtureRegistry(), reviews, stored);
     expect(inactive.rules[0].recordStatus).toBe("inactive");

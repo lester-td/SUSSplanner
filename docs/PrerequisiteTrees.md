@@ -34,9 +34,9 @@ SVG connectors use the same 2px thickness and
 meet nodes at their vertical centres, bending between columns. Subtree contours
 include both boxes and connector lanes so independent alternatives cannot touch.
 Genuinely distinct prerequisite variants branch from a small **by programme**
-link that opens the Prerequisite disclosure below. ICT233's `ICT133` and
-`ICT133 or ANL252` remain separate programme branches: the latter alternative
-does not relax the former requirement. Equivalent requirements still share a branch.
+link that opens the Prerequisite disclosure below. Overlapping alternatives
+collapse when their combined routes already match a recorded variant: ICT233's
+`ICT133` and `ICT133 or ANL252` display once as **one of ICT133 / ANL252**.
 Matching nested operators flatten, and duplicate alternatives match regardless
 of course order. ALL branches inside an ANY choice remain separate. Curriculum
 names stay inside the disclosures rather than taking up space in the tree.
@@ -284,15 +284,9 @@ SQL/apply require the affected retained database state. Generated SQL takes a
 transaction advisory lock and table locks, checks the complete expected record set
 and every input/decision/activity/update field, then changes records in one
 transaction. PostgreSQL timestamp precision is preserved in those guards. Any
-failure rolls back. No-op imports with confidently parsed evidence preserve approvals
-and update times. Relevant diagnostics or uncertain parser states reset inherited
-structured approvals to pending, even when the existing fingerprint is unchanged.
-An explicit current review can resolve parser uncertainty; unresolved source
-interpretation still cannot be approved. Diagnostics remain in the import report,
-without a new database column or fingerprint contract. Missing rules are reported
-and reset to pending; an old review cannot reapprove them
-until current evidence is available. They are never implicitly removed. Explicit
-deactivation retains the previous evidence and decision; inactive rows remain historical.
+failure rolls back. No-op imports preserve approvals and update times. Missing
+rules are reported, never implicitly removed. Explicit deactivation retains the
+previous evidence and decision; inactive rows remain historical.
 
 Changed document inclusion requires refreshing or deactivating every retained
 active rule from the old document in the same transaction. Metadata/input changes
