@@ -167,6 +167,43 @@ semester, SUSSPlanner displays a message instead of adding it.
 
 Some courses may not have information for every section.
 
+When prerequisite information has been published, **View prerequisites ↓** near
+the course title jumps to a visible **Prerequisite Tree** above Assessment
+Components. On desktop it sits in the right column below the course facts;
+Description, Topics and Learning Outcomes remain in the left column.
+The tree is connected from left to right: postrequisite courses **need** the
+current course, which connects to its prerequisite branches. **all of** requires
+every item, **one of** requires one alternative, and **at least N of** requires
+the stated number of choices. Both sides expand recursively: the “needs” side
+continues through downstream courses, and prerequisite courses show their own
+requirements, including nested logical groups. Alternatives have separate branches;
+course codes may repeat where they belong to different requirements. Each course's
+own requirements expand once. Common requirements can appear above a choice, and complete combinations may display
+as an equivalent counted choice; for example, any pair of three courses becomes
+**at least 2 of** those courses. Trees that fit are centred within
+a drawing area capped at 320px high. Larger trees start near the current course
+without adding empty space beyond their edges. Scroll horizontally or vertically to explore
+it. Select **Expand tree** for a nearly full-screen view with the same course
+text size and programme details. Close the expanded view to return to the card.
+Boxed course codes link to their course pages. Hover or focus a compact box to
+see a tooltip with just the course code and full name together. Click or tap
+the box to open its course page. All boxed courses use timetable colours, with
+a distinct colour for each visible column. The current course is blue with a
+stronger border and **Current course** label below its box. Press Escape to
+dismiss a tooltip.
+Courses absent from the catalogue appear as plain codes without links.
+Overlapping alternatives display once; for example, ICT233 shows **one of ICT133
+/ ANL252**. **by programme** remains for genuinely different recorded requirements;
+select it to open the recorded wording below the tree. Expand **Prerequisite**
+or **Remarks** to read programme-labelled entries; sections without recorded
+content are hidden. Remarks may contain mandatory
+conditions. Entries for expanded prerequisite courses are labelled by course code.
+Statements awaiting review display **Needs verification**.
+Each “needs” connection follows a reviewed prerequisite relationship; other
+requirements may apply. Prerequisite trees are experimental; always check your
+programme's curriculum plan for updated information.
+Missing information does not mean a course has no prerequisites.
+
 ### Add Courses to Your Semester Planner
 
 #### Add a Listed Course

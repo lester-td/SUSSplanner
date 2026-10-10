@@ -36,6 +36,7 @@ except ModuleNotFoundError:
 
 COURSE_CODE_RE = re.compile(r"^([A-Z]{2,6}[0-9]{3}[A-Za-z0-9]*)(?:\s+|$)(.*)$")
 COURSE_CODE_IN_TEXT_RE = re.compile(r"\b[A-Z]{2,6}[0-9]{3}[A-Za-z0-9]*\b", re.IGNORECASE)
+PARSER_CONTRACT_VERSION = 2
 SECTION_CU_RE = re.compile(r"(?:-|–)\s*([0-9]+(?:\.[0-9]+)?)\s*cu\b", re.IGNORECASE)
 SECTION_NAME_RE = re.compile(
     r"\b(compulsory|elective|core|major|minor|track|specialisation|specialization|basket|"
@@ -78,9 +79,28 @@ def plan_key(relative_path: Path) -> str:
 
 
 def repair_course_code_spacing(value: str) -> str:
-    # PDF extraction can insert a space inside a course prefix, for example
-    # "HB C105". Repair that narrow pattern before finding course codes.
-    return re.sub(r"\b([A-Z]{2,5})\s+([A-Z]\d{3}[A-Za-z0-9]*)\b", r"\1\2", value)
+    # Join uppercase course-code fragments, never operators or ordinary words.
+    def join(match: re.Match[str]) -> str:
+        prefix = match.group(1) + match.group(2)
+        if match.group(1) in {"AND", "OR", "CU"} or len(prefix) > 6:
+            return match.group(0)
+        return prefix + match.group(3)
+    for _ in range(5):
+        repaired = re.sub(r"\b([A-Z]{1,5})\s+([A-Z]{1,5})(\d{3}[A-Za-z0-9]*)\b", join, value)
+        if repaired == value:
+            break
+        value = repaired
+    value = re.sub(r"\b([A-Z]{2,6})\s+(\d{3}[A-Za-z0-9]*)\b", lambda match: match.group(0) if match.group(1) in {"AND", "OR", "CU"} else "".join(match.groups()), value)
+    return re.sub(r"\b([A-Z]{2,6})(\d{1,2})\s+(\d{1,2})([A-Za-z0-9]*)\b", lambda match: "".join(match.groups()) if len(match.group(2) + match.group(3)) == 3 and match.group(1) not in {"AND", "OR", "CU"} else match.group(0), value)
+
+
+def normalize_prerequisite_text(value: str) -> str:
+    text = repair_course_code_spacing(clean(value))
+    # These observed PDF word splits are repaired only for parsing/display;
+    # source fields and evidence always retain the extracted original wording.
+    for fragment, replacement in [(r"programmin\s+g", "programming"), (r"managemen\s+t", "management"), (r"undergradu\s+ate", "undergraduate"), (r"specialisatio\s+n", "specialisation"), (r"requirement\s+s", "requirements"), (r"concur\s+rently", "concurrently"), (r"recommend\s+ed", "recommended"), (r"recommen\s+d(?:ed)?", "recommend"), (r"organisatio\s+nal", "Organisational"), (r"prerequisite\s+s", "prerequisites"), (r"programme\s+s", "programmes"), (r"mandato\s+ry", "mandatory")]:
+        text = re.sub(fragment, replacement, text, flags=re.IGNORECASE)
+    return text
 
 
 def course_codes(value: str | None) -> list[str]:
@@ -604,127 +624,432 @@ def parse_effective_term(value: str | None) -> tuple[int | None, str | None]:
     return int(match.group(1)), period
 
 
-def replace_prerequisite_courses(raw_text: str, codes: list[str], replacement: str) -> str:
-    text = repair_course_code_spacing(clean(raw_text))
-    if not codes:
-        return text
-    code_pattern = r"\b(?:" + "|".join(re.escape(code) for code in codes) + r")\b"
-    # A course node already requires completion. Consume only completion
-    # wording immediately before a represented course, never general prose.
-    completion = (
-        r"\b(?:(?:students?\s+)?must\s+have\s+|have\s+|having\s+)?"
-        r"(?:successfully\s+)?(?:completed|passed|taken)\s+(?:the\s+)?"
-        r"|\b(?:successful\s+)?completion\s+of\s+"
-    )
-    text = re.sub(r"(?:" + completion + r")(?=" + code_pattern + r")", "", text, flags=re.IGNORECASE)
-    text = re.sub(code_pattern, replacement, text)
-    text = re.sub(r"^pre[- ]?requisites?\s*:\s*", "", text, flags=re.IGNORECASE)
-    return text
+def prerequisite_rule(raw_text: str, codes: list[str], *, allow_conditions: bool = True) -> tuple[str, str, dict[str, Any] | None]:
+    """Parse complete course expressions, preserving explicit logical groups.
+
+    Comma enumerations mean ALL courses. Unparenthesized mixed expressions
+    require every OR alternative to be an AND group; asymmetric wording such as
+    A OR B AND C remains ambiguous. Suggestions still require batch approval.
+    """
+    text = normalize_prerequisite_text(raw_text)
+    fallback = ("mixed" if codes else "condition", "review_required" if codes else "unparsed", None)
+    if len(text.encode("utf-8")) > 4096:
+        return fallback
+    if allow_conditions:
+        conditioned = prerequisite_condition_rule(text)
+        if conditioned is not None:
+            try:
+                candidate = normalize_prerequisite_rule(conditioned)
+                return candidate["type"], "parsed", candidate
+            except ValueError:
+                return fallback
+    # An explicit completion verb does not change a course-only expression.
+    text = re.sub(r"^(?:Completion of|Completed|Must complete|Students must complete)\s+", "", text, flags=re.IGNORECASE)
+    read_all = re.fullmatch(r"To read all\s+(\d+):\s*(.+)", text, flags=re.IGNORECASE)
+    if read_all:
+        text = read_all.group(2)
+        if len(course_codes(text)) != int(read_all.group(1)):
+            return fallback
+    lexer = re.compile(r"\s*([A-Z]{2,6}[0-9]{3}[A-Za-z0-9]*\b|either\b|and\b|or\b|[&(),])", re.IGNORECASE)
+    tokens: list[str] = []
+    offset = 0
+    while offset < len(text):
+        match = lexer.match(text, offset)
+        if match is None or len(tokens) >= 256:
+            return fallback
+        tokens.append(match.group(1).upper())
+        offset = match.end()
+    position = 0
+
+    def atom(depth: int) -> tuple[dict[str, Any], bool]:
+        nonlocal position
+        if depth > 8 or position >= len(tokens):
+            raise ValueError("Missing or deeply nested course expression")
+        token = tokens[position]
+        position += 1
+        if token == "(":
+            node = alternatives(depth + 1)
+            if position >= len(tokens) or tokens[position] != ")":
+                raise ValueError("Unclosed prerequisite group")
+            position += 1
+            return node, True
+        if token == "EITHER":
+            node = alternatives(depth + 1)
+            if node["type"] != "any":
+                raise ValueError("Either requires alternatives")
+            return node, True
+        if COURSE_CODE_IN_TEXT_RE.fullmatch(token):
+            return {"type": "course", "courseCode": token}, False
+        raise ValueError("Expected course or parenthesized expression")
+
+    def conjunction(depth: int) -> tuple[dict[str, Any], bool, bool]:
+        nonlocal position
+        first, wrapped = atom(depth)
+        children = [first]
+        while position < len(tokens) and tokens[position] in {"AND", "&", ","}:
+            connector = tokens[position]
+            position += 1
+            if connector == "," and position < len(tokens) and tokens[position] in {"AND", "&"}:
+                position += 1
+            elif connector == "," and position < len(tokens) and tokens[position] == "OR":
+                break  # Oxford comma immediately before the OR alternative.
+            children.append(atom(depth)[0])
+        paired = len(children) > 1
+        return ({"type": "all", "children": children} if paired else first), paired, wrapped and not paired
+
+    def alternatives(depth: int) -> dict[str, Any]:
+        nonlocal position
+        groups = [conjunction(depth)]
+        while position < len(tokens) and tokens[position] == "OR":
+            position += 1
+            groups.append(conjunction(depth))
+        if len(groups) == 1:
+            return groups[0][0]
+        if any(paired and not wrapped for _, paired, wrapped in groups) and any(not paired and not wrapped for _, paired, wrapped in groups):
+            raise ValueError("Unparenthesized AND/OR scope is ambiguous")
+        return {"type": "any", "children": [node for node, _, _ in groups]}
+
+    try:
+        candidate = normalize_prerequisite_rule(alternatives(1))
+        if position != len(tokens):
+            return fallback
+        return "single" if candidate["type"] == "course" else candidate["type"], "parsed", candidate
+    except ValueError:
+        return fallback
 
 
-def prerequisite_residual(raw_text: str, codes: list[str]) -> str:
-    text = replace_prerequisite_courses(raw_text, codes, "")
-    if not codes:
-        return text
-    text = re.sub(r"\band\b|\bor\b|&", " ", text, flags=re.IGNORECASE)
-    # Commas and punctuation surround course lists without adding conditions.
-    # Keep other syntax (such as /, +, >) for review instead of guessing its meaning.
-    text = re.sub(r"[(),;:]|(?<!\d)\.|\.(?!\d)", " ", text)
-    return clean(text)
+def normalize_prerequisite_rule(rule: dict[str, Any]) -> dict[str, Any]:
+    nodes = 0
+    def visit(node: dict[str, Any], depth: int = 1) -> dict[str, Any]:
+        nonlocal nodes
+        nodes += 1
+        if depth > 8 or nodes > 64:
+            raise ValueError("Prerequisite tree exceeds depth/node budget")
+        if node["type"] in {"course", "condition"}:
+            return node
+        children = [visit(child, depth + 1) for child in node["children"]]
+        if node["type"] in {"all", "any"}:
+            children = [grandchild for child in children for grandchild in (child["children"] if child["type"] == node["type"] else [child])]
+        children.sort(key=lambda child: json.dumps(child, sort_keys=True))
+        signatures = [json.dumps(child, sort_keys=True) for child in children]
+        if len(children) > 32 or len(signatures) != len(set(signatures)):
+            raise ValueError("Repeated or oversized prerequisite choices")
+        if node["type"] == "nOf":
+            seen: set[str] = set()
+            for child in children:
+                leaves = set(prerequisite_rule_codes(child))
+                if seen & leaves:
+                    raise ValueError("Overlapping numbered course choices")
+                seen.update(leaves)
+            return {"type": "nOf", "count": node["count"], "children": children}
+        return children[0] if len(children) == 1 else {"type": node["type"], "children": children}
+    return visit(rule)
 
 
-def complete_course_expression(raw_text: str, codes: list[str]) -> bool:
-    text = replace_prerequisite_courses(raw_text, codes, "COURSE").strip().removesuffix(".")
-    if not re.fullmatch(r"(?:COURSE|and|or|&|[,;()]|\s)+", text, flags=re.IGNORECASE):
-        return False
-    tokens = re.findall(r"COURSE|and|or|&|[,;()]", text, flags=re.IGNORECASE)
-    # Commas/semicolons mean all; do not silently reinterpret them as OR.
-    if any(token.lower() == "or" for token in tokens) and any(token in {",", ";"} for token in tokens):
-        return False
-    expect_operand = True
-    depth = 0
-    for token in tokens:
-        if token.lower() == "course":
-            if not expect_operand:
-                return False
-            expect_operand = False
-        elif token == "(":
-            if not expect_operand:
-                return False
-            depth += 1
-        elif token == ")":
-            if expect_operand or depth == 0:
-                return False
-            depth -= 1
+def prerequisite_condition_rule(text: str, depth: int = 1) -> dict[str, Any] | None:
+    """Recognize complete, narrowly defined clauses without dropping qualifiers."""
+    if depth > 8:
+        return None
+    def courses(value: str) -> dict[str, Any] | None:
+        _, status, node = prerequisite_rule(value, course_codes(value), allow_conditions=False)
+        return node if status == "parsed" else None
+    def all_of(*nodes: dict[str, Any]) -> dict[str, Any]:
+        children = [child for node in nodes for child in (node["children"] if node["type"] == "all" else [node])]
+        return {"type": "all", "children": children}
+    match = re.fullmatch(r"(MPCL only):\s*(.+?)\.?", text, flags=re.IGNORECASE)
+    if match:
+        base = courses(match.group(2))
+        if base:
+            return all_of({"type": "condition", "text": match.group(1)}, base)
+    credit_prefix = r"(?:Completed|Complete(?:d)? (?:a )?minimum|Must complete)\s+\d+\s*cu(?: of courses)?"
+    match = re.fullmatch(rf"({credit_prefix}),?\s+including\s+(.+)", text, flags=re.IGNORECASE)
+    if match:
+        tail = prerequisite_condition_rule(match.group(2), depth + 1) or courses(match.group(2))
+        if tail:
+            return all_of({"type": "condition", "text": match.group(1)}, tail)
+    match = re.fullmatch(r"(.+?)\s+and\s+(ONE|TWO|\d+)\s*(?:\((\d+)\))?\s+of the following courses:\s*(.+)", text, flags=re.IGNORECASE)
+    if match:
+        count = {"ONE": 1, "TWO": 2}.get(match.group(2).upper(), int(match.group(2)) if match.group(2).isdigit() else 0)
+        base, choices = courses(match.group(1)), courses(match.group(4))
+        if base and choices and choices["type"] == "all" and (match.group(3) is None or int(match.group(3)) == count) and 1 <= count <= len(choices["children"]) and all(child["type"] == "course" for child in choices["children"]):
+            if set(prerequisite_rule_codes(base)) & set(prerequisite_rule_codes(choices)):
+                return None
+            return all_of(base, {"type": "nOf", "count": count, "children": choices["children"]})
+    match = re.fullmatch(rf"(.+?)\.\s*({credit_prefix})\.?", text, flags=re.IGNORECASE)
+    if match:
+        base = courses(match.group(1))
+        if base:
+            return all_of(base, {"type": "condition", "text": match.group(2)})
+    match = re.fullmatch(r"(All Compulsory SWK Level 100,\s*200 courses)\s*(?:,\s*|and\s+)(.+?)\.?", text, flags=re.IGNORECASE)
+    if match:
+        base = courses(match.group(2))
+        if base:
+            return all_of({"type": "condition", "text": match.group(1)}, base)
+    match = re.fullmatch(r"(All MCOU compulsory courses),\s*(.+?),\s*and\s+(CGPA of \d+(?:\.\d+)?)\.?", text, flags=re.IGNORECASE)
+    if match:
+        base = courses(match.group(2))
+        if base:
+            return all_of({"type": "condition", "text": match.group(1)}, base, {"type": "condition", "text": match.group(3)})
+    # Keep the whole non-course alternative as one condition. Date, exemption,
+    # concurrence and scope clauses are intentionally outside this grammar.
+    parts = re.split(r"\s+or\s+", text.rstrip("."), flags=re.IGNORECASE)
+    if len(parts) > 1:
+        nodes: list[dict[str, Any]] = []
+        saw_condition = False
+        for part in parts:
+            node = courses(part)
+            if node is None and re.fullmatch(r"(?:(?:other )?prior learning in [A-Za-z /-]+|Malay Placement test)", part, flags=re.IGNORECASE) and not course_codes(part):
+                node = {"type": "condition", "text": part}
+                saw_condition = True
+            if node is None:
+                return None
+            nodes.append(node)
+        if saw_condition:
+            return {"type": "any", "children": nodes}
+    return None
+
+
+def prerequisite_review_reason(text: str) -> str:
+    if re.search(r"co[ -]*requisite|concurrent|at the same time", text, flags=re.IGNORECASE):
+        return "Concurrent or co-requisite enrolment retained as remarks; no prerequisite edges suggested"
+    if re.search(r"before|after|onwards|intakes?|Jul(?:y)? 20|Jan(?:uary)? 20", text, flags=re.IGNORECASE) and re.search(r"20\d{2}", text):
+        return "Date or cohort-specific requirement retained in remarks; no default cohort selected"
+    if re.search(r"compulsory|MPCL only|tracks?|programme|disciplines?", text, flags=re.IGNORECASE):
+        return "Programme or course-group requirement retained in remarks; course membership is not inferred"
+    if re.search(r"\bcu\b|\bcus\b|\d+\s*cu|CGPA|grade", text, flags=re.IGNORECASE):
+        return "Credit or academic-standing requirement retained as prerequisite remarks"
+    if re.search(r"\band\b|\bor\b|/", text, flags=re.IGNORECASE) and course_codes(text):
+        return "Logical grouping needs triage; complete source wording retained"
+    return "Non-course eligibility or unsupported wording retained as prerequisite remarks"
+
+
+def analyze_prerequisite_remarks(value: str | None, target: str, *, has_prerequisite: bool = False) -> list[dict[str, Any]]:
+    """Classify clauses by their enrolment meaning, not just course-code presence.
+
+    Informational and recommended clauses stay in the audit/source cells. Only
+    actual requirements, qualifications of an existing prerequisite, and unclear
+    possible requirements enter prerequisite triage. No classifier adds edges.
+    """
+    clauses = [part.strip() for part in re.split(r"(?<=[.!?。])\s+|;\s*", normalize_prerequisite_text(value or "")) if part.strip(" .")]
+    result = []
+    for text in clauses:
+        def matches(pattern: str) -> bool:
+            return re.search(pattern, text, re.I) is not None
+
+        disposition, category, reason = "information", "course_information", "No enrolment precondition identified"
+        soft = matches(r"\b(?:recommend\w*|suggest\w*|advis\w*|encourag\w*|preferably|strongly urged)\b")
+        concurrency = matches(r"co[ -]*requisite|concurrent|same semester|\b(?:take|taken)\b.{0,150}\btogether\b|\bto take (?:this )?with\b")
+        entry_context = matches(r"\bto be eligible\b|\bin order to (?:take|read|enrol)\b|\bbefore (?:taking|reading|enrolling)\b|\bplacement (?:\w+ )?test\b")
+        independent_must = matches(r"\b(?:students|applicants|they|you) (?:also )?must\b")
+        if soft and not independent_must:
+            disposition, category, reason = "recommendation", "recommendation", "Suggested preparation or scheduling is optional"
+        elif matches(r"credit recognition|\bfor CR\b|\bfor (?:the )?(?:issuance|award) of (?:the )?certificate\b|\bfor graduation\b|\bUCore requirement\b"):
+            category, reason = "credit_or_award", "Condition for credits, graduation or an award, rather than entry to this course"
+        elif matches(r"excluded combination") or (matches(r"\b(?:not eligible|not (?:be )?applicable)\b") and matches(r"\bcompleted\b")):
+            category, reason = "exclusion", "Exclusion or exclusion waiver; completing the named course is not a prerequisite"
+        elif matches(r"\bis a pre[ -]*requisite for\b") and target not in course_codes(re.split(r"\bfor\b", text, flags=re.I)[-1]):
+            category, reason = "other_course_requirement", "Describes a prerequisite for another course"
+        elif matches(r"exempt") and not matches(r"pre[ -]*requisite|placement|prior learning"):
+            category, reason = "course_exemption", "Exemption from the current course, rather than its entry requirements"
+        elif matches(r"\b(?:must take|required to take|compulsory (?:course )?for|remains as a compulsory course|to take in (?:first|final)|to take (?:this course |this )?before|to be taken before)\b") and not entry_context and not matches(r"pre[ -]*requisite|\bto take after\b"):
+            category, reason = "study_plan", "Programme obligation or study schedule, rather than prerequisites of this course"
+        elif entry_context and matches(r"\b(?:must take|required to take)\b"):
+            disposition, category, reason = "requirement", "eligibility", "Mandatory entry or placement-test requirement"
+        elif matches(r"\bto take after\b|\bpre[ -]*requisites?\b|\b(?:must|need to|required to|would be required to)\s+(?:have\s+)?(?:taken|passed|completed|complete|pass|read|sit for)\b|\bmust have taken and passed\b|先修|修满"):
+            disposition, category, reason = "requirement", "course_order", "Explicit prerequisite or completion requirement"
+        elif matches(r"\b(?:should have completed|should have taken|should sit for)\b"):
+            tail = re.split(r"\bbefore (?:taking|reading|sitting for)\b", text, flags=re.I)[-1]
+            if "before" in text.lower() and course_codes(tail) and target not in course_codes(tail):
+                category, reason = "other_course_requirement", "Study order refers to another course"
+            else:
+                disposition, category, reason = "needs_review", "possible_requirement", "Expected completion is stated without an explicit mandatory instruction"
+        elif matches(r"\b(?:requires?|need)\b.{0,35}\b(?:foundation|background|knowledge|experience)\b|\b(?:background|experience)\b.{0,25}\b(?:mandatory|required)\b|\bminimum\b.{0,40}\bproficiency\b|\b(?:must|are required to) have\b.{0,40}\b(?:degree|qualifications?|training|access)\b|\bmust (?:achieve|obtain)\b|\bprior approval\b|\bmust contact\b.{0,60}\b(?:HoP|Head)\b|\bapplicants must\b"):
+            disposition, category, reason = "requirement", "eligibility", "Explicit background, qualification, access or approval requirement"
+        elif matches(r"\b(?:available only|only applicable|not open to|not offered to)\b|\bexclusion:|\boffered\b.{0,80}\bonly\b"):
+            disposition, category, reason = "requirement", "eligibility", "Entry is restricted to specified students or programmes"
+        elif concurrency:
+            mentioned = set(course_codes(text)) - {target}
+            if matches(r"\b(?:can|may)\b"):
+                disposition = "qualification" if has_prerequisite and mentioned else "information"
+                category, reason = "optional_concurrent", "Permitted concurrent enrolment; this is not a prior-completion requirement"
+            else:
+                disposition, category, reason = "requirement", "concurrent_enrolment", "Required concurrent enrolment, without prior-completion edges"
+        elif matches(r"\b(?:knowledge|background)\b.{0,80}\bassumed\b"):
+            disposition, category, reason = "needs_review", "assumed_knowledge", "Assumed knowledge may qualify preparation; it does not establish completion of a named course"
+        elif matches(r"expected to have prior experience|should have a ready|\bshould have\b.{0,40}\bknowledge\b|\bprior learning\b"):
+            disposition, category, reason = "needs_review", "possible_requirement", "Possible entry condition needs triage"
+        elif has_prerequisite and matches(r"only applies|exempt|\b20\d{2}\b|intakes?|最后一个学期") and (course_codes(text) or matches(r"pre[ -]*requisite|exempt|最后一个学期")):
+            disposition, category, reason = "qualification", "prerequisite_qualification", "Programme, intake or exemption qualifies the existing prerequisite"
+        # A recommendation and a separate mandatory statement in one sentence
+        # must be reviewed together, never discarded or reduced to the advice.
+        if soft and independent_must:
+            disposition, category, reason = "needs_review", "possible_requirement", "Mandatory and recommended clauses share a sentence; retain it for triage"
+        categories = [category]
+        if concurrency and disposition in {"requirement", "qualification", "needs_review"} and category not in {"concurrent_enrolment", "optional_concurrent"}:
+            categories.append("concurrent_enrolment")
+        if disposition in {"requirement", "qualification", "needs_review"} and matches(r"\b20\d{2}\b|intakes?"):
+            categories.append("dated_or_cohort")
+        result.append({"text": text, "disposition": disposition, "categories": categories, "reason": reason})
+    return result
+
+
+def prerequisite_remarks_categories(value: str | None) -> list[str]:
+    return list(dict.fromkeys(category for clause in analyze_prerequisite_remarks(value, "") for category in clause["categories"]))
+
+
+def prerequisite_remarks_rule(text: str, target: str) -> dict[str, Any] | None:
+    """Parse complete, explicit completion clauses, retaining their qualifications."""
+    # Each remaining sentence must be consumed. Information/recommendations have
+    # already been classified separately; an unsupported requirement stops this
+    # grammar rather than losing the second sentence or an alternative route.
+    nodes, scopes = [], []
+    for clause in re.split(r"(?<=[.])\s+", text):
+        match = re.fullmatch(r"(?:(?P<scope>[A-Za-z][A-Za-z -]* students):\s*)?To take after(?: completing)?\s+(?P<courses>.+?)\.?", clause, re.I)
+        if match:
+            scope = match.group("scope")
+            expression = match.group("courses")
         else:
-            if expect_operand:
-                return False
-            expect_operand = True
-    return bool(tokens) and not expect_operand and depth == 0
+            match = re.fullmatch(rf"(?:Students )?must (?:have completed|have passed|have taken and passed|complete|pass) (.+?)(?: first| before (?:taking|reading) (?:this course|{re.escape(target)}))?\.?", clause, re.I)
+            if not match:
+                break
+            scope, expression = None, match.group(1)
+        _, status, node = prerequisite_rule(expression, course_codes(expression), allow_conditions=False)
+        if status != "parsed":
+            break
+        nodes.append(node)
+        if scope:
+            scopes.append(scope)
+    else:
+        if nodes:
+            # Different scopes cannot be merged into a universal AND.
+            if scopes and (len(set(scopes)) != 1 or len(scopes) != len(nodes)):
+                return None
+            try:
+                node = normalize_prerequisite_rule(nodes[0] if len(nodes) == 1 else {"type": "all", "children": nodes})
+            except ValueError:
+                return None
+            if scopes:
+                node["displayRemarks"] = [text]
+            return node
+    # These routes explicitly distinguish passed courses from passed/concurrent
+    # choices. The latter remain text conditions and never produce prior edges.
+    match = re.fullmatch(rf"To take {re.escape(target)}, Forensic Psychology students must (.+?)\. Organisational Psychology students must (.+?)\.?", text, re.I)
+    if match:
+        routes = []
+        for label, clause in zip(["Forensic Psychology students", "Organisational Psychology students"], match.groups()):
+            parts = re.fullmatch(r"pass (.+?), and pass/concurrently take (.+)", clause, re.I)
+            if not parts:
+                return None
+            _, status, passed = prerequisite_rule(parts.group(1), course_codes(parts.group(1)), allow_conditions=False)
+            if status != "parsed":
+                return None
+            routes.append({"type": "all", "children": [{"type": "condition", "text": label}, passed, {"type": "condition", "text": "Passed or concurrently taking " + parts.group(2).rstrip(".")}]})
+        return normalize_prerequisite_rule({"type": "any", "children": routes})
+    return None
 
 
-def prerequisite_condition(raw_text: str, residual: str) -> dict[str, Any]:
-    patterns = {
-        "placement_test": r"\bplacement\s+(?:\w+\s+){0,3}tests?\b",
-        "prior_learning": r"\bprior\s+learning\b",
-        "experience": r"\bexperience\b|\bexperienced\b",
-        "credit_units": r"\b\d+(?:\.\d+)?\s*(?:cu|credit[ -]*units?)\b",
-        "programme_standing": (
-            r"\b(?:programme|program|academic)\s+standing\b"
-            r"|\b\d+\s*[- ]\s*year\s+(?:tracks?|students?)\b"
-            r"|\b(?:senior|final[ -]year)\b"
-        ),
-        "co_enrollment": (
-            r"\bco[ -]?(?:enrol(?:l)?(?:ment|ed|ing)?|requisites?)\b"
-            r"|\bconcurrent(?:ly)?\b|\bat\s+the\s+same\s+time\b"
-        ),
-    }
-    kinds = [kind for kind, pattern in patterns.items() if re.search(pattern, clean(raw_text), flags=re.IGNORECASE)]
-    return {
-        "type": "condition",
-        "text": residual,
-        "sourceText": raw_text,
-        # These tags aid review; they do not make the condition executable.
-        "conditionTypes": kinds or ["unrecognized"],
-    }
+def attach_prerequisite_candidate(entry: dict[str, Any]) -> None:
+    if entry.get("recordType") != "offering":
+        return
+    for field in ["prerequisiteEvidenceText", "prerequisiteNormalizedText", "prerequisiteNotes", "prerequisiteDiagnostics", "parserRule", "parserOperator", "parseStatus"]:
+        entry.pop(field, None)
+    raw_text = entry.get("prerequisite")
+    remarks = entry.get("remarks")
+    target = normalized_course_code(entry["courseCode"])
+    analysis = analyze_prerequisite_remarks(remarks, target, has_prerequisite=bool(raw_text))
+    for clause in analysis:
+        if clause["disposition"] == "qualification" and "optional_concurrent" in clause["categories"] and not set(course_codes(clause["text"])) & set(course_codes(raw_text)):
+            clause.update({"disposition": "information", "reason": "Optional pairing with another course does not qualify a listed prerequisite"})
+    relevant = [clause for clause in analysis if clause["disposition"] in {"requirement", "qualification", "needs_review"}]
+    categories = list(dict.fromkeys(category for clause in analysis for category in clause["categories"]))
+    fields = (["prerequisite"] if raw_text else []) + (["remarks"] if remarks and (raw_text or relevant) else [])
+    entry.update({"parserContractVersion": PARSER_CONTRACT_VERSION, "prerequisiteSourceFields": fields, "prerequisiteRemarksCategories": categories, "prerequisiteRemarksAnalysis": analysis})
+    if not fields:
+        return
+    points_to_remarks = re.search(r"(?:see|refer to)\s+(?:the\s+)?remarks\b", raw_text or "", flags=re.IGNORECASE) is not None
+    only_pointer = re.fullmatch(r"(?:please\s+)?(?:see|refer to)\s+(?:the\s+)?remarks[.!]?", clean(raw_text), flags=re.IGNORECASE) is not None
+    relevant_text = " ".join(clause["text"] for clause in relevant)
+    # Explicit pointers also support bare course lists without requirement verbs.
+    resolved = (relevant_text or remarks) if (not raw_text or only_pointer) and remarks else raw_text
+    evidence = "\n".join(([raw_text] if raw_text else []) + ([f"Remarks: {remarks}"] if "remarks" in fields else []))
+    normalized = normalize_prerequisite_text(resolved)
+    codes = course_codes(normalized)
+    operator, status, candidate = prerequisite_rule(normalized, codes)
+    raw_codes = [match.group(0).upper() for match in COURSE_CODE_IN_TEXT_RE.finditer(normalized)]
+    diagnostics = []
+    notes = []
+    if "remarks" in fields:
+        notes.append("Every remarks cell was checked; complete remarks are bound to this source evidence")
+    if categories:
+        notes.append("Remarks classification: " + "; ".join(category.replace("_", " ") for category in categories))
+    if not raw_text:
+        notes.append("Requirement found in remarks although the prerequisite cell is empty")
+    if (not raw_text or only_pointer) and remarks:
+        if not relevant and any(clause["disposition"] == "recommendation" for clause in analysis):
+            status, candidate = "review_required", None
+            diagnostics.append("Recommended preparation retained as remarks; recommendations do not create required prerequisite edges")
+        elif candidate is None:
+            candidate = prerequisite_remarks_rule(normalized, normalized_course_code(entry["courseCode"]))
+            if candidate:
+                status, operator = "parsed", "single" if candidate["type"] == "course" else candidate["type"]
+                notes.append("Explicit completion requirements parsed from remarks; programme and concurrent conditions retained")
+    elif candidate is not None and relevant:
+        normalized_remarks = relevant_text
+        if any("dated_or_cohort" in clause["categories"] for clause in relevant) and set(course_codes(normalized_remarks)) & set(prerequisite_rule_codes(candidate)):
+            status, candidate = "review_required", None
+            diagnostics.append("Remarks restrict a listed prerequisite by cohort or date; complete source retained without an unrestricted completion tree")
+        elif re.search(r"co[ -]*requisite|concurrent|same semester|\btogether\b", normalized_remarks, re.I) and set(course_codes(normalized_remarks)) & set(prerequisite_rule_codes(candidate)):
+            status, candidate = "review_required", None
+            diagnostics.append("Remarks allow a listed prerequisite to be taken concurrently; complete source retained without prior-completion edges")
+        elif re.search(r"\b(?:must|need to|required to|to take after)\b", normalized_remarks, re.I) and set(course_codes(normalized_remarks)) - {target} - set(prerequisite_rule_codes(candidate)):
+            status, candidate = "review_required", None
+            diagnostics.append("Additional course requirement in remarks needs triage; complete source retained")
+        else:
+            candidate["displayRemarks"] = list(dict.fromkeys([*candidate.get("displayRemarks", []), relevant_text]))
+            notes.append("Only requirement-related clauses appear beneath the tree; optional advice and course information remain in source details and the audit")
+    if points_to_remarks and not remarks:
+        status, candidate = "review_required", None
+        diagnostics.append("Prerequisite refers to an empty remarks cell; source check required")
+    elif points_to_remarks:
+        notes.append("Prerequisite evidence includes the remarks cell from the same source row")
+    if normalized != clean(resolved):
+        notes.append("PDF spacing repaired for parsing; original wording retained in source evidence")
+    def has_condition(node: dict[str, Any]) -> bool:
+        return node["type"] == "condition" or any(has_condition(child) for child in node.get("children", []))
+    if candidate is not None and has_condition(candidate):
+        notes.append("Text conditions remain part of the requirement; no course-group membership or eligibility result is inferred")
+    if re.search(r"\beither\b", normalized, flags=re.IGNORECASE):
+        diagnostics.append("Either grouping requires triage; ANL303 scope must be confirmed" if normalized.startswith("ANL303 and either ") else "Either grouping requires triage before publication")
+    if candidate is None and len(raw_codes) != len(set(raw_codes)):
+        diagnostics.append("Repeated raw course tokens require review")
+    if candidate is not None and normalized_course_code(entry["courseCode"]) in prerequisite_rule_codes(candidate):
+        status, candidate = "review_required", None
+        diagnostics.append("Self-reference requires review; no prerequisite edges suggested")
+    if candidate is None:
+        diagnostics.append(prerequisite_review_reason(evidence))
+    if re.search(r"\(cid:\d+\)", evidence, flags=re.IGNORECASE):
+        diagnostics.append("Unresolved prerequisite glyph affects interpretation")
+        status, candidate = "review_required", None
+    entry.update({
+        "parserContractVersion": PARSER_CONTRACT_VERSION,
+        "parseStatus": status,
+        "parserRule": candidate,
+        "parserOperator": operator,
+        "prerequisiteDiagnostics": diagnostics,
+        "prerequisiteEvidenceText": evidence,
+        "prerequisiteNormalizedText": normalized,
+        "prerequisiteNotes": notes,
+    })
 
 
-def prerequisite_rule(raw_text: str, codes: list[str]) -> tuple[str, str, dict[str, Any]]:
-    source_condition = prerequisite_condition(raw_text, clean(raw_text))
-    if "co_enrollment" in source_condition["conditionTypes"]:
-        # Course references in these passages do not establish prior completion.
-        # Preserve the whole passage for review rather than guessing clause scope.
-        return "condition", "review_required", source_condition
-    residual = prerequisite_residual(raw_text, codes)
-    has_and = re.search(r"\band\b|&", raw_text, flags=re.IGNORECASE) is not None
-    has_or = re.search(r"\bor\b", raw_text, flags=re.IGNORECASE) is not None
-    if not codes:
-        return "condition", "review_required", prerequisite_condition(raw_text, residual)
-    condition = prerequisite_condition(raw_text, residual) if residual else None
-    children = [{"type": "course", "courseCode": code} for code in codes]
-    if condition:
-        children.append(condition)
-    if has_and and has_or:
-        return "mixed", "review_required", {
-            "type": "unparsed",
-            "text": raw_text,
-            "courseCodes": codes,
-            "children": children,
-        }
-    operator = "any" if has_or else "all" if has_and or len(codes) > 1 else "single"
-    if not condition and not complete_course_expression(raw_text, codes):
-        return operator, "review_required", {"type": "unparsed", "text": raw_text, "children": children}
-    node_type = "any" if operator == "any" else "all"
-    return operator, "review_required" if condition else "parsed", {
-        "type": node_type,
-        "children": children,
-    }
-
-
-def prerequisite_rule_codes(rule: dict[str, Any]) -> list[str]:
+def prerequisite_rule_codes(rule: dict[str, Any] | None) -> list[str]:
+    if rule is None:
+        return []
     if rule["type"] == "course":
         return [rule["courseCode"]]
-    return [code for child in rule.get("children", []) for code in prerequisite_rule_codes(child)]
+    if rule["type"] == "condition":
+        return []
+    return list(dict.fromkeys(code for child in rule.get("children", []) for code in prerequisite_rule_codes(child)))
 
 
 def active_replacement_pairs(current_course_code: str, remarks: str | None) -> list[tuple[str, str]]:
@@ -876,31 +1201,14 @@ def build_product_models(
             "sortOrder": course_sort_order,
         })
 
-        raw_prerequisite = entry.get("prerequisite")
-        if raw_prerequisite:
-            extracted_codes = course_codes(raw_prerequisite)
-            self_references = [code for code in extracted_codes
-                               if normalized_course_code(code) == normalized_course_code(course_code)]
-            codes = [code for code in extracted_codes if code not in self_references]
-            operator, parse_status, rule_json = prerequisite_rule(raw_prerequisite, codes)
-            if self_references:
-                parse_status = "review_required"
+        attach_prerequisite_candidate(entry)
+        evidence = entry.get("prerequisiteEvidenceText")
+        if evidence:
+            operator = entry["parserOperator"]
+            parse_status = entry["parseStatus"]
+            rule_json = entry["parserRule"]
             if issues is not None and parse_status != "parsed":
-                conditions = [rule_json] if rule_json["type"] == "condition" else [
-                    node for node in rule_json.get("children", []) if node["type"] == "condition"
-                ]
-                details = "; ".join(
-                    f"{', '.join(node['conditionTypes'])}: {node['text']}" for node in conditions
-                )
-                message = (
-                    f"Unsupported prerequisite conditions retained for review: {details}"
-                    if conditions else f"Unsupported prerequisite course logic requires review: {raw_prerequisite}"
-                )
-                if self_references:
-                    message = (
-                        f"Self-reference to {course_code} excluded from prerequisite courses "
-                        f"(review_required). {message}"
-                    )
+                message = "; ".join(entry["prerequisiteDiagnostics"]) + f" ({parse_status}): {evidence}"
                 issues.append({
                     "planKey": plan_key_value,
                     "courseCode": course_code,
@@ -914,7 +1222,7 @@ def build_product_models(
                 "planKey": plan_key_value,
                 "courseCode": course_code,
                 "operator": operator,
-                "rawText": raw_prerequisite,
+                "rawText": entry["prerequisiteEvidenceText"],
                 "rule": rule_json,
                 "parseStatus": parse_status,
             })
@@ -1013,11 +1321,13 @@ def generate_sql(models: dict[str, list[dict[str, Any]]]) -> str:
     plan_keys = [plan["planKey"] for plan in models["plans"]]
     plan_key_list = ", ".join(sql_string(value) for value in plan_keys)
     lines = [
+        "-- EXPERIMENTAL ONLY: never use this import for reviewed prerequisite records.",
         "-- Curriculum plan import generated by parse_curriculum_plans.py.",
         "-- Requires the optional tables in scraper/curriculum-schema-extension.sql.",
         "-- The extension is preliminary and is not part of the deployed application schema.",
         "-- Review the JSON and issues TSV before importing this file.",
         "BEGIN;",
+        "DO $guard$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'curriculum_prerequisite_rules' AND column_name = 'approved_rule_hash') THEN RAISE EXCEPTION 'Experimental importer cannot modify reviewed prerequisites. Use scripts/review-curriculum.ts.'; END IF; END $guard$;",
     ]
 
     for plan in models["plans"]:
@@ -1208,6 +1518,7 @@ def main() -> None:
     models = build_product_models(plans, entries, issues)
     payload = {
         "metadata": {
+            "parserContractVersion": PARSER_CONTRACT_VERSION,
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "sourceDirectory": args.input_dir.as_posix(),
             "planCount": len(plans),
@@ -1218,7 +1529,8 @@ def main() -> None:
             "notes": [
                 "Course rows remain programme-plan-specific and are not merged globally.",
                 "Presentations describe published availability and do not create class schedules or semesters.",
-                "Prerequisite rules preserve source text and flag mixed or non-course conditions for review.",
+                "Prerequisite rules preserve source text, parse explicit logical groups and flag ambiguous or non-course conditions for review.",
+                "Every offering row's remarks are checked; related requirements, recommendations and qualifications are preserved with their source cells.",
                 "Retired and replaced rows are lifecycle records and are not batch-added as active plan courses.",
                 "CID OCR is limited to affected title cells and never overwrites source PDFs.",
             ],

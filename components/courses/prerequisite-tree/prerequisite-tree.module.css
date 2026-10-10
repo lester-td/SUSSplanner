@@ -1,0 +1,50 @@
+.section, .expandedContent { --tree-line-color: color-mix(in srgb, var(--on-surface-variant) 65%, var(--surface-container-lowest)); }
+.section { overflow: hidden; overflow-wrap: anywhere; scroll-margin-top: 5rem; }
+.section:focus-visible, .treeViewport:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.sourceContent:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.body { padding: .75rem; }
+.intro { color: var(--on-surface-variant); font-size: .8125rem; line-height: 1.6; }
+.intro { margin-bottom: .75rem; }
+.treeViewport { max-width: 100%; max-height: 320px; overflow: auto; overscroll-behavior: contain; border-radius: .25rem; margin: 1rem 0; }
+.graphCanvas { display: grid; place-items: center; min-width: 100%; min-height: 100%; width: max-content; }
+.graph { position: relative; margin-inline: auto; }
+.graphLines { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.graphLines path { fill: none; stroke: var(--tree-line-color); stroke-width: 2px; stroke-linejoin: round; stroke-linecap: round; }
+.graphNodes, .sourceList { list-style: none; padding: 0; margin: 0; }
+.graphNode { position: absolute; display: flex; align-items: center; justify-content: center; }
+.graphLabel { color: var(--on-surface-variant); font-size: .75rem; line-height: 18px; text-align: center; }
+.graphCondition { padding: 6px; }
+.graphCondition .graphLabel { color: var(--on-surface); text-align: left; }
+.detailsLink { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: .2rem; }
+.detailsLink:hover { color: var(--primary); }
+.node { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 1.875rem; padding: .125rem .375rem; border: 1px solid transparent; border-radius: .3rem; color: var(--on-surface-variant); font-size: .875rem; font-weight: 500; line-height: 1.4; white-space: nowrap; text-decoration: none; }
+.available { border-color: color-mix(in srgb, var(--course-color), #111827 28%); background: var(--course-color); color: #1f2937; transition: background .15s; }
+.available:hover { background: color-mix(in srgb, var(--course-color), #fff 12%); text-decoration: underline; text-underline-offset: .2rem; }
+.current.available { position: relative; border-width: 2px; border-color: #35639b; font-weight: 700; box-shadow: 0 0 0 2px color-mix(in srgb, var(--course-color) 30%, transparent); }
+.currentLabel { position: absolute; top: calc(100% + 5px); left: 50%; transform: translateX(-50%); color: var(--on-surface-variant); font-size: .625rem; font-weight: 500; line-height: 12px; white-space: nowrap; }
+.courseCard { position: fixed; z-index: 100; width: max-content; max-width: min(560px, calc(100vw - 24px)); padding: .75rem; max-height: calc(100dvh - 24px); overflow-y: auto; overflow-wrap: anywhere; border: 1px solid var(--outline-variant); border-radius: .5rem; background: var(--surface-container-lowest); color: var(--on-surface); box-shadow: var(--shadow-elev-3); }
+.cardHeading { margin: 0; font-size: .8125rem; line-height: 1.6; }
+.cardCode { margin-right: .375rem; font-weight: 700; white-space: nowrap; }
+.detailsLink:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.node:focus-visible, .remarksLink:focus-visible, .disclosure summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.remarksLink { font-size: .75rem; line-height: 18px; color: var(--primary); text-decoration: underline; text-underline-offset: .2rem; }
+.sourceContent { padding: .5rem 0 .75rem 1rem; scroll-margin-top: 5rem; }
+.body .sourceContent { max-height: min(14rem, 30dvh); overflow-y: auto; overscroll-behavior: contain; padding-right: .5rem; }
+.sourceGroup + .sourceGroup { margin-top: 1.25rem; }
+.sourceCourse { margin-bottom: .625rem; color: var(--on-surface); font-size: .875rem; font-weight: 650; }
+.sourceList { display: grid; gap: 1rem; }
+.programme { display: block; color: var(--on-surface); font-size: .8125rem; font-weight: 650; line-height: 1.6; }
+.sourceText { white-space: pre-wrap; font-size: .8125rem; line-height: 1.7; margin: .375rem 0 0; color: var(--on-surface-variant); }
+.reviewState { font-size: .75rem; font-weight: 600; color: var(--on-surface-variant); margin-top: .5rem; }
+.disclosure { border-top: 1px solid var(--outline-variant); font-size: .8125rem; line-height: 1.6; color: var(--on-surface-variant); }
+.disclosure summary { cursor: pointer; padding: .75rem 0; min-height: 2.75rem; color: var(--on-surface); font-weight: 600; }
+.expandButton { flex: none; margin-left: auto; padding: 1px 6px; border: 1px solid var(--outline-variant); border-radius: .25rem; color: var(--primary); background: var(--surface-container-lowest); font-size: .6875rem; font-weight: 600; line-height: 18px; white-space: nowrap; }
+.expandedSurface { height: calc(100dvh - 2rem); max-width: none; }
+.expandedSurface :global(.app-modal-header-close) { color: var(--on-surface-variant); }
+.expandedBody { display: flex; overflow: hidden; padding: .75rem; }
+.expandedContent { display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow-wrap: anywhere; }
+.expandedContent > .intro { flex: none; }
+.expandedViewport { flex: 1; min-height: 0; max-height: none; }
+.expandedSources { flex: none; max-height: 35%; overflow-y: auto; overscroll-behavior: contain; }
+@media (max-width: 40rem) { .sourceContent { padding-left: .75rem; } }
+@media (prefers-reduced-motion: reduce) { .available { transition: none; } }

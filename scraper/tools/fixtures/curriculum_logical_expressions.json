@@ -1,0 +1,54 @@
+[
+  {
+    "courseCode": "ENG308",
+    "rawText": "ENG201 and ENG203 or ENG201 and ENG311 or ENG203 and ENG311",
+    "rule": {
+      "type": "any",
+      "children": [
+        { "type": "all", "children": [{ "type": "course", "courseCode": "ENG201" }, { "type": "course", "courseCode": "ENG203" }] },
+        { "type": "all", "children": [{ "type": "course", "courseCode": "ENG201" }, { "type": "course", "courseCode": "ENG311" }] },
+        { "type": "all", "children": [{ "type": "course", "courseCode": "ENG203" }, { "type": "course", "courseCode": "ENG311" }] }
+      ]
+    }
+  },
+  {
+    "courseCode": "ENG209",
+    "rawText": "ENG101, ENG103 and (ICT133 or ICT162)",
+    "rule": {
+      "type": "all",
+      "children": [
+        { "type": "any", "children": [{ "type": "course", "courseCode": "ICT133" }, { "type": "course", "courseCode": "ICT162" }] },
+        { "type": "course", "courseCode": "ENG101" },
+        { "type": "course", "courseCode": "ENG103" }
+      ]
+    }
+  },
+  {
+    "courseCode": "ACC351",
+    "rawText": "ACC201, BUS201, BUS205, ACC305",
+    "rule": { "type": "all", "children": [
+      { "type": "course", "courseCode": "ACC201" }, { "type": "course", "courseCode": "ACC305" },
+      { "type": "course", "courseCode": "BUS201" }, { "type": "course", "courseCode": "BUS205" }
+    ] }
+  },
+  {
+    "courseCode": "ACC353",
+    "rawText": "ANL303 and either (ACC201 and ACC203) or ACC202",
+    "rule": { "type": "all", "children": [
+      { "type": "any", "children": [
+        { "type": "all", "children": [{ "type": "course", "courseCode": "ACC201" }, { "type": "course", "courseCode": "ACC203" }] },
+        { "type": "course", "courseCode": "ACC202" }
+      ] },
+      { "type": "course", "courseCode": "ANL303" }
+    ] }
+  },
+  {
+    "courseCode": "BME313",
+    "rawText": "(BME107,B ME108) or (BME209,B ME210) or BME207",
+    "rule": { "type": "any", "children": [
+      { "type": "all", "children": [{ "type": "course", "courseCode": "BME107" }, { "type": "course", "courseCode": "BME108" }] },
+      { "type": "all", "children": [{ "type": "course", "courseCode": "BME209" }, { "type": "course", "courseCode": "BME210" }] },
+      { "type": "course", "courseCode": "BME207" }
+    ] }
+  }
+]

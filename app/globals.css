@@ -2386,6 +2386,7 @@
 }
 
 .course-detail-assessment__header,
+.course-detail-prerequisites__header,
 .course-detail-classes__header {
   min-height: 2.5rem;
   padding: 0.5rem 0.75rem;
@@ -2420,8 +2421,8 @@
   --course-detail-mobile-fact-bg: #203b49;
 }
 
-.course-detail-page :is(.course-detail-facts, .course-detail-stat, .course-detail-assessment, .course-detail-classes),
-:root[data-color-scheme="dark"] .course-detail-page :is(.course-detail-facts, .course-detail-stat, .course-detail-assessment, .course-detail-classes) {
+.course-detail-page :is(.course-detail-facts, .course-detail-stat, .course-detail-prerequisites, .course-detail-assessment, .course-detail-classes),
+:root[data-color-scheme="dark"] .course-detail-page :is(.course-detail-facts, .course-detail-stat, .course-detail-prerequisites, .course-detail-assessment, .course-detail-classes) {
   border-color: var(--course-detail-card-border);
   background-color: var(--course-detail-card-body);
 }
@@ -2522,7 +2523,9 @@
   }
 
   .course-detail-page .course-detail-assessment,
-  :root[data-color-scheme="dark"] .course-detail-page .course-detail-assessment {
+  .course-detail-page .course-detail-prerequisites,
+  :root[data-color-scheme="dark"] .course-detail-page .course-detail-assessment,
+  :root[data-color-scheme="dark"] .course-detail-page .course-detail-prerequisites {
     overflow: visible;
     border: 0;
     border-top: 1px solid var(--outline-variant);
@@ -2609,26 +2612,30 @@
   }
 }
 
-/* The three quick actions in a course header share the Available Classes hover. */
-:root .course-detail-quick-actions > :is(button, a) {
+/* Course page actions share the Available Classes hover. */
+:root .course-detail-quick-actions > :is(button, a),
+:root .course-detail-expand-tree {
   transition: box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease, color 150ms ease;
 }
 
-:root .course-detail-quick-actions > :is(button, a):hover:not(:disabled) {
+:root .course-detail-quick-actions > :is(button, a):hover:not(:disabled),
+:root .course-detail-expand-tree:hover:not(:disabled) {
   border-color: var(--primary);
   background: var(--control-surface-hover);
   color: var(--primary);
   box-shadow: 0 0 0 1px var(--primary-ring-soft), 0 0 14px var(--primary-ring-soft);
 }
 
-:root .course-detail-quick-actions > :is(button, a):focus-visible {
+:root .course-detail-quick-actions > :is(button, a):focus-visible,
+:root .course-detail-expand-tree:focus-visible {
   border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 2px var(--primary-ring-strong), 0 0 16px var(--primary-ring-soft);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root .course-detail-quick-actions > :is(button, a) {
+  :root .course-detail-quick-actions > :is(button, a),
+  :root .course-detail-expand-tree {
     transition: none;
   }
 }

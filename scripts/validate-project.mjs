@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { spawnSync } from "node:child_process";
 
 const projectRoot = process.cwd();
 
@@ -260,6 +261,11 @@ function checkSnapshotArtifacts()
 
   const manifestPath = path.join(projectRoot, "data", "snapshots", "manifest.json");
   const courseIndexPath = path.join(projectRoot, "data", "snapshots", "course-index.json");
+  if (fs.existsSync(manifestPath) && fs.existsSync(courseIndexPath))
+  {
+    const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/validate-data-snapshots.ts"], { cwd: projectRoot, encoding: "utf8" });
+    addCheck(result.status === 0, result.stdout.trim() || "Snapshot payloads are valid.", result.stderr.trim() || "Snapshot artifact validation failed.");
+  }
   addCheck(
     fs.existsSync(manifestPath) && fs.existsSync(courseIndexPath),
     "Generated data snapshot artifacts are present.",

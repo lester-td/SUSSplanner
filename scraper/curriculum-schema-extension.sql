@@ -1,10 +1,17 @@
--- Preliminary curriculum-plan schema extension.
+-- Experimental curriculum-plan schema.
 --
 -- This is not a migration and is not part of the application's currently deployed
--- schema. Apply scraper/schema.sql first, then apply this file only to a database
--- where the experimental curriculum tables are intentionally wanted.
+-- schema. Apply this file directly to an empty disposable database. Do not apply
+-- scraper/schema.sql there: its reviewed prerequisite tables have incompatible
+-- layouts. All references in this experimental model are internal to these tables.
 
 BEGIN;
+
+DO $guard$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'curriculum_plans' AND column_name = 'publication_input_hash') THEN
+    RAISE EXCEPTION 'Experimental curriculum schema cannot be applied over reviewed prerequisite tables.';
+  END IF;
+END $guard$;
 
 CREATE TABLE IF NOT EXISTS curriculum_plans (
     plan_key                TEXT PRIMARY KEY,
