@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { reconcileReviews, generateReviewSql } from "./import-review";
-import { emptyReviewFile, fixtureExtraction, fixturePlan, fixtureRegistry, fixtureRule, fixtureTime } from "./fixtures";
+import { emptyReviewFile, fixtureCatalogue, fixtureExtraction, fixturePlan, fixtureRegistry, fixtureRule, fixtureTime } from "./fixtures";
+import { buildRequisites } from "./build-requisites";
 import { publicationHash } from "./review-input";
 
 const empty = () => ({ plans: [], rules: [] });
@@ -9,6 +10,9 @@ describe("stable identity and review reconciliation", () => {
     const next = reconcileReviews(fixtureExtraction(), fixtureRegistry(), emptyReviewFile(), empty());
     expect(next.plans[0].publicationStatus).toBe("unreviewed");
     expect(next.rules[0].reviewStatus).toBe("pending");
+    const published = buildRequisites(next.plans, next.rules, fixtureCatalogue).byCourse;
+    expect(published.MAIN300.prerequisiteVariants).toEqual([]);
+    expect(published.PRE100.dependentCourses).toEqual([]);
     expect(next.rules[0].ruleKey).toBe("prerequisite:demo-programme:MAIN300:default");
     expect(next.report.inputs[0].expectedInputHash).toBe(next.rules[0].reviewInputHash);
   });
@@ -36,6 +40,67 @@ describe("stable identity and review reconciliation", () => {
     expect(approved.rules[0].approvedRuleJson?.type).toBe("all");
     expect(approved.rules[0].ruleJson).toBeNull();
     expect(approved.rules[0].parseStatus).toBe("review_required");
+  });
+  it.each(["parsed", "review_required"] as const)("retains fingerprint-matched human approval with generic diagnostics (%s)", parseStatus => {
+    const plan = fixturePlan(), rule = fixtureRule(plan, undefined, { parseStatus, ruleJson: parseStatus === "parsed" ? { type: "course", courseCode: "PRE100" } : null });
+    const extraction = fixtureExtraction();
+    Object.assign(extraction.review.sourceEntries[0], { parseStatus, parserRule: rule.ruleJson, prerequisiteDiagnostics: ["Ambiguous prerequisite grouping"], warnings: ["Prerequisite grouping needs triage"] });
+    const stored = { plans: [plan], rules: [rule] };
+    const next = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored);
+    expect(next.rules[0]).toEqual(rule);
+    expect(buildRequisites(next.plans, next.rules, fixtureCatalogue).byCourse.PRE100.dependentCourses).toHaveLength(1);
+    expect(generateReviewSql(stored, next)).not.toMatch(/INSERT INTO|UPDATE curriculum/);
+  });
+  it.each(["text", "candidate", "status", "scope", "occurrence", "PDF", "parser version", "unresolved CID"])("invalidates approval for materially changed %s", mode => {
+    const plan = fixturePlan(), rule = fixtureRule(plan), extraction = fixtureExtraction(), registry = fixtureRegistry();
+    const entry = extraction.review.sourceEntries[0];
+    if (mode === "text") entry.prerequisite = "PRE100 OR ALT200";
+    if (mode === "candidate") entry.parserRule = { type: "course", courseCode: "ALT200" };
+    if (mode === "status") entry.parseStatus = "review_required";
+    if (mode === "scope") registry.plans[0].scopes[0].applicabilityLabel = "Different scope";
+    if (mode === "occurrence") entry.sourceRow = 3;
+    if (mode === "PDF") extraction.review.plans[0].sourceHash = registry.plans[0].sourceHash = "b".repeat(64);
+    if (mode === "parser version") Object.assign(entry, { parserContractVersion: extraction.metadata.parserContractVersion = 2, prerequisiteSourceFields: ["prerequisite"], prerequisiteEvidenceText: entry.prerequisite });
+    if (mode === "unresolved CID") Object.assign(entry, { prerequisite: "PRE100 (cid:999)", parseStatus: "review_required", parserRule: null, prerequisiteDiagnostics: ["Unresolved prerequisite glyph affects interpretation"] });
+    const stored = { plans: [plan], rules: [rule] };
+    const next = reconcileReviews(extraction, registry, emptyReviewFile(), stored);
+    expect(next.rules[0].reviewInputHash).not.toBe(rule.reviewInputHash);
+    expect(next.rules[0].reviewStatus).toBe("pending");
+    expect(next.rules[0].approvedRuleJson).toBeNull();
+    const published = buildRequisites(next.plans, next.rules, fixtureCatalogue).byCourse;
+    expect(published.MAIN300.prerequisiteVariants.every(variant => variant.rule === null)).toBe(true);
+    expect(published.PRE100.dependentCourses).toEqual([]);
+    const reviews = emptyReviewFile();
+    reviews.reviews.push({ ruleKey: rule.ruleKey, expectedInputHash: rule.reviewInputHash, decision: "approved", approvedRule: rule.approvedRuleJson, reviewerAlias: "reviewer", reviewedAt: fixtureTime });
+    expect(() => reconcileReviews(extraction, registry, reviews, stored)).toThrow(/stale/);
+    if (mode === "unresolved CID") {
+      reviews.reviews[0].expectedInputHash = next.rules[0].reviewInputHash;
+      expect(() => reconcileReviews(extraction, registry, reviews, stored)).toThrow(/Unresolved source interpretation/);
+    }
+  });
+  it.each(["empty", "absent row", "unmapped scope", "contract 2"])("does not publish missing current evidence or replay an old approval (%s)", mode => {
+    const plan = fixturePlan(), rule = fixtureRule(plan), extraction = fixtureExtraction(), registry = fixtureRegistry();
+    const entry = extraction.review.sourceEntries[0];
+    if (mode === "empty") entry.prerequisite = null as never;
+    if (mode === "absent row") {
+      extraction.review.sourceEntries = [];
+      extraction.metadata.entryCount = extraction.metadata.courseLikeRowCount = 0;
+      extraction.review.plans[0].entryCount = extraction.review.plans[0].courseLikeRowCount = 0;
+    }
+    if (mode === "unmapped scope") registry.plans[0].sectionMappings = [];
+    if (mode === "contract 2") Object.assign(entry, { parserContractVersion: extraction.metadata.parserContractVersion = 2, prerequisite: null, prerequisiteSourceFields: [], remarks: null });
+    const stored = { plans: [plan], rules: [rule] };
+    const next = reconcileReviews(extraction, registry, emptyReviewFile(), stored);
+    expect(next.rules[0].reviewInputHash).toBe(rule.reviewInputHash);
+    expect(next.rules[0].reviewStatus).toBe("pending");
+    expect(next.rules[0].recordStatus).toBe("active");
+    expect(next.rules[0].rawText).toBe(rule.rawText);
+    const published = buildRequisites(next.plans, next.rules, fixtureCatalogue).byCourse;
+    expect(published.MAIN300.prerequisiteVariants[0].rule).toBeNull();
+    expect(published.PRE100.dependentCourses).toEqual([]);
+    const reviews = emptyReviewFile();
+    reviews.reviews.push({ ruleKey: rule.ruleKey, expectedInputHash: rule.reviewInputHash, decision: "approved", approvedRule: rule.approvedRuleJson, reviewerAlias: "reviewer", reviewedAt: fixtureTime });
+    expect(() => reconcileReviews(extraction, registry, reviews, stored)).toThrow(/Missing current prerequisite evidence/);
   });
   it("collapses identical occurrences but rejects conflicting text in one scope", () => {
     const extraction = fixtureExtraction();
@@ -73,12 +138,15 @@ describe("stable identity and review reconciliation", () => {
     reviews.reviews.push({ ...reviews.reviews[0] });
     expect(() => reconcileReviews(fixtureExtraction(), fixtureRegistry(), reviews, { plans: [plan], rules: [rule] })).toThrow(/duplicate/);
   });
-  it("never deactivates missing rules implicitly and retains inactive evidence", () => {
+  it("resets missing rules without deactivating them and retains explicitly inactive evidence", () => {
     const plan = fixturePlan(); const rule = fixtureRule(plan);
     const extraction = fixtureExtraction(); extraction.review.sourceEntries[0].prerequisite = null as never;
     const stored = { plans: [plan], rules: [rule] };
     const missing = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored);
-    expect(missing.rules[0]).toEqual(rule); expect(missing.report.missingActiveRules).toEqual([rule.ruleKey]);
+    expect(missing.rules[0].recordStatus).toBe("active");
+    expect(missing.rules[0].reviewStatus).toBe("pending");
+    expect(missing.rules[0].approvedRuleJson).toBeNull();
+    expect(missing.report.missingActiveRules).toEqual([rule.ruleKey]);
     const reviews = emptyReviewFile(); reviews.deactivations.push({ ruleKey: rule.ruleKey, expectedInputHash: rule.reviewInputHash, reviewerAlias: "reviewer", reviewedAt: fixtureTime });
     const inactive = reconcileReviews(extraction, fixtureRegistry(), reviews, stored);
     expect(inactive.rules[0].recordStatus).toBe("inactive");
