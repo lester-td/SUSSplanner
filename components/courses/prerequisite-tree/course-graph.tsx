@@ -24,7 +24,7 @@ export function CourseGraph({ courseCode, requisites, prerequisites, postrequisi
       </div>
     </TreeViewport>
     <ul className="sr-only" aria-label="Prerequisite requirements">
-      {graph.requirements.map(item => <li key={item.courseCode}>{item.courseCode}: {item.rules.map(graphRuleText).join("; requirements vary by programme: ")}{item.textOnly ? "; see recorded requirements below" : ""}.</li>)}
+      {graph.requirements.map(item => <li key={item.courseCode}>{item.courseCode}: {item.rules.length + Number(item.textOnly) > 1 ? "requirements vary by programme: " : ""}{item.rules.map(graphRuleText).join("; ")}{item.textOnly ? "; see recorded requirements below" : ""}.</li>)}
     </ul>
     {graph.postrequisites.length ? <ul className="sr-only" aria-label="Postrequisite courses">
       {graph.postrequisites.map(item => <li key={`${item.courseCode}:${item.prerequisite}`}>{item.courseCode} needs {item.prerequisite}.</li>)}

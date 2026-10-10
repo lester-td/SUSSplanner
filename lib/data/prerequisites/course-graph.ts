@@ -116,16 +116,10 @@ export function buildCourseGraph(courseCode: string, requisites: CourseRequisite
     const items = variants.get(code) ?? [];
     const unique = new Map<string, GraphRule>();
     for (const item of items) if (item.rule) { const rule = compactGraphRule(item.rule); unique.set(ruleKey(rule), rule); }
-    let rules = [...unique.values()];
+    // Compact within a scope; only equivalent requirements may share a branch.
+    // A broader programme's alternatives do not relax another programme's rule.
+    const rules = [...unique.values()];
     const textOnly = items.some(item => !item.rule);
-    if (rules.length > 1 && !textOnly)
-    {
-      const combined = compactGraphRule({ type: "any", children: rules });
-      // Collapse overlapping variants only when their combined routes are
-      // already represented by one recorded variant. Keep genuine differences
-      // (and unstructured requirements) under their programme branch.
-      if (rules.some(rule => ruleKey(rule) === ruleKey(combined))) rules = [combined];
-    }
     if (!rules.length && !textOnly) return;
     requirements.push({ courseCode: code, rules, textOnly });
     const varies = rules.length + Number(textOnly) > 1;
