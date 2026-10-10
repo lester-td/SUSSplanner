@@ -1,5 +1,5 @@
 import { canonicalizeRule, compareCodeUnits, courseLeaves, utf8Length } from "./rule";
-import { approvedRuleHash, hasUnresolvedEvidence, publicationHash, reviewInputHash, sourceHashSchema, sourceUrlSchema, slugSchema, stableSerialize, validateReviewTime, validateRuleEvidence, variantKey } from "./review-input";
+import { approvedRuleHash, publicationHash, reviewInputHash, sourceHashSchema, sourceUrlSchema, slugSchema, stableSerialize, validateReviewTime, validateRuleEvidence, variantKey } from "./review-input";
 import { validateRequisitesSnapshot } from "./snapshot-validation";
 import type { CourseNodeSummary, CourseRequisitesSnapshot, PlanRecord, PrerequisiteVariant, PublicRuleSource, RuleRecord } from "./types";
 
@@ -36,7 +36,7 @@ export function validateRuleRecord(rule: RuleRecord, plan: PlanRecord, recompute
       const canonical = canonicalizeRule(rule.approvedRuleJson);
       if (stableSerialize(canonical) !== stableSerialize(rule.approvedRuleJson) || approvedRuleHash(canonical) !== rule.approvedRuleHash) throw new Error(`Invalid approved structure fingerprint: ${rule.ruleKey}`);
       if (courseLeaves(canonical).includes(rule.courseCode)) throw new Error(`Self-prerequisite: ${rule.ruleKey}`);
-      if (hasUnresolvedEvidence(rule)) throw new Error(`Unresolved source interpretation (prerequisite glyph/OCR): ${rule.ruleKey}`);
+      if (/\(cid:\d+\)/i.test(rule.rawText)) throw new Error(`Unresolved prerequisite glyph: ${rule.ruleKey}`);
     }
     else if (rule.approvedRuleJson !== null || rule.approvedRuleHash !== null) throw new Error(`Text decision has approved tree: ${rule.ruleKey}`);
   }

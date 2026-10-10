@@ -24,24 +24,11 @@ export function publicationInput(plan: Pick<PlanRecord, "planKey" | "sourceHash"
   return { contractVersion: 1, planKey, sourceHash, programmeName, studyMode, curriculumVersion, effectiveFrom, sourceLabel, sourceUrl };
 }
 export const publicationHash = (plan: Parameters<typeof publicationInput>[0]) => fingerprint("publication-input", publicationInput(plan));
-// Diagnostics are evidence, not parser authority. Normalize set/order noise while
-// retaining every prerequisite interpretation warning in the approval binding.
-export function sortedEvidenceDiagnostics(values: string[]): string[]
-{
-  return [...new Set(z.array(prerequisiteTextSchema).parse(values).map(value => value.trim()).filter(Boolean))].sort(compareCodeUnits);
-}
-export function hasUnresolvedEvidence(rule: Pick<RuleRecord, "rawText" | "evidenceDiagnostics">)
-{
-  return /\(cid:\d+\)/i.test(rule.rawText) || rule.evidenceDiagnostics.some(message => /unresolved.*(?:glyph|ocr)|interpretation/i.test(message));
-}
-export function ruleInput(plan: Parameters<typeof publicationInput>[0], rule: Pick<RuleRecord, "ruleKey" | "planKey" | "courseCode" | "applicabilityKey" | "applicabilityLabel" | "sourceHash" | "sourceOccurrences" | "rawText" | "parseStatus" | "ruleJson" | "parserContractVersion" | "evidenceDiagnostics">)
+export function ruleInput(plan: Parameters<typeof publicationInput>[0], rule: Pick<RuleRecord, "ruleKey" | "planKey" | "courseCode" | "applicabilityKey" | "applicabilityLabel" | "sourceHash" | "sourceOccurrences" | "rawText" | "parseStatus" | "ruleJson" | "parserContractVersion">)
 {
   const { ruleKey, planKey, courseCode, applicabilityKey, applicabilityLabel, sourceHash, rawText, parseStatus, parserContractVersion } = rule;
   const { programmeName, studyMode, curriculumVersion, effectiveFrom, sourceLabel, sourceUrl } = plan;
-  return { contractVersion: 1, parserContractVersion, ruleKey, planKey, courseCode, applicabilityKey, applicabilityLabel, programmeName, studyMode, curriculumVersion, effectiveFrom, sourceHash, sourceLabel, sourceUrl, sourceOccurrences: sortedOccurrences(rule.sourceOccurrences), rawText, parseStatus, parserRule: rule.ruleJson,
-    // Preserve clean legacy fingerprints; nonempty diagnostic evidence is bound.
-    ...(rule.evidenceDiagnostics.length ? { evidenceDiagnostics: sortedEvidenceDiagnostics(rule.evidenceDiagnostics) } : {}),
-  };
+  return { contractVersion: 1, parserContractVersion, ruleKey, planKey, courseCode, applicabilityKey, applicabilityLabel, programmeName, studyMode, curriculumVersion, effectiveFrom, sourceHash, sourceLabel, sourceUrl, sourceOccurrences: sortedOccurrences(rule.sourceOccurrences), rawText, parseStatus, parserRule: rule.ruleJson };
 }
 export const reviewInputHash = (plan: Parameters<typeof publicationInput>[0], rule: Parameters<typeof ruleInput>[1]) => fingerprint("review-input", ruleInput(plan, rule));
 export const approvedRuleHash = (rule: unknown) => fingerprint("approved-rule", { contractVersion: 1, rule: canonicalizeRule(rule) });
@@ -111,7 +98,6 @@ export function validateRuleEvidence(rule: RuleRecord)
   sourceHashSchema.parse(rule.sourceHash);
   z.enum(["parsed", "review_required", "unparsed"]).parse(rule.parseStatus);
   z.number().int().positive().parse(rule.parserContractVersion);
-  if (stableSerialize(sortedEvidenceDiagnostics(rule.evidenceDiagnostics)) !== stableSerialize(rule.evidenceDiagnostics)) throw new Error(`Unsorted evidence diagnostics: ${rule.ruleKey}`);
   if (!rule.sourceOccurrences.length || stableSerialize(sortedOccurrences(rule.sourceOccurrences)) !== stableSerialize(rule.sourceOccurrences)) throw new Error(`Missing/unsorted occurrences: ${rule.ruleKey}`);
   if (rule.ruleJson !== null) validateJsonBudget(rule.ruleJson, true);
 }

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { reconcileReviews, generateReviewSql } from "./import-review";
-import { emptyReviewFile, fixtureExtraction, fixtureCatalogue, fixturePlan, fixtureRegistry, fixtureRule, fixtureTime } from "./fixtures";
-import { buildRequisites } from "./build-requisites";
+import { emptyReviewFile, fixtureExtraction, fixturePlan, fixtureRegistry, fixtureRule, fixtureTime } from "./fixtures";
 import { publicationHash } from "./review-input";
 
 const empty = () => ({ plans: [], rules: [] });
@@ -109,74 +108,8 @@ describe("stable identity and review reconciliation", () => {
     const plan = fixturePlan(); const rule = fixtureRule(plan, undefined, { rawText: "Quoted 'condition' and \\ text" });
     const sql = generateReviewSql({ plans: [plan], rules: [rule] }, { plans: [plan], rules: [rule] });
     expect(sql).toContain("pg_advisory_xact_lock"); expect(sql).toContain("SHARE ROW EXCLUSIVE");
-    for (const column of ["reviewed_at", "review_status", "approved_rule_hash", "record_status", "last_updated", "evidence_diagnostics"]) expect(sql).toContain(column);
+    for (const column of ["reviewed_at", "review_status", "approved_rule_hash", "record_status", "last_updated"]) expect(sql).toContain(column);
     expect(sql).toContain("count(*)");
     expect(sql).not.toMatch(/DELETE FROM/);
-  });
-});
-
-describe("diagnostic evidence approval binding", () => {
-  it("invalidates an inherited approval when unresolved prerequisite OCR is newly reported", () => {
-    const plan = fixturePlan(), rule = fixtureRule(plan);
-    const stored = { plans: [plan], rules: [rule] };
-    const extraction = fixtureExtraction();
-    extraction.review.sourceEntries[0].warnings = ["Unresolved prerequisite OCR affects interpretation"];
-    const next = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored);
-    expect(next.report.diagnostics[0].messages).toEqual(extraction.review.sourceEntries[0].warnings);
-    expect(next.rules[0].evidenceDiagnostics).toEqual(extraction.review.sourceEntries[0].warnings);
-    expect(next.rules[0].reviewInputHash).not.toBe(rule.reviewInputHash);
-    expect(next.rules[0].reviewStatus).toBe("pending");
-    expect(next.rules[0].approvedRuleJson).toBeNull();
-    expect(generateReviewSql(stored, next)).toContain("UPDATE curriculum_prerequisite_rules");
-    const published = buildRequisites(next.plans, next.rules, fixtureCatalogue).byCourse;
-    expect(published.MAIN300.prerequisiteVariants[0].rule).toBeNull();
-    expect(published.PRE100.dependentCourses).toEqual([]);
-    const reviews = emptyReviewFile();
-    reviews.reviews.push({ ruleKey: rule.ruleKey, expectedInputHash: rule.reviewInputHash, decision: "approved", approvedRule: rule.approvedRuleJson, reviewerAlias: "reviewer", reviewedAt: fixtureTime });
-    expect(() => reconcileReviews(extraction, fixtureRegistry(), reviews, stored)).toThrow(/stale/);
-    reviews.reviews[0].expectedInputHash = next.rules[0].reviewInputHash;
-    expect(() => reconcileReviews(extraction, fixtureRegistry(), reviews, stored)).toThrow(/Unresolved source interpretation/);
-    // Even a matching persisted fingerprint cannot bypass the safety boundary.
-    const unresolved = fixtureRule(plan, undefined, { evidenceDiagnostics: next.rules[0].evidenceDiagnostics });
-    expect(() => reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), { plans: [plan], rules: [unresolved] })).toThrow(/Unresolved source interpretation/);
-  });
-  it("requires review when interpretation diagnostics change, disappear or occur on another copy", () => {
-    const plan = fixturePlan();
-    const rule = fixtureRule(plan, undefined, { evidenceDiagnostics: ["Prerequisite logical grouping requires triage"] });
-    const extraction = fixtureExtraction();
-    extraction.review.sourceEntries[0].prerequisiteDiagnostics = [...rule.evidenceDiagnostics];
-    const stored = { plans: [plan], rules: [rule] };
-    expect(reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored).rules[0]).toEqual(rule);
-    for (const diagnostics of [[], ["Prerequisite scope requires triage"]])
-    {
-      extraction.review.sourceEntries[0].prerequisiteDiagnostics = diagnostics;
-      const next = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored);
-      expect(next.rules[0].reviewStatus).toBe("pending");
-      expect(next.rules[0].reviewInputHash).not.toBe(rule.reviewInputHash);
-    }
-    extraction.review.sourceEntries.push({ ...extraction.review.sourceEntries[0], sourceRow: 3,
-      prerequisiteDiagnostics: ["Unresolved prerequisite OCR affects interpretation"] });
-    extraction.metadata.entryCount = extraction.metadata.courseLikeRowCount = 2;
-    extraction.review.plans[0].entryCount = extraction.review.plans[0].courseLikeRowCount = 2;
-    for (const entries of [extraction.review.sourceEntries, [...extraction.review.sourceEntries].reverse()])
-    {
-      const next = reconcileReviews({ ...extraction, review: { ...extraction.review, sourceEntries: entries } }, fixtureRegistry(), emptyReviewFile(), stored);
-      expect(next.rules[0].reviewStatus).toBe("pending");
-      expect(next.rules[0].evidenceDiagnostics).toContain("Unresolved prerequisite OCR affects interpretation");
-    }
-  });
-  it("preserves approvals and SQL on irrelevant warnings and diagnostic set/order noise", () => {
-    const plan = fixturePlan();
-    for (const diagnostics of [[], ["Logical grouping requires triage", "Prerequisite scope requires triage"]])
-    {
-      const rule = fixtureRule(plan, undefined, { evidenceDiagnostics: diagnostics });
-      const extraction = fixtureExtraction();
-      extraction.review.sourceEntries[0].warnings = ["Title-only OCR warning"];
-      extraction.review.sourceEntries[0].prerequisiteDiagnostics = [...diagnostics].reverse().concat(diagnostics);
-      const stored = { plans: [plan], rules: [rule] };
-      const next = reconcileReviews(extraction, fixtureRegistry(), emptyReviewFile(), stored);
-      expect(next.rules[0]).toEqual(rule);
-      expect(generateReviewSql(stored, next)).not.toMatch(/INSERT INTO|UPDATE curriculum/);
-    }
   });
 });

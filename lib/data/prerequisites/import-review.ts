@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { courseCodeSchema } from "@/lib/validation/timetable";
 import { canonicalizeRule, compareCodeUnits, courseLeaves, prerequisiteTextSchema, validateJsonBudget } from "./rule";
-import { approvedRuleHash, normalizeTimestamp, publicationHash, publicationInput, ruleInput, reviewFileSchema, reviewInputHash, sortedEvidenceDiagnostics, sortedOccurrences, stableSerialize, validateRegistry, validateReviewTime } from "./review-input";
+import { approvedRuleHash, normalizeTimestamp, publicationHash, publicationInput, ruleInput, reviewFileSchema, reviewInputHash, sortedOccurrences, stableSerialize, validateRegistry, validateReviewTime } from "./review-input";
 import { validatePlanRecord, validateRuleRecord } from "./build-requisites";
 import type { PlanRecord, RuleRecord } from "./types";
 
@@ -129,19 +129,19 @@ export function reconcileReviews(extractionInput: unknown, registryInput: unknow
     const code = courseCodeSchema.parse(entry.courseCode);
     const ruleKey = `prerequisite:${binding.planKey}:${code}:${scopeKey}`;
     if (entry.parserRule !== null) validateJsonBudget(entry.parserRule, true);
-    const rule: RuleRecord = { ruleKey, planKey: binding.planKey, courseCode: code, applicabilityKey: scopeKey, applicabilityLabel: scope.applicabilityLabel, rawText: evidence, parseStatus: entry.parseStatus, ruleJson: entry.parserRule, parserContractVersion: entry.parserContractVersion, evidenceDiagnostics: sortedEvidenceDiagnostics([...(entry.prerequisiteDiagnostics ?? []), ...(entry.warnings ?? []).filter(warning => /prerequisite/i.test(warning))]), sourceHash: source.sourceHash, sourceOccurrences: [{ page: entry.sourcePage, table: entry.sourceTable, row: entry.sourceRow, section: entry.section }], recordStatus: "active", reviewStatus: "pending", reviewInputHash: "", reviewedInputHash: null, approvedRuleJson: null, approvedRuleHash: null, reviewedBy: null, reviewedAt: null, reviewNotes: null, lastUpdated: nowIso };
+    const rule: RuleRecord = { ruleKey, planKey: binding.planKey, courseCode: code, applicabilityKey: scopeKey, applicabilityLabel: scope.applicabilityLabel, rawText: evidence, parseStatus: entry.parseStatus, ruleJson: entry.parserRule, parserContractVersion: entry.parserContractVersion, sourceHash: source.sourceHash, sourceOccurrences: [{ page: entry.sourcePage, table: entry.sourceTable, row: entry.sourceRow, section: entry.section }], recordStatus: "active", reviewStatus: "pending", reviewInputHash: "", reviewedInputHash: null, approvedRuleJson: null, approvedRuleHash: null, reviewedBy: null, reviewedAt: null, reviewNotes: null, lastUpdated: nowIso };
     const duplicate = incoming.get(ruleKey);
     if (duplicate)
     {
       if (duplicate.rawText !== rule.rawText || duplicate.parseStatus !== rule.parseStatus || stableSerialize(duplicate.ruleJson) !== stableSerialize(rule.ruleJson)) throw new Error(`Conflicting occurrences in scope: ${ruleKey}`);
-      duplicate.evidenceDiagnostics = sortedEvidenceDiagnostics([...duplicate.evidenceDiagnostics, ...rule.evidenceDiagnostics]);
       duplicate.sourceOccurrences = sortedOccurrences([...duplicate.sourceOccurrences, ...rule.sourceOccurrences]);
     }
     else incoming.set(ruleKey, rule);
+    const diagnostics = [...(entry.prerequisiteDiagnostics ?? []), ...(entry.warnings ?? []).filter(warning => /prerequisite/i.test(warning))];
+    if (diagnostics.length) report.diagnostics.push({ ruleKey, messages: diagnostics });
   }
   for (const [key, incomingRule] of incoming)
   {
-    if (incomingRule.evidenceDiagnostics.length) report.diagnostics.push({ ruleKey: key, messages: incomingRule.evidenceDiagnostics });
     const previous = rules.get(key);
     if (previous?.recordStatus === "inactive") continue; // Retain historical evidence.
     incomingRule.reviewInputHash = reviewInputHash(plans.get(incomingRule.planKey)!, incomingRule);
@@ -175,6 +175,7 @@ export function reconcileReviews(extractionInput: unknown, registryInput: unknow
     currentKeys.add(entry.ruleKey);
     const tree = entry.decision === "approved" ? canonicalizeRule(entry.approvedRule) : null;
     if (tree && courseLeaves(tree).includes(rule.courseCode)) throw new Error(`Self-prerequisite approval: ${entry.ruleKey}`);
+    if (tree && (/\(cid:\d+\)/i.test(rule.rawText) || report.diagnostics.some(item => item.ruleKey === entry.ruleKey && item.messages.some(message => /unresolved.*(?:glyph|ocr)|interpretation/i.test(message))))) throw new Error(`Unresolved source interpretation: ${entry.ruleKey}`);
     rules.set(entry.ruleKey, { ...rule, reviewStatus: entry.decision, reviewedInputHash: rule.reviewInputHash, approvedRuleJson: tree, approvedRuleHash: tree ? approvedRuleHash(tree) : null, reviewedBy: entry.reviewerAlias, reviewedAt: normalizeTimestamp(entry.reviewedAt), reviewNotes: entry.notes ?? null });
   }
   for (const plan of plans.values()) validatePlanRecord(plan);
@@ -191,7 +192,7 @@ export function reconcileReviews(extractionInput: unknown, registryInput: unknow
   return { plans: finalize(plans, stored.plans, "planKey"), rules: finalize(rules, stored.rules, "ruleKey"), report };
 }
 
-const jsonColumns = new Set(["rule_json", "approved_rule_json", "source_occurrences", "evidence_diagnostics"]);
+const jsonColumns = new Set(["rule_json", "approved_rule_json", "source_occurrences"]);
 const snake = (value: string) => value.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 export const sqlLiteral = (value: string) => `E'${value.replaceAll("\\", "\\\\").replaceAll("'", "''")}'`;
 function sqlValue(column: string, value: unknown): string
