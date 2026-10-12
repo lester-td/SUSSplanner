@@ -104,8 +104,12 @@ export async function downloadVariant(
 ): Promise<VariantDownloadResult> {
   const isft = isftForScheduleType(scheduleType);
   const url = buildCourseDetailPdfUrl(courseCode, isft);
-  const pdfDir = path.join(outDir, scheduleType);
+  const pdfDir = path.resolve(outDir, scheduleType);
   const pdfPath = path.resolve(pdfDir, `${courseCode}.pdf`);
+
+  if (!courseCode || /[^A-Z0-9]/i.test(courseCode) || path.dirname(pdfPath) !== pdfDir) {
+    throw new Error(`Invalid course PDF target for ${JSON.stringify(courseCode)}: expected a direct child of ${pdfDir}`);
+  }
 
   await fs.mkdir(pdfDir, { recursive: true });
 
@@ -201,12 +205,12 @@ async function main(): Promise<void> {
   const reportOut = optionalString(args, "report-out") ?? "data/output/courses/download-report.tsv";
   const force = optionalBool(args, "force");
   const delayMs = Number(optionalString(args, "delay-ms") ?? "250");
+  const courseCodes = await resolveInputCourseCodes(args, "data/output/schedules/course-codes.txt");
 
   await fs.mkdir(outDir, { recursive: true });
   await fs.mkdir(path.dirname(manifestOut), { recursive: true });
   await fs.mkdir(path.dirname(reportOut), { recursive: true });
 
-  const courseCodes = await resolveInputCourseCodes(args, "data/output/schedules/course-codes.txt");
   const results: VariantDownloadResult[] = [];
 
   for (const courseCode of courseCodes) {

@@ -198,6 +198,77 @@ globalThis.fetch = async input => new Response(bodies[codes.indexOf(new URL(inpu
   }
 });
 
+for (const status of [404, 410, 200]) {
+  it(`direct downloads reject unsafe targets before filesystem access or HTTP ${status}`, async t => {
+    const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "suss-download-containment-"));
+    t.after(() => fs.rm(cwd, { recursive: true, force: true }));
+    const outside = path.join(cwd, "ACC201.pdf");
+    const outDir = path.join(cwd, "pdfs");
+    await fs.writeFile(outside, oldPdf);
+    const fetchMock = t.mock.method(globalThis, "fetch", async () => new Response(status === 200 ? freshPdf : "missing", { status }));
+    for (const code of ["../../ACC201", "..\\..\\ACC201", path.join(cwd, "ACC201"), "C:\\tmp\\ACC201", "nested/../ACC201", "ACC/201", "ACC\\201"]) {
+      for (const variant of ["daytime", "evening"] as const) {
+        await assert.rejects(downloadVariant(code, variant, outDir, true), /Invalid course PDF target/);
+      }
+    }
+    assert.equal(fetchMock.mock.callCount(), 0);
+    assert.equal(await fs.readFile(outside, "utf8"), oldPdf);
+    await assert.rejects(fs.access(outDir));
+  });
+
+  for (const source of ["inline", "explicit file", "default file", "prefix"]) {
+    it(`the CLI rejects unsafe ${source} selectors before outputs or HTTP ${status}`, async t => {
+      const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "suss-cli-selectors-"));
+      t.after(() => fs.rm(cwd, { recursive: true, force: true }));
+      await fs.writeFile(path.join(cwd, "ACC201.pdf"), oldPdf);
+      const mockPath = path.join(cwd, "fetch-mock.mjs");
+      await fs.writeFile(mockPath, `import fs from 'node:fs/promises';
+globalThis.fetch = async () => {
+  await fs.appendFile('network-called.txt', 'fetch\\n');
+  return new Response(${JSON.stringify(status === 200 ? freshPdf : "missing")}, { status: ${status} });
+};`);
+      for (const code of ["../../ACC201", "..\\..\\ACC201", path.join(cwd, "ACC201")]) {
+        let selectors: string[];
+        if (source === "inline") selectors = ["--codes", `ACC201,${code}`];
+        else if (source === "prefix") selectors = ["--codes", "ACC201", "--code-prefix", code];
+        else {
+          const codesFile = source === "explicit file" ? "codes.txt" : "data/output/schedules/course-codes.txt";
+          await fs.mkdir(path.dirname(path.join(cwd, codesFile)), { recursive: true });
+          await fs.writeFile(path.join(cwd, codesFile), `ACC201\n${code}\n`);
+          selectors = source === "explicit file" ? ["--codes", "BUS101", "--codes-file", codesFile] : [];
+        }
+        await assert.rejects(execFileAsync(process.execPath, [
+          "--import", mockPath, "--import", loader, fileURLToPath(new URL("./downloadCoursePdfs.ts", import.meta.url)),
+          "--force", ...selectors, "--out-dir", "pdfs", "--manifest-out", "manifests/downloads.json",
+          "--report-out", "reports/downloads.tsv", "--delay-ms", "0",
+        ], { cwd }), (error: unknown) => {
+          const failure = error as { code: number; stderr: string };
+          return failure.code === 1 && /Invalid course selector/.test(failure.stderr);
+        });
+        assert.equal(await fs.readFile(path.join(cwd, "ACC201.pdf"), "utf8"), oldPdf);
+        for (const output of ["pdfs", "manifests", "reports", "network-called.txt"]) await assert.rejects(fs.access(path.join(cwd, output)));
+      }
+    });
+  }
+}
+
+it("downloads supported suffixes into separate variant directories", async t => {
+  const outDir = await fs.mkdtemp(path.join(os.tmpdir(), "suss-download-suffixes-"));
+  t.after(() => fs.rm(outDir, { recursive: true, force: true }));
+  const fetchMock = t.mock.method(globalThis, "fetch", async () => new Response(freshPdf));
+  for (const courseCode of ["BUS557AE", "CDO303ACI", "MGT558O"]) {
+    for (const variant of ["daytime", "evening"] as const) {
+      const result = await downloadVariant(courseCode, variant, outDir, true);
+      assert.equal(result.status, "downloaded");
+      assert.equal(result.inputState, "fresh");
+      assert.equal(result.pdfPath, path.join(outDir, variant, `${courseCode}.pdf`));
+      assert.equal(await fs.readFile(result.pdfPath, "utf8"), freshPdf);
+      assert.equal(new URL(result.url).searchParams.get("crsecd"), courseCode);
+    }
+  }
+  assert.equal(fetchMock.mock.callCount(), 6);
+});
+
 it("parse:courses uses accepted manifest variants and reports excluded stale and missing inputs", async t => {
   const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "suss-course-parse-"));
   t.after(() => fs.rm(cwd, { recursive: true, force: true }));
