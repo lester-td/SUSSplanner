@@ -74,7 +74,8 @@ async function fetchPdf(url: string): Promise<{ status: "ok" | "not_found" | "fa
     const reason = contentType.toLowerCase().includes("html")
       ? `HTML response (${contentType || "unknown content-type"})`
       : `Non-PDF response (${contentType || "unknown content-type"})`;
-    const noRecord = /\bNo\s+Record\s+Found\b/i.test(buffer.toString("utf8"));
+    // Only standalone placeholders prove absence; mentions in other HTML do not.
+    const noRecord = /^\s*(?:No\s+Record\s+Found|<p>\s*No\s+Record\s+Found\s*<\/p>)\s*$/i.test(buffer.toString("utf8"));
     return { status: noRecord ? "not_found" : "failed", reason };
   }
 
