@@ -11,7 +11,7 @@ const courseSnapshots = "./data/snapshots/courses/*.json";
 const scheduleSnapshots = "./data/snapshots/schedules/*.json";
 const detailSnapshots = [courseIndex];
 const metadataOnlyExcludes = [courseIndex, courseSnapshots, scheduleSnapshots];
-const searchOnlyExcludes = [snapshotManifest, courseSnapshots, scheduleSnapshots];
+const searchOnlyExcludes = [courseSnapshots];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
