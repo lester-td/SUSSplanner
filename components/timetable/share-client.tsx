@@ -29,6 +29,7 @@ import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { TimetableExportCard } from "@/components/timetable/timetable-export-card";
 import { printTimetablePdf } from "@/lib/export/pdf-client";
+import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
 import { getPdfClassSessionEvents } from "@/lib/export/class-sessions";
 import { buildExportCourses, getTimetableExportFileName } from "@/lib/export/timetable-model";
 import { exportElementToPng } from "@/lib/export/png";
@@ -185,7 +186,7 @@ export function ShareClient({
       examCalendarCard,
       selectedSemester,
       getPdfClassSessionEvents(timetable, hiddenClasses),
-      timetable.clashes.filter((clash) => clash.events.every((event) => !hiddenClasses.includes(event.shareKey))),
+      detectTimetableClashes(timetable.events.filter((event) => !hiddenClasses.includes(event.shareKey))),
       getTimetableExportFileName(selectedSemester, "pdf"),
     );
     if (!opened) window.alert("Unable to open the PDF print dialog.");
