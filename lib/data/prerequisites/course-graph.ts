@@ -110,6 +110,7 @@ export function buildCourseGraph(courseCode: string, requisites: CourseRequisite
   const operator = (id: string, label: string, title?: string, href?: string) => addNode({ id, kind: "operator", label, title, href, width: Math.max(40, label.length * 6.5 + 12), height: 28 });
   const root = addCourse(courseCode);
   const expanded = new Set<string>();
+  const expansionQueue = [{ code: courseCode, owner: root }];
   const addRequirements = (code: string, owner: string) => {
     if (expanded.has(code)) return;
     expanded.add(code);
@@ -126,7 +127,7 @@ export function buildCourseGraph(courseCode: string, requisites: CourseRequisite
     const parent = varies ? operator(`varies:${code}`, "by programme", "Prerequisites differ by programme. View the recorded requirements.", "#prerequisite-details") : owner;
     if (varies) connect(owner, parent);
     const addRule = (rule: GraphRule): string => {
-      if (rule.type === "course") { const child = addCourse(rule.courseCode); addRequirements(rule.courseCode, child); return child; }
+      if (rule.type === "course") { const child = addCourse(rule.courseCode); expansionQueue.push({ code: rule.courseCode, owner: child }); return child; }
       const base = `rule:${code}`;
       if (rule.type === "condition")
       {
@@ -155,7 +156,13 @@ export function buildCourseGraph(courseCode: string, requisites: CourseRequisite
       connect(parent, id);
     }
   };
-  addRequirements(courseCode, root);
+  // Draw each course frontier before expanding its children, so a deeper
+  // reference cannot consume the requirements of a shallower occurrence.
+  for (let index = 0; index < expansionQueue.length; index++)
+  {
+    const { code, owner } = expansionQueue[index];
+    addRequirements(code, owner);
+  }
 
   const addDependents = (parent: string, code: string, children: PostrequisiteNode[]) => {
     if (!children.length) return;
