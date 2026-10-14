@@ -129,4 +129,20 @@ describe("semester ownership of timetable selections", () => {
     expect(getSavedSemesterState(loadSavedTimetable(), JULY)!.selectedClasses)
       .toEqual([{ ...CRN, originSemesterId: JANUARY }]);
   });
+
+  it("replaces only the imported semester even if its prior start has a later link", () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => data.set(key, value),
+    } });
+    let saved = upsertClassInSavedTimetable(null, JULY, TG, [NEXT_JANUARY]);
+    saved = upsertClassInSavedTimetable(saved, JANUARY, CRN);
+    saveTimetableToLocalStorage(saved);
+    const beforeJanuary = getSavedSemesterState(loadSavedTimetable(), JANUARY)!;
+    const beforeNextJanuary = getSavedSemesterState(loadSavedTimetable(), NEXT_JANUARY)!;
+    importSharedTimetableToLocalStorage({ semesterId: JULY, selectedClasses: [{ ...TG, groupCode: "TG02" }] }, loadSavedTimetable());
+    expect(getSavedSemesterState(loadSavedTimetable(), JANUARY)).toEqual(beforeJanuary);
+    expect(getSavedSemesterState(loadSavedTimetable(), NEXT_JANUARY)).toEqual(beforeNextJanuary);
+  });
 });
