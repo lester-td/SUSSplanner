@@ -638,7 +638,7 @@ not removed when you change appearance settings.
 
 When a reminder is active, a notification appears at the top right of the app.
 SUSSPlanner shows only one active registration reminder at a time. The reminder
-can change from **Upcoming** to **Open** to **Closing Soon** as the registration
+can change from **Upcoming** to **Now Open** to **Closing Soon** as the registration
 window moves through those phases.
 
 The reminder status uses:
@@ -651,7 +651,7 @@ The reminder schedule is:
 
 - **Upcoming:** 7 days, 3 days, 2 days, 1 day, 12 hours, 6 hours, and 1 hour
   before the window opens.
-- **Open:** when the window opens, then every 24 hours while it remains open.
+- **Now Open:** when the window opens, then every 24 hours while it remains open.
 - **Closing Soon:** 24 hours, 12 hours, 6 hours, and 1 hour before the window
   closes.
 
@@ -791,7 +791,7 @@ You can plan between 1 and 20 semesters.
 A reminder appears only when **In-app reminders** are enabled, the current date
 is within an upcoming, open, or closing-soon reminder threshold, and that exact
 threshold has not already been dismissed in this browser. SUSSPlanner shows at
-most one registration reminder at a time, so a more urgent closing-soon or open
+most one registration reminder at a time, so a more urgent closing-soon or now open
 reminder can take priority over an upcoming one.
 
 ### Are course registration reminders official SUSS notices?
