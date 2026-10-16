@@ -61,6 +61,7 @@ import {
   getSavedSemesterState,
   saveTimetableToLocalStorage,
   upsertClassInSavedTimetable,
+  removeCourseCodeFromSavedTimetable,
   removeClassFromSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import {
@@ -1152,6 +1153,13 @@ export function PlannerClient({
   function resetPlanner()
   {
     if (!canReset) return;
+    let next = loadSavedTimetable();
+    for (const courseCode of new Set(selectedClasses
+      .filter((item) => item.originSemesterId === undefined)
+      .map((item) => item.courseCode)))
+    {
+      next = removeCourseCodeFromSavedTimetable(next, semesterId, courseCode);
+    }
     setSelectedClasses((current) => current.filter((item) => item.originSemesterId !== undefined));
     setHiddenClasses([]);
     setCourseColorsByCourseCode({});
@@ -1161,6 +1169,7 @@ export function PlannerClient({
     setConfirmResetOpen(false);
     closeClassPicker();
     saveTimetableToLocalStorage({
+      ...next,
       semesterId,
       selectedClasses: selectedClasses.filter((item) => item.originSemesterId !== undefined),
       hiddenClasses: [],

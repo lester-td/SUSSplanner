@@ -37,10 +37,11 @@ import {
   formatClassGroupLabel,
 } from "@/lib/timetable/date-utils";
 import {
-  importSharedTimetableToLocalStorage,
+  getSavedSemesterState,
   loadSavedTimetable,
 } from "@/lib/timetable/local-storage";
-import { encodeShareUrlState } from "@/lib/timetable/share-url";
+import { buildTimetableImportProposal, commitTimetableImport } from "@/lib/timetable/import-proposal";
+import { buildSharedClassIdentifier, encodeShareUrlState } from "@/lib/timetable/share-url";
 import { getTimetableActionAvailability } from "@/lib/timetable/timetable-actions";
 import {
   buildExamCards,
@@ -53,6 +54,7 @@ import {
 } from "@/lib/timetable/timetable-utils";
 import type {
   SharedTimetableState,
+  PlannerStorageState,
   SemesterRecord,
   TimetableData,
   TimetableOrientation,
@@ -92,7 +94,12 @@ export function ShareClient({
   const [orientation, setOrientation] = useState<TimetableOrientation>(() => savedLocalState?.orientation ?? "vertical");
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [selectedWeekId, setSelectedWeekId] = useState<number | "all">("all");
-  const [importOpen, setImportOpen] = useState(false);
+  const [importPhase, setImportPhase] = useState<"closed" | "loading" | "warning" | "confirm">("closed");
+  const [importProposal, setImportProposal] = useState<ReturnType<typeof buildTimetableImportProposal> | null>(null);
+  const [importSnapshot, setImportSnapshot] = useState("");
+  const [importError, setImportError] = useState("");
+  const [reviewUpdated, setReviewUpdated] = useState(false);
+  const importRequestRef = useRef(0);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [scheduleCourse, setScheduleCourse] = useState<ReturnType<typeof buildSelectedCourseCards>[number] | null>(null);
   const [hiddenClasses, setHiddenClasses] = useState<string[]>([]);
@@ -214,11 +221,72 @@ export function ShareClient({
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [downloadOpen]);
 
+  function closeImport()
+  {
+    importRequestRef.current += 1;
+    setImportPhase("closed");
+    setImportProposal(null);
+  }
+
+  async function prepareImport(current: PlannerStorageState | null, updated = false)
+  {
+    const requestId = ++importRequestRef.current;
+    setImportPhase("loading");
+    setImportError("");
+    try
+    {
+      const savedSelections = (getSavedSemesterState(current, sharedState.semesterId)?.selectedClasses ?? [])
+        .filter((selection) => {
+          try
+          {
+            encodeShareUrlState({ semesterId: sharedState.semesterId, selectedClasses: [selection] });
+            return true;
+          }
+          catch
+          {
+            return false;
+          }
+        });
+      let savedTimetable: TimetableData | null = null;
+      if (savedSelections.length > 0)
+      {
+        const query = encodeShareUrlState({ semesterId: sharedState.semesterId, selectedClasses: savedSelections }).split("?")[1];
+        const response = await fetch(`/api/classes?${query}`);
+        if (!response.ok) throw new Error("Unable to validate the saved timetable.");
+        savedTimetable = (await response.json() as { timetable: TimetableData }).timetable;
+      }
+      if (requestId !== importRequestRef.current) return;
+      const proposal = buildTimetableImportProposal({
+        incoming: sharedState,
+        current,
+        incomingTimetable: timetable,
+        savedTimetable,
+      });
+      setImportProposal(proposal);
+      setImportSnapshot(JSON.stringify(current));
+      setReviewUpdated(updated);
+      setImportPhase(proposal.skipped.length > 0 ? "warning" : "confirm");
+    }
+    catch (error)
+    {
+      if (requestId !== importRequestRef.current) return;
+      setImportError(error instanceof Error ? error.message : "Unable to prepare the import.");
+    }
+  }
+
   function handleImport()
   {
-    const current = loadSavedTimetable();
-    importSharedTimetableToLocalStorage(sharedState, current);
-    setImportOpen(false);
+    if (!importProposal?.canImport) return;
+    if (!commitTimetableImport({
+      semesterId: sharedState.semesterId,
+      proposal: importProposal,
+      expectedSavedState: importSnapshot,
+    }))
+    {
+      void prepareImport(loadSavedTimetable(), true);
+      return;
+    }
+    closeImport();
     router.push("/timetable");
   }
 
@@ -245,7 +313,7 @@ export function ShareClient({
 
               <div className="flex w-full gap-1.5 md:w-auto md:min-w-[18rem] md:justify-end">
                 <div className="min-w-0 flex-1">
-                  <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Import" onClick={() => setImportOpen(true)} stretch />
+                <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Import" onClick={() => void prepareImport(loadSavedTimetable())} stretch />
                 </div>
                 <div className="min-w-0 flex-1">
                   <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Cancel" onClick={() => router.push("/timetable")} stretch />
@@ -465,18 +533,48 @@ export function ShareClient({
       </div>
 
       <Modal
-        open={importOpen}
-        title="Import shared timetable"
-        description="Importing will replace the saved timetable for this semester. This cannot be undone."
-        onClose={() => setImportOpen(false)}
+        open={importPhase !== "closed"}
+        title={importPhase === "warning" ? "Some classes will be skipped" : "Import shared timetable"}
+        description={importPhase === "warning"
+          ? "These classes cannot be included in the saved timetable."
+          : "Importing will replace the saved timetable for this semester. This cannot be undone."}
+        onClose={closeImport}
         footer={(
           <>
-            <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Cancel" onClick={() => setImportOpen(false)} />
-            <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Confirm import" onClick={handleImport} />
+            <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Cancel" onClick={closeImport} />
+            {importPhase === "warning" ? (
+              <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Proceed" onClick={() => setImportPhase("confirm")} />
+            ) : importPhase === "confirm" ? (
+              <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Confirm import" onClick={handleImport} disabled={!importProposal?.canImport} />
+            ) : null}
           </>
         )}
       >
-        <div className="h-2" />
+        {importPhase === "loading" ? <p>Checking shared and saved classes…</p> : null}
+        {importError ? <p role="alert">{importError}</p> : null}
+        {importPhase === "warning" ? (
+          <div className="space-y-2 text-sm">
+            <ul className="space-y-2">
+              {importProposal?.skipped.map(({ selection, reason, savedOrigin }) => (
+                <li key={buildSharedClassIdentifier(selection)}>
+                  <strong>{selection.courseCode} {selection.groupCode}</strong>: {reason === "conflict"
+                    ? `The saved starting class uses ${savedOrigin?.groupCode}; this continuation will be skipped.`
+                    : "This class identifier could not be matched to a published class."}
+                </li>
+              ))}
+            </ul>
+            {!importProposal?.canImport && !importProposal?.tooManySelections
+              ? <p role="status">There are no valid selections to import. Your saved timetable will not be cleared.</p> : null}
+          </div>
+        ) : null}
+        {importPhase === "confirm" ? (
+          <div className="space-y-2 text-sm">
+            {reviewUpdated ? <p role="status">Your saved timetable changed. Review this updated import before confirming.</p> : null}
+            {importProposal?.tooManySelections ? <p role="alert">The result exceeds the 50-class timetable limit.</p> : null}
+            {!importProposal?.canImport && !importProposal?.tooManySelections
+              ? <p role="status">There are no valid selections to import. Your saved timetable will not be cleared.</p> : null}
+          </div>
+        ) : null}
       </Modal>
 
       <TimetableExportCard

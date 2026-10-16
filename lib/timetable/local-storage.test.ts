@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   getSavedSemesterState,
+  importSharedTimetableToLocalStorage,
   isCourseInTimetable,
   loadSavedTimetable,
   removeCourseCodeFromSavedTimetable,
@@ -100,9 +101,48 @@ describe("semester ownership of timetable selections", () => {
     expect(reloaded.selectedClasses).toEqual([{ ...TG, originSemesterId: JANUARY }, TG]);
     const shared = decodeShareUrlState(new URLSearchParams(encodeShareUrlState(reloaded).split("?")[1]));
     expect(shared.selectedClasses).toEqual([TG, { ...TG, originSemesterId: JANUARY }]);
-    // A reset in the starting semester cleans only its linked continuations.
+    // Explicit removal cleans the linked enrollment; a passive save does not.
     const origin = getSavedSemesterState(reloaded, JANUARY)!;
     saveTimetableToLocalStorage({ ...reloaded, ...origin, selectedClasses: [] });
+    expect(getSavedSemesterState(loadSavedTimetable(), JULY)!.selectedClasses)
+      .toEqual([{ ...TG, originSemesterId: JANUARY }, TG]);
+    saveTimetableToLocalStorage(removeCourseCodeFromSavedTimetable(loadSavedTimetable(), JANUARY, "NIE301"));
     expect(getSavedSemesterState(loadSavedTimetable(), JULY)!.selectedClasses).toEqual([TG]);
+  });
+
+  it("does not change imported continuation slices when loading or saving another semester", () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => data.set(key, value),
+    } });
+    const imported = { ...TG, originSemesterId: JANUARY };
+    importSharedTimetableToLocalStorage({ semesterId: JULY, selectedClasses: [imported] });
+    const july = getSavedSemesterState(loadSavedTimetable(), JULY)!;
+    saveTimetableToLocalStorage({
+      semesterId: JANUARY, selectedClasses: [], hiddenClasses: [],
+      courseColorsByCourseCode: {}, selectedWeekId: "all", orientation: "horizontal", viewMode: "class",
+    });
+    expect(getSavedSemesterState(loadSavedTimetable(), JULY)).toEqual(july);
+    // An explicit group update still changes the linked continuation.
+    saveTimetableToLocalStorage(upsertClassInSavedTimetable(loadSavedTimetable(), JANUARY, CRN));
+    expect(getSavedSemesterState(loadSavedTimetable(), JULY)!.selectedClasses)
+      .toEqual([{ ...CRN, originSemesterId: JANUARY }]);
+  });
+
+  it("replaces only the imported semester even if its prior start has a later link", () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => data.set(key, value),
+    } });
+    let saved = upsertClassInSavedTimetable(null, JULY, TG, [NEXT_JANUARY]);
+    saved = upsertClassInSavedTimetable(saved, JANUARY, CRN);
+    saveTimetableToLocalStorage(saved);
+    const beforeJanuary = getSavedSemesterState(loadSavedTimetable(), JANUARY)!;
+    const beforeNextJanuary = getSavedSemesterState(loadSavedTimetable(), NEXT_JANUARY)!;
+    importSharedTimetableToLocalStorage({ semesterId: JULY, selectedClasses: [{ ...TG, groupCode: "TG02" }] }, loadSavedTimetable());
+    expect(getSavedSemesterState(loadSavedTimetable(), JANUARY)).toEqual(beforeJanuary);
+    expect(getSavedSemesterState(loadSavedTimetable(), NEXT_JANUARY)).toEqual(beforeNextJanuary);
   });
 });
