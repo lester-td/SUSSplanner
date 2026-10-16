@@ -918,7 +918,7 @@ export function PlannerClient({
     setClassPickerLoading(false);
   }
 
-  function addClassSelection(selection: SharedClassIdentifier, continuationSemesterIds: number[] = [])
+  function addClassSelection(selection: SharedClassIdentifier, continuationSemesterIds?: number[])
   {
     if (selection.originSemesterId !== undefined) return;
     const next = upsertClassInSavedTimetable(loadSavedTimetable(), semesterId, selection, continuationSemesterIds);
@@ -1042,7 +1042,9 @@ export function PlannerClient({
         semesters: allSemesters,
         continuationSemesterIds: firstClass.continuationSemesterIds,
       });
-      addClassSelection(toClassSelection(firstClass), continuationSemesters.map((item) => item.semesterId));
+      addClassSelection(toClassSelection(firstClass), firstClass.continuationSemesterIds
+        ?? (selectedClasses.some((item) => item.courseCode === course.courseCode && item.originSemesterId === undefined)
+          ? undefined : continuationSemesters.map((item) => item.semesterId)));
     }
     catch (error: unknown)
     {
@@ -1295,7 +1297,7 @@ export function PlannerClient({
                           scheduleType: matchingGroup.scheduleType,
                           groupCodeType: matchingGroup.groupCodeType,
                           groupCode: matchingGroup.groupCode,
-                        });
+                        }, matchingGroup.continuationSemesterIds);
                       }
 
                       return;

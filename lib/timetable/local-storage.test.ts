@@ -106,3 +106,74 @@ describe("semester ownership of timetable selections", () => {
     expect(getSavedSemesterState(loadSavedTimetable(), JULY)!.selectedClasses).toEqual([TG]);
   });
 });
+
+describe("published continuation destinations on a start-group change", () => {
+  const ORIGIN = 14;
+  const TARGET = 28;
+  const nextGroup = (courseCode: string, groupCode: string, groupCodeType: "TG" | "CRN" = "CRN"): SharedClassIdentifier => ({
+    courseCode, scheduleType: groupCodeType === "TG" ? "daytime" : "evening", groupCodeType, groupCode,
+  });
+
+  it("updates NIE301 TG01 to TG02 at the same published destination without duplicating its link", () => {
+    const first = nextGroup("NIE301", "TG01", "TG");
+    const second = nextGroup("NIE301", "TG02", "TG");
+    let saved = upsertClassInSavedTimetable(null, ORIGIN, first, [TARGET]);
+    saved = upsertClassInSavedTimetable(saved, TARGET, nextGroup("ICT302", "CRN01"));
+    saved = upsertClassInSavedTimetable(saved, ORIGIN, second, [TARGET]);
+    expect(getSavedSemesterState(saved, TARGET)!.selectedClasses)
+      .toEqual([{ ...second, originSemesterId: ORIGIN }, nextGroup("ICT302", "CRN01")]);
+    expect(getSavedSemesterState(saved, ORIGIN)!.selectedClasses).toEqual([second]);
+  });
+
+  it("adds MBA599's newly published destination when changing CRN01 to CRN02", () => {
+    const first = nextGroup("MBA599", "CRN01");
+    const second = nextGroup("MBA599", "CRN02");
+    const saved = upsertClassInSavedTimetable(upsertClassInSavedTimetable(null, ORIGIN, first, []), ORIGIN, second, [TARGET]);
+    expect(getSavedSemesterState(saved, TARGET)!.selectedClasses).toEqual([{ ...second, originSemesterId: ORIGIN }]);
+  });
+
+  it("removes SWK512's obsolete destination and hidden key when CRN02 publishes none", () => {
+    const first = nextGroup("SWK512", "CRN01");
+    const second = nextGroup("SWK512", "CRN02");
+    let saved = upsertClassInSavedTimetable(null, ORIGIN, first, [TARGET]);
+    saved = upsertClassInSavedTimetable(saved, TARGET, nextGroup("SWK512", "CRN03"), [29]);
+    saved = upsertClassInSavedTimetable(saved, TARGET, nextGroup("ICT302", "CRN01"));
+    saved.semesterStates![String(TARGET)].hiddenClasses = [buildSharedClassIdentifier({ ...first, originSemesterId: ORIGIN })];
+    saved = upsertClassInSavedTimetable(saved, ORIGIN, second, []);
+    expect(getSavedSemesterState(saved, TARGET)!.selectedClasses)
+      .toEqual([nextGroup("SWK512", "CRN03"), nextGroup("ICT302", "CRN01")]);
+    expect(getSavedSemesterState(saved, TARGET)!.hiddenClasses).toEqual([]);
+    expect(getSavedSemesterState(saved, 29)!.selectedClasses)
+      .toEqual([{ ...nextGroup("SWK512", "CRN03"), originSemesterId: TARGET }]);
+  });
+
+  it("reconciles multiple destinations while preserving unrelated owners and semester state", () => {
+    const first = nextGroup("NIE301", "TG01", "TG");
+    const second = nextGroup("NIE301", "TG02", "TG");
+    let saved = upsertClassInSavedTimetable(null, ORIGIN, first, [TARGET, 29]);
+    saved = upsertClassInSavedTimetable(saved, 29, nextGroup("ICT302", "CRN01"));
+    saved = upsertClassInSavedTimetable(saved, ORIGIN, second, [29, 30]);
+    expect(getSavedSemesterState(saved, TARGET)!.selectedClasses).toEqual([]);
+    expect(getSavedSemesterState(saved, 29)!.selectedClasses)
+      .toEqual([{ ...second, originSemesterId: ORIGIN }, nextGroup("ICT302", "CRN01")]);
+    expect(getSavedSemesterState(saved, 30)!.selectedClasses).toEqual([{ ...second, originSemesterId: ORIGIN }]);
+  });
+
+  it("keeps existing destinations when publication metadata is missing, including after reload", () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => data.set(key, value),
+    } });
+    const first = nextGroup("NIE301", "TG01", "TG");
+    const second = nextGroup("NIE301", "TG02", "TG");
+    saveTimetableToLocalStorage(upsertClassInSavedTimetable(null, ORIGIN, first, [TARGET]));
+    saveTimetableToLocalStorage(upsertClassInSavedTimetable(loadSavedTimetable(), ORIGIN, second));
+    expect(getSavedSemesterState(loadSavedTimetable(), TARGET)!.selectedClasses)
+      .toEqual([{ ...second, originSemesterId: ORIGIN }]);
+    const target = getSavedSemesterState(loadSavedTimetable(), TARGET)!;
+    saveTimetableToLocalStorage({ ...loadSavedTimetable()!, ...target });
+    expect(getSavedSemesterState(loadSavedTimetable(), TARGET)!.selectedClasses)
+      .toEqual([{ ...second, originSemesterId: ORIGIN }]);
+  });
+});
