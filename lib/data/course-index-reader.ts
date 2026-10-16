@@ -5,23 +5,16 @@ import path from "node:path";
 
 import { getSnapshotManifest } from "./manifest-reader";
 import { readCachedJson } from "./snapshot-cache";
-import { getScheduleSnapshot } from "./schedule-snapshot-reader";
 import type { CourseIndexSnapshotRecord } from "./snapshot-types";
-import { inferCatalogSemesterSpan } from "@/lib/courses/semester-span";
-import { isClassStartingInSemester } from "@/lib/timetable/semester-events";
 import { getActiveSemesters, getSemesterChoices } from "@/lib/timetable/semester-visibility";
 
 const snapshotRoot = path.resolve(process.cwd(), "data", "snapshots");
 let startingIndex: Promise<CourseIndexSnapshotRecord[]> | undefined;
 
-async function resolveStartingOfferings(record: CourseIndexSnapshotRecord): Promise<CourseIndexSnapshotRecord>
+function resolveStartingOfferings(record: CourseIndexSnapshotRecord): CourseIndexSnapshotRecord
 {
-  const offerings = (await Promise.all(record.offerings.map(async offering => {
-    if (inferCatalogSemesterSpan(record.courseCode) === 1) return offering;
-    const snapshot = await getScheduleSnapshot(offering.semesterId, record.courseCode);
-    const classes = snapshot?.classes.filter(group => group.scheduleType === offering.scheduleType && isClassStartingInSemester(group)) ?? [];
-    return { ...offering, classCount: classes.length, availableAsGsp: classes.some(group => group.availableAsGsp === true) };
-  }))).filter(offering => offering.classCount > 0);
+  // The snapshot generator already excludes continuation-only classes.
+  const offerings = record.offerings.filter(offering => offering.classCount > 0);
   const availableClassCount = offerings.reduce((total, offering) => total + offering.classCount, 0);
   return {
     ...record,
