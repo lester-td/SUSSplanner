@@ -205,7 +205,7 @@ export function upsertClassInSavedTimetable(
   state: PlannerStorageState | null,
   semesterId: number,
   selection: SharedTimetableState["selectedClasses"][number],
-  continuationSemesterIds: number[] = [],
+  continuationSemesterIds?: number[],
 )
 {
   const base = state ? getTimetableStateForSemester(state, semesterId) : createEmptyTimetableState(semesterId);
@@ -237,38 +237,45 @@ export function upsertClassInSavedTimetable(
   };
   if (normalizedSelection.originSemesterId === undefined)
   {
+    // Undefined means the publication has no destination metadata: retain
+    // existing links. An explicit [] means this group has no continuations.
+    const targetIds = new Set(continuationSemesterIds === undefined
+      ? Object.values(semesterStates).filter((target) => target.semesterId !== semesterId
+        && target.selectedClasses.some((item) => item.courseCode === normalizedSelection.courseCode
+          && item.originSemesterId === semesterId)).map((target) => target.semesterId)
+      : continuationSemesterIds.filter((id) => id !== semesterId));
+    const linkedSelection = { ...normalizedSelection, originSemesterId: semesterId };
     for (const [key, target] of Object.entries(semesterStates))
     {
       if (target.semesterId === semesterId) continue;
-      const selectedClasses = target.selectedClasses.map((item) => (
-        item.courseCode === normalizedSelection.courseCode && item.originSemesterId === semesterId
-          ? { ...normalizedSelection, originSemesterId: semesterId }
-          : item
-      ));
-      const validKeys = new Set(selectedClasses.map(buildSharedClassIdentifier));
+      const owned = target.selectedClasses.filter((item) => item.courseCode === normalizedSelection.courseCode
+        && item.originSemesterId === semesterId);
+      if (owned.length === 0 && !targetIds.has(target.semesterId)) continue;
+      const ownedKeys = new Set(owned.map(buildSharedClassIdentifier));
+      const retainedKey = targetIds.has(target.semesterId) ? buildSharedClassIdentifier(linkedSelection) : null;
+      let retained = false;
+      const selectedClasses = target.selectedClasses.flatMap((item) => {
+        if (item.courseCode !== normalizedSelection.courseCode || item.originSemesterId !== semesterId) return [item];
+        if (!retainedKey || retained) return [];
+        retained = true;
+        return [linkedSelection];
+      });
+      if (retainedKey && !retained) selectedClasses.push(linkedSelection);
       semesterStates[key] = {
         ...target,
         selectedClasses,
-        hiddenClasses: target.hiddenClasses.filter((shareKey) => validKeys.has(shareKey)),
+        hiddenClasses: target.hiddenClasses.filter((shareKey) => !ownedKeys.has(shareKey) || shareKey === retainedKey),
       };
+      targetIds.delete(target.semesterId);
     }
-    for (const targetId of continuationSemesterIds.filter((id) => id !== semesterId))
+    for (const targetId of targetIds)
     {
-      const target = semesterStates[String(targetId)] ?? {
+      semesterStates[String(targetId)] = {
         semesterId: targetId,
-        selectedClasses: [],
+        selectedClasses: [linkedSelection],
         hiddenClasses: [],
         courseColorsByCourseCode: {},
         selectedWeekId: "all" as const,
-      };
-      semesterStates[String(targetId)] = {
-        ...target,
-        selectedClasses: [
-          ...target.selectedClasses.filter((item) => (
-            item.courseCode !== normalizedSelection.courseCode || item.originSemesterId !== semesterId
-          )),
-          { ...normalizedSelection, originSemesterId: semesterId },
-        ],
       };
     }
   }
