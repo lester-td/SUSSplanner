@@ -14,7 +14,13 @@ export function parseCourseCodes(value: string): string[] {
   return value
     .split(/[,\n\r\t ]+/)
     .map(code => code.trim().toUpperCase())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map(code => {
+      if (/[^A-Z0-9]/.test(code)) {
+        throw new Error(`Invalid course selector ${JSON.stringify(code)}: use ASCII letters and digits only`);
+      }
+      return code;
+    });
 }
 
 export function parseCourseCodePrefixes(value: string): string[] {
