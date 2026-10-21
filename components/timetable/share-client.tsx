@@ -94,7 +94,7 @@ export function ShareClient({
   const [orientation, setOrientation] = useState<TimetableOrientation>(() => savedLocalState?.orientation ?? "vertical");
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [selectedWeekId, setSelectedWeekId] = useState<number | "all">("all");
-  const [importPhase, setImportPhase] = useState<"closed" | "loading" | "warning" | "confirm">("closed");
+  const [importPhase, setImportPhase] = useState<"closed" | "loading" | "warning" | "confirm" | "error">("closed");
   const [importProposal, setImportProposal] = useState<ReturnType<typeof buildTimetableImportProposal> | null>(null);
   const [importSnapshot, setImportSnapshot] = useState("");
   const [importError, setImportError] = useState("");
@@ -271,6 +271,7 @@ export function ShareClient({
     {
       if (requestId !== importRequestRef.current) return;
       setImportError(error instanceof Error ? error.message : "Unable to prepare the import.");
+      setImportPhase("error");
     }
   }
 
@@ -534,10 +535,12 @@ export function ShareClient({
 
       <Modal
         open={importPhase !== "closed"}
-        title={importPhase === "warning" ? "Some classes will be skipped" : "Import shared timetable"}
+        title={importPhase === "warning" ? "Some classes will be skipped"
+          : importPhase === "error" ? "Unable to prepare import" : "Import shared timetable"}
         description={importPhase === "warning"
           ? "These classes cannot be included in the saved timetable."
-          : "Importing will replace the saved timetable for this semester. This cannot be undone."}
+          : importPhase === "error" ? "Please try checking the timetable again."
+            : "Importing will replace the saved timetable for this semester. This cannot be undone."}
         onClose={closeImport}
         footer={(
           <>
@@ -546,6 +549,8 @@ export function ShareClient({
               <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Proceed" onClick={() => setImportPhase("confirm")} />
             ) : importPhase === "confirm" ? (
               <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Confirm import" onClick={handleImport} disabled={!importProposal?.canImport} />
+            ) : importPhase === "error" ? (
+              <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Retry" onClick={() => void prepareImport(loadSavedTimetable())} />
             ) : null}
           </>
         )}
