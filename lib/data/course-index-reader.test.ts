@@ -23,6 +23,10 @@ it.each(["NIE301", "NIE351"])("uses generated starting counts and excludes zero-
     offeredSemesters: [
       { semesterId: 1, academicYear: "2025/2026", semesterNo: 2, semesterName: "January 2026" },
       { semesterId: 3, academicYear: "2026/2027", semesterNo: 1, semesterName: "July 2026" },
+    ],
+    scheduledSemesters: [
+      { semesterId: 1, academicYear: "2025/2026", semesterNo: 2, semesterName: "January 2026" },
+      { semesterId: 3, academicYear: "2026/2027", semesterNo: 1, semesterName: "July 2026" },
       { semesterId: 14, academicYear: "2026/2027", semesterNo: 2, semesterName: "January 2027" },
     ],
     offerings: [
@@ -31,14 +35,15 @@ it.each(["NIE301", "NIE351"])("uses generated starting counts and excludes zero-
       { semesterId: 14, scheduleType: "daytime", classCount: 0, availableAsGsp: true },
     ],
   };
-  vi.mocked(getSnapshotManifest).mockResolvedValue({ semesters: record.offeredSemesters } as import("./snapshot-types").DataSnapshotManifest);
+  vi.mocked(getSnapshotManifest).mockResolvedValue({ semesters: record.scheduledSemesters } as import("./snapshot-types").DataSnapshotManifest);
   vi.mocked(readCachedJson).mockResolvedValue([record]);
   const { getCourseIndexSnapshot } = await import("./course-index-reader");
   const [result] = await getCourseIndexSnapshot();
   expect(result.availableClassCount).toBe(3);
   expect(result.offerings.map(offering => offering.classCount)).toEqual([1, 2]);
   expect(result.offerings.map(offering => offering.semesterId)).toEqual([1, 3]);
-  expect(result.offeredSemesters.map(semester => semester.semesterId)).toEqual([1, 3, 14]);
+  expect(result.offeredSemesters.map(semester => semester.semesterId)).toEqual([1, 3]);
+  expect(result.scheduledSemesters?.map(semester => semester.semesterId)).toEqual([1, 3, 14]);
   expect(result.availableAsGsp).toBe(false);
   expect(result.scheduleTypes).toEqual(["daytime", "evening"]);
   expect(getScheduleSnapshot).not.toHaveBeenCalled();

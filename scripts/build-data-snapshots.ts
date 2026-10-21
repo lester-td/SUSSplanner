@@ -417,9 +417,11 @@ async function main()
           || right.semesterId - left.semesterId
         ));
       const courseAssessments = assessmentsByCourseCode.get(courseRow.courseCode) ?? [];
-      const offeredSemesters = getSemesterChoices(scheduledSemesters);
-      const availableIntakeIds = new Set(offeredSemesters.map(semester => semester.semesterId));
+      const eligibleSemesters = getSemesterChoices(scheduledSemesters);
+      const availableIntakeIds = new Set(eligibleSemesters.map(semester => semester.semesterId));
       const startingClasses = relevantClasses.filter(group => availableIntakeIds.has(group.semesterId) && isClassStartingInSemester(group));
+      const startingSemesterIds = new Set(startingClasses.map(group => group.semesterId));
+      const offeredSemesters = eligibleSemesters.filter(semester => startingSemesterIds.has(semester.semesterId));
       const offeringsByKey = new Map<string, CourseOfferingSnapshot>();
       for (const classRow of startingClasses)
       {
