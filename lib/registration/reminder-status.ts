@@ -4,14 +4,14 @@ export type RegistrationReminderWindowState = RegistrationReminderPhase | "ended
 
 export const REGISTRATION_REMINDER_WINDOW_STATUS_LABELS: Record<RegistrationReminderWindowState, string> = {
   upcoming: "Soon",
-  open: "Open",
+  open: "Now Open",
   closing: "Closing",
   ended: "Ended",
 };
 
 export const REGISTRATION_REMINDER_SCHEDULE_STATUS_LABELS: Record<RegistrationReminderPhase, string> = {
   upcoming: "Upcoming",
-  open: "Open",
+  open: "Now Open",
   closing: "Closing Soon",
 };
 

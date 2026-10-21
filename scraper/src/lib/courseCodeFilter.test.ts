@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "node:test";
 import { parseArgs } from "./args.js";
-import { filterCourseCodes, loadCourseCodeFilter, resolveInputCourseCodes } from "./courseCodeFilter.js";
+import { filterCourseCodes, loadCourseCodeFilter, parseCourseCodes, resolveInputCourseCodes } from "./courseCodeFilter.js";
 
 const availableCodes = ["abc101", "ACC101", "bus101", "BUS102", "DEF101", "ZZZ101", "acc101"];
 
@@ -82,3 +82,30 @@ it("multiple prefixes union with inline codes over the default file", async t =>
     "code-prefix": "acc,BUS,Acc",
   }, defaultFile), ["ABC101", "ACC101", "BUS101"]);
 });
+
+it("preserves suffixes, partial prefixes, and normalized selector unions", async t => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "suss-code-suffixes-"));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const codesFile = path.join(dir, "codes.txt");
+  await fs.writeFile(codesFile, "bus557Ae\nCDO303ACI\nmgt558o\nBUS557AE\n");
+  assert.deepEqual(parseCourseCodes("bus557Ae, CDO303ACI\tmgt558o"), ["BUS557AE", "CDO303ACI", "MGT558O"]);
+  assert.deepEqual(await resolveInputCourseCodes({ "code-prefix": "bus5, cdo3,m" }, codesFile),
+    ["BUS557AE", "CDO303ACI", "MGT558O"]);
+  assert.deepEqual(await resolveInputCourseCodes({ codes: "acc201", "codes-file": codesFile, "code-prefix": "bus5" }, "missing.txt"),
+    ["ACC201", "BUS557AE", "CDO303ACI", "MGT558O"]);
+});
+
+for (const unsafe of ["../../ACC201", "..\\..\\ACC201", "/tmp/ACC201", "C:\\tmp\\ACC201", "ACC/201", "ACC\\201", "ACC201.pdf", "ACC201?x=1", "ACC201\0", "ACCé201"]) {
+  it(`rejects unsafe selectors from every shared input source: ${JSON.stringify(unsafe)}`, async t => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "suss-unsafe-code-"));
+    t.after(() => fs.rm(dir, { recursive: true, force: true }));
+    const codesFile = path.join(dir, "codes.txt");
+    await fs.writeFile(codesFile, `ACC201\n${unsafe}\n`);
+    await assert.rejects(resolveInputCourseCodes({ codes: `ACC201,${unsafe}` }, "missing.txt"), /Invalid course selector/);
+    await assert.rejects(loadCourseCodeFilter({ "code-prefix": unsafe }), /Invalid course selector/);
+    await assert.rejects(resolveInputCourseCodes({ codes: "BUS101", "codes-file": codesFile }, "missing.txt"), /Invalid course selector/);
+    await assert.rejects(resolveInputCourseCodes({}, codesFile), /Invalid course selector/);
+    // Invalid default-file candidates must not disappear behind a prefix filter.
+    await assert.rejects(resolveInputCourseCodes({ "code-prefix": "BUS" }, codesFile), /Invalid course selector/);
+  });
+}

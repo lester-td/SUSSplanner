@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { realpathSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -74,7 +75,8 @@ async function fetchPdf(url: string): Promise<{ status: "ok" | "not_found" | "fa
     const reason = contentType.toLowerCase().includes("html")
       ? `HTML response (${contentType || "unknown content-type"})`
       : `Non-PDF response (${contentType || "unknown content-type"})`;
-    const noRecord = /\bNo\s+Record\s+Found\b/i.test(buffer.toString("utf8"));
+    // Only standalone placeholders prove absence; mentions in other HTML do not.
+    const noRecord = /^\s*(?:No\s+Record\s+Found|<p>\s*No\s+Record\s+Found\s*<\/p>)\s*$/i.test(buffer.toString("utf8"));
     return { status: noRecord ? "not_found" : "failed", reason };
   }
 
@@ -103,8 +105,12 @@ export async function downloadVariant(
 ): Promise<VariantDownloadResult> {
   const isft = isftForScheduleType(scheduleType);
   const url = buildCourseDetailPdfUrl(courseCode, isft);
-  const pdfDir = path.join(outDir, scheduleType);
+  const pdfDir = path.resolve(outDir, scheduleType);
   const pdfPath = path.resolve(pdfDir, `${courseCode}.pdf`);
+
+  if (!courseCode || /[^A-Z0-9]/i.test(courseCode) || path.dirname(pdfPath) !== pdfDir) {
+    throw new Error(`Invalid course PDF target for ${JSON.stringify(courseCode)}: expected a direct child of ${pdfDir}`);
+  }
 
   await fs.mkdir(pdfDir, { recursive: true });
 
@@ -200,12 +206,12 @@ async function main(): Promise<void> {
   const reportOut = optionalString(args, "report-out") ?? "data/output/courses/download-report.tsv";
   const force = optionalBool(args, "force");
   const delayMs = Number(optionalString(args, "delay-ms") ?? "250");
+  const courseCodes = await resolveInputCourseCodes(args, "data/output/schedules/course-codes.txt");
 
   await fs.mkdir(outDir, { recursive: true });
   await fs.mkdir(path.dirname(manifestOut), { recursive: true });
   await fs.mkdir(path.dirname(reportOut), { recursive: true });
 
-  const courseCodes = await resolveInputCourseCodes(args, "data/output/schedules/course-codes.txt");
   const results: VariantDownloadResult[] = [];
 
   for (const courseCode of courseCodes) {
@@ -256,7 +262,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   main().catch(error => {
     console.error(error);
     process.exitCode = 1;

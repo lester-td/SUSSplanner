@@ -53,26 +53,6 @@ function normalizeStorageState(state: PlannerStorageState)
 
   semesterStates.set(String(activeSemesterState.semesterId), activeSemesterState);
 
-  // A continuation belongs to its starting semester. Keep its group in sync
-  // without touching a separate start of the same course in the target semester.
-  for (const [key, semesterState] of semesterStates)
-  {
-    if (semesterState.semesterId === activeSemesterState.semesterId) continue;
-    const selectedClasses = semesterState.selectedClasses.flatMap((selection) => {
-      if (selection.originSemesterId !== activeSemesterState.semesterId) return [selection];
-      const origin = activeSemesterState.selectedClasses.find((item) => (
-        item.courseCode === selection.courseCode && item.originSemesterId === undefined
-      ));
-      return origin ? [{ ...origin, originSemesterId: activeSemesterState.semesterId }] : [];
-    });
-    const validKeys = new Set(selectedClasses.map(buildSharedClassIdentifier));
-    semesterStates.set(key, {
-      ...semesterState,
-      selectedClasses,
-      hiddenClasses: semesterState.hiddenClasses.filter((shareKey) => validKeys.has(shareKey)),
-    });
-  }
-
   return {
     semesterId: activeSemesterState.semesterId,
     selectedClasses: activeSemesterState.selectedClasses,
@@ -328,13 +308,28 @@ export function removeCourseCodeFromSavedTimetable(
     selectedWeekId: base.selectedWeekId,
   };
 
+  const semesterStates: Record<string, PlannerSemesterState> = {
+    ...(state?.semesterStates ?? {}),
+    [String(semesterId)]: nextSemesterState,
+  };
+  for (const [key, target] of Object.entries(semesterStates))
+  {
+    if (target.semesterId === semesterId) continue;
+    const selectedClasses = target.selectedClasses.filter((item) => (
+      item.courseCode !== normalizedCode || item.originSemesterId !== semesterId
+    ));
+    const validKeys = new Set(selectedClasses.map(buildSharedClassIdentifier));
+    semesterStates[key] = {
+      ...target,
+      selectedClasses,
+      hiddenClasses: target.hiddenClasses.filter((shareKey) => validKeys.has(shareKey)),
+    };
+  }
+
   return normalizeStorageState({
     ...base,
     ...nextSemesterState,
-    semesterStates: {
-      ...(state?.semesterStates ?? {}),
-      [String(semesterId)]: nextSemesterState,
-    },
+    semesterStates,
   });
 }
 

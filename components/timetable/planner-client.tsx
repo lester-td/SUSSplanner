@@ -34,6 +34,7 @@ import { TimetableAlerts } from "@/components/timetable/timetable-alerts";
 import { TimetableCanvas } from "@/components/timetable/timetable-canvas";
 import { TimetableExportCard } from "@/components/timetable/timetable-export-card";
 import { printTimetablePdf } from "@/lib/export/pdf-client";
+import { detectTimetableClashes } from "@/lib/timetable/clash-detection";
 import { getPdfClassSessionEvents } from "@/lib/export/class-sessions";
 import { buildExportCourses, getTimetableExportFileName } from "@/lib/export/timetable-model";
 import { exportElementToPng } from "@/lib/export/png";
@@ -61,6 +62,7 @@ import {
   getSavedSemesterState,
   saveTimetableToLocalStorage,
   upsertClassInSavedTimetable,
+  removeCourseCodeFromSavedTimetable,
   removeClassFromSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import {
@@ -1140,7 +1142,7 @@ export function PlannerClient({
       examCalendarCard,
       selectedSemester,
       getPdfClassSessionEvents(timetableData, hiddenClasses),
-      timetableData.clashes.filter((clash) => clash.events.every((event) => !hiddenClasses.includes(event.shareKey))),
+      detectTimetableClashes(timetableData.events.filter((event) => !hiddenClasses.includes(event.shareKey))),
       getTimetableExportFileName(selectedSemester, "pdf"),
       () => setExportingFormat(null),
     );
@@ -1154,6 +1156,13 @@ export function PlannerClient({
   function resetPlanner()
   {
     if (!canReset) return;
+    let next = loadSavedTimetable();
+    for (const courseCode of new Set(selectedClasses
+      .filter((item) => item.originSemesterId === undefined)
+      .map((item) => item.courseCode)))
+    {
+      next = removeCourseCodeFromSavedTimetable(next, semesterId, courseCode);
+    }
     setSelectedClasses((current) => current.filter((item) => item.originSemesterId !== undefined));
     setHiddenClasses([]);
     setCourseColorsByCourseCode({});
@@ -1163,6 +1172,7 @@ export function PlannerClient({
     setConfirmResetOpen(false);
     closeClassPicker();
     saveTimetableToLocalStorage({
+      ...next,
       semesterId,
       selectedClasses: selectedClasses.filter((item) => item.originSemesterId !== undefined),
       hiddenClasses: [],

@@ -204,3 +204,55 @@ it("never joins connectors from distinct all-of alternatives sharing course code
     expect(left.max < right.min || right.max < left.min, "Different alternatives must have disjoint vertical connector ranges").toBe(true);
   }
 });
+
+// Follow drawn edges through operators, counting only course occurrences.
+function courseChildren(graph: ReturnType<typeof buildCourseGraph>, owner: string): string[]
+{
+  return graph.edges.filter(edge => edge.from === owner).flatMap(edge => {
+    const node = graph.nodes.find(node => node.id === edge.to)!;
+    return node.kind === "course" ? [node.id] : courseChildren(graph, node.id);
+  });
+}
+
+it.each([false, true])("expands a direct prerequisite before an indirect occurrence (reversed siblings: %s)", async reversed => {
+  const plan = fixturePlan();
+  const siblings = reversed ? ["PRE100", "ALT200"] : ["ALT200", "PRE100"];
+  const { byCourse } = buildRequisites([plan], [
+    fixtureRule(plan, all(...siblings)),
+    fixtureRule(plan, course("PRE100"), { courseCode: "ALT200", ruleKey: `prerequisite:${plan.planKey}:ALT200:default` }),
+    fixtureRule(plan, course("NEXT400"), { courseCode: "PRE100", ruleKey: `prerequisite:${plan.planKey}:PRE100:default` }),
+  ], fixtureCatalogue);
+  const pre = await buildPrerequisiteTree("MAIN300", byCourse.MAIN300, async code => byCourse[code] ?? null);
+  if (reversed && pre.variants[0].rule?.type === "all") pre.variants[0].rule.children.reverse();
+  const graph = buildCourseGraph("MAIN300", byCourse.MAIN300, pre);
+  const direct = courseChildren(graph, graph.root).find(id => id.startsWith("course:PRE100"))!;
+  const indirect = courseChildren(graph, "course:ALT200")[0];
+  expect(courseChildren(graph, direct)).toEqual(["course:NEXT400"]);
+  expect(courseChildren(graph, indirect)).toEqual([]);
+  expect(graph.requirements.filter(item => item.courseCode === "PRE100")).toHaveLength(1);
+  expect(graph.requirements.find(item => item.courseCode === "MAIN300")!.rules).toEqual([all(...siblings)]);
+  const layout = layoutCourseGraph(graph);
+  expect(layout.nodes.find(node => node.id === "course:NEXT400")?.level).toBe(2);
+  expect(layout.paths).toHaveLength(graph.edges.length);
+  expect(layout.paths.every(edge => !/NaN|Infinity/.test(edge.path))).toBe(true);
+});
+
+it("expands only the first equal-depth occurrence while retaining distinct logical branches and cycles", async () => {
+  const plan = fixturePlan();
+  const rule: PrerequisiteRuleNode = { type: "any", children: [all("PRE100", "ALT200"), all("PRE100", "NEXT400"), course("ALT200")] };
+  const { byCourse } = buildRequisites([plan], [
+    fixtureRule(plan, rule),
+    fixtureRule(plan, course("MAIN300"), { courseCode: "PRE100", ruleKey: `prerequisite:${plan.planKey}:PRE100:default` }),
+  ], fixtureCatalogue);
+  const pre = await buildPrerequisiteTree("MAIN300", byCourse.MAIN300, async code => byCourse[code] ?? null);
+  const graph = buildCourseGraph("MAIN300", byCourse.MAIN300, pre);
+  const duplicates = courseChildren(graph, graph.root).filter(id => id.startsWith("course:PRE100"));
+  expect(duplicates).toHaveLength(2);
+  expect(courseChildren(graph, duplicates[0])).toEqual(["course:MAIN300#2"]);
+  expect(courseChildren(graph, duplicates[1])).toEqual([]);
+  expect(courseChildren(graph, "course:MAIN300#2")).toEqual([]);
+  expect(graph.requirements.find(item => item.courseCode === "MAIN300")!.rules).toEqual([compactGraphRule(canonicalizeRule(rule))]);
+  const layout = layoutCourseGraph(graph);
+  expect(layout.nodes).toHaveLength(graph.nodes.length);
+  expect(layout.paths.every(edge => !/NaN|Infinity/.test(edge.path))).toBe(true);
+});
