@@ -97,7 +97,7 @@ export default async function SharePage({
       dataUpdatedAt={latestDataUpdatedAt}
       contentLayout="full-bleed"
     >
-      <ShareClient sharedState={decodedState} timetable={timetable} />
+      <ShareClient sharedState={decodedState} timetable={timetable} semesters={semesterTree} />
     </AppShell>
   );
 }
