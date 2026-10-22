@@ -1,5 +1,5 @@
 import { plannerSemesterStateSchema, plannerStorageStateSchema } from "@/lib/validation/timetable";
-import type { PlannerSemesterState, PlannerStorageState, SharedClassIdentifier, SharedTimetableState } from "./types";
+import type { PlannerSemesterState, PlannerStorageState, SharedClassIdentifier, SharedTimetableState, TimetableSelectionRecord } from "./types";
 import { buildSharedClassIdentifier } from "./share-url";
 
 export const TIMETABLE_STORAGE_KEY = "sussplanner.timetable.v1";
@@ -285,6 +285,63 @@ export function upsertClassInSavedTimetable(
     ...nextSemesterState,
     semesterStates,
   });
+}
+
+export type ResolvedContinuationStart = Pick<TimetableSelectionRecord, "identifier" | "continuationSemesterIds">;
+
+export function getContinuationConflicts(
+  state: PlannerStorageState | null,
+  semesterId: number,
+  resolved: ResolvedContinuationStart,
+)
+{
+  const linked = { ...resolved.identifier, originSemesterId: semesterId };
+  const key = buildSharedClassIdentifier(linked);
+  return [...new Set(resolved.continuationSemesterIds ?? [])].filter((id) => id !== semesterId
+    && (getSavedSemesterState(state, id)?.selectedClasses.some((item) => (
+      item.courseCode === linked.courseCode && item.originSemesterId === semesterId
+      && buildSharedClassIdentifier(item) !== key
+    )) ?? false));
+}
+
+// Deliberately add missing published links for still-current starts. Unlike an
+// explicit group change, restoration never removes or rewrites saved links.
+export function restoreMissingContinuationLinks(
+  state: PlannerStorageState | null,
+  semesterId: number,
+  resolvedStarts: ResolvedContinuationStart[],
+)
+{
+  let next = state;
+  const conflicts: { selection: SharedClassIdentifier; semesterId: number }[] = [];
+  for (const resolved of resolvedStarts)
+  {
+    const { identifier, continuationSemesterIds } = resolved;
+    if (!next || identifier.originSemesterId !== undefined || continuationSemesterIds === undefined) continue;
+    const key = buildSharedClassIdentifier(identifier);
+    if (!getSavedSemesterState(next, semesterId)?.selectedClasses.some((item) => (
+      item.originSemesterId === undefined && buildSharedClassIdentifier(item) === key
+    ))) continue;
+    const conflictingIds = new Set(getContinuationConflicts(next, semesterId, resolved));
+    const linked = { ...identifier, originSemesterId: semesterId };
+    for (const id of new Set(continuationSemesterIds))
+    {
+      if (id === semesterId) continue;
+      const target = getSavedSemesterState(next, id) ?? createEmptyTimetableState(id);
+      if (!conflictingIds.has(id) && target.selectedClasses.some((item) => buildSharedClassIdentifier(item) === buildSharedClassIdentifier(linked))) continue;
+      if (conflictingIds.has(id) || target.selectedClasses.length >= 50)
+      {
+        conflicts.push({ selection: identifier, semesterId: id });
+        continue;
+      }
+      const semesterStates = {
+        ...next.semesterStates,
+        [String(id)]: { ...target, selectedClasses: [...target.selectedClasses, linked] },
+      };
+      next = normalizeStorageState({ ...next, semesterStates });
+    }
+  }
+  return { state: next, changed: next !== state, conflicts };
 }
 
 export function removeCourseCodeFromSavedTimetable(
