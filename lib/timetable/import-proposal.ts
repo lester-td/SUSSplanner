@@ -28,6 +28,7 @@ export function buildTimetableImportProposal({
   const validSaved = new Set(savedTimetable?.selections.map((item) => buildSharedClassIdentifier(item.identifier)) ?? []);
   const selectedClasses: SharedClassIdentifier[] = [];
   const skipped: SkippedImportSelection[] = [];
+  const preservedSelections: SharedClassIdentifier[] = [];
   const seen = new Set<string>();
   let eligibleIncomingCount = 0;
 
@@ -72,12 +73,14 @@ export function buildTimetableImportProposal({
       || origin.scheduleType !== selection.scheduleType
       || origin.groupCodeType !== selection.groupCodeType
       || origin.groupCode !== selection.groupCode) continue;
+    preservedSelections.push(selection);
     if (!selectedClasses.some((item) => item.courseCode === selection.courseCode
       && item.originSemesterId === selection.originSemesterId)) selectedClasses.push(selection);
   }
 
   return {
     selectedClasses,
+    preservedSelections,
     skipped,
     canImport: eligibleIncomingCount > 0 && selectedClasses.length <= 50,
     tooManySelections: selectedClasses.length > 50,
