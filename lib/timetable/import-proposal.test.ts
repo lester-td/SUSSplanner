@@ -31,6 +31,7 @@ describe("timetable import proposal", () => {
       savedTimetable: timetable(savedLink, group("ICT301", "TG01")),
     });
     expect(proposal.selectedClasses).toEqual([added, savedLink]);
+    expect(getSavedSemesterState(proposal.projectedState, 3)!.selectedClasses).toEqual([added, savedLink]);
     expect(proposal.skipped).toEqual([
       { selection: incomingLink, reason: "conflict", savedOrigin },
       { selection: stale, reason: "unresolved" },
@@ -126,5 +127,22 @@ describe("timetable import proposal", () => {
     expect(commitTimetableImport({ semesterId: 3, proposal: reviewed, expectedSavedState: JSON.stringify(refreshed) })).toBe(true);
     expect(getSavedSemesterState(loadSavedTimetable(), 3)!.selectedClasses).toEqual([added, savedLink]);
     expect(getSavedSemesterState(loadSavedTimetable(), 1)!.selectedClasses).toEqual([group("NIE301", "TG02")]);
+    expect(loadSavedTimetable()).toEqual(reviewed.projectedState);
+  });
+
+  it("retains the 50-selection boundary including kept links", () => {
+    const incoming = Array.from({ length: 50 }, (_, index) => group(`ICT${100 + index}`, "TG01"));
+    const shared = { semesterId: 3, selectedClasses: incoming };
+    const atLimit = buildTimetableImportProposal({ incoming: shared, current: null,
+      incomingTimetable: timetable(...incoming), savedTimetable: null });
+    expect(atLimit).toMatchObject({ canImport: true, tooManySelections: false });
+
+    const origin = group("NIE301", "TG01");
+    const link = { ...origin, originSemesterId: 1 };
+    const current = upsertClassInSavedTimetable(null, 1, origin, [3]);
+    const overLimit = buildTimetableImportProposal({ incoming: shared, current,
+      incomingTimetable: timetable(...incoming), savedTimetable: timetable(link) });
+    expect(overLimit).toMatchObject({ canImport: false, tooManySelections: true });
+    expect(overLimit.selectedClasses).toEqual([...incoming, link]);
   });
 });

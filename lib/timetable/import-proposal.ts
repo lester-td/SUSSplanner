@@ -4,6 +4,8 @@ import {
   loadSavedTimetable,
 } from "./local-storage";
 import { buildSharedClassIdentifier } from "./share-url";
+import { projectTimetableImport } from "./import-projection";
+import { MAX_TIMETABLE_SELECTIONS } from "./limits";
 import type { PlannerStorageState, SharedClassIdentifier, SharedTimetableState, TimetableData } from "./types";
 
 export type SkippedImportSelection = {
@@ -82,8 +84,9 @@ export function buildTimetableImportProposal({
     selectedClasses,
     preservedSelections,
     skipped,
-    canImport: eligibleIncomingCount > 0 && selectedClasses.length <= 50,
-    tooManySelections: selectedClasses.length > 50,
+    projectedState: projectTimetableImport({ semesterId: incoming.semesterId, selectedClasses }, current),
+    canImport: eligibleIncomingCount > 0 && selectedClasses.length <= MAX_TIMETABLE_SELECTIONS,
+    tooManySelections: selectedClasses.length > MAX_TIMETABLE_SELECTIONS,
   };
 }
 
