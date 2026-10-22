@@ -1,5 +1,6 @@
 import { plannerSemesterStateSchema, plannerStorageStateSchema } from "@/lib/validation/timetable";
 import { projectTimetableImport } from "./import-projection";
+import { getContinuationDestinationIds, getEnrolmentOwner, isOwnedContinuation } from "./continuation-ownership";
 import type { PlannerSemesterState, PlannerStorageState, SharedClassIdentifier, SharedTimetableState } from "./types";
 import { buildSharedClassIdentifier } from "./share-url";
 
@@ -238,25 +239,19 @@ export function upsertClassInSavedTimetable(
   };
   if (normalizedSelection.originSemesterId === undefined)
   {
-    // Undefined means the publication has no destination metadata: retain
-    // existing links. An explicit [] means this group has no continuations.
-    const targetIds = new Set(continuationSemesterIds === undefined
-      ? Object.values(semesterStates).filter((target) => target.semesterId !== semesterId
-        && target.selectedClasses.some((item) => item.courseCode === normalizedSelection.courseCode
-          && item.originSemesterId === semesterId)).map((target) => target.semesterId)
-      : continuationSemesterIds.filter((id) => id !== semesterId));
+    const owner = getEnrolmentOwner(normalizedSelection, semesterId);
+    const targetIds = getContinuationDestinationIds(Object.values(semesterStates), owner, continuationSemesterIds);
     const linkedSelection = { ...normalizedSelection, originSemesterId: semesterId };
     for (const [key, target] of Object.entries(semesterStates))
     {
       if (target.semesterId === semesterId) continue;
-      const owned = target.selectedClasses.filter((item) => item.courseCode === normalizedSelection.courseCode
-        && item.originSemesterId === semesterId);
+      const owned = target.selectedClasses.filter((item) => isOwnedContinuation(item, owner));
       if (owned.length === 0 && !targetIds.has(target.semesterId)) continue;
       const ownedKeys = new Set(owned.map(buildSharedClassIdentifier));
       const retainedKey = targetIds.has(target.semesterId) ? buildSharedClassIdentifier(linkedSelection) : null;
       let retained = false;
       const selectedClasses = target.selectedClasses.flatMap((item) => {
-        if (item.courseCode !== normalizedSelection.courseCode || item.originSemesterId !== semesterId) return [item];
+        if (!isOwnedContinuation(item, owner)) return [item];
         if (!retainedKey || retained) return [];
         retained = true;
         return [linkedSelection];
@@ -296,6 +291,7 @@ export function removeCourseCodeFromSavedTimetable(
 {
   const base = state ? getTimetableStateForSemester(state, semesterId) : createEmptyTimetableState(semesterId);
   const normalizedCode = normalizeCourseCode(courseCode);
+  const owner = { courseCode: normalizedCode, originSemesterId: semesterId };
   const nextSemesterState: PlannerSemesterState = {
     semesterId,
     selectedClasses: base.selectedClasses.filter((selection) => (
@@ -316,9 +312,7 @@ export function removeCourseCodeFromSavedTimetable(
   for (const [key, target] of Object.entries(semesterStates))
   {
     if (target.semesterId === semesterId) continue;
-    const selectedClasses = target.selectedClasses.filter((item) => (
-      item.courseCode !== normalizedCode || item.originSemesterId !== semesterId
-    ));
+    const selectedClasses = target.selectedClasses.filter((item) => !isOwnedContinuation(item, owner));
     const validKeys = new Set(selectedClasses.map(buildSharedClassIdentifier));
     semesterStates[key] = {
       ...target,
@@ -340,8 +334,8 @@ export function removeClassFromSavedTimetable(
   selection: SharedClassIdentifier,
 )
 {
-  const originId = selection.originSemesterId ?? semesterId;
-  const next = removeCourseCodeFromSavedTimetable(state, originId, selection.courseCode);
+  const owner = getEnrolmentOwner(selection, semesterId);
+  const next = removeCourseCodeFromSavedTimetable(state, owner.originSemesterId, owner.courseCode);
   // Remove the whole linked enrollment, but keep the semester being viewed.
   return normalizeStorageState(getTimetableStateForSemester(next, semesterId));
 }
