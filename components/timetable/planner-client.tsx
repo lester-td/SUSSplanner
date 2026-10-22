@@ -64,6 +64,7 @@ import {
   upsertClassInSavedTimetable,
   removeCourseCodeFromSavedTimetable,
   removeClassFromSavedTimetable,
+  restoreMissingContinuationLinks,
 } from "@/lib/timetable/local-storage";
 import {
   buildSharedClassIdentifier,
@@ -625,6 +626,13 @@ export function PlannerClient({
       .then((payload) => {
         if (controller.signal.aborted || activeSemesterIdRef.current !== semesterId) return;
         if (!selectedSemester) return;
+        if (payload.timetable.semester?.semesterId !== semesterId) return;
+        const restored = restoreMissingContinuationLinks(loadSavedTimetable(), semesterId, payload.timetable.selections);
+        if (restored.changed && restored.state) saveTimetableToLocalStorage(restored.state);
+        if (restored.conflicts.length > 0)
+        {
+          showPlannerBanner(`Some continuation links could not be restored. Saved selections were preserved: ${restored.conflicts.map((item) => `${item.selection.courseCode} (semester ${item.semesterId})`).join(", ")}.`);
+        }
         setTimetableData(filterTimetableForSemester(payload.timetable, selectedSemester, semesterWeeks));
         setSelectedWeekId((current) => (
           current === "all" || payload.timetable.semesterWeeks.some((week) => week.weekId === current)

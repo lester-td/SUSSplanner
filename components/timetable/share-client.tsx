@@ -561,10 +561,12 @@ export function ShareClient({
         {importPhase === "warning" ? (
           <div className="space-y-2 text-sm">
             <ul className="space-y-2">
-              {importProposal?.skipped.map(({ selection, reason, savedOrigin }) => (
+              {importProposal?.skipped.map(({ selection, reason, savedOrigin, conflictSemesterId }) => (
                 <li key={buildSharedClassIdentifier(selection)}>
                   <strong>{selection.courseCode} {selection.groupCode}</strong>: {reason === "conflict"
-                    ? `The saved starting class uses ${savedOrigin?.groupCode}; this continuation will be skipped.`
+                    ? conflictSemesterId !== undefined
+                      ? `A saved continuation in semester ${conflictSemesterId} uses a different group; this starting class will be skipped.`
+                      : `The saved starting class uses ${savedOrigin?.groupCode}; this continuation will be skipped.`
                     : "This class identifier could not be matched to a published class."}
                 </li>
               ))}
