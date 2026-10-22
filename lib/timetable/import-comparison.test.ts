@@ -8,11 +8,16 @@ const group = (courseCode: string, groupCode = "TG01", originSemesterId?: number
   courseCode, groupCode, groupCodeType: "TG", scheduleType: "daytime", ...(originSemesterId === undefined ? {} : { originSemesterId }),
 });
 const data = (...identifiers: SharedClassIdentifier[]) => ({ selections: identifiers.map((identifier) => ({ identifier })) }) as TimetableData;
-const compare = (saved: SharedClassIdentifier[], incoming: SharedClassIdentifier[], preservedSelections: SharedClassIdentifier[] = []) => (
-  buildTimetableImportComparison(saved, { selectedClasses: incoming, preservedSelections, skipped: [], canImport: true, tooManySelections: false })
+const compare = (saved: readonly SharedClassIdentifier[], incoming: readonly SharedClassIdentifier[], preservedSelections: readonly SharedClassIdentifier[] = []) => (
+  buildTimetableImportComparison(saved, { selectedClasses: incoming, preservedSelections })
 );
 
 describe("effective timetable import comparison", () => {
+  it("accepts readonly selection-only inputs for a no-op comparison", () => {
+    const saved = Object.freeze([group("ICT301")]);
+    expect(compare(saved, saved)).toMatchObject({ added: [], removed: [], changed: [], unchanged: saved, hasChanges: false });
+  });
+
   it("shows additions for an empty saved timetable, and removals for replacement", () => {
     const added = group("ICT302", "TG03");
     expect(compare([], [added])).toMatchObject({ added: [added], removed: [], changed: [], hasChanges: true });

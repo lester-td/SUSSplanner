@@ -1,13 +1,17 @@
-import type { buildTimetableImportProposal } from "./import-proposal";
 import { buildSharedClassIdentifier } from "./share-url";
 import type { SharedClassIdentifier } from "./types";
 
+type ImportComparisonSelections = {
+  readonly selectedClasses: readonly SharedClassIdentifier[];
+  readonly preservedSelections: readonly SharedClassIdentifier[];
+};
+
 export function buildTimetableImportComparison(
-  saved: SharedClassIdentifier[],
-  proposal: ReturnType<typeof buildTimetableImportProposal>,
+  saved: readonly SharedClassIdentifier[],
+  proposal: ImportComparisonSelections,
 )
 {
-  const unique = (items: SharedClassIdentifier[]) => [...new Map(items.map((item) => [buildSharedClassIdentifier(item), item])).values()];
+  const unique = (items: readonly SharedClassIdentifier[]) => [...new Map(items.map((item) => [buildSharedClassIdentifier(item), item])).values()];
   const before = unique(saved);
   const after = unique(proposal.selectedClasses);
   const beforeKeys = new Set(before.map(buildSharedClassIdentifier));

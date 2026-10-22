@@ -7,7 +7,7 @@ import type { SharedClassIdentifier } from "./types";
 
 const start: SharedClassIdentifier = { courseCode: "NIE301", scheduleType: "daytime", groupCodeType: "TG", groupCode: "TG01" };
 const render = (saved: SharedClassIdentifier[], next: SharedClassIdentifier[], preserved: SharedClassIdentifier[] = []) => renderToStaticMarkup(createElement(ImportComparison, {
-  comparison: buildTimetableImportComparison(saved, { selectedClasses: next, preservedSelections: preserved, skipped: [], canImport: true, tooManySelections: false }),
+  comparison: buildTimetableImportComparison(saved, { selectedClasses: next, preservedSelections: preserved }),
   semesters: [{ semesterId: 14, semesterName: "January 2027", academicYear: "2026/2027", semesterNo: 2 }],
 }));
 
