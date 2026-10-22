@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { ImportClashes } from "@/components/timetable/import-clashes";
 import { buildTimetableImportClashAnalysis } from "./import-clashes";
 import { buildTimetableImportProposal, commitTimetableImport } from "./import-proposal";
 import { loadSavedTimetable, saveTimetableToLocalStorage, upsertClassInSavedTimetable } from "./local-storage";
@@ -126,5 +129,40 @@ describe("effective timetable import clashes", () => {
     const analysis = analyze(incoming, timetable(selection(added, [event(added, 1)])), [added, kept], [added, kept]);
     expect(analysis.status).toBe("complete");
     expect(analysis.clashes[0].change).toBe("unclassified");
+  });
+});
+
+describe("import clash disclosure", () => {
+  const render = (analysis: ReturnType<typeof buildTimetableImportClashAnalysis>) => (
+    renderToStaticMarkup(createElement(ImportClashes, { analysis }))
+  );
+
+  it("shows course/group, actual date and session times, and keeps clashes informational", () => {
+    const html = render(analyze(timetable(selection(added, [event(added, 1)]), selection(kept, [event(kept, 2)]))));
+    expect(html).toContain('aria-label="Timetable clashes"');
+    expect(html).toContain("New or changed clashes (1)");
+    expect(html).toContain("ICT301 TG01");
+    expect(html).toContain("NIE301 TG01");
+    expect(html).toContain("Tue, 13 Jul 2027");
+    expect(html).toContain("10:00-11:00");
+    expect(html).toContain("You can still import this timetable.");
+    expect(html).not.toContain("disabled");
+  });
+
+  it("labels existing clashes separately and keeps verified no-clash imports quiet", () => {
+    const saved = timetable(selection(added, [event(added, 1)]), selection(kept, [event(kept, 2)]));
+    const html = render(analyze(saved, saved));
+    expect(html).toContain("Existing clashes (1)");
+    expect(html).not.toContain("New or changed clashes");
+    expect(render(analyze(timetable(selection(added, []))))).toBe("");
+  });
+
+  it("discloses unavailable, partial, and unclassified results without claiming no clashes", () => {
+    expect(render(analyze(timetable(), null, [added]))).toContain("Clash analysis is unavailable.");
+    expect(render(analyze(timetable(selection(added, [])), null, [added, kept]))).toContain("Other clashes may not be shown.");
+    const incoming = timetable(selection(added, [event(added, 1)]), selection(kept, [event(kept, 2)]));
+    const html = render(analyze(incoming, timetable(), [added, kept], [added, kept]));
+    expect(html).toContain("Clashes with unknown previous state (1)");
+    expect(html).not.toContain("New or changed clashes");
   });
 });

@@ -44,6 +44,9 @@ import {
   loadSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import { ImportComparison } from "@/components/timetable/import-comparison";
+import { ImportClashes } from "@/components/timetable/import-clashes";
+import { buildTimetableImportClashAnalysis } from "@/lib/timetable/import-clashes";
+import type { ImportClashAnalysis } from "@/lib/timetable/import-clashes";
 import { buildTimetableImportComparison } from "@/lib/timetable/import-comparison";
 import { buildTimetableImportProposal, commitTimetableImport } from "@/lib/timetable/import-proposal";
 import { buildSharedClassIdentifier, encodeShareUrlState } from "@/lib/timetable/share-url";
@@ -104,6 +107,7 @@ export function ShareClient({
   const [importPhase, setImportPhase] = useState<"closed" | "loading" | "warning" | "confirm" | "error">("closed");
   const [importProposal, setImportProposal] = useState<ReturnType<typeof buildTimetableImportProposal> | null>(null);
   const [importComparison, setImportComparison] = useState<ReturnType<typeof buildTimetableImportComparison> | null>(null);
+  const [importClashes, setImportClashes] = useState<ImportClashAnalysis | null>(null);
   const [importResetsView, setImportResetsView] = useState(false);
   const [importSnapshot, setImportSnapshot] = useState("");
   const [importError, setImportError] = useState("");
@@ -256,6 +260,7 @@ export function ShareClient({
     importRequestRef.current += 1;
     setImportPhase("closed");
     setImportProposal(null);
+    setImportClashes(null);
   }
 
   async function prepareImport(current: PlannerStorageState | null, updated = false)
@@ -263,6 +268,7 @@ export function ShareClient({
     const requestId = ++importRequestRef.current;
     setImportPhase("loading");
     setImportError("");
+    setImportClashes(null);
     try
     {
       const savedSelections = (getSavedSemesterState(current, sharedState.semesterId)?.selectedClasses ?? [])
@@ -300,6 +306,13 @@ export function ShareClient({
       });
       const savedSemester = getSavedSemesterState(current, sharedState.semesterId);
       setImportComparison(buildTimetableImportComparison(savedSemester?.selectedClasses ?? [], proposal));
+      setImportClashes(buildTimetableImportClashAnalysis({
+        selectedClasses: proposal.selectedClasses,
+        savedSelections: savedSemester?.selectedClasses ?? [],
+        semesterId: sharedState.semesterId,
+        incomingTimetable: timetable,
+        savedTimetable,
+      }));
       setImportResetsView((savedSemester?.hiddenClasses.length ?? 0) > 0
         || (savedSemester?.selectedWeekId ?? "all") !== "all");
       setImportProposal(proposal);
@@ -630,6 +643,7 @@ export function ShareClient({
             {importProposal?.canImport && importComparison ? (
               <>
                 <ImportComparison comparison={importComparison} semesters={semesters} />
+                {importClashes ? <ImportClashes analysis={importClashes} /> : null}
                 {importResetsView ? <p>Importing will also show hidden classes and reset the week view to All weeks.</p>
                   : !importComparison.hasChanges ? <p>Your saved timetable is already the same. No changes will be made.</p> : null}
               </>
