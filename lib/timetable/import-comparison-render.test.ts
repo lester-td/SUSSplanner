@@ -12,13 +12,13 @@ const render = (saved: SharedClassIdentifier[], next: SharedClassIdentifier[], p
 }));
 
 describe("import comparison labels", () => {
-  it("labels categories and the originating semester of preserved continuations", () => {
+  it("labels categories and the originating semester of kept continuations", () => {
     const link = { ...start, originSemesterId: 14 };
     const added = { ...start, courseCode: "ICT302" };
     const html = render([link, start], [link, added], [link]);
     expect(html).toContain('aria-label="Added"');
     expect(html).toContain('aria-label="Removed"');
-    expect(html).toContain('aria-label="Preserved"');
+    expect(html).toContain('aria-label="Kept"');
     expect(html).toContain("continuation from January 2027");
     expect(html).toContain("ICT302 TG01");
   });

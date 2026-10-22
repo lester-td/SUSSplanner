@@ -73,7 +73,7 @@ try
   const origins = { "3": semester(3, [group("NIE301", "TG02"), group("NIE351", "TG03")]) };
   const mixed = state([...links, group("NIE351", "TG02")], origins);
   const mixedUrl = `${baseUrl}/share?sem=14&classes=NIE301:TG01@3,NIE351:TG01@3,ICT302:CRN01,GONE:TG01`;
-  await scenario("warning cancellation, effective comparison, preserved links, and mobile layout", async (page) => {
+  await scenario("warning cancellation, effective comparison, kept links, and mobile layout", async (page) => {
     await page.goto(mixedUrl);
     await seed(page, mixed);
     const before = await saved(page);
@@ -90,7 +90,7 @@ try
     }
     await open(page);
     await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
-    await assertIncludes(dialog(page).getByRole("region", { name: "Preserved", exact: true }), "NIE301 TG02 · continuation from July 2026");
+    await assertIncludes(dialog(page).getByRole("region", { name: "Kept", exact: true }), "NIE301 TG02 · continuation from July 2026");
     await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "NIE351 TG02");
     await assertIncludes(dialog(page).getByRole("region", { name: "Added", exact: true }), "ICT302 CRN01");
     assert.ok(!(await dialog(page).innerText()).includes("GONE"));
@@ -157,7 +157,7 @@ try
     await assertIncludes(dialog(page), "Your saved timetable changed.");
     assert.equal(await saved(page), before);
     await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
-    assert.ok(!(await dialog(page).getByRole("region", { name: "Preserved", exact: true }).innerText()).includes("NIE301"));
+    assert.ok(!(await dialog(page).getByRole("region", { name: "Kept", exact: true }).innerText()).includes("NIE301"));
     await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "NIE301 TG02 · continuation");
     await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
     await page.waitForURL("**/timetable");

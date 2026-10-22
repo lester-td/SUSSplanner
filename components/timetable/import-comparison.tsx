@@ -15,7 +15,7 @@ export function ImportComparison({ comparison, semesters }: {
       {([
         ["Added", comparison.added],
         ["Removed", comparison.removed],
-        ["Preserved", comparison.preserved],
+        ["Kept", comparison.preserved],
       ] as const).map(([title, selections]) => selections.length > 0 ? (
         <section key={title} aria-label={title}>
           <h3 className="font-semibold text-[var(--on-surface)]">{title} ({selections.length})</h3>
