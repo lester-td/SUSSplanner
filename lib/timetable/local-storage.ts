@@ -1,4 +1,5 @@
 import { plannerSemesterStateSchema, plannerStorageStateSchema } from "@/lib/validation/timetable";
+import { projectTimetableImport } from "./import-projection";
 import type { PlannerSemesterState, PlannerStorageState, SharedClassIdentifier, SharedTimetableState } from "./types";
 import { buildSharedClassIdentifier } from "./share-url";
 
@@ -360,29 +361,7 @@ export function importSharedTimetableToLocalStorage(
   current?: PlannerStorageState | null,
 )
 {
-  const currentTargetState = getSavedSemesterState(current ?? null, state.semesterId);
-  const nextSemesterState: PlannerSemesterState = {
-    semesterId: state.semesterId,
-    selectedClasses: state.selectedClasses,
-    hiddenClasses: [],
-    courseColorsByCourseCode: currentTargetState?.courseColorsByCourseCode ?? {},
-    selectedWeekId: "all",
-  };
-
-  const nextState: PlannerStorageState = {
-    semesterId: nextSemesterState.semesterId,
-    selectedClasses: nextSemesterState.selectedClasses,
-    hiddenClasses: nextSemesterState.hiddenClasses,
-    courseColorsByCourseCode: nextSemesterState.courseColorsByCourseCode,
-    selectedWeekId: nextSemesterState.selectedWeekId,
-    orientation: current?.orientation ?? "horizontal",
-    viewMode: current?.viewMode ?? "class",
-    semesterStates: {
-      ...(current?.semesterStates ?? {}),
-      [String(nextSemesterState.semesterId)]: nextSemesterState,
-    },
-  };
-
+  const nextState = projectTimetableImport(state, current);
   saveTimetableToLocalStorage(nextState);
   return nextState;
 }

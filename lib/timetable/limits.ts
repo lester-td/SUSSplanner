@@ -1,0 +1,1 @@
+export const MAX_TIMETABLE_SELECTIONS = 50;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_TIMETABLE_SELECTIONS } from "@/lib/timetable/limits";
 
 export const scheduleTypeSchema = z.enum(["daytime", "evening"]);
 export const groupCodeTypeSchema = z.enum(["TG", "CRN"]);
@@ -39,13 +40,13 @@ export const sharedClassIdentifierSchema = z.object({
 
 export const sharedTimetableStateSchema = z.object({
   semesterId: semesterIdSchema,
-  selectedClasses: z.array(sharedClassIdentifierSchema).max(50),
+  selectedClasses: z.array(sharedClassIdentifierSchema).max(MAX_TIMETABLE_SELECTIONS),
 });
 
 export const courseColorPreferenceSchema = z.string().regex(/^theme-color:\d+$/);
 
 export const plannerSemesterStateSchema = sharedTimetableStateSchema.extend({
-  hiddenClasses: z.array(z.string()).max(50),
+  hiddenClasses: z.array(z.string()).max(MAX_TIMETABLE_SELECTIONS),
   courseColorsByCourseCode: z.record(courseCodeSchema, courseColorPreferenceSchema).default({}),
   selectedWeekId: z.union([z.literal("all"), semesterIdSchema]),
 });
