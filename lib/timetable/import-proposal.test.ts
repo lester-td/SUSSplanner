@@ -127,4 +127,39 @@ describe("timetable import proposal", () => {
     expect(getSavedSemesterState(loadSavedTimetable(), 3)!.selectedClasses).toEqual([added, savedLink]);
     expect(getSavedSemesterState(loadSavedTimetable(), 1)!.selectedClasses).toEqual([group("NIE301", "TG02")]);
   });
+  it("creates missing links only when an imported published start is finally committed", () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => data.set(key, value),
+    } });
+    const start = group("NIE301", "TG01");
+    const unrelated = upsertClassInSavedTimetable(null, 9, group("ICT301", "TG02"));
+    saveTimetableToLocalStorage(unrelated);
+    const current = loadSavedTimetable();
+    const incomingTimetable = timetable(start);
+    incomingTimetable.selections[0].continuationSemesterIds = [3, 14];
+    const proposal = buildTimetableImportProposal({ incoming: { semesterId: 1, selectedClasses: [start] },
+      current, incomingTimetable, savedTimetable: null });
+    expect(loadSavedTimetable()).toEqual(current);
+    expect(commitTimetableImport({ semesterId: 1, proposal, expectedSavedState: JSON.stringify(current) })).toBe(true);
+    expect(getSavedSemesterState(loadSavedTimetable(), 3)?.selectedClasses).toEqual([{ ...start, originSemesterId: 1 }]);
+    expect(getSavedSemesterState(loadSavedTimetable(), 14)?.selectedClasses).toEqual([{ ...start, originSemesterId: 1 }]);
+    expect(getSavedSemesterState(loadSavedTimetable(), 9)).toEqual(getSavedSemesterState(current, 9));
+  });
+
+  it("skips an imported start whose published destination conflicts with a saved link", () => {
+    const start = group("NIE301", "TG01");
+    const link = group("NIE301", "TG02", 1);
+    const current = upsertClassInSavedTimetable(null, 3, link);
+    const incomingTimetable = timetable(start);
+    incomingTimetable.selections[0].continuationSemesterIds = [3];
+    const proposal = buildTimetableImportProposal({ incoming: { semesterId: 1, selectedClasses: [start] },
+      current, incomingTimetable, savedTimetable: null });
+    expect(proposal.selectedClasses).toEqual([]);
+    expect(proposal.resolvedStarts).toEqual([]);
+    expect(proposal.skipped).toEqual([{ selection: start, reason: "conflict", conflictSemesterId: 3 }]);
+    expect(proposal.canImport).toBe(false);
+  });
+
 });

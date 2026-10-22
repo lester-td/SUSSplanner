@@ -415,6 +415,7 @@ export function clearSavedTimetable()
 export function importSharedTimetableToLocalStorage(
   state: SharedTimetableState,
   current?: PlannerStorageState | null,
+  resolvedStarts: ResolvedContinuationStart[] = [],
 )
 {
   const currentTargetState = getSavedSemesterState(current ?? null, state.semesterId);
@@ -440,6 +441,7 @@ export function importSharedTimetableToLocalStorage(
     },
   };
 
-  saveTimetableToLocalStorage(nextState);
-  return nextState;
+  const restored = restoreMissingContinuationLinks(nextState, state.semesterId, resolvedStarts).state!;
+  saveTimetableToLocalStorage(restored);
+  return restored;
 }

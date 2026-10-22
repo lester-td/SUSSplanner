@@ -1,5 +1,6 @@
 import {
   getSavedSemesterState,
+  getContinuationConflicts,
   importSharedTimetableToLocalStorage,
   loadSavedTimetable,
 } from "./local-storage";
@@ -10,6 +11,7 @@ export type SkippedImportSelection = {
   selection: SharedClassIdentifier;
   reason: "unresolved" | "conflict";
   savedOrigin?: SharedClassIdentifier;
+  conflictSemesterId?: number;
 };
 
 export function buildTimetableImportProposal({
@@ -30,6 +32,7 @@ export function buildTimetableImportProposal({
   const skipped: SkippedImportSelection[] = [];
   const seen = new Set<string>();
   let eligibleIncomingCount = 0;
+  const resolvedStarts = incomingTimetable.selections.filter((item) => item.identifier.originSemesterId === undefined);
 
   for (const selection of incoming.selectedClasses)
   {
@@ -39,6 +42,14 @@ export function buildTimetableImportProposal({
     if (!validIncoming.has(key))
     {
       skipped.push({ selection, reason: "unresolved" });
+      continue;
+    }
+
+    const resolved = resolvedStarts.find((item) => buildSharedClassIdentifier(item.identifier) === key);
+    const conflictSemesterId = resolved ? getContinuationConflicts(current, incoming.semesterId, resolved)[0] : undefined;
+    if (conflictSemesterId !== undefined)
+    {
+      skipped.push({ selection, reason: "conflict", conflictSemesterId });
       continue;
     }
 
@@ -78,6 +89,7 @@ export function buildTimetableImportProposal({
 
   return {
     selectedClasses,
+    resolvedStarts: resolvedStarts.filter((item) => selectedClasses.some((selection) => buildSharedClassIdentifier(selection) === buildSharedClassIdentifier(item.identifier))),
     skipped,
     canImport: eligibleIncomingCount > 0 && selectedClasses.length <= 50,
     tooManySelections: selectedClasses.length > 50,
@@ -97,6 +109,6 @@ export function commitTimetableImport({
   if (!proposal.canImport) return false;
   const current = loadSavedTimetable();
   if (JSON.stringify(current) !== expectedSavedState) return false;
-  importSharedTimetableToLocalStorage({ semesterId, selectedClasses: proposal.selectedClasses }, current);
+  importSharedTimetableToLocalStorage({ semesterId, selectedClasses: proposal.selectedClasses }, current, proposal.resolvedStarts);
   return true;
 }
