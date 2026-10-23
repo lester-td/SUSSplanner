@@ -44,9 +44,6 @@ import {
   loadSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import { ImportComparison } from "@/components/timetable/import-comparison";
-import { ImportClashes } from "@/components/timetable/import-clashes";
-import { buildTimetableImportClashAnalysis } from "@/lib/timetable/import-clashes";
-import type { ImportClashAnalysis } from "@/lib/timetable/import-clashes";
 import { buildTimetableImportComparison } from "@/lib/timetable/import-comparison";
 import { buildTimetableImportProposal, commitTimetableImport } from "@/lib/timetable/import-proposal";
 import { buildSharedClassIdentifier, encodeShareUrlState } from "@/lib/timetable/share-url";
@@ -107,11 +104,12 @@ export function ShareClient({
   const [importPhase, setImportPhase] = useState<"closed" | "loading" | "warning" | "confirm" | "error">("closed");
   const [importProposal, setImportProposal] = useState<ReturnType<typeof buildTimetableImportProposal> | null>(null);
   const [importComparison, setImportComparison] = useState<ReturnType<typeof buildTimetableImportComparison> | null>(null);
-  const [importClashes, setImportClashes] = useState<ImportClashAnalysis | null>(null);
   const [importResetsView, setImportResetsView] = useState(false);
   const [importSnapshot, setImportSnapshot] = useState("");
   const [importError, setImportError] = useState("");
   const [reviewUpdated, setReviewUpdated] = useState(false);
+  const importIsNoop = importPhase === "confirm" && importProposal?.canImport === true
+    && importComparison?.hasChanges === false && !importResetsView;
   const importRequestRef = useRef(0);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [scheduleCourse, setScheduleCourse] = useState<ReturnType<typeof buildSelectedCourseCards>[number] | null>(null);
@@ -260,7 +258,6 @@ export function ShareClient({
     importRequestRef.current += 1;
     setImportPhase("closed");
     setImportProposal(null);
-    setImportClashes(null);
   }
 
   async function prepareImport(current: PlannerStorageState | null, updated = false)
@@ -268,7 +265,6 @@ export function ShareClient({
     const requestId = ++importRequestRef.current;
     setImportPhase("loading");
     setImportError("");
-    setImportClashes(null);
     try
     {
       const savedSelections = (getSavedSemesterState(current, sharedState.semesterId)?.selectedClasses ?? [])
@@ -306,13 +302,6 @@ export function ShareClient({
       });
       const savedSemester = getSavedSemesterState(current, sharedState.semesterId);
       setImportComparison(buildTimetableImportComparison(savedSemester?.selectedClasses ?? [], proposal));
-      setImportClashes(buildTimetableImportClashAnalysis({
-        selectedClasses: proposal.selectedClasses,
-        savedSelections: savedSemester?.selectedClasses ?? [],
-        semesterId: sharedState.semesterId,
-        incomingTimetable: timetable,
-        savedTimetable,
-      }));
       setImportResetsView((savedSemester?.hiddenClasses.length ?? 0) > 0
         || (savedSemester?.selectedWeekId ?? "all") !== "all");
       setImportProposal(proposal);
@@ -601,7 +590,7 @@ export function ShareClient({
         open={importPhase !== "closed"}
         title={importPhase === "warning" ? "Some classes will be skipped"
           : importPhase === "error" ? "Unable to prepare import" : importPhase === "confirm" ? "Review timetable changes" : "Import shared timetable"}
-        description={importPhase === "warning"
+        description={importIsNoop ? undefined : importPhase === "warning"
           ? "These classes cannot be included in the saved timetable."
           : importPhase === "error" ? "Please try checking the timetable again."
             : `Review the replacement for ${selectedSemester?.semesterName ?? "this semester"} before saving. This cannot be undone.`}
@@ -639,19 +628,21 @@ export function ShareClient({
         ) : null}
         {importPhase === "confirm" ? (
           <div className="space-y-2 text-sm">
-            {reviewUpdated ? <p role="status">Your saved timetable changed. Review this updated import before confirming.</p> : null}
-            {importProposal?.canImport && importComparison ? (
+            {importIsNoop ? <p role="status">This timetable matches your saved timetable.</p> : (
               <>
-                <ImportComparison comparison={importComparison} semesters={semesters} />
-                {importClashes ? <ImportClashes analysis={importClashes} /> : null}
-                {importResetsView ? <p>Importing will also show hidden classes and reset the week view to All weeks.</p>
-                  : !importComparison.hasChanges ? <p>Your saved timetable is already the same. No changes will be made.</p> : null}
+                {reviewUpdated ? <p role="status">Your saved timetable changed. Review this updated import before confirming.</p> : null}
+                {importProposal?.canImport && importComparison ? (
+                  <>
+                    <ImportComparison comparison={importComparison} semesters={semesters} />
+                    {importResetsView ? <p>Importing will show hidden classes and reset the week view to All weeks.</p> : null}
+                  </>
+                ) : null}
+                {sharedState.selectedClasses.length === 0 ? <p>This shared timetable is empty. There are no selections to import; your saved timetable will not be cleared.</p> : null}
+                {importProposal?.tooManySelections ? <p role="alert">The result exceeds the 50-class timetable limit.</p> : null}
+                {!importProposal?.canImport && !importProposal?.tooManySelections
+                  ? <p role="status">There are no valid selections to import. Your saved timetable will not be cleared.</p> : null}
               </>
-            ) : null}
-            {sharedState.selectedClasses.length === 0 ? <p>This shared timetable is empty. There are no selections to import; your saved timetable will not be cleared.</p> : null}
-            {importProposal?.tooManySelections ? <p role="alert">The result exceeds the 50-class timetable limit.</p> : null}
-            {!importProposal?.canImport && !importProposal?.tooManySelections
-              ? <p role="status">There are no valid selections to import. Your saved timetable will not be cleared.</p> : null}
+            )}
           </div>
         ) : null}
       </Modal>
