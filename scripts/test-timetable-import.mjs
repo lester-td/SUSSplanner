@@ -52,7 +52,9 @@ try
     for (const dismiss of ["cancel", "escape", "backdrop"])
     {
       await open(page);
-      await assertIncludes(dialog(page), "NIE301 TG01 → NIE301 TG02");
+      await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "NIE301 TG01");
+      await assertIncludes(dialog(page).getByRole("region", { name: "Added", exact: true }), "NIE301 TG02");
+      assert.equal(await dialog(page).getByRole("region", { name: "Changed", exact: true }).count(), 0);
       assert.equal(await saved(page), before);
       if (dismiss === "cancel") await dialog(page).getByRole("button", { name: "Cancel", exact: true }).click();
       if (dismiss === "escape") await page.keyboard.press("Escape");
@@ -73,7 +75,7 @@ try
   const origins = { "3": semester(3, [group("NIE301", "TG02"), group("NIE351", "TG03")]) };
   const mixed = state([...links, group("NIE351", "TG02")], origins);
   const mixedUrl = `${baseUrl}/share?sem=14&classes=NIE301:TG01@3,NIE351:TG01@3,ICT302:CRN01,GONE:TG01`;
-  await scenario("warning cancellation, effective comparison, kept links, and mobile layout", async (page) => {
+  await scenario("warning cancellation, compact comparison, kept persistence, and mobile layout", async (page) => {
     await page.goto(mixedUrl);
     await seed(page, mixed);
     const before = await saved(page);
@@ -90,7 +92,9 @@ try
     }
     await open(page);
     await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
-    await assertIncludes(dialog(page).getByRole("region", { name: "Kept", exact: true }), "NIE301 TG02 · continuation from July 2026");
+    assert.equal(await dialog(page).getByRole("region", { name: "Kept", exact: true }).count(), 0);
+    assert.equal(await dialog(page).getByRole("region").count(), 2);
+    assert.ok(!(await dialog(page).innerText()).includes("continuation from July 2026"));
     await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "NIE351 TG02");
     await assertIncludes(dialog(page).getByRole("region", { name: "Added", exact: true }), "ICT302 CRN01");
     assert.ok(!(await dialog(page).innerText()).includes("GONE"));
@@ -121,7 +125,9 @@ try
     await page.keyboard.press("Escape");
     await seed(page, state([group("NIE301", "TG02")]));
     await open(page);
-    await assertIncludes(dialog(page), "No changes will be made.");
+    assert.deepEqual(await dialog(page).getByRole("status").allTextContents(), ["This timetable matches your saved timetable."]);
+    assert.equal(await dialog(page).getByRole("region").count(), 0);
+    assert.ok(!(await dialog(page).innerText()).includes("This cannot be undone."));
     assert.equal(await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).isDisabled(), true);
     await page.keyboard.press("Escape");
     const hidden = state([group("NIE301", "TG02")]);
@@ -129,6 +135,7 @@ try
     await seed(page, hidden);
     await open(page);
     await assertIncludes(dialog(page), "show hidden classes and reset the week view");
+    assert.equal(await dialog(page).getByText("This timetable matches your saved timetable.", { exact: true }).count(), 0);
     assert.equal(await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).isEnabled(), true);
     await page.goto(`${baseUrl}/share?sem=14&classes=GONE:TG01`);
     const before = await saved(page);
@@ -157,7 +164,7 @@ try
     await assertIncludes(dialog(page), "Your saved timetable changed.");
     assert.equal(await saved(page), before);
     await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
-    assert.ok(!(await dialog(page).getByRole("region", { name: "Kept", exact: true }).innerText()).includes("NIE301"));
+    assert.equal(await dialog(page).getByRole("region", { name: "Kept", exact: true }).count(), 0);
     await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "NIE301 TG02 · continuation");
     await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
     await page.waitForURL("**/timetable");
@@ -189,6 +196,52 @@ try
     release();
     await page.unrouteAll({ behavior: "wait" });
     assert.equal(await dialog(page).count(), 0);
+    assert.equal(await saved(page), before);
+  });
+
+  await scenario("confirmation lists only added and removed classes even when a kept class clashes", async (page) => {
+    const link = group("NIE301", "TG02", 3);
+    const origin = { "3": semester(3, [group("NIE301", "TG02")]) };
+    await page.goto(`${baseUrl}/share?sem=14&classes=BXL632:CRN01`);
+    await seed(page, state([link, group("EAS109", "CRN05")], origin));
+    const before = await saved(page);
+    await open(page);
+    await assertIncludes(dialog(page).getByRole("region", { name: "Added", exact: true }), "BXL632 CRN01");
+    await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "EAS109 CRN05");
+    assert.equal(await dialog(page).getByRole("region").count(), 2);
+    assert.ok(!(await dialog(page).innerText()).includes("NIE301"), "kept class is omitted from confirmation");
+    assert.ok(!/clash|unchanged/i.test(await dialog(page).innerText()));
+    assert.equal(await saved(page), before);
+    for (const [name, width, height] of [["desktop", 1280, 900], ["mobile", 390, 844]])
+    {
+      await page.setViewportSize({ width, height });
+      const box = await dialog(page).boundingBox();
+      assert.ok(box.x >= 0 && box.x + box.width <= width, `${name}: dialog fits viewport`);
+      assert.ok(await dialog(page).evaluate((el) => el.scrollWidth <= el.clientWidth), `${name}: no horizontal overflow`);
+      if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/import-changes-${name}.png` });
+    }
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    const result = await read(page);
+    assert.deepEqual(result.semesterStates["14"].selectedClasses, [group("BXL632", "CRN01"), link]);
+    assert.deepEqual(result.semesterStates["3"], origin["3"]);
+  });
+
+  await scenario("matching timetable has one message while the shared preview still shows clashes", async (page) => {
+    const link = group("NIE301", "TG02", 3);
+    const classes = [group("BXL632", "CRN01"), link];
+    await page.goto(`${baseUrl}/share?sem=14&classes=BXL632:CRN01,NIE301:TG02@3`);
+    await page.getByText("1 clash in 2 tutorial groups", { exact: true }).waitFor();
+    await seed(page, state(classes, { "3": semester(3, [group("NIE301", "TG02")]) }));
+    const before = await saved(page);
+    await open(page);
+    assert.deepEqual(await dialog(page).getByRole("status").allTextContents(), ["This timetable matches your saved timetable."]);
+    assert.equal(await dialog(page).getByRole("region").count(), 0);
+    const text = await dialog(page).innerText();
+    assert.ok(!/clash|unchanged|No class changes|No changes will be made|This cannot be undone/i.test(text));
+    assert.equal(await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).isDisabled(), true);
+    if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/import-matching-timetable.png` });
+    await page.keyboard.press("Escape");
     assert.equal(await saved(page), before);
   });
 

@@ -108,6 +108,8 @@ export function ShareClient({
   const [importSnapshot, setImportSnapshot] = useState("");
   const [importError, setImportError] = useState("");
   const [reviewUpdated, setReviewUpdated] = useState(false);
+  const importIsNoop = importPhase === "confirm" && importProposal?.canImport === true
+    && importComparison?.hasChanges === false && !importResetsView;
   const importRequestRef = useRef(0);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [scheduleCourse, setScheduleCourse] = useState<ReturnType<typeof buildSelectedCourseCards>[number] | null>(null);
@@ -588,7 +590,7 @@ export function ShareClient({
         open={importPhase !== "closed"}
         title={importPhase === "warning" ? "Some classes will be skipped"
           : importPhase === "error" ? "Unable to prepare import" : importPhase === "confirm" ? "Review timetable changes" : "Import shared timetable"}
-        description={importPhase === "warning"
+        description={importIsNoop ? undefined : importPhase === "warning"
           ? "These classes cannot be included in the saved timetable."
           : importPhase === "error" ? "Please try checking the timetable again."
             : `Review the replacement for ${selectedSemester?.semesterName ?? "this semester"} before saving. This cannot be undone.`}
@@ -626,18 +628,21 @@ export function ShareClient({
         ) : null}
         {importPhase === "confirm" ? (
           <div className="space-y-2 text-sm">
-            {reviewUpdated ? <p role="status">Your saved timetable changed. Review this updated import before confirming.</p> : null}
-            {importProposal?.canImport && importComparison ? (
+            {importIsNoop ? <p role="status">This timetable matches your saved timetable.</p> : (
               <>
-                <ImportComparison comparison={importComparison} semesters={semesters} />
-                {importResetsView ? <p>Importing will also show hidden classes and reset the week view to All weeks.</p>
-                  : !importComparison.hasChanges ? <p>Your saved timetable is already the same. No changes will be made.</p> : null}
+                {reviewUpdated ? <p role="status">Your saved timetable changed. Review this updated import before confirming.</p> : null}
+                {importProposal?.canImport && importComparison ? (
+                  <>
+                    <ImportComparison comparison={importComparison} semesters={semesters} />
+                    {importResetsView ? <p>Importing will show hidden classes and reset the week view to All weeks.</p> : null}
+                  </>
+                ) : null}
+                {sharedState.selectedClasses.length === 0 ? <p>This shared timetable is empty. There are no selections to import; your saved timetable will not be cleared.</p> : null}
+                {importProposal?.tooManySelections ? <p role="alert">The result exceeds the 50-class timetable limit.</p> : null}
+                {!importProposal?.canImport && !importProposal?.tooManySelections
+                  ? <p role="status">There are no valid selections to import. Your saved timetable will not be cleared.</p> : null}
               </>
-            ) : null}
-            {sharedState.selectedClasses.length === 0 ? <p>This shared timetable is empty. There are no selections to import; your saved timetable will not be cleared.</p> : null}
-            {importProposal?.tooManySelections ? <p role="alert">The result exceeds the 50-class timetable limit.</p> : null}
-            {!importProposal?.canImport && !importProposal?.tooManySelections
-              ? <p role="status">There are no valid selections to import. Your saved timetable will not be cleared.</p> : null}
+            )}
           </div>
         ) : null}
       </Modal>
