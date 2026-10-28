@@ -8,12 +8,12 @@ type EnrolmentOwner = {
 
 export function getEnrolmentOwner(selection: SharedClassIdentifier, semesterId: number): EnrolmentOwner
 {
-  return { courseCode: selection.courseCode, originSemesterId: selection.originSemesterId ?? semesterId };
+  return { courseCode: selection.courseCode.trim().toUpperCase(), originSemesterId: selection.originSemesterId ?? semesterId };
 }
 
 export function isOwnedContinuation(selection: SharedClassIdentifier, owner: EnrolmentOwner)
 {
-  return selection.courseCode === owner.courseCode && selection.originSemesterId === owner.originSemesterId;
+  return selection.courseCode.trim().toUpperCase() === owner.courseCode && selection.originSemesterId === owner.originSemesterId;
 }
 
 // Explicit group changes retain existing destinations when publication metadata
@@ -37,6 +37,7 @@ export function reconcileOwnedContinuations(
   owner: EnrolmentOwner,
   selection: SharedClassIdentifier | null,
   publishedDestinationIds?: readonly number[],
+  mode: "replace" | "restore" = "replace",
 )
 {
   const result = { ...semesterStates };
@@ -46,6 +47,18 @@ export function reconcileOwnedContinuations(
   {
     if (target.semesterId === owner.originSemesterId) continue;
     const owned = target.selectedClasses.filter((item) => isOwnedContinuation(item, owner));
+    if (mode === "restore")
+    {
+      if (!linkedSelection || !targetIds.has(target.semesterId)) continue;
+      // Restoration is prevalidated by the projection. Never rewrite existing
+      // records or their hidden/view metadata, even when they look obsolete.
+      if (owned.length === 0)
+      {
+        result[key] = { ...target, selectedClasses: [...target.selectedClasses, linkedSelection] };
+      }
+      targetIds.delete(target.semesterId);
+      continue;
+    }
     if (selection && owned.length === 0 && !targetIds.has(target.semesterId)) continue;
     const ownedKeys = new Set(owned.map(buildSharedClassIdentifier));
     const retainedKey = linkedSelection && targetIds.has(target.semesterId) ? buildSharedClassIdentifier(linkedSelection) : null;
