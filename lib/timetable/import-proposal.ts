@@ -1,16 +1,17 @@
 import {
   getSavedSemesterState,
-  importSharedTimetableToLocalStorage,
   loadSavedTimetable,
+  saveTimetableToLocalStorage,
 } from "./local-storage";
 import { buildSharedClassIdentifier } from "./share-url";
+import { getImportEnrolmentKey, getTimetableImportGroups } from "./import-ambiguities";
 import { projectTimetableImport } from "./import-projection";
 import { MAX_TIMETABLE_SELECTIONS } from "./limits";
 import type { PlannerStorageState, SharedClassIdentifier, SharedTimetableState, TimetableData } from "./types";
 
 export type SkippedImportSelection = {
   selection: SharedClassIdentifier;
-  reason: "unresolved" | "conflict";
+  reason: "unresolved" | "conflict" | "capacity" | "ambiguous";
   savedOrigin?: SharedClassIdentifier;
 };
 
@@ -19,74 +20,110 @@ export function buildTimetableImportProposal({
   current,
   incomingTimetable,
   savedTimetable,
+  continuationTimetables = new Map(),
 }: {
   incoming: SharedTimetableState;
   current: PlannerStorageState | null;
   incomingTimetable: TimetableData;
   savedTimetable: TimetableData | null;
+  continuationTimetables?: ReadonlyMap<number, TimetableData>;
 })
 {
-  const validIncoming = new Set(incomingTimetable.selections.map((item) => buildSharedClassIdentifier(item.identifier)));
-  const validSaved = new Set(savedTimetable?.selections.map((item) => buildSharedClassIdentifier(item.identifier)) ?? []);
-  const selectedClasses: SharedClassIdentifier[] = [];
-  const skipped: SkippedImportSelection[] = [];
-  const preservedSelections: SharedClassIdentifier[] = [];
-  const seen = new Set<string>();
-  let eligibleIncomingCount = 0;
+  const keyOf = buildSharedClassIdentifier;
+  const ownerKey = (selection: SharedClassIdentifier) => getImportEnrolmentKey(selection, incoming.semesterId);
+  const groups = getTimetableImportGroups(incoming);
+  const uniqueIncoming = [...new Map(incoming.selectedClasses.map((item) => [keyOf(item), item])).values()];
+  const resolved = new Map(incomingTimetable.selections.map((item) => [keyOf(item.identifier), item]));
+  const validSaved = new Set(savedTimetable?.selections.map((item) => keyOf(item.identifier)) ?? []);
+  const savedSelections = getSavedSemesterState(current, incoming.semesterId)?.selectedClasses ?? [];
+  const rejected = new Map<string, SkippedImportSelection>();
+  const destinations = new Map<string, number[]>();
+  const unverifiedContinuations: SharedClassIdentifier[] = [];
 
-  for (const selection of incoming.selectedClasses)
+  // Record incoming intent before rejecting anything. A failed attempt restores
+  // its old enrolment; only courses absent from this intent are omissions.
+  for (const selection of uniqueIncoming)
   {
-    const key = buildSharedClassIdentifier(selection);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    if (!validIncoming.has(key))
+    const key = keyOf(selection);
+    if (groups.get(ownerKey(selection))!.length > 1)
     {
-      skipped.push({ selection, reason: "unresolved" });
+      rejected.set(key, { selection, reason: "ambiguous" });
       continue;
     }
-
+    if (!resolved.has(key))
+    {
+      rejected.set(key, { selection, reason: "unresolved" });
+      continue;
+    }
     const savedOrigin = selection.originSemesterId === undefined ? undefined
       : getSavedSemesterState(current, selection.originSemesterId)?.selectedClasses.find((item) => (
         item.courseCode === selection.courseCode && item.originSemesterId === undefined
       ));
-    if (savedOrigin && (
-      savedOrigin.scheduleType !== selection.scheduleType
-      || savedOrigin.groupCodeType !== selection.groupCodeType
-      || savedOrigin.groupCode !== selection.groupCode
-    ))
+    if (savedOrigin && keyOf({ ...savedOrigin, originSemesterId: selection.originSemesterId }) !== key)
     {
-      skipped.push({ selection, reason: "conflict", savedOrigin });
+      rejected.set(key, { selection, reason: "conflict", savedOrigin });
       continue;
     }
-    selectedClasses.push(selection);
-    eligibleIncomingCount += 1;
+    if (selection.originSemesterId !== undefined) continue;
+    const published = resolved.get(key)!.continuationSemesterIds;
+    const verified = [...new Set(published ?? [])].filter((id) => id !== incoming.semesterId);
+    const validated = verified.filter((id) => continuationTimetables.get(id)?.selections.some((item) => (
+      keyOf(item.identifier) === keyOf({ ...selection, originSemesterId: incoming.semesterId })
+    )));
+    if (published === undefined || validated.length !== verified.length) unverifiedContinuations.push(selection);
+    destinations.set(key, validated);
   }
 
-  // A target-semester import replaces ordinary selections, but a valid link
-  // owned by a saved start in another semester remains part of that enrollment.
-  for (const selection of getSavedSemesterState(current, incoming.semesterId)?.selectedClasses ?? [])
-  {
-    if (selection.originSemesterId === undefined) continue;
-    const key = buildSharedClassIdentifier(selection);
+  // Keep valid continuations owned by another saved start when importing their
+  // destination semester. Originless links remain ordinary replacement inputs.
+  const preservedSelections = savedSelections.filter((selection) => {
+    if (selection.originSemesterId === undefined || !validSaved.has(keyOf(selection))) return false;
     const origin = getSavedSemesterState(current, selection.originSemesterId)?.selectedClasses.find((item) => (
       item.courseCode === selection.courseCode && item.originSemesterId === undefined
     ));
-    if (!validSaved.has(key) || !origin
-      || origin.scheduleType !== selection.scheduleType
-      || origin.groupCodeType !== selection.groupCodeType
-      || origin.groupCode !== selection.groupCode) continue;
-    preservedSelections.push(selection);
-    if (!selectedClasses.some((item) => item.courseCode === selection.courseCode
-      && item.originSemesterId === selection.originSemesterId)) selectedClasses.push(selection);
-  }
+    return origin && keyOf({ ...origin, originSemesterId: selection.originSemesterId }) === keyOf(selection);
+  });
 
+  const project = () => {
+    const accepted = uniqueIncoming.filter((item) => !rejected.has(keyOf(item)));
+    const failedOwners = new Set([...rejected.values()].map((item) => ownerKey(item.selection)));
+    const retained = savedSelections.filter((item) => failedOwners.has(ownerKey(item)));
+    const selectedClasses = [...new Map([...accepted, ...preservedSelections, ...retained].map((item) => [keyOf(item), item])).values()];
+    return projectTimetableImport({ semesterId: incoming.semesterId, selectedClasses }, current, {
+      continuationDestinations: destinations,
+      retainedStarts: new Set(retained.filter((item) => item.originSemesterId === undefined).map(keyOf)),
+    });
+  };
+
+  // Rejections are monotonic and bounded by the input size. Reject every
+  // contributor to an overfull destination, then recompute with old enrolments
+  // restored; URL order cannot choose a capacity winner.
+  let projectedState = project();
+  for (let round = 0; round < uniqueIncoming.length; round += 1)
+  {
+    const overfull = Object.values(projectedState.semesterStates ?? {})
+      .filter((item) => item.selectedClasses.length > MAX_TIMETABLE_SELECTIONS);
+    if (overfull.length === 0) break;
+    const contributors = uniqueIncoming.filter((selection) => {
+      if (rejected.has(keyOf(selection))) return false;
+      const affectedIds = [incoming.semesterId, ...(destinations.get(keyOf(selection)) ?? [])];
+      return overfull.some((semester) => affectedIds.includes(semester.semesterId));
+    });
+    if (contributors.length === 0) break;
+    for (const selection of contributors) rejected.set(keyOf(selection), { selection, reason: "capacity" });
+    projectedState = project();
+  }
+  const skipped = uniqueIncoming.flatMap((item) => rejected.has(keyOf(item)) ? [rejected.get(keyOf(item))!] : []);
+  const selectedClasses = projectedState.selectedClasses;
   return {
     selectedClasses,
     preservedSelections,
     skipped,
-    projectedState: projectTimetableImport({ semesterId: incoming.semesterId, selectedClasses }, current),
-    canImport: eligibleIncomingCount > 0 && selectedClasses.length <= MAX_TIMETABLE_SELECTIONS,
-    tooManySelections: selectedClasses.length > MAX_TIMETABLE_SELECTIONS,
+    unverifiedContinuations: unverifiedContinuations.filter((item) => !rejected.has(keyOf(item))),
+    projectedState,
+    canImport: uniqueIncoming.some((item) => !rejected.has(keyOf(item)))
+      && Object.values(projectedState.semesterStates ?? {}).every((item) => item.selectedClasses.length <= MAX_TIMETABLE_SELECTIONS),
+    tooManySelections: skipped.some((item) => item.reason === "capacity"),
   };
 }
 
@@ -100,9 +137,9 @@ export function commitTimetableImport({
   expectedSavedState: string;
 })
 {
-  if (!proposal.canImport) return false;
+  if (!proposal.canImport || proposal.projectedState.semesterId !== semesterId) return false;
   const current = loadSavedTimetable();
   if (JSON.stringify(current) !== expectedSavedState) return false;
-  importSharedTimetableToLocalStorage({ semesterId, selectedClasses: proposal.selectedClasses }, current);
+  saveTimetableToLocalStorage(proposal.projectedState);
   return true;
 }

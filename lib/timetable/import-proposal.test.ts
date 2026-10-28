@@ -143,6 +143,8 @@ describe("timetable import proposal", () => {
     const overLimit = buildTimetableImportProposal({ incoming: shared, current,
       incomingTimetable: timetable(...incoming), savedTimetable: timetable(link) });
     expect(overLimit).toMatchObject({ canImport: false, tooManySelections: true });
-    expect(overLimit.selectedClasses).toEqual([...incoming, link]);
+    expect(overLimit.selectedClasses).toEqual([link]);
+    expect(overLimit.skipped).toHaveLength(50);
+    expect(overLimit.skipped.every((item) => item.reason === "capacity")).toBe(true);
   });
 });

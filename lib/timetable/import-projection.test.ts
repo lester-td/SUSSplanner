@@ -53,7 +53,7 @@ describe("pure timetable import projection", () => {
     });
   });
 
-  it("replaces ordinary selections, keeps supplied links, and resets only the target view", () => {
+  it("replaces ordinary selections, keeps supplied links, and resets only the target view and removes omitted owned links", () => {
     const current = freeze(savedState());
     const incoming = freeze({ semesterId: 3, selectedClasses: [added, kept] });
     const before = structuredClone({ current, incoming });
@@ -64,18 +64,19 @@ describe("pure timetable import projection", () => {
       selectedClasses: [added, kept], hiddenClasses: [], selectedWeekId: "all",
       semesterStates: {
         ...current.semesterStates,
+        "14": { ...current.semesterStates!["14"], selectedClasses: [] },
         "3": { ...current.semesterStates!["3"], selectedClasses: [added, kept], hiddenClasses: [], selectedWeekId: "all" },
       },
     });
     expect({ current, incoming }).toEqual(before);
   });
 
-  it("leaves existing outgoing links untouched when the imported start changes or is omitted", () => {
+  it("removes obsolete outgoing links when the imported start changes or is omitted without destinations", () => {
     const current = savedState();
     for (const selectedClasses of [[{ ...ordinary, groupCode: "TG02" }], [added]])
     {
       const projected = projectTimetableImport({ semesterId: 3, selectedClasses }, current);
-      expect(projected.semesterStates!["14"]).toEqual(current.semesterStates!["14"]);
+      expect(projected.semesterStates!["14"]).toEqual({ ...current.semesterStates!["14"], selectedClasses: [] });
       expect(projected.semesterStates!["1"]).toEqual(current.semesterStates!["1"]);
     }
   });
