@@ -147,6 +147,17 @@ export function saveTimetableToLocalStorage(state: PlannerStorageState)
   window.localStorage.setItem(TIMETABLE_STORAGE_KEY, JSON.stringify(parsed));
 }
 
+export function saveTimetableImportProjection(state: PlannerStorageState, expectedSavedState: string)
+{
+  if (!canUseLocalStorage()) return false;
+  const parsed = normalizeStorageState(state);
+  // Imports replace the complete reviewed projection. The general saver merges
+  // semester maps, which could introduce unreviewed state from a second read.
+  if (JSON.stringify(loadSavedTimetable()) !== expectedSavedState) return false;
+  window.localStorage.setItem(TIMETABLE_STORAGE_KEY, JSON.stringify(parsed));
+  return true;
+}
+
 export function announceTimetableUpdated()
 {
   if (typeof window === "undefined")

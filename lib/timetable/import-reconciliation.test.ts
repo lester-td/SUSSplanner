@@ -144,6 +144,20 @@ describe("explicit import enrolment reconciliation", () => {
     expect(selections(result.projectedState, 4)).toHaveLength(50);
   });
 
+  it("keeps passive saving and reload non-destructive without continuation metadata", () => {
+    const storage = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+    } });
+    const current = upsertClassInSavedTimetable(null, 1, old, [3, 4]);
+    saveTimetableToLocalStorage(current);
+    expect(loadSavedTimetable()).toEqual(current);
+    saveTimetableToLocalStorage(loadSavedTimetable()!);
+    expect(loadSavedTimetable()).toEqual(current);
+    expect(selections(loadSavedTimetable()!, 3)).toEqual([{ ...old, originSemesterId: 1 }]);
+  });
+
   it("persists exactly the reviewed multi-semester projection once and rejects stale state", () => {
     const storage = new Map<string, string>();
     const setItem = vi.fn((key: string, value: string) => storage.set(key, value));

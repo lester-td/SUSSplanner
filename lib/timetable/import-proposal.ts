@@ -1,7 +1,6 @@
 import {
   getSavedSemesterState,
-  loadSavedTimetable,
-  saveTimetableToLocalStorage,
+  saveTimetableImportProjection,
 } from "./local-storage";
 import { buildSharedClassIdentifier } from "./share-url";
 import { getImportEnrolmentKey, getTimetableImportGroups } from "./import-ambiguities";
@@ -87,7 +86,7 @@ export function buildTimetableImportProposal({
   const project = () => {
     const accepted = uniqueIncoming.filter((item) => !rejected.has(keyOf(item)));
     const failedOwners = new Set([...rejected.values()].map((item) => ownerKey(item.selection)));
-    const retained = savedSelections.filter((item) => failedOwners.has(ownerKey(item)));
+    const retained = savedSelections.filter((item) => item.originSemesterId === undefined && failedOwners.has(ownerKey(item)));
     const selectedClasses = [...new Map([...accepted, ...preservedSelections, ...retained].map((item) => [keyOf(item), item])).values()];
     return projectTimetableImport({ semesterId: incoming.semesterId, selectedClasses }, current, {
       continuationDestinations: destinations,
@@ -138,8 +137,5 @@ export function commitTimetableImport({
 })
 {
   if (!proposal.canImport || proposal.projectedState.semesterId !== semesterId) return false;
-  const current = loadSavedTimetable();
-  if (JSON.stringify(current) !== expectedSavedState) return false;
-  saveTimetableToLocalStorage(proposal.projectedState);
-  return true;
+  return saveTimetableImportProjection(proposal.projectedState, expectedSavedState);
 }
