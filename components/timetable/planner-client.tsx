@@ -645,7 +645,9 @@ export function PlannerClient({
         if (restoration?.skipped.length)
         {
           const courses = [...new Set(restoration.skipped.map((item) => item.selection.courseCode))].join(", ");
-          setPlannerNotice(`Some continuation links could not be restored for ${courses}. Check for ambiguous groups, conflicting selections or full destination timetables.`);
+          const descriptions = { ambiguous: "multiple saved starting groups", conflict: "conflicting saved selections", capacity: "full destination timetables" };
+          const reasons = [...new Set(restoration.skipped.map((item) => descriptions[item.reason]))].join("; ");
+          setPlannerNotice(`Some continuation links could not be restored for ${courses}: ${reasons}. Saved selections were preserved.`);
         }
       })
       .catch((error: unknown) => {

@@ -386,6 +386,11 @@ try
     await assertIncludes(dialog(page).getByRole("region", { name: "July 2027", exact: true }), "NIE301 TG02");
     assert.ok(!(await dialog(page).innerText()).includes("This timetable matches"));
     assert.ok(await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).isEnabled());
+    const before = await saved(page);
+    await dialog(page).getByRole("button", { name: "Cancel", exact: true }).click();
+    assert.equal(await saved(page), before);
+    await open(page);
+    assert.equal(await saved(page), before);
     await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
     await page.waitForURL("**/timetable");
     await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02`);
@@ -454,6 +459,143 @@ try
     const result = await read(page);
     assert.deepEqual(result.selectedClasses, [group("NIE301", "TG02")]);
     assert.deepEqual(result.semesterStates["28"].selectedClasses, [group("NIE301", "TG02", 14)]);
+  });
+
+  await scenario("legacy restoration preserves metadata through navigation and reload without redundant writes", async (page) => {
+    await page.addInitScript((key) => {
+      const setItem = Storage.prototype.setItem;
+      window.timetableWrites = 0;
+      Storage.prototype.setItem = function (name, value) {
+        if (name === key) window.timetableWrites += 1;
+        return setItem.call(this, name, value);
+      };
+    }, key);
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG01`);
+    const initial = state([group("NIE301")], { "3": semester(3, [group("ICT302", "CRN01")]) });
+    initial.hiddenClasses = initial.semesterStates["14"].hiddenClasses = ["NIE301:daytime:TG:TG01"];
+    initial.courseColorsByCourseCode = initial.semesterStates["14"].courseColorsByCourseCode = { NIE301: "theme-color:2" };
+    await seed(page, initial);
+    await page.goto(`${baseUrl}/timetable`);
+    await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key)).semesterStates["28"]?.selectedClasses.length === 1, key);
+    const restored = await read(page);
+    assert.deepEqual(restored.semesterStates["28"].selectedClasses, [group("NIE301", "TG01", 14)]);
+    for (const id of ["3", "14"]) assert.deepEqual(restored.semesterStates[id], initial.semesterStates[id]);
+    assert.equal(await page.evaluate(() => window.timetableWrites), 1);
+    await page.locator('[data-rail-item="28"]').first().click();
+    await page.getByRole("button", { name: "Remove course", exact: true }).waitFor();
+    await page.locator('[data-rail-item="14"]').first().click();
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+    assert.deepEqual((await read(page)).semesterStates["28"], restored.semesterStates["28"]);
+    assert.equal(await page.evaluate(() => window.timetableWrites), 0);
+  });
+
+  await scenario("legacy conflicts remain add-only and display a warning on desktop and mobile", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG01`);
+    const initial = state([group("NIE301")], { "28": { ...semester(28, [group("NIE301", "TG02", 14)]),
+      hiddenClasses: ["NIE301:daytime:TG:TG02@14"], selectedWeekId: 7 } });
+    await seed(page, initial);
+    const before = await saved(page);
+    await page.goto(`${baseUrl}/timetable`);
+    await page.getByText(/Some continuation links could not be restored for NIE301/).waitFor();
+    assert.equal(await saved(page), before);
+    const announcements = page.getByRole("button", { name: /^Dismiss announcement:/ });
+    while (await announcements.count()) await announcements.first().click();
+    for (const [name, width, height] of [["desktop", 1280, 900], ["mobile", 390, 844]])
+    {
+      await page.setViewportSize({ width, height });
+      const notice = page.getByText(/Some continuation links could not be restored for NIE301/);
+      assert.ok(await notice.evaluate((el) => el.scrollWidth <= el.clientWidth), `${name}: restoration notice wraps`);
+      if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/139-restoration-${name}.png`, fullPage: true });
+    }
+  });
+
+  async function holdLegacyDestination(page)
+  {
+    let release;
+    const gate = new Promise((done) => { release = done; });
+    let requested;
+    const seen = new Promise((done) => { requested = done; });
+    let held = false;
+    await page.route("**/api/classes?*", async (route) => {
+      if (!held && new URL(route.request().url()).searchParams.get("sem") === "28")
+      {
+        held = true;
+        const response = await route.fetch();
+        requested();
+        await gate;
+        await route.fulfill({ response });
+      }
+      else await route.continue();
+    });
+    await page.goto(`${baseUrl}/timetable`);
+    await seen;
+    return async () => { release(); await page.unrouteAll({ behavior: "wait" }); await page.waitForLoadState("networkidle"); };
+  }
+
+  await scenario("a held legacy response cannot recreate a removed enrolment", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG01`);
+    await seed(page, state([group("NIE301")]));
+    const release = await holdLegacyDestination(page);
+    await page.getByRole("button", { name: "Remove course", exact: true }).click();
+    const before = await saved(page);
+    await release();
+    assert.equal(await saved(page), before);
+    assert.deepEqual((await read(page)).selectedClasses, []);
+    assert.equal((await read(page)).semesterStates["28"], undefined);
+  });
+
+  await scenario("an older held response cannot overwrite a newer group resolution", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG01`);
+    await seed(page, state([group("NIE301")]));
+    const release = await holdLegacyDestination(page);
+    await seed(page, state([group("NIE301", "TG02")]));
+    await page.evaluate((key) => window.dispatchEvent(new StorageEvent("storage", { key })), key);
+    await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key)).semesterStates["28"]?.selectedClasses[0]?.groupCode === "TG02", key);
+    const before = await saved(page);
+    await release();
+    assert.equal(await saved(page), before);
+    assert.deepEqual((await read(page)).semesterStates["28"].selectedClasses, [group("NIE301", "TG02", 14)]);
+  });
+
+  for (const change of ["unrelated", "filled", "conflicting"])
+  {
+    await scenario(`legacy resolution rechecks a destination changed during its request: ${change}`, async (page) => {
+      await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG01`);
+      await seed(page, state([group("NIE301")]));
+      const release = await holdLegacyDestination(page);
+      const latest = await read(page);
+      if (change === "unrelated") latest.semesterStates["3"] = semester(3, [group("ICT302", "CRN01")]);
+      if (change === "filled") latest.semesterStates["28"] = semester(28, Array.from({ length: 50 }, (_, index) => group(`FILL${index}`)));
+      if (change === "conflicting") latest.semesterStates["28"] = semester(28, [group("NIE301", "TG02", 14)]);
+      await seed(page, latest); // Deliberately no event: test the final fresh read.
+      const before = await saved(page);
+      await release();
+      if (change === "unrelated")
+      {
+        assert.deepEqual((await read(page)).semesterStates["3"], latest.semesterStates["3"]);
+        assert.deepEqual((await read(page)).semesterStates["28"].selectedClasses, [group("NIE301", "TG01", 14)]);
+      }
+      else
+      {
+        const notice = page.getByText(/Some continuation links could not be restored/);
+        await notice.waitFor();
+        await assertIncludes(notice, change === "filled" ? "full destination timetables" : "conflicting saved selections");
+        assert.equal(await saved(page), before);
+      }
+    });
+  }
+
+  await scenario("switching semesters cancels pending legacy restoration", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG01`);
+    await seed(page, state([group("NIE301")]));
+    const release = await holdLegacyDestination(page);
+    await page.locator('[data-rail-item="28"]').first().click();
+    await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key)).semesterId === 28, key);
+    const before = await saved(page);
+    await release();
+    assert.equal(await saved(page), before);
+    assert.deepEqual((await read(page)).selectedClasses, []);
   });
 
 }
