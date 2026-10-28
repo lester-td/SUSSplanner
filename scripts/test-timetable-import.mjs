@@ -24,12 +24,17 @@ const seed = (page, value) => page.evaluate(({ key, value }) => {
   else localStorage.setItem(key, JSON.stringify(value));
 }, { key, value });
 const dialog = (page) => page.getByRole("dialog");
-const open = async (page) => {
+const start = async (page) => {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.getByRole("button", { name: /^Dismiss announcement:/ }).first().waitFor({ timeout: 1000 }).catch(() => {});
+  const popups = page.locator(".app-notification-stack").getByRole("button", { name: /^(Dismiss|Snooze)/ });
+  while (await popups.count()) await popups.first().click();
   const notifications = page.getByRole("button", { name: /^(Dismiss|Snooze)/ });
   while (await notifications.count()) await notifications.first().click();
   await page.getByRole("button", { name: "Import", exact: true }).click();
+};
+const open = async (page) => {
+  await start(page);
   await dialog(page).getByRole("button", { name: /Proceed|Confirm import/ }).waitFor();
 };
 const assertIncludes = async (locator, text) => assert.ok((await locator.innerText()).includes(text), `Expected ${text}`);
@@ -52,7 +57,8 @@ try
     for (const dismiss of ["cancel", "escape", "backdrop"])
     {
       await open(page);
-      await assertIncludes(dialog(page), "NIE301 TG01 → NIE301 TG02");
+      await assertIncludes(dialog(page).getByRole("region", { name: "January 2027", exact: true }).getByRole("region", { name: "Removed", exact: true }), "NIE301 TG01");
+      await assertIncludes(dialog(page).getByRole("region", { name: "January 2027", exact: true }).getByRole("region", { name: "Added", exact: true }), "NIE301 TG02");
       assert.equal(await saved(page), before);
       if (dismiss === "cancel") await dialog(page).getByRole("button", { name: "Cancel", exact: true }).click();
       if (dismiss === "escape") await page.keyboard.press("Escape");
@@ -73,7 +79,7 @@ try
   const origins = { "3": semester(3, [group("NIE301", "TG02"), group("NIE351", "TG03")]) };
   const mixed = state([...links, group("NIE351", "TG02")], origins);
   const mixedUrl = `${baseUrl}/share?sem=14&classes=NIE301:TG01@3,NIE351:TG01@3,ICT302:CRN01,GONE:TG01`;
-  await scenario("warning cancellation, effective comparison, kept links, and mobile layout", async (page) => {
+  await scenario("warning cancellation, effective comparison, protected links, and mobile layout", async (page) => {
     await page.goto(mixedUrl);
     await seed(page, mixed);
     const before = await saved(page);
@@ -90,9 +96,10 @@ try
     }
     await open(page);
     await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
-    await assertIncludes(dialog(page).getByRole("region", { name: "Kept", exact: true }), "NIE301 TG02 · continuation from July 2026");
-    await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "NIE351 TG02");
-    await assertIncludes(dialog(page).getByRole("region", { name: "Added", exact: true }), "ICT302 CRN01");
+    for (const category of ["Kept", "Changed"]) assert.equal(await dialog(page).getByRole("region", { name: category, exact: true }).count(), 0);
+    assert.ok(!(await dialog(page).innerText()).includes("NIE301 TG02"), "unchanged protected link is omitted from comparison");
+    await assertIncludes(dialog(page).getByRole("region", { name: "January 2027", exact: true }).getByRole("region", { name: "Removed", exact: true }), "NIE351 TG02");
+    await assertIncludes(dialog(page).getByRole("region", { name: "January 2027", exact: true }).getByRole("region", { name: "Added", exact: true }), "ICT302 CRN01");
     assert.ok(!(await dialog(page).innerText()).includes("GONE"));
     assert.ok(!(await dialog(page).innerText()).includes("NIE301 TG01"));
     assert.equal(await saved(page), before);
@@ -116,15 +123,15 @@ try
     await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02`);
     await seed(page, null);
     await open(page);
-    await assertIncludes(dialog(page).getByRole("region", { name: "Added", exact: true }), "NIE301 TG02");
+    await assertIncludes(dialog(page).getByRole("region", { name: "January 2027", exact: true }).getByRole("region", { name: "Added", exact: true }), "NIE301 TG02");
     assert.equal(await saved(page), null);
     await page.keyboard.press("Escape");
-    await seed(page, state([group("NIE301", "TG02")]));
+    await seed(page, state([group("NIE301", "TG02")], { "28": semester(28, [group("NIE301", "TG02", 14)]) }));
     await open(page);
-    await assertIncludes(dialog(page), "No changes will be made.");
+    await assertIncludes(dialog(page), "This timetable matches your saved timetable.");
     assert.equal(await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).isDisabled(), true);
     await page.keyboard.press("Escape");
-    const hidden = state([group("NIE301", "TG02")]);
+    const hidden = state([group("NIE301", "TG02")], { "28": semester(28, [group("NIE301", "TG02", 14)]) });
     hidden.hiddenClasses = hidden.semesterStates["14"].hiddenClasses = ["NIE301:daytime:TG:TG02"];
     await seed(page, hidden);
     await open(page);
@@ -157,8 +164,8 @@ try
     await assertIncludes(dialog(page), "Your saved timetable changed.");
     assert.equal(await saved(page), before);
     await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
-    assert.ok(!(await dialog(page).getByRole("region", { name: "Kept", exact: true }).innerText()).includes("NIE301"));
-    await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "NIE301 TG02 · continuation");
+    assert.equal(await dialog(page).getByRole("region", { name: "Kept", exact: true }).count(), 0);
+    await assertIncludes(dialog(page).getByRole("region", { name: "January 2027", exact: true }).getByRole("region", { name: "Removed", exact: true }), "NIE301 TG02 · continuation");
     await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
     await page.waitForURL("**/timetable");
     assert.deepEqual((await read(page)).semesterStates["14"].selectedClasses, [group("ICT302", "CRN01"), links[1]]);
@@ -170,7 +177,7 @@ try
     await seed(page, state([group("NIE351", "TG02")]));
     await page.evaluate((key) => window.dispatchEvent(new StorageEvent("storage", { key })), key);
     await dialog(page).getByText("Your saved timetable changed. Review this updated import before confirming.", { exact: true }).waitFor();
-    await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "NIE351 TG02");
+    await assertIncludes(dialog(page).getByRole("region", { name: "January 2027", exact: true }).getByRole("region", { name: "Removed", exact: true }), "NIE351 TG02");
     await page.keyboard.press("Escape");
     let release;
     const gate = new Promise((done) => { release = done; });
@@ -183,13 +190,270 @@ try
       await route.fulfill({ response });
     });
     const before = await saved(page);
-    await page.getByRole("button", { name: "Import", exact: true }).click();
+    await start(page);
     await seen;
     await dialog(page).getByRole("button", { name: "Cancel", exact: true }).click();
     release();
     await page.unrouteAll({ behavior: "wait" });
     assert.equal(await dialog(page).count(), 0);
     assert.equal(await saved(page), before);
+  });
+
+  const origin3 = semester(3, [group("NIE301")]);
+  const independent = group("NIE301", "TG03");
+  const crossState = () => state([group("NIE301", "TG01", 3), independent], {
+    "3": structuredClone(origin3),
+    "28": semester(28, [group("NIE301", "TG01", 3), group("NIE301", "TG03", 14)]),
+  });
+  async function capture(page, prefix)
+  {
+    if (screenshotDir) await mkdir(screenshotDir, { recursive: true });
+    for (const [name, width, height] of [["desktop", 1280, 900], ["mobile", 390, 844]])
+    {
+      await page.setViewportSize({ width, height });
+      const box = await dialog(page).boundingBox();
+      assert.ok(box.x >= 0 && box.x + box.width <= width && box.height <= height, `${name}: dialog fits`);
+      assert.ok(await dialog(page).evaluate((el) => el.scrollWidth <= el.clientWidth), `${name}: no horizontal overflow`);
+      if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/${prefix}-${name}.png` });
+    }
+  }
+  await scenario("cross-semester replacement reconciles links and preserves independent enrolments through reload", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=3&classes=NIE301:TG02`);
+    const initial = crossState();
+    initial.semesterStates["14"].hiddenClasses = ["NIE301:daytime:TG:TG01@3"];
+    initial.hiddenClasses = initial.semesterStates["14"].hiddenClasses;
+    await seed(page, initial);
+    const before = await saved(page);
+    await open(page);
+    const july = dialog(page).getByRole("region", { name: "July 2026", exact: true });
+    const january = dialog(page).getByRole("region", { name: "January 2027", exact: true });
+    await assertIncludes(july.getByRole("region", { name: "Removed", exact: true }), "NIE301 TG01");
+    await assertIncludes(july.getByRole("region", { name: "Added", exact: true }), "NIE301 TG02");
+    await assertIncludes(january.getByRole("region", { name: "Removed", exact: true }), "NIE301 TG01 · continuation from July 2026");
+    await assertIncludes(january.getByRole("region", { name: "Added", exact: true }), "NIE301 TG02 · continuation from July 2026");
+    await assertIncludes(dialog(page).getByRole("region", { name: "July 2027", exact: true }), "Removed");
+    assert.ok(!(await dialog(page).innerText()).includes("TG03"));
+    assert.equal(await saved(page), before);
+    await capture(page, "146-cross-semester");
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    const result = await read(page);
+    assert.deepEqual(result.semesterStates["3"].selectedClasses, [group("NIE301", "TG02")]);
+    assert.deepEqual(result.semesterStates["14"].selectedClasses, [group("NIE301", "TG02", 3), independent]);
+    assert.deepEqual(result.semesterStates["28"].selectedClasses, [group("NIE301", "TG03", 14)]);
+    assert.deepEqual(result.semesterStates["14"].hiddenClasses, []);
+    await page.reload();
+    assert.deepEqual((await read(page)).semesterStates, result.semesterStates);
+  });
+
+  await scenario("omitting a start discloses and removes its entire linked enrolment", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=3&classes=NIE351:TG03`);
+    await seed(page, crossState());
+    const before = await saved(page);
+    await open(page);
+    for (const semesterName of ["July 2026", "January 2027", "July 2027"])
+      await assertIncludes(dialog(page).getByRole("region", { name: semesterName, exact: true }).getByRole("region", { name: "Removed", exact: true }), "NIE301 TG01");
+    assert.equal(await saved(page), before);
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    const result = await read(page);
+    assert.deepEqual(result.semesterStates["3"].selectedClasses, [group("NIE351", "TG03")]);
+    assert.deepEqual(result.semesterStates["14"].selectedClasses, [independent, group("NIE351", "TG03", 3)]);
+    assert.deepEqual(result.semesterStates["28"].selectedClasses, [group("NIE301", "TG03", 14)]);
+  });
+
+  await scenario("ambiguity defaults, keyboard choices, cancellation, focus, and mobile layout", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02,NIE301:TG01,NIE301:TG02,NIE351:TG03,NIE351:TG02`);
+    await seed(page, null);
+    for (const dismiss of ["cancel", "escape", "backdrop"])
+    {
+      await start(page);
+      await dialog(page).getByRole("radio").first().waitFor();
+      assert.equal(await dialog(page).getByRole("radio").count(), 4);
+      assert.equal(await dialog(page).getByRole("radio", { checked: true }).count(), 2);
+      assert.ok(await dialog(page).getByRole("radio", { name: /NIE301 TG02/ }).isChecked());
+      assert.ok(await dialog(page).getByRole("radio", { name: /NIE351 TG03/ }).isChecked());
+      assert.ok(await dialog(page).getByRole("radio").first().evaluate((el) => el === document.activeElement));
+      assert.equal(await saved(page), null);
+      if (dismiss === "cancel") await dialog(page).getByRole("button", { name: "Cancel", exact: true }).click();
+      if (dismiss === "escape") await page.keyboard.press("Escape");
+      if (dismiss === "backdrop") await page.getByRole("button", { name: "Close modal", exact: true }).click({ position: { x: 2, y: 2 } });
+      await dialog(page).waitFor({ state: "hidden" });
+      assert.equal(await saved(page), null);
+      assert.ok(await page.getByRole("button", { name: "Import", exact: true }).evaluate((el) => el === document.activeElement));
+    }
+    await start(page);
+    await dialog(page).getByRole("radio").first().focus();
+    await page.keyboard.press("ArrowDown");
+    assert.ok(await dialog(page).getByRole("radio", { name: /NIE301 TG01/ }).isChecked());
+    await capture(page, "146-group-choice");
+    await dialog(page).getByRole("button", { name: "Review import", exact: true }).click();
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).waitFor();
+    await assertIncludes(dialog(page).getByRole("region", { name: "January 2027", exact: true }), "NIE301 TG01");
+    assert.ok(!(await dialog(page).innerText()).includes("NIE301 TG02"));
+    assert.equal(await saved(page), null);
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    assert.deepEqual((await read(page)).semesterStates["14"].selectedClasses, [group("NIE301"), group("NIE351", "TG03")]);
+    assert.deepEqual((await read(page)).semesterStates["28"].selectedClasses, [group("NIE301", "TG01", 14), group("NIE351", "TG03", 14)]);
+  });
+
+  await scenario("accepting the default group and exact duplicates", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02,NIE301:TG01`);
+    await seed(page, null);
+    await start(page);
+    await dialog(page).getByRole("button", { name: "Review import", exact: true }).click();
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    assert.deepEqual((await read(page)).selectedClasses, [group("NIE301", "TG02")]);
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02,NIE301:TG02`);
+    await open(page);
+    assert.ok(!(await dialog(page).innerText()).includes("Choose incoming groups"));
+    await assertIncludes(dialog(page), "This timetable matches your saved timetable.");
+  });
+
+  await scenario("a chosen unresolved group preserves its previous enrolment without switching groups", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02,NIE301:TG99,ICT302:CRN01`);
+    const initial = state([group("NIE301")], { "28": semester(28, [group("NIE301", "TG01", 14)]) });
+    await seed(page, initial);
+    const before = await saved(page);
+    await start(page);
+    await dialog(page).getByRole("radio", { name: /NIE301 TG99/ }).check();
+    await dialog(page).getByRole("button", { name: "Review import", exact: true }).click();
+    await dialog(page).getByRole("button", { name: "Proceed", exact: true }).waitFor();
+    await assertIncludes(dialog(page), "NIE301 TG99");
+    await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
+    assert.ok(!(await dialog(page).innerText()).includes("NIE301 TG02"));
+    assert.ok(!(await dialog(page).innerText()).includes("NIE301 TG01"));
+    assert.equal(await saved(page), before);
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    const result = await read(page);
+    assert.deepEqual(result.selectedClasses, [group("ICT302", "CRN01"), group("NIE301")]);
+    assert.deepEqual(result.semesterStates["28"], initial.semesterStates["28"]);
+  });
+
+  await scenario("destination capacity rejects all competitors and restores a failed replacement", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02,NIE351:TG03,ICT302:CRN01`);
+    const fillers = Array.from({ length: 49 }, (_, index) => group(`FILL${index}`));
+    const initial = state([group("NIE301")], { "28": semester(28, [group("NIE301", "TG01", 14), ...fillers]) });
+    await seed(page, initial);
+    const before = await saved(page);
+    await open(page);
+    await assertIncludes(dialog(page), "Some classes will be skipped");
+    await assertIncludes(dialog(page), "NIE301 TG02");
+    await assertIncludes(dialog(page), "NIE351 TG03");
+    await assertIncludes(dialog(page), "class limit");
+    await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
+    await assertIncludes(dialog(page).getByRole("region", { name: "Added", exact: true }), "ICT302 CRN01");
+    assert.equal(await dialog(page).getByRole("region", { name: "Removed", exact: true }).count(), 0);
+    assert.equal(await saved(page), before);
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    const result = await read(page);
+    assert.deepEqual(result.selectedClasses, [group("ICT302", "CRN01"), group("NIE301")]);
+    assert.deepEqual(result.semesterStates["28"], initial.semesterStates["28"]);
+  });
+
+  await scenario("unverifiable destination warns before removing obsolete links", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02`);
+    const initial = state([group("NIE301")], { "28": semester(28, [group("NIE301", "TG01", 14)]) });
+    await seed(page, initial);
+    await page.route("**/api/classes?*", async (route) => {
+      if (new URL(route.request().url()).searchParams.get("sem") === "28") await route.fulfill({ status: 503, body: "Unavailable" });
+      else await route.continue();
+    });
+    const before = await saved(page);
+    await open(page);
+    await assertIncludes(dialog(page).getByRole("alert"), "Continuation information could not be verified");
+    await assertIncludes(dialog(page).getByRole("alert"), "may be incomplete");
+    await assertIncludes(dialog(page).getByRole("region", { name: "July 2027", exact: true }), "Removed");
+    assert.equal(await saved(page), before);
+    await page.keyboard.press("Escape");
+    assert.equal(await saved(page), before);
+    await open(page);
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    assert.deepEqual((await read(page)).selectedClasses, [group("NIE301", "TG02")]);
+    assert.deepEqual((await read(page)).semesterStates["28"].selectedClasses, []);
+  });
+
+  await scenario("continuation-only changes are actionable, then become a true no-op", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02`);
+    await seed(page, state([group("NIE301", "TG02")]));
+    await open(page);
+    assert.equal(await dialog(page).getByRole("region", { name: "January 2027", exact: true }).count(), 0);
+    await assertIncludes(dialog(page).getByRole("region", { name: "July 2027", exact: true }), "NIE301 TG02");
+    assert.ok(!(await dialog(page).innerText()).includes("This timetable matches"));
+    assert.ok(await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).isEnabled());
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02`);
+    await open(page);
+    await assertIncludes(dialog(page), "This timetable matches your saved timetable.");
+    assert.ok(await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).isDisabled());
+  });
+
+  await scenario("a destination changed before confirmation requires fresh capacity review", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02,ICT302:CRN01`);
+    const fillers = Array.from({ length: 49 }, (_, index) => group(`FILL${index}`));
+    const initial = state([group("NIE301")], { "28": semester(28, fillers) });
+    await seed(page, initial);
+    await open(page);
+    await assertIncludes(dialog(page).getByRole("region", { name: "July 2027", exact: true }), "Added");
+    const updated = structuredClone(initial);
+    updated.semesterStates["28"].selectedClasses.push(group("FILL49"));
+    await seed(page, updated); // Final confirmation must re-read without an event.
+    const before = await saved(page);
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await dialog(page).getByRole("button", { name: "Proceed", exact: true }).waitFor();
+    await assertIncludes(dialog(page), "Your saved timetable changed");
+    await assertIncludes(dialog(page), "NIE301 TG02");
+    assert.equal(await saved(page), before);
+    await dialog(page).getByRole("button", { name: "Proceed", exact: true }).click();
+    assert.equal(await dialog(page).getByRole("region", { name: "July 2027", exact: true }).count(), 0);
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    const result = await read(page);
+    assert.deepEqual(result.selectedClasses, [group("ICT302", "CRN01"), group("NIE301")]);
+    assert.deepEqual(result.semesterStates["28"], updated.semesterStates["28"]);
+  });
+
+  await scenario("a cancelled asynchronous response cannot replace a newer review", async (page) => {
+    await page.goto(`${baseUrl}/share?sem=14&classes=NIE301:TG02`);
+    await seed(page, state([group("NIE301")]));
+    let release;
+    const gate = new Promise((done) => { release = done; });
+    let requested;
+    const seen = new Promise((done) => { requested = done; });
+    let held = false;
+    await page.route("**/api/classes?*", async (route) => {
+      if (!held && new URL(route.request().url()).searchParams.get("sem") === "28")
+      {
+        held = true;
+        const response = await route.fetch();
+        requested();
+        await gate;
+        await route.fulfill({ response });
+      }
+      else await route.continue();
+    });
+    await start(page);
+    await seen;
+    await dialog(page).getByRole("button", { name: "Cancel", exact: true }).click();
+    await seed(page, state([group("ICT302", "CRN01")]));
+    const before = await saved(page);
+    await open(page);
+    release();
+    await page.unrouteAll({ behavior: "wait" });
+    await assertIncludes(dialog(page).getByRole("region", { name: "Removed", exact: true }), "ICT302 CRN01");
+    assert.ok(!(await dialog(page).innerText()).includes("NIE301 TG01"));
+    assert.equal(await saved(page), before);
+    await dialog(page).getByRole("button", { name: "Confirm import", exact: true }).click();
+    await page.waitForURL("**/timetable");
+    const result = await read(page);
+    assert.deepEqual(result.selectedClasses, [group("NIE301", "TG02")]);
+    assert.deepEqual(result.semesterStates["28"].selectedClasses, [group("NIE301", "TG02", 14)]);
   });
 
 }
