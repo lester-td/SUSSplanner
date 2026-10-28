@@ -1,6 +1,6 @@
 import { plannerSemesterStateSchema, plannerStorageStateSchema } from "@/lib/validation/timetable";
 import { projectTimetableImport } from "./import-projection";
-import { getContinuationDestinationIds, getEnrolmentOwner, isOwnedContinuation } from "./continuation-ownership";
+import { getEnrolmentOwner, reconcileOwnedContinuations } from "./continuation-ownership";
 import type { PlannerSemesterState, PlannerStorageState, SharedClassIdentifier, SharedTimetableState } from "./types";
 import { buildSharedClassIdentifier } from "./share-url";
 
@@ -240,40 +240,7 @@ export function upsertClassInSavedTimetable(
   if (normalizedSelection.originSemesterId === undefined)
   {
     const owner = getEnrolmentOwner(normalizedSelection, semesterId);
-    const targetIds = getContinuationDestinationIds(Object.values(semesterStates), owner, continuationSemesterIds);
-    const linkedSelection = { ...normalizedSelection, originSemesterId: semesterId };
-    for (const [key, target] of Object.entries(semesterStates))
-    {
-      if (target.semesterId === semesterId) continue;
-      const owned = target.selectedClasses.filter((item) => isOwnedContinuation(item, owner));
-      if (owned.length === 0 && !targetIds.has(target.semesterId)) continue;
-      const ownedKeys = new Set(owned.map(buildSharedClassIdentifier));
-      const retainedKey = targetIds.has(target.semesterId) ? buildSharedClassIdentifier(linkedSelection) : null;
-      let retained = false;
-      const selectedClasses = target.selectedClasses.flatMap((item) => {
-        if (!isOwnedContinuation(item, owner)) return [item];
-        if (!retainedKey || retained) return [];
-        retained = true;
-        return [linkedSelection];
-      });
-      if (retainedKey && !retained) selectedClasses.push(linkedSelection);
-      semesterStates[key] = {
-        ...target,
-        selectedClasses,
-        hiddenClasses: target.hiddenClasses.filter((shareKey) => !ownedKeys.has(shareKey) || shareKey === retainedKey),
-      };
-      targetIds.delete(target.semesterId);
-    }
-    for (const targetId of targetIds)
-    {
-      semesterStates[String(targetId)] = {
-        semesterId: targetId,
-        selectedClasses: [linkedSelection],
-        hiddenClasses: [],
-        courseColorsByCourseCode: {},
-        selectedWeekId: "all" as const,
-      };
-    }
+    Object.assign(semesterStates, reconcileOwnedContinuations(semesterStates, owner, normalizedSelection, continuationSemesterIds));
   }
 
   return normalizeStorageState({
@@ -309,17 +276,7 @@ export function removeCourseCodeFromSavedTimetable(
     ...(state?.semesterStates ?? {}),
     [String(semesterId)]: nextSemesterState,
   };
-  for (const [key, target] of Object.entries(semesterStates))
-  {
-    if (target.semesterId === semesterId) continue;
-    const selectedClasses = target.selectedClasses.filter((item) => !isOwnedContinuation(item, owner));
-    const validKeys = new Set(selectedClasses.map(buildSharedClassIdentifier));
-    semesterStates[key] = {
-      ...target,
-      selectedClasses,
-      hiddenClasses: target.hiddenClasses.filter((shareKey) => validKeys.has(shareKey)),
-    };
-  }
+  Object.assign(semesterStates, reconcileOwnedContinuations(semesterStates, owner, null, []));
 
   return normalizeStorageState({
     ...base,
