@@ -143,9 +143,10 @@ export function saveTimetableToLocalStorage(state: PlannerStorageState)
     return;
   }
 
-  const parsed = mergeStorageState(loadSavedTimetable(), state);
+  const current = loadSavedTimetable();
+  const parsed = mergeStorageState(current, state);
   const serialized = JSON.stringify(parsed);
-  if (window.localStorage.getItem(TIMETABLE_STORAGE_KEY) !== serialized)
+  if (JSON.stringify(current) !== serialized)
     window.localStorage.setItem(TIMETABLE_STORAGE_KEY, serialized);
 }
 

@@ -27,6 +27,15 @@ function storage(initial = state())
 afterEach(() => vi.unstubAllGlobals());
 
 describe("fresh add-only continuation persistence", () => {
+  it("does not rewrite equivalent legacy state just to reorder serialized fields", () => {
+    const initial = state();
+    const legacy = { groupCode: start.groupCode, courseCode: start.courseCode, scheduleType: start.scheduleType, groupCodeType: start.groupCodeType };
+    initial.selectedClasses = initial.semesterStates!["1"].selectedClasses = [legacy];
+    const { setItem } = storage(initial);
+    saveTimetableToLocalStorage(loadSavedTimetable()!);
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
   it("restores once and performs no writes on repeated resolution or passive save", () => {
     const { setItem } = storage();
     expect(restoreResolvedContinuations(1, resolved, destinations)?.changed).toBe(true);
