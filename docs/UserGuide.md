@@ -599,18 +599,25 @@ Opening the link does not change your saved timetable.
 
 ### Import a Shared Timetable
 
-Importing replaces your saved timetable for the shared semester. Other saved
-semesters are kept. Save a share link for your existing timetable before importing
-if you want to restore it later.
+Importing replaces ordinary selections in the shared semester. Replacing a starting
+class updates its published continuations; omitting a starting class removes its
+whole linked enrolment. Unrelated semesters and independent enrolments are kept.
+Save a share link for your existing timetable if you want to restore it later.
 
 1. Open the shared link.
 2. Review the timetable.
 3. Select **Import**.
-4. Read the warning.
-5. Select **Confirm import**.
+4. Choose one group per enrolment if the link contains multiple groups.
+5. Review any skipped-class or unverified-continuation warnings and the **Added** /
+   **Removed** classes grouped by affected semester.
+6. Select **Confirm import**. Cancelling or dismissing the dialog changes nothing.
 
-The shared classes replace your saved selections for that semester. Hidden courses
-are cleared, and the view returns to **All Weeks**.
+The complete reviewed result is saved together. Failed replacements retain the old
+linked enrolment; new enrolments that cannot fit all verified destinations are skipped.
+Unverifiable continuation data is disclosed before saving, and obsolete links are
+removed without guessing new destinations. Hidden courses in the shared semester
+are shown, and its view returns to **All Weeks**. If saved state changes during review,
+you must review the updated proposal before confirming again.
 
 ## Managing Settings and Course Registration Reminders
 
@@ -740,8 +747,9 @@ No. It opens a read-only preview. Your timetable changes only if you select
 
 ### What happens when I import a shared timetable?
 
-It replaces the shared semester’s saved classes, clears hidden courses, and
-returns that timetable to **All Weeks**. Other saved semesters are kept.
+It replaces ordinary classes in the shared semester and reconciles continuations
+owned by its starting classes. Review Added/Removed classes for every affected
+semester before confirming. Unrelated enrolments remain protected.
 
 ### What is the difference between hiding and removing a course?
 

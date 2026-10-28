@@ -44,7 +44,9 @@ import {
   loadSavedTimetable,
 } from "@/lib/timetable/local-storage";
 import { ImportComparison } from "@/components/timetable/import-comparison";
-import { buildTimetableImportComparison } from "@/lib/timetable/import-comparison";
+import { buildTimetableImportEffects } from "@/lib/timetable/import-comparison";
+import { ImportGroupSelection } from "@/components/timetable/import-group-selection";
+import { getTimetableImportGroups, resolveTimetableImportGroups } from "@/lib/timetable/import-ambiguities";
 import { buildTimetableImportProposal, commitTimetableImport } from "@/lib/timetable/import-proposal";
 import { buildSharedClassIdentifier, encodeShareUrlState } from "@/lib/timetable/share-url";
 import { getTimetableActionAvailability } from "@/lib/timetable/timetable-actions";
@@ -101,9 +103,11 @@ export function ShareClient({
   const [orientation, setOrientation] = useState<TimetableOrientation>(() => savedLocalState?.orientation ?? "vertical");
   const [viewMode, setViewMode] = useState<"class" | "exam">("class");
   const [selectedWeekId, setSelectedWeekId] = useState<number | "all">("all");
-  const [importPhase, setImportPhase] = useState<"closed" | "loading" | "warning" | "confirm" | "error">("closed");
+  const [importPhase, setImportPhase] = useState<"closed" | "groups" | "loading" | "warning" | "confirm" | "error">("closed");
   const [importProposal, setImportProposal] = useState<ReturnType<typeof buildTimetableImportProposal> | null>(null);
-  const [importComparison, setImportComparison] = useState<ReturnType<typeof buildTimetableImportComparison> | null>(null);
+  const [importComparison, setImportComparison] = useState<ReturnType<typeof buildTimetableImportEffects> | null>(null);
+  const importGroups = useMemo(() => getTimetableImportGroups(sharedState), [sharedState]);
+  const [importChoices, setImportChoices] = useState<Record<string, string>>({});
   const [importResetsView, setImportResetsView] = useState(false);
   const [importSnapshot, setImportSnapshot] = useState("");
   const [importError, setImportError] = useState("");
@@ -258,6 +262,18 @@ export function ShareClient({
     setImportProposal(null);
   }
 
+  function startImport()
+  {
+    const choices = Object.fromEntries([...importGroups].map(([key, selections]) => [key, buildSharedClassIdentifier(selections[0])]));
+    setImportChoices(choices);
+    if ([...importGroups.values()].some((items) => items.length > 1))
+    {
+      importRequestRef.current += 1;
+      setImportPhase("groups");
+    }
+    else void prepareImport(loadSavedTimetable());
+  }
+
   async function prepareImport(current: PlannerStorageState | null, updated = false)
   {
     const requestId = ++importRequestRef.current;
@@ -265,6 +281,30 @@ export function ShareClient({
     setImportError("");
     try
     {
+      const incoming = resolveTimetableImportGroups(sharedState, importChoices);
+      const continuationRequests = new Map<number, SharedTimetableState["selectedClasses"]>();
+      for (const selection of incoming.selectedClasses)
+      {
+        if (selection.originSemesterId !== undefined) continue;
+        const published = timetable.selections.find((item) => buildSharedClassIdentifier(item.identifier) === buildSharedClassIdentifier(selection));
+        for (const id of new Set(published?.continuationSemesterIds ?? []))
+        {
+          if (id === sharedState.semesterId) continue;
+          continuationRequests.set(id, [...(continuationRequests.get(id) ?? []), { ...selection, originSemesterId: sharedState.semesterId }]);
+        }
+      }
+      // An unavailable destination is unverified metadata, not proof that this
+      // start has no continuations. The proposal warns and uses only verified links.
+      const continuationTimetables = new Map<number, TimetableData>();
+      await Promise.all([...continuationRequests].map(async ([semesterId, selectedClasses]) => {
+        try
+        {
+          const query = encodeShareUrlState({ semesterId, selectedClasses }).split("?")[1];
+          const response = await fetch(`/api/classes?${query}`);
+          if (response.ok) continuationTimetables.set(semesterId, (await response.json() as { timetable: TimetableData }).timetable);
+        }
+        catch { /* Report unverified destinations in the proposal. */ }
+      }));
       const savedSelections = (getSavedSemesterState(current, sharedState.semesterId)?.selectedClasses ?? [])
         .filter((selection) => {
           try
@@ -293,15 +333,15 @@ export function ShareClient({
         return;
       }
       const proposal = buildTimetableImportProposal({
-        incoming: sharedState,
+        incoming,
         current,
         incomingTimetable: timetable,
         savedTimetable,
+        continuationTimetables,
       });
-      const savedSemester = getSavedSemesterState(current, sharedState.semesterId);
-      setImportComparison(buildTimetableImportComparison(savedSemester?.selectedClasses ?? [], proposal));
-      setImportResetsView((savedSemester?.hiddenClasses.length ?? 0) > 0
-        || (savedSemester?.selectedWeekId ?? "all") !== "all");
+      const effects = buildTimetableImportEffects(current, proposal.projectedState);
+      setImportComparison(effects);
+      setImportResetsView(effects.resetsView);
       setImportProposal(proposal);
       setImportSnapshot(JSON.stringify(current));
       setReviewUpdated(updated);
@@ -365,7 +405,7 @@ export function ShareClient({
 
               <div className="flex w-full gap-1.5 md:w-auto md:min-w-[18rem] md:justify-end">
                 <div className="min-w-0 flex-1">
-                <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Import" onClick={() => void prepareImport(loadSavedTimetable())} stretch />
+                <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Import" onClick={startImport} stretch />
                 </div>
                 <div className="min-w-0 flex-1">
                   <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Cancel" onClick={() => router.push("/timetable")} stretch />
@@ -585,7 +625,23 @@ export function ShareClient({
       </div>
 
       <Modal
-        open={importPhase !== "closed"}
+        open={importPhase === "groups"}
+        title="Choose incoming groups"
+        description="Select one group for each enrolment before reviewing the import."
+        onClose={closeImport}
+        footer={(
+          <>
+            <ActionButton variant="ghost" icon={<XIcon className="h-4 w-4" />} label="Cancel" onClick={closeImport} />
+            <ActionButton variant="primary" icon={<UploadIcon className="h-4 w-4" />} label="Review import" onClick={() => void prepareImport(loadSavedTimetable())} />
+          </>
+        )}
+      >
+        <ImportGroupSelection groups={importGroups} choices={importChoices} semesters={semesters}
+          onChange={(key, identifier) => setImportChoices((current) => ({ ...current, [key]: identifier }))} />
+      </Modal>
+
+      <Modal
+        open={importPhase !== "closed" && importPhase !== "groups"}
         title={importPhase === "warning" ? "Some classes will be skipped"
           : importPhase === "error" ? "Unable to prepare import" : importPhase === "confirm" ? "Review timetable changes" : "Import shared timetable"}
         description={importPhase === "warning"
@@ -616,7 +672,9 @@ export function ShareClient({
                 <li key={buildSharedClassIdentifier(selection)}>
                   <strong>{selection.courseCode} {selection.groupCode}</strong>: {reason === "conflict"
                     ? `The saved starting class uses ${savedOrigin?.groupCode}; this continuation will be skipped.`
-                    : "This class identifier could not be matched to a published class."}
+                    : reason === "capacity" ? "The complete enrolment exceeds a semester's class limit; its previous enrolment will be kept."
+                      : reason === "ambiguous" ? "Choose one group for this enrolment."
+                        : "This class identifier could not be matched to a published class; any previous enrolment will be kept."}
                 </li>
               ))}
             </ul>
@@ -629,13 +687,21 @@ export function ShareClient({
             {reviewUpdated ? <p role="status">Your saved timetable changed. Review this updated import before confirming.</p> : null}
             {importProposal?.canImport && importComparison ? (
               <>
-                <ImportComparison comparison={importComparison} semesters={semesters} />
-                {importResetsView ? <p>Importing will also show hidden classes and reset the week view to All weeks.</p>
-                  : !importComparison.hasChanges ? <p>Your saved timetable is already the same. No changes will be made.</p> : null}
+                {!importComparison.hasChanges && !importResetsView ? <p role="status">This timetable matches your saved timetable.</p> : null}
+                {importComparison.semesters.map(({ semesterId, comparison }) => (
+                  <section key={semesterId} aria-label={semesters.find((item) => item.semesterId === semesterId)?.semesterName ?? `Semester ${semesterId}`} className="space-y-2">
+                    <h3 className="font-semibold">{semesters.find((item) => item.semesterId === semesterId)?.semesterName ?? `Semester ${semesterId}`}</h3>
+                    <ImportComparison comparison={comparison} semesters={semesters} />
+                  </section>
+                ))}
+                {importProposal.unverifiedContinuations.length > 0 ? (
+                  <p role="alert">Continuation information could not be verified for {importProposal.unverifiedContinuations.map((item) => `${item.courseCode} ${item.groupCode}`).join(", ")}. Obsolete links will be removed; these imported enrolments may be incomplete. You can cancel before saving.</p>
+                ) : null}
+                {importResetsView ? <p>Importing will also open this semester, show hidden classes and reset the week view to All weeks.</p> : null}
               </>
             ) : null}
             {sharedState.selectedClasses.length === 0 ? <p>This shared timetable is empty. There are no selections to import; your saved timetable will not be cleared.</p> : null}
-            {importProposal?.tooManySelections ? <p role="alert">The result exceeds the 50-class timetable limit.</p> : null}
+            {importProposal?.tooManySelections ? <p role="alert">Some enrolments were skipped because the complete result would exceed the 50-class limit in a semester.</p> : null}
             {!importProposal?.canImport && !importProposal?.tooManySelections
               ? <p role="status">There are no valid selections to import. Your saved timetable will not be cleared.</p> : null}
           </div>

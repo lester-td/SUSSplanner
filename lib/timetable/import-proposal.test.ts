@@ -91,6 +91,21 @@ describe("timetable import proposal", () => {
     expect(proposal.canImport).toBe(false);
   });
 
+  it("does not restore an invalid saved link after its originating start changes", () => {
+    const oldLink = group("NIE301", "TG02", 1);
+    const current = upsertClassInSavedTimetable(null, 1, group("NIE301", "TG04"), [3]);
+    current.semesterStates!["3"].selectedClasses = [oldLink];
+    const added = group("ICT302", "TG03");
+    const conflicting = group("NIE301", "TG01", 1);
+    const proposal = buildTimetableImportProposal({
+      incoming: { semesterId: 3, selectedClasses: [conflicting, added] }, current,
+      incomingTimetable: timetable(conflicting, added), savedTimetable: timetable(),
+    });
+    expect(proposal.selectedClasses).toEqual([added]);
+    expect(getSavedSemesterState(proposal.projectedState, 1)!.selectedClasses).toEqual([group("NIE301", "TG04")]);
+    expect(proposal.skipped).toEqual([{ selection: conflicting, reason: "conflict", savedOrigin: group("NIE301", "TG04") }]);
+  });
+
   it("writes only after final confirmation and refuses a proposal made against stale saved state", () => {
     const data = new Map<string, string>();
     vi.stubGlobal("window", { localStorage: {
@@ -143,6 +158,8 @@ describe("timetable import proposal", () => {
     const overLimit = buildTimetableImportProposal({ incoming: shared, current,
       incomingTimetable: timetable(...incoming), savedTimetable: timetable(link) });
     expect(overLimit).toMatchObject({ canImport: false, tooManySelections: true });
-    expect(overLimit.selectedClasses).toEqual([...incoming, link]);
+    expect(overLimit.selectedClasses).toEqual([link]);
+    expect(overLimit.skipped).toHaveLength(50);
+    expect(overLimit.skipped.every((item) => item.reason === "capacity")).toBe(true);
   });
 });
