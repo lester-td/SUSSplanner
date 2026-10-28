@@ -4,7 +4,7 @@ import {
 } from "./local-storage";
 import { buildSharedClassIdentifier } from "./share-url";
 import { getImportEnrolmentKey, getTimetableImportGroups } from "./import-ambiguities";
-import { projectTimetableImport } from "./import-projection";
+import { getVerifiedContinuationDestinations, projectTimetableImport } from "./import-projection";
 import { MAX_TIMETABLE_SELECTIONS } from "./limits";
 import type { PlannerStorageState, SharedClassIdentifier, SharedTimetableState, TimetableData } from "./types";
 
@@ -65,12 +65,9 @@ export function buildTimetableImportProposal({
     }
     if (selection.originSemesterId !== undefined) continue;
     const published = resolved.get(key)!.continuationSemesterIds;
-    const verified = [...new Set(published ?? [])].filter((id) => id !== incoming.semesterId);
-    const validated = verified.filter((id) => continuationTimetables.get(id)?.selections.some((item) => (
-      keyOf(item.identifier) === keyOf({ ...selection, originSemesterId: incoming.semesterId })
-    )));
-    if (published === undefined || validated.length !== verified.length) unverifiedContinuations.push(selection);
-    destinations.set(key, validated);
+    const { verified, complete } = getVerifiedContinuationDestinations(selection, incoming.semesterId, published, continuationTimetables);
+    if (!complete) unverifiedContinuations.push(selection);
+    destinations.set(key, verified);
   }
 
   // Keep valid continuations owned by another saved start when importing their

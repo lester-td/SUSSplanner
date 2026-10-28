@@ -1,7 +1,7 @@
 import { plannerSemesterStateSchema, plannerStorageStateSchema } from "@/lib/validation/timetable";
-import { projectTimetableImport } from "./import-projection";
+import { projectMissingContinuations, projectTimetableImport } from "./import-projection";
 import { getEnrolmentOwner, reconcileOwnedContinuations } from "./continuation-ownership";
-import type { PlannerSemesterState, PlannerStorageState, SharedClassIdentifier, SharedTimetableState } from "./types";
+import type { PlannerSemesterState, PlannerStorageState, SharedClassIdentifier, SharedTimetableState, TimetableData } from "./types";
 import { buildSharedClassIdentifier } from "./share-url";
 
 export const TIMETABLE_STORAGE_KEY = "sussplanner.timetable.v1";
@@ -143,19 +143,43 @@ export function saveTimetableToLocalStorage(state: PlannerStorageState)
     return;
   }
 
-  const parsed = mergeStorageState(loadSavedTimetable(), state);
+  const current = loadSavedTimetable();
+  const parsed = mergeStorageState(current, state);
+  const serialized = JSON.stringify(parsed);
+  if (JSON.stringify(current) !== serialized)
+    window.localStorage.setItem(TIMETABLE_STORAGE_KEY, serialized);
+}
+
+function saveTimetableProjection(state: PlannerStorageState, expectedSavedState: string)
+{
+  if (!canUseLocalStorage()) return false;
+  const parsed = normalizeStorageState(state);
+  // Save the complete validated projection. The general saver merges semester
+  // maps, which could introduce state from a second read.
+  if (JSON.stringify(loadSavedTimetable()) !== expectedSavedState) return false;
   window.localStorage.setItem(TIMETABLE_STORAGE_KEY, JSON.stringify(parsed));
+  return true;
 }
 
 export function saveTimetableImportProjection(state: PlannerStorageState, expectedSavedState: string)
 {
-  if (!canUseLocalStorage()) return false;
-  const parsed = normalizeStorageState(state);
-  // Imports replace the complete reviewed projection. The general saver merges
-  // semester maps, which could introduce unreviewed state from a second read.
-  if (JSON.stringify(loadSavedTimetable()) !== expectedSavedState) return false;
-  window.localStorage.setItem(TIMETABLE_STORAGE_KEY, JSON.stringify(parsed));
-  return true;
+  return saveTimetableProjection(state, expectedSavedState);
+}
+
+export function restoreResolvedContinuations(
+  semesterId: number,
+  timetable: TimetableData,
+  continuationTimetables: ReadonlyMap<number, TimetableData>,
+)
+{
+  // Resolution may have taken time. Plan against a fresh read: only matching
+  // starts still saved now can own additions, and capacity/conflicts are current.
+  const current = loadSavedTimetable();
+  if (!current) return null;
+  const result = projectMissingContinuations(current, semesterId, timetable, continuationTimetables);
+  if (!result.changed) return result;
+  const saved = saveTimetableProjection(result.projectedState, JSON.stringify(current));
+  return { ...result, changed: saved };
 }
 
 export function announceTimetableUpdated()

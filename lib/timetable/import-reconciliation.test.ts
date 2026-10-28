@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildTimetableImportProposal, commitTimetableImport } from "./import-proposal";
 import { getSavedSemesterState, loadSavedTimetable, saveTimetableToLocalStorage, upsertClassInSavedTimetable } from "./local-storage";
+import { buildTimetableImportEffects } from "./import-comparison";
 import { buildSharedClassIdentifier as keyOf } from "./share-url";
 import type { PlannerStorageState, SharedClassIdentifier, TimetableData } from "./types";
 
@@ -37,6 +38,21 @@ describe("explicit import enrolment reconciliation", () => {
     expect(result.skipped).toEqual([]);
     expect(result.unverifiedContinuations).toEqual([]);
     expect(current).toEqual(before);
+  });
+
+  it("projects missing links for an unchanged start into comparison and no-op decisions", () => {
+    const current = upsertClassInSavedTimetable(null, 1, old, []);
+    const before = structuredClone(current);
+    const reviewed = proposal(current, [old], [3, 4]);
+    expect(reviewed.canImport).toBe(true);
+    expect(selections(reviewed.projectedState, 1)).toEqual([old]);
+    const effects = buildTimetableImportEffects(current, reviewed.projectedState);
+    expect(effects.hasChanges).toBe(true);
+    expect(effects.semesters.map((item) => item.semesterId)).toEqual([3, 4]);
+    for (const id of [3, 4]) expect(selections(reviewed.projectedState, id)).toEqual([{ ...old, originSemesterId: 1 }]);
+    expect(current).toEqual(before); // Preview/cancellation cannot write additions.
+    const complete = proposal(reviewed.projectedState, [old], [3, 4]);
+    expect(buildTimetableImportEffects(reviewed.projectedState, complete.projectedState).hasChanges).toBe(false);
   });
 
   it("removes an omitted start and all its links, preserving unrelated metadata and independent enrolments", () => {

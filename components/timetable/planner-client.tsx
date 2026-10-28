@@ -64,7 +64,9 @@ import {
   upsertClassInSavedTimetable,
   removeCourseCodeFromSavedTimetable,
   removeClassFromSavedTimetable,
+  restoreResolvedContinuations,
 } from "@/lib/timetable/local-storage";
+import { resolveContinuationTimetables } from "@/lib/timetable/continuation-resolution";
 import {
   buildSharedClassIdentifier,
   encodeShareUrlState,
@@ -428,6 +430,9 @@ export function PlannerClient({
   const activeSemesterIdRef = useRef(semesterId);
   activeSemesterIdRef.current = semesterId;
   const pickerRequestRef = useRef(0);
+  const timetableRequestRef = useRef(0);
+  const selectedClassesRef = useRef(selectedClasses);
+  selectedClassesRef.current = selectedClasses;
   const deferredSearch = useDeferredValue(searchInput);
 
   const semesterChoices = getActiveSemesters(semesters);
@@ -586,6 +591,7 @@ export function PlannerClient({
   }, [ready, selectedClasses, semesterId]);
 
   useEffect(() => {
+    const requestId = ++timetableRequestRef.current;
     if (!ready || !semesterId)
     {
       return;
@@ -622,8 +628,10 @@ export function PlannerClient({
         }
         return response.json() as Promise<{ timetable: TimetableData }>;
       })
-      .then((payload) => {
-        if (controller.signal.aborted || activeSemesterIdRef.current !== semesterId) return;
+      .then(async (payload) => {
+        const isCurrent = () => !controller.signal.aborted && activeSemesterIdRef.current === semesterId
+          && timetableRequestRef.current === requestId && selectedClassesRef.current === selectedClasses;
+        if (!isCurrent()) return;
         if (!selectedSemester) return;
         setTimetableData(filterTimetableForSemester(payload.timetable, selectedSemester, semesterWeeks));
         setSelectedWeekId((current) => (
@@ -631,6 +639,16 @@ export function PlannerClient({
             ? current
             : "all"
         ));
+        const continuationTimetables = await resolveContinuationTimetables({ semesterId, selectedClasses }, payload.timetable, controller.signal);
+        if (!isCurrent()) return;
+        const restoration = restoreResolvedContinuations(semesterId, payload.timetable, continuationTimetables);
+        if (restoration?.skipped.length)
+        {
+          const courses = [...new Set(restoration.skipped.map((item) => item.selection.courseCode))].join(", ");
+          const descriptions = { ambiguous: "multiple saved starting groups", conflict: "conflicting saved selections", capacity: "full destination timetables" };
+          const reasons = [...new Set(restoration.skipped.map((item) => descriptions[item.reason]))].join("; ");
+          setPlannerNotice(`Some continuation links could not be restored for ${courses}: ${reasons}. Saved selections were preserved.`);
+        }
       })
       .catch((error: unknown) => {
         if ((error as { name?: string })?.name === "AbortError")

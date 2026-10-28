@@ -681,6 +681,17 @@ Example:
 The optional `@originSemesterId` suffix identifies a continued class’s starting
 semester, keeping it distinct from a new intake with the same group code.
 
+When a saved starting class resolves, missing published continuations are restored
+through the shared projection and ownership helpers. This is add-only: existing
+links, hidden selections and view metadata stay intact. Unknown or unavailable
+publication data defers restoration. Ambiguous starts, conflicting destinations
+and insufficient capacity skip the whole enrolment; competing candidates for a
+full destination are all rejected. Storage is re-read and validated after resolution,
+and cancelled or superseded requests cannot restore obsolete groups. Repeated
+resolution with no missing links performs no write. Shared imports include their
+continuation effects in the existing Added/Removed review and save only the
+confirmed projection; passive restoration never runs on the shared preview.
+
 Share links infer daytime classes from `TG` group codes and evening classes
 from `CRN` group codes. Encoders place TG classes first, followed by CRN
 classes, and sort each group by course code and group code. The resolved

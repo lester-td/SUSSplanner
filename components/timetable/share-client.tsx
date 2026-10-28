@@ -47,6 +47,7 @@ import { ImportComparison } from "@/components/timetable/import-comparison";
 import { buildTimetableImportEffects } from "@/lib/timetable/import-comparison";
 import { ImportGroupSelection } from "@/components/timetable/import-group-selection";
 import { getTimetableImportGroups, resolveTimetableImportGroups } from "@/lib/timetable/import-ambiguities";
+import { resolveContinuationTimetables } from "@/lib/timetable/continuation-resolution";
 import { buildTimetableImportProposal, commitTimetableImport } from "@/lib/timetable/import-proposal";
 import { buildSharedClassIdentifier, encodeShareUrlState } from "@/lib/timetable/share-url";
 import { getTimetableActionAvailability } from "@/lib/timetable/timetable-actions";
@@ -282,29 +283,7 @@ export function ShareClient({
     try
     {
       const incoming = resolveTimetableImportGroups(sharedState, importChoices);
-      const continuationRequests = new Map<number, SharedTimetableState["selectedClasses"]>();
-      for (const selection of incoming.selectedClasses)
-      {
-        if (selection.originSemesterId !== undefined) continue;
-        const published = timetable.selections.find((item) => buildSharedClassIdentifier(item.identifier) === buildSharedClassIdentifier(selection));
-        for (const id of new Set(published?.continuationSemesterIds ?? []))
-        {
-          if (id === sharedState.semesterId) continue;
-          continuationRequests.set(id, [...(continuationRequests.get(id) ?? []), { ...selection, originSemesterId: sharedState.semesterId }]);
-        }
-      }
-      // An unavailable destination is unverified metadata, not proof that this
-      // start has no continuations. The proposal warns and uses only verified links.
-      const continuationTimetables = new Map<number, TimetableData>();
-      await Promise.all([...continuationRequests].map(async ([semesterId, selectedClasses]) => {
-        try
-        {
-          const query = encodeShareUrlState({ semesterId, selectedClasses }).split("?")[1];
-          const response = await fetch(`/api/classes?${query}`);
-          if (response.ok) continuationTimetables.set(semesterId, (await response.json() as { timetable: TimetableData }).timetable);
-        }
-        catch { /* Report unverified destinations in the proposal. */ }
-      }));
+      const continuationTimetables = await resolveContinuationTimetables(incoming, timetable);
       const savedSelections = (getSavedSemesterState(current, sharedState.semesterId)?.selectedClasses ?? [])
         .filter((selection) => {
           try
